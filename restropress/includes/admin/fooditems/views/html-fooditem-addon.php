@@ -8,18 +8,19 @@ defined( 'ABSPATH' ) || exit;
 $count    = !empty( $current ) ? $current : time();
 $post_id  = get_the_ID();
 $addons   = get_post_meta( $post_id, '_addon_items', true );
-  
 $variation_label = '';
 if ( is_array( $addons ) && !empty( $addons ) ) :
   if( ! is_null( $post_id ) && rpress_has_variable_prices( $post_id ) ) {
     $variation_label = get_post_meta( $post_id, 'rpress_variable_price_label', true );
     $variation_label = !empty( $variation_label ) ? $variation_label : esc_html__( 'Variation', 'restropress' );
+   
   }
   foreach( $addons as $key => $addon_item ) :
     if( ! isset( $addon_item['category'] ) )
       continue;
     $addon_id = $addon_item['category'];
     $addon_type  = get_term_meta( $addon_id, '_type', true );
+    
     if( isset( $addon_item['is_required'] ) && $addon_item['is_required'] == 'yes' ) {
       $is_required = 'checked';
     } else {
@@ -62,6 +63,7 @@ if ( is_array( $addons ) && !empty( $addons ) ) :
         <div class="addon-items">
           <?php
           $get_addons = rpress_get_addons( $addon_id );
+           
           if ( !empty( $addon_id ) && is_array( $get_addons ) && !empty( $get_addons ) ) : ?>
             <table class="rp-addon-items" data-addon_type="<?php echo $addon_type ?>">
               <thead>
@@ -96,11 +98,12 @@ if ( is_array( $addons ) && !empty( $addons ) ) :
               </thead>
               <tbody>
               <?php foreach( $get_addons as $get_addon ) :
+              
                 $addon_item_id = $get_addon->term_id;
                 $addon_item_name = $get_addon->name;
                 $addon_slug = $get_addon->slug;
                 $addon_price = rpress_get_addon_data( $addon_item_id, '_price' );
-             
+                
                 $addon_price = ! empty( $addon_price ) ? $addon_price : 0;
                 $selected = '';
                 $req_selected = '';
@@ -120,28 +123,29 @@ if ( is_array( $addons ) && !empty( $addons ) ) :
                     $default_selected = 'checked';
                   }
                 }
+               
                 if( rpress_has_variable_prices( $post_id ) ) {
                 
                   $count = 1;
                   foreach ( rpress_get_variable_prices( $post_id ) as $price) {
                     
-                    if(empty( $addon_item['prices'] )){
-                        $addon_price = $addon_price;
-                    }else{
-                        $addon_price = !empty( $addon_item['prices'] ) && !empty( $addon_item['prices'][$addon_item_id][sanitize_text_field( $price['name'] )] ) ? $addon_item['prices'][$addon_item_id][ sanitize_text_field( $price['name'] )] : '';
-                    }
-                    
-                    
+                    $addon_price = !empty( $addon_item['prices'] ) && !empty( $addon_item['prices'][$addon_item_id][ $price['name'] ] ) ? sanitize_text_field( $addon_item['prices'][$addon_item_id][ $price['name'] ] ) : $addon_price;
+                    // if(empty( $addon_item['prices'] )){
+                    //     $addon_price = $addon_price;
+                    // }else{
+                        
+                    // }
                     if ( isset( $addon_item['default'] ) ) {
                       
-                  if ( in_array( $addon_item_id .'|'. $price['name'], $addon_item['default'] ) ) {
-                    $default_var_selected = 'checked';
-                  }else{
-                    $default_var_selected ='';
-                  }
-                }else{
-                  $default_var_selected ='';
-                }
+                      if ( in_array( $addon_item_id .'|'. $price['name'], $addon_item['default'] ) ) {
+                        $default_var_selected = 'checked';
+                      }else{
+                        $default_var_selected ='';
+                      }
+                    }else{
+                      $default_var_selected ='';
+                    }
+                    
                     ?>
                     <tr class="rp-child-addon">
                       <?php if( $count == 1 ) { ?>
@@ -151,13 +155,14 @@ if ( is_array( $addons ) && !empty( $addons ) ) :
                       <?php } ?>
                       <td class="add_label"><label for="<?php echo esc_attr( $addon_slug ) ; ?>"><?php echo (esc_html( $addon_item_name )); ?></label></td>
                       <td class="variation_label"><label for="<?php echo esc_attr($price['name'] ); ?>"><?php echo esc_html( $price['name'] ); ?></label></td>
-                      <td class="addon_price"><input class="addon-custom-price" type="number" step="any" min="0.00" placeholder="0.00" value="<?php echo rpress_sanitize_amount( $addon_price ); ?>" name="addons[<?php echo sanitize_key( $key ); ?>][prices][<?php echo sanitize_key( $addon_item_id ); ?>][<?php echo sanitize_key( $price['name'] ); ?>]"></td>
+                      <td class="addon_price"><input class="addon-custom-price" type="number" step="any" min="0.00" placeholder="0.00" value="<?php echo rpress_sanitize_amount( $addon_price ); ?>" name="addons[<?php echo  $key ; ?>][prices][<?php echo $addon_item_id ; ?>][<?php echo  $price['name'] ; ?>]"></td>
                       
                       <td class="td_checkbox"><input type="checkbox" data-variation_name="<?php echo esc_attr( $price['name'] ); ?>" value="<?php echo esc_attr( $addon_item_id . '|' . $price['name']); ?>" id="<?php echo esc_attr( $addon_slug ); ?>" name="addons[<?php echo sanitize_key( $key ); ?>][default][]"class="rps-checkbox" <?php echo esc_html( $default_var_selected ); ?> /></td>
                     </tr>
                   <?php $count++; } ?>
                 <?php } else {
                   $addon_price = ( isset( $addon_item['prices'][$addon_item_id] ) && !is_array( $addon_item['prices'][$addon_item_id] ) ) ? $addon_item['prices'][$addon_item_id] : $addon_price;
+                  
                   ?>
                   <tr class="rp-child-addon">
                     <td class="rp-addon-select td_checkbox"><input type="checkbox" value="<?php echo esc_attr( $addon_item_id ); ?>" id="<?php echo esc_attr( $addon_slug ); ?>" name="addons[<?php echo sanitize_key( $key ); ?>][items][]" class="rp-checkbox" <?php echo esc_html( $selected ); ?> /></td>

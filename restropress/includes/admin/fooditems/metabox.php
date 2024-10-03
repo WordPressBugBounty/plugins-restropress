@@ -49,6 +49,7 @@ function rpress_fooditem_metabox_fields() {
  * @return void
  */
 function rpress_fooditem_meta_box_save( $post_id, $post ) {
+	
 	if ( ! isset( $_POST['rpress_fooditem_meta_box_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['rpress_fooditem_meta_box_nonce'] ), basename( __FILE__ ) ) ) {
 		return;
 	}

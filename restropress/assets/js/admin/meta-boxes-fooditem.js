@@ -194,6 +194,7 @@ jQuery( function( $ ) {
 			}
 		});
 		$.post( fooditem_meta_boxes.ajax_url, data, function( response ) {
+			
 			$addons.html( response );
 			$wrapper.unblock();
 			$( document.body ).trigger( 'rpress_loaded_addon' );

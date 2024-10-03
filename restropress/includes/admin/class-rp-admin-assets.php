@@ -157,8 +157,10 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         'enable_order_notification'   => esc_attr( rpress_get_option( 'enable_order_notification' )),
         'loopsound'                   => esc_attr( rpress_get_option( 'notification_sound_loop' )),
         'load_admin_addon_nonce'      => wp_create_nonce( 'load-admin-addon' ),
-        'preview_nonce' => wp_create_nonce( 'rpress-preview-order' ),
-        'order_nonce'   => wp_create_nonce( 'rpress-order' ),
+        'preview_nonce'               => wp_create_nonce( 'rpress-preview-order' ),
+        'order_nonce'                 => wp_create_nonce( 'rpress-order' ),
+        'activate_license'            => wp_create_nonce( 'activate-license' ),
+        'deactivate_license'          => wp_create_nonce( 'deactivate-license' ),
       );
       wp_localize_script( 'rp-admin', 'rpress_vars',
         $admin_params

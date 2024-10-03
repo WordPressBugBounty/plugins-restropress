@@ -984,6 +984,7 @@ class RPRESS_Payment {
   		if( !empty($options) ) {
             foreach ( $options as &$addon_item ) { // Notice the '&' here
                 $addon_price = (float) $rpress_cart->get_addon_price( $addon_item['addon_id'], $options, $addon_item['price'] );
+               $addon_price= round($addon_price,rpress_currency_decimal_filter());
                 $amount += $addon_price;
                 $addon_item['price_without_tax'] = $addon_price; // Now this will be reflected in the original $options array
             }
@@ -1862,7 +1863,8 @@ class RPRESS_Payment {
 					$options 			= isset( $item['item_number']['options'] ) ? $item['item_number']['options'] : array();
 					$price_id 			= isset( $item['item_number']['options']['price_id'] ) ? $item['item_number']['options']['price_id'] : null;
 					$item_price 		= $cart->get_item_price( $fooditem_id, $item, $options, $price_id, false, $item['price'] );
-		        	$addon_tax_price = $item_addon_prices = 0;
+		        	$item_price = round($item_price,rpress_currency_decimal_filter());
+                    $addon_tax_price = $item_addon_prices = 0;
 		        	if ( !empty( $item['addon_items'] ) ) {
 			    		foreach ( $item['addon_items'] as  $addon_item ) {
 			    			$addon_id = !empty( $addon_item['addon_id'] ) ? $addon_item['addon_id'] : '';
@@ -1870,7 +1872,8 @@ class RPRESS_Payment {
 			    			$addon_tax_price += !empty( $addon_item['price'] ) ? floatval( $addon_item['price'] ) : 0.00;
 			    			$addon_price = !empty( $addon_item['price'] ) ? floatval( $addon_item['price'] ) : 0.00;
 			    			$addon_price = $cart->get_addon_price( $addon_id, $item, $addon_price );
-			    			$item_addon_prices += $addon_price;
+			    			$addon_price= round($addon_price,rpress_currency_decimal_filter());
+                            $item_addon_prices += $addon_price;
 			    		}
 		        	}
 	        		//Check if Product is variable

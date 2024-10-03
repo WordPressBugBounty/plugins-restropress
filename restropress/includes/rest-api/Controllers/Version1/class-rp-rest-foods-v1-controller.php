@@ -573,8 +573,6 @@ class RP_REST_Foods_V1_Controller extends RP_REST_Posts_Controller {
             $query_args['orderby'] = 'meta_value_num';
 		}
        
-        
-		// print_r($query_args);
 		return $query_args;
 	}
 	/**

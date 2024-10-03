@@ -502,7 +502,7 @@ $customer_email = is_array( isset( $payment_meta['user_info'] ) ) ? $payment_met
     					<?php if ( rpress_use_taxes() ) : ?>
                         <li class="item_tax"><?php _ex( 'Tax', 'payment details purchased item tax - full screen', 'restropress' ); ?></li>
                     	<?php endif; ?>
-    					<?php if ( !empty($discount) && 'flat' !== rpress_get_discount_type( $discount_id )  ) : ?>
+    					<?php if ( !empty($discount)  ) : ?>
                         <li class="item_discount"><?php _ex( 'Discount', 'payment details purchased item discount - full screen', 'restropress' ); ?></li>
                     	<?php endif; ?>
                     	<li class="price"><?php printf( _x( '%s Total', 'payment details purchased item total - full screen', 'restropress' ), rp_get_label_singular() ); ?>
@@ -591,7 +591,7 @@ $customer_email = is_array( isset( $payment_meta['user_info'] ) ) ? $payment_met
                   					<input type="text" class="small-text rpress-price-field rpress-payment-details-fooditem-item-tax rpress-payment-item-input rpress-order-input" name="rpress-payment-details-fooditems[<?php echo $key; ?>][item_tax]" value="<?php echo rpress_format_amount( $item_tax ); ?>" />
                   				</li>
                   				<?php endif; ?>
-                  				<?php if ( !empty($discount)  && 'flat' !== rpress_get_discount_type( $discount_id )   ) : ?>
+                  				<?php if ( !empty($discount)  ) : ?>
                   				<li class="item_discount">
                   					<span class="rpress-payment-details-label-mobile"><?php echo $discount_code; ?></span>
                   					<?php echo rpress_currency_symbol( $currency_code ); ?>

@@ -77,7 +77,9 @@ function rpress_calculate_tax( $amount = 0, $country = false, $state = false ,$i
 	$tax  = 0.00;
 	if ( rpress_use_taxes() && $amount > 0 ) {
         if($ignore_inclusive){
-            $tax = floatval($amount) * $rate;
+            $amount = floatval($amount);  // Ensure $amount is rounded first
+            $tax = $amount * $rate;  
+            $tax  = floor($tax * 100) / 100;
         }else if ( rpress_prices_include_tax()) {
             
 			$pre_tax = ( $amount / ( 1 + $rate ) );

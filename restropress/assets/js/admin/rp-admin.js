@@ -43,6 +43,7 @@ jQuery(function ($) {
       var LicenseString = _self.parent('.rpress-license-wrapper')
         .find('.rpress_license_string')
         .val();
+      var activatenonce = rpress_vars.activate_license;
       var action = _self.attr('data-action');
       if (License.length) {
         _self.addClass('disabled');
@@ -53,6 +54,7 @@ jQuery(function ($) {
           product_name: ProductName,
           license: License,
           license_key: LicenseString,
+          security : activatenonce,
         };
         $.ajax({
           type: "POST",
@@ -109,11 +111,13 @@ jQuery(function ($) {
         .attr('data-item-name');
       _self.addClass('disabled');
       _self.text(rpress_vars.please_wait);
+      var deactivatenonce = rpress_vars.deactivate_license;
       if (Licensestring.length) {
         data = {
           action: action,
           product_name: ProductName,
           license_key: Licensestring,
+          security: deactivatenonce,
         };
         $.ajax({
           type: "POST",

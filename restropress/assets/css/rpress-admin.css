@@ -1501,6 +1501,9 @@ input[class*="rpress-price-field"] {
 	content: '\f239'
 }
 /* Dashboard Widget Styles-------------------------------------------------------------- */
+#wpbody-content .rp-col-sm-12 {
+    overflow-x: hidden;
+}
 .rpress_dashboard_widget table thead td{
 	border-bottom: 1px solid #ececec;
 	color: #777

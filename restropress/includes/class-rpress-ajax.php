@@ -292,9 +292,11 @@ class RP_AJAX {
   public static function load_addon_child() {
     check_ajax_referer( 'load-addon', 'security' );
     $parent      =  isset( $_POST['parent'] ) && ! empty( $_POST['parent'] ) ? sanitize_text_field( wp_unslash( $_POST['parent'] ) ) : NULL ;
+    
     $current     = isset( $_POST['i'] ) && ! empty( $_POST['i'] ) ? sanitize_text_field( wp_unslash( $_POST['i'] ) ) : NULL ;
     $item_id     = isset( $_POST['item_id'] ) && ! empty( $_POST['item_id'] ) ? sanitize_text_field( wp_unslash( $_POST['item_id'] ) ) : NULL ;
     $addon_items = rpress_get_addons( $parent );
+    
     $variation_label = '';
     if( ! is_null( $item_id ) && rpress_has_variable_prices( $item_id ) ) {
       $variation_label = get_post_meta( $item_id, 'rpress_variable_price_label', true );
@@ -324,6 +326,7 @@ class RP_AJAX {
     foreach( $addon_items as $addon_item ) {
       $addon_price = rpress_get_addon_data( $addon_item->term_id, '_price' );
       $addon_price = ! empty( $addon_price ) ? $addon_price : '0.00';
+      
       $parent_class = ( $addon_item->parent == 0 ) ? 'rp-parent-addon' : 'rp-child-addon';
       $count = 1;
       if( ! empty( $item_id ) && rpress_has_variable_prices( $item_id ) ) {
@@ -341,7 +344,7 @@ class RP_AJAX {
           $output .= '</tr>';
           $count++;
         }
-      } else {
+      } else { 
         $output .= '<tr class="' . $parent_class . '">';
         $output .= '<td class="rp-addon-select td_checkbox"><input type="checkbox" value="' . $addon_item->term_id . '" id="' . $addon_item->slug .'" name="addons[' . $current . '][items][]" class="rp-checkbox"></td>';
         $output .= '<td class="add_label"><label for="' . $addon_item->slug .'">' . $addon_item->name .'</label></td>';
@@ -351,6 +354,7 @@ class RP_AJAX {
         $output .= '</tr>';
       }
     }
+    
     $output .= '</tbody>';
     $output .= '</table>';
     echo $output;
@@ -1156,6 +1160,8 @@ class RP_AJAX {
    * @author RestrPress
    */
   public static function activate_addon_license() {
+
+    check_ajax_referer( 'activate-license', 'security' );
     // listen for our activate button to be clicked
     if( isset( $_POST['license_key'] ) ) {
       // Get the license from the user
@@ -1240,6 +1246,8 @@ class RP_AJAX {
    * @return void
    */
   public static function deactivate_addon_license() {
+
+    check_ajax_referer( 'deactivate-license', 'security' );
     if( isset($_POST['license_key']) ) {
       $license_key = isset( $_POST['license_key'] ) ? sanitize_text_field( $_POST['license_key'] ) : '';
       // retrieve the license from the database
