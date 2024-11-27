@@ -497,7 +497,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         'order_count'             =>  $order_count,
         'customer_count'          =>  $result['customer_count'],    
         'total_refund'            =>  $total_refund['total_refund'],
-        'total_sales'             =>  $total_sales['total_sales'],
+        'total_sales'             =>  sprintf("%0.2f",$total_sales['total_sales']),
         'order_percentage'        =>  number_format( $percentage_change, 2 ),
         'customer_percentage'     =>  $result['percentage_change_customer'],
         'refund_percentage'       =>  $total_refund['total_refund_percentage'],

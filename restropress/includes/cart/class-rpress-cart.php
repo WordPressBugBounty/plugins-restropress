@@ -781,13 +781,16 @@ class RPRESS_Cart {
 	    	//Check if Product is variable
 	      	if ( rpress_has_variable_prices( $fooditem_id ) && !is_null( $price_id ) ) {
 	        	$price = rpress_get_price_option_amount( $fooditem_id, $price_id );
+				
 	        } else {
 	      		$price = rpress_get_fooditem_price( $fooditem_id );
 	      	}
+			
 	    }
 		if ( rpress_prices_include_tax() ) {
 			$price -= $this->get_item_tax( $fooditem_id, $item, $price );
 		}
+		
 		return $price;
 	}
 	/**
@@ -931,7 +934,9 @@ class RPRESS_Cart {
 	 * @return float|mixed|void Total discounted amount
 	 */
 	public function get_discounted_amount( $discounts = false ) {
+	
 		$discounts = false === $discounts ? $this->get_discounts() : $discounts;
+		
 		$discount_sum = 0.00 ;
 		if( is_array( $discounts ) ) {
 			foreach ( $discounts as  $discount ) {
@@ -939,6 +944,7 @@ class RPRESS_Cart {
 				$discount_sum += rpress_get_discount_value( $discount, 'amount' );
 				$reqs     = rpress_get_discount_product_reqs( $code_id );
 				$cat_reqs = rpress_get_discount_category_reqs( $code_id );
+
 			}
 			if( empty( $reqs ) ){
 				return apply_filters( 'rpress_get_cart_discounted_amount', $discount_sum );
@@ -957,7 +963,7 @@ class RPRESS_Cart {
 			}
 		}
 		if( !empty( $discounts ) &&  $amount > $discount_sum ) $amount = $discount_sum ;
-		return apply_filters( 'rpress_get_cart_discounted_amount', $amount );
+		return apply_filters( 'rpress_get_cart_discounted_amount', $discount_sum );
 	}
 	/**
 	 * Get Cart Subtotal.

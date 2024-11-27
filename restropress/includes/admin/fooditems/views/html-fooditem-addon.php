@@ -54,6 +54,10 @@ if ( is_array( $addons ) && !empty( $addons ) ) :
             <?php esc_html_e( 'Max Selections?', 'restropress' ); ?>
             <input type="number" min="1" name="addons[<?php echo sanitize_key( $key ); ?>][max_addons]" value="<?php echo isset( $addon_item['max_addons'] ) ? esc_attr( $addon_item['max_addons'] ) : ''; ?>" />
           </label>
+          <label class="input_min_allowed">
+            <?php esc_html_e( 'Min Selections?', 'restropress' ); ?>
+            <input type="number" name="addons[<?php echo sanitize_key( $key ); ?>][min_addons]" value="<?php echo isset( $addon_item['min_addons'] ) ? esc_attr( $addon_item['min_addons'] ) : ''; ?>" />
+          </label>
           <label class="cb_required">
             <input type="checkbox" name="addons[<?php echo sanitize_key( $key ) ; ?>][is_required]" value="yes" <?php echo esc_html( $is_required ); ?> />
             <?php esc_html_e( 'Required?', 'restropress' ); ?>
@@ -212,6 +216,10 @@ if ( is_array( $addons ) && !empty( $addons ) ) :
         <label class="input_max_allowed">
           <?php esc_html_e( 'Max Selections?', 'restropress' ); ?>
           <input type="number" min="1" name="addons[<?php echo sanitize_key( $count ) ; ?>][max_addons]" value="" />
+        </label>
+         <label class="input_min_allowed">
+          <?php esc_html_e( 'Min Selections?', 'restropress' ); ?>
+          <input type="number" name="addons[<?php echo sanitize_key( $count ) ; ?>][min_addons]" value="" />
         </label>
         <label class="cb_required">
           <input type="checkbox" name="addons[<?php echo sanitize_key( $count ); ?>][is_required]" value="yes" />Is Required?

@@ -2636,6 +2636,9 @@
  .rp-metabox-content .addon-category label.input_max_allowed input {
   width: 55px;
  }
+ .rp-metabox-content .addon-category label.input_min_allowed input {
+  width: 55px;
+ }
  .rp-metabox-content .addon-category label.cb_required {
   padding: 6px;
  }

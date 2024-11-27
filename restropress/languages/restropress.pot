@@ -2,8 +2,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: RestroPress\n"
-"POT-Creation-Date: 2024-10-03 16:01+0530\n"
-"PO-Revision-Date: 2024-10-03 16:01+0530\n"
+"POT-Creation-Date: 2024-11-09 19:35+0530\n"
+"PO-Revision-Date: 2024-11-09 19:35+0530\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -1325,7 +1325,7 @@ msgstr ""
 #: includes/admin/dashboard/rp-dashboard.php:531
 #: includes/admin/fooditems/dashboard-columns.php:31
 #: includes/admin/fooditems/dashboard-columns.php:272
-#: includes/admin/fooditems/views/html-fooditem-addon.php:89
+#: includes/admin/fooditems/views/html-fooditem-addon.php:93
 #: includes/admin/fooditems/views/html-fooditem-data-general.php:51
 #: includes/admin/payments/view-order-details.php:715
 #: includes/admin/reporting/export/class-batch-export-fooditems.php:48
@@ -1818,8 +1818,8 @@ msgid "Variation"
 msgstr ""
 
 #: includes/admin/fooditems/views/html-fooditem-addon.php:34
-#: includes/admin/fooditems/views/html-fooditem-addon.php:195
-#: includes/admin/fooditems/views/html-fooditem-addon.php:201
+#: includes/admin/fooditems/views/html-fooditem-addon.php:199
+#: includes/admin/fooditems/views/html-fooditem-addon.php:205
 msgid "Select Addon"
 msgstr ""
 
@@ -1828,40 +1828,45 @@ msgid "Select Addon Category"
 msgstr ""
 
 #: includes/admin/fooditems/views/html-fooditem-addon.php:51
-#: includes/admin/fooditems/views/html-fooditem-addon.php:210
+#: includes/admin/fooditems/views/html-fooditem-addon.php:214
 #: includes/template-functions.php:142
 msgid "Add"
 msgstr ""
 
 #: includes/admin/fooditems/views/html-fooditem-addon.php:54
-#: includes/admin/fooditems/views/html-fooditem-addon.php:213
+#: includes/admin/fooditems/views/html-fooditem-addon.php:217
 msgid "Max Selections?"
 msgstr ""
 
-#: includes/admin/fooditems/views/html-fooditem-addon.php:59
+#: includes/admin/fooditems/views/html-fooditem-addon.php:58
+#: includes/admin/fooditems/views/html-fooditem-addon.php:221
+msgid "Min Selections?"
+msgstr ""
+
+#: includes/admin/fooditems/views/html-fooditem-addon.php:63
 msgid "Required?"
 msgstr ""
 
-#: includes/admin/fooditems/views/html-fooditem-addon.php:74
+#: includes/admin/fooditems/views/html-fooditem-addon.php:78
 #: includes/class-rpress-ajax.php:309
 msgid "Enable"
 msgstr ""
 
-#: includes/admin/fooditems/views/html-fooditem-addon.php:79
+#: includes/admin/fooditems/views/html-fooditem-addon.php:83
 #: includes/class-rpress-ajax.php:312
 #: includes/rest-api/Controllers/Version1/class-rp-rest-foods-v1-controller.php:374
 #: includes/rest-api/Controllers/Version1/class-rp-rest-foods-v1-controller.php:375
 msgid "Addon Name"
 msgstr ""
 
-#: includes/admin/fooditems/views/html-fooditem-addon.php:94
+#: includes/admin/fooditems/views/html-fooditem-addon.php:98
 #: includes/class-rpress-ajax.php:321 includes/fooditem-functions.php:451
 #: templates/rpress-user-dashboard.php:313
 msgid "Default"
 msgstr ""
 
-#: includes/admin/fooditems/views/html-fooditem-addon.php:182
-#: includes/admin/fooditems/views/html-fooditem-addon.php:223
+#: includes/admin/fooditems/views/html-fooditem-addon.php:186
+#: includes/admin/fooditems/views/html-fooditem-addon.php:231
 msgid "Please select a addon category first!"
 msgstr ""
 
@@ -8751,14 +8756,20 @@ msgstr ""
 msgid "User is not valid !!!"
 msgstr ""
 
-#: includes/rp-ajax-functions.php:218
+#: includes/rp-ajax-functions.php:219
 msgid "Required"
 msgstr ""
 
 #. translators: %s: Placeholder for max addons
-#: includes/rp-ajax-functions.php:225
+#: includes/rp-ajax-functions.php:226
 #, php-format
 msgid "Maximum %s allowed"
+msgstr ""
+
+#. translators: %s: Placeholder for min addons
+#: includes/rp-ajax-functions.php:236
+#, php-format
+msgid "Minimum %s allowed"
 msgstr ""
 
 #: includes/rp-core-functions.php:78

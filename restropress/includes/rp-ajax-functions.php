@@ -204,6 +204,7 @@ function get_fooditem_lists( $fooditem_id, $cart_key = '') {
         $addon_id = $addon_items->term_id;
         $is_required = isset( $addons[ $parent ]['is_required'] ) ? $addons[ $parent ]['is_required'] : 'no';
         $max_addons = isset( $addons[ $parent ]['max_addons'] ) ? $addons[ $parent ]['max_addons'] : 0;
+        $min_addons = isset( $addons[ $parent ]['min_addons'] ) ? $addons[ $parent ]['min_addons'] : 0;
         $is_default = isset( $addons[ $parent ]['default'] ) ? $addons[ $parent ]['default'] : array();
      
         if( ! empty( $is_default ) )
@@ -228,9 +229,20 @@ function get_fooditem_lists( $fooditem_id, $cart_key = '') {
                 ?>
               </span>
             <?php endif; ?>
+            <?php if( ! empty( $min_addons ) ) : ?>
+              <span class="rp-min-addon">
+                <?php echo sprintf( 
+                    /* translators: %s: Placeholder for min addons */
+                    __( 'Minimum %s allowed', 'restropress' ), 
+                    $min_addons 
+                  ); 
+                ?>
+              </span>
+            <?php endif; ?>
           </h6>
           <input type="hidden" name="is_required" class="addon_is_required" value="<?php echo esc_attr( $is_required ); ?>" />
           <input type="hidden" name="max_limit" class="addon_max_limit" value="<?php echo esc_attr( $max_addons ); ?>" />
+          <input type="hidden" name="min_limit" class="addon_min_limit" value="<?php echo esc_attr( $min_addons ); ?>" />
           <?php
           $addon_category_args = array( 'taxonomy' => 'addon_category', 'parent' => $addon_items->term_id, 'include' => $child_ids );
           $child_addons = get_terms( apply_filters( 'rp_addon_category', $addon_category_args ) );

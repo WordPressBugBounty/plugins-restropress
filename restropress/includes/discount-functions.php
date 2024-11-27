@@ -398,6 +398,7 @@ function rpress_get_discount_product_reqs( $code_id = null ) {
  */
 function rpress_get_discount_category_reqs( $code_id = null ) {
 	$discount = new RPRESS_Discount( $code_id );
+	
 	return $discount->category_reqs;
 }
 /**
@@ -782,7 +783,7 @@ function rpress_get_cart_discounts_html( $discounts = false ) {
 	foreach ( $discounts as $discount ) {
 		$discount_id = rpress_get_discount_id_by_code( $discount );
 		$rate        = rpress_format_discount_rate( rpress_get_discount_type( $discount_id ), rpress_get_discount_amount( $discount_id ) );
-		//$discount_value = rpress_get_discount_value( $discount );
+		$discount_value = rpress_get_discount_value( $discount );
 		$discount_value = rpress_currency_filter( rpress_format_amount( RPRESS()->cart->get_discounted_amount() ) );
 		$remove_url  = add_query_arg(
 			array(
@@ -802,6 +803,7 @@ function rpress_get_cart_discounts_html( $discounts = false ) {
         $discount_html .= "</span>";
         $discount_html .= "</span>\n";
 		$html .= apply_filters( 'rpress_get_cart_discount_html', $discount_html, $discount, $rate, $remove_url );
+		
 	}
 	return apply_filters( 'rpress_get_cart_discounts_html', $html, $discounts, $rate, $remove_url );
 }
@@ -1055,13 +1057,14 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
     $discount_amount 	 	= rpress_get_discount_amount( $discount->ID );
     $is_not_global 			= rpress_is_discount_not_global(  $discount->ID );
    	$included_food_items 	= rpress_get_discount_product_reqs( $discount->ID );
-   	$included_categories    =rpress_get_discount_category_reqs($discount->ID);
+   	$included_categories    =rpress_get_discount_category_reqs($discount->ID);		
    	$cart_item_ids 		 	= wp_list_pluck( rpress_get_cart_content_details(), 'id' );
    	$cart_item_quanties  	= wp_list_pluck( rpress_get_cart_content_details(), 'quantity' );
-   	$cart_items  	=  rpress_get_cart_content_details();
+   	$cart_items  			=  rpress_get_cart_content_details();
    	$cart_item_number 		= wp_list_pluck( rpress_get_cart_content_details(), 'item_number' );
    	$cart_item_addon_items 	= array_column( $cart_item_number, 'addon_items' );
    	$discount_value 	 = 0 ;
+	
    	if( $subtotal < $discount_amount && 'flat' === $discount_type ) $discount_amount = $subtotal;
     if( ! $is_not_global || empty( $included_food_items ) ||  empty( $included_categories ) )
     	if( 'flat' === $discount_type ){
@@ -1088,7 +1091,9 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
 					$cart_item_addon_price = $cart_item_addon_price * $quantity;
 
 					$item_cart_total_price = $cart_item_addon_price + $item_cart_price;
+					
 				if ( $discount_type == 'percent' ) {
+					
 					$discount_value +=  rpress_format_amount(( $discount_amount / 100 ) * $item_cart_total_price );
 				} else {
 					$discount_value = $discount_amount;
@@ -1098,9 +1103,10 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
     else{
     	foreach ( $cart_item_ids as $key => $cart_item_id ) {
     		if ( ! empty( $included_food_items  ) || !empty( $included_categories ) ) {
-    			if ( in_array( $cart_item_id, $included_food_items ) ) {
-    				$price_id 			= rpress_get_cart_item_price_id( $cart_item_id );
+				if ( is_array(  $included_categories ) ) {
+					$price_id 			= rpress_get_cart_item_price_id( $cart_item_id );
     				$price 				= rpress_get_cart_item_price( $cart_item_id, [], $price_id, '' );
+				
     				$quantity 			= $cart_item_quanties[$key];
     				$item_cart_price 	= $price * $quantity;
 					$cart_item_addon_price = 0.00;
@@ -1110,19 +1116,22 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
         					$cart_item_addon_price = (float)$cart_item_addon_price + (float)$cart_item_addon_item['price'];
         				}
     				}
+					
     				$cart_item_addon_price = $cart_item_addon_price * $quantity;
     				$item_cart_total_price = $cart_item_addon_price + $item_cart_price;
+					
     				if ( $discount_type == 'percent' ) {
     					$discount_value += rpress_format_amount(( $discount_amount / 100 ) * $item_cart_total_price);
+						
 				    } else {
-				        $discount_value = $discount_amount;
+				        $discount_value = $discount_value;
 				    }
     			}
     		}
     	}
     }
+	
     $discount_value = apply_filters( 'rpress_get_discount_price_value', $discount_value, $discount );
     $discount_price_value = rpress_currency_filter( rpress_format_amount( $discount_value ) );
-    
 	return $type == 'currency' ? $discount_price_value : $discount_value;
 }

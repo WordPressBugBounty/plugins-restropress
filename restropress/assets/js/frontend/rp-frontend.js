@@ -431,6 +431,8 @@ jQuery(function ($) {
               .val();
             var max_addons = _self.children('input.addon_max_limit')
               .val();
+            var min_addons = _self.children('input.addon_min_limit')
+              .val();
             var checked = _self.find('.food-item-list.active input:checked')
               .length;
             _self.find('.rp-addon-error')
@@ -443,7 +445,12 @@ jQuery(function ($) {
               _self.find('.rp-max-addon')
                 .addClass('rp-addon-error');
               validation = 1;
+            } else if ( min_addons != 0 && checked < min_addons ) {
+              _self.find('.rp-min-addon')
+                .addClass('rp-addon-error');
+              validation = 1;
             }
+            
             if (validation != '') {
               self.removeClass('disable_click');
               self.find('.cart-action-text')
