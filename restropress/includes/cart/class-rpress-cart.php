@@ -240,11 +240,11 @@ class RPRESS_Cart {
 				$subtotal = ( $item_price + $item_addon_prices ) * $quantity;
 				$tax = $tax_price - ( $subtotal - $discount );
 				if( $include_tax == 'yes'){
-                    // $tax = $tax_price -  $subtotal;
-                    $tax = $this->get_item_tax( $item['id'], $item, ($subtotal-$discount),true );
-                    $tax = round( $tax, rpress_currency_decimal_filter() );
-                    // if($rpress_is_last_cart_item){
-                    // }
+                    $tax = $tax_price -  $subtotal;
+                //     $tax = $this->get_item_tax( $item['id'], $item, ($subtotal-$discount),true );
+                //    error_log("asdfasd f ".$tax.'  '.$item_price);
+				// 	$tax = round( $tax, rpress_currency_decimal_filter() );
+                   
 				}
 			}    
 			foreach ( $fees as $fee ) {
