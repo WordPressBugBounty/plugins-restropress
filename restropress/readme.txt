@@ -9,68 +9,71 @@ Stable tag: 3.1.8.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
+
 == Description ==
-RestroPress is an Online Food Ordering system for WordPress. It is a standalone WordPress plugin which allows you to easily add a Food Ordering System to your WordPress Website. Using RestroPress you can easily receive both PickUp/Takeaway and Delivery orders.
-RestroPress has a user-friendly frontend and backend interface which will allow you to easily manage the orders and also comes with a pre-built user dashboard to manage their profile and orders.
-The plugin automatically adds the required pages to your site when you activate the plugin. The plugin outputs the food items on your page using [fooditems] shortcode.
-= Shortcode Attributes =
-* category (category ids or slug separated by comma(,))
-* category_menu (this will show only the child category of the specified category)
-* cat_orderby (Ordering for category)
-* fooditem_orderby (ordering of food items inside the category)
-* cat_order: asc/desc
-* fooditem_order: asc/desc
-**Examples**
-[fooditems category="starter,snacks,lunch"]
-The above shortcode should display the category sidebar with those 3 categories and the products would only be displayed from those 3 categories.
-[fooditems category_menu="lunch"]
-The above shortcode will only display the child categories of lunch on the category sidebar and also display the food items from the child category of lunch.
-***Required ShortCodes***
-1. [fooditems] -> By using [fooditems] shortcode you can show all your products on a single page.
-2. [fooditem_checkout] -> This shortcode is used for the checkout page.
-3. [rpress_receipt] -> This shortcode is used for the order confirmation page.
-4. [order_history] -> This shortcode is used to show order history for the particular customer.
-5. [rpress_login] -> This shortcode is used for customer login.
-6. [rpress_register] -> This shortcode is used for customer registration.
-7. [customer_dashboard] -> The shortcode provided is designated for the user dashboard, facilitating profile management and access to order history and status details. (Available from Version 3.1)
-= Restropress In action =
+RestroPress is the ultimate standalone WordPress plugin for restaurants, cafes, and food businesses to offer seamless online ordering. Unlike other solutions, RestroPress works independently and does not require WooCommerce, giving you complete freedom and simplicity. With RestroPress, you get a commission-free solution that simplifies operations, enhances customer satisfaction, and boosts profitability.
+
+== Watch RestroPress In Action ==
 [youtube https://www.youtube.com/watch?v=CGVpXYw6JDQ]
-Check <a href="https://www.restropress.com/" target="_blank">RestroPress Website</a> for details and support.
-= Get A Free license =
-<a href="https://restropress.com/checkout?edd_action=add_to_cart&download_id=53444" target="_blank">Generate Free License Key</a>
-= Restropress Demo =
-Check <a href="https://demo.restropress.com/" target="_blank">RestroPress Demo Website</a>
-= REST API =
-Check <a href="https://documenter.getpostman.com/view/14761886/2s9YsFCYrf" target="_blank">RestroPress REST API</a>
-<i>Note: You can use this feature from version 3.0.0</i>
-= Why use RestroPress: =
-* 100% Free and easy to install and setup.
-* Add food ordering system to your WordPress site without any coding skills.
-* Easy to use interface to manage food items, add-on items, food category etc.
-* Allows to receive both Pickup/Takeaway and Delivery orders.
-* Option to mark the specific addon as required and option to set maximum allowed option.
-* Ability to set different prices for addons for variable products.
-* Get instant push notifications for online orders.
-* User-friendly admin interface to add restaurant menu.
-* Reporting system to view sales, customers etc.
-* Allows you to add multiple add-on options for your food.
-* Custom user login, register, and dashboard.
-* Receive payments using PayPal, Amazon, Cash On Delivery, and more options coming soon.
-* Developer friendly with sufficient hooks.
-* Desktop and mobile app to get live order notifications and print receipts.
-* And much more coming soon...
-= Extending the possibilities with RestroPress =
-RestroPress has some basic features for a food ordering system. If you want more exciting premium features then we have some addons to boost your RestroPress-powered ordering system.
-[Check RestroPress Extensions](https://www.restropress.com/extensions/)
-= Want some custom extension? =
-If you want any custom extension for RestroPress, feel free to contact us at support@restropress.com
-If you have any suggestions for a new extension, feel free to email us at support@restropress.com
-== Installation ==
-1. Login to your WordPress dashboard and navigate to Plugins > Add New
-2. Search for "RestroPress".
-3. Click install.
-4. Click activate.
-5. Once the plugin is installed then you can see RestroPress on the left navigation bar of the WordPress Dashboard.
+
+[Try Demo](https://demo.restropress.com)
+
+== RestroPress is ideal for: ==
+
+- Local Restaurants and Cafes  
+- Takeout/Takeaway Businesses  
+- Bakeries, Pizza Shops, Burger Shops  
+- Grocery Stores, Florists, Farmers Markets  
+- Specialty Stores, Fruit & Vegetable Shops  
+- Laundry Services  
+
+== The Problems We Solve == 
+
+Tired of managing complex, expensive systems for online food orders? RestroPress eliminates the hurdles of third-party platforms by providing:
+
+- Freedom from dependency on WooCommerce or external plugins  
+- A fully commission-free solution that reduces your operational costs  
+- Simplified order management with real-time tracking and notifications  
+- A scalable system that grows with your business, offering unlimited orders  
+- Tools to streamline operations, from custom menus to automated printing  
+- Better customer communication with SMS, WhatsApp, and email updates  
+
+== Benefits of Choosing RestroPress ==
+
+- **Completely Free with Unlimited Orders:** Take unlimited orders at no additional cost. Save money and maximize profits with no commissions or subscription fees.  
+- **A Fully Standalone Solution:** RestroPress is independent and doesn’t require WooCommerce, keeping your website fast and lightweight.  
+- **All-in-One Management:** From real-time order tracking to automated printing and delivery management, RestroPress simplifies operations for you.  
+- **Boost Customer Engagement:** Keep customers informed with SMS, WhatsApp, and email notifications for every order status.  
+- **Built for Growth:** Add multiple locations, customize your menus, and integrate with premium tools like Clover POS or Square POS as your business scales.  
+- **Dine-In and Delivery Made Easy:** Enable QR code-based table ordering for dine-in customers or set flexible delivery fees based on location.  
+- **Seamless Mobile and Desktop Experience:** Use our powerful mobile apps and desktop POS system to stay in control wherever you are.  
+- **Save Time with Automation:** From auto-printing orders to scheduled holiday settings, RestroPress eliminates manual work.  
+
+== Extensions and Apps == 
+
+- **Driver App:** Efficiently manage your delivery team.  
+- **Customer App:** Offer a smooth ordering experience for your customers.  
+- **Order Tracking App:** Let customers track their orders in real time.  
+- **KDS App:** Organize and streamline kitchen operations.  
+- **Dine-In Ordering:** QR code-based table ordering for an enhanced dining experience.  
+- **POS System for Mobile and Desktop:** Manage in-store and online orders from a unified interface.  
+- **Clover and Square Integrations:** Streamline payments with premium POS systems.  
+
+& Much More, [Visit our extensions page](https://restropress.com/extension/) to get a list of all extensions.
+
+== RestroPress Resources ==
+
+- **[Official Website](https://restropress.com)**  
+- **[Documentation](https://docs.restropress.com)**  
+- **[Join Our Facebook Group](https://facebook.com/groups/restropress)**  
+- **[YouTube Channel](https://www.youtube.com/@restropress)**  
+- **[Demo Page](https://demo.restropress.com)**  
+
+== Build Your Custom Solution ==
+
+RestroPress now supports **REST API** (added in version 3.0).  
+Use the API to build your custom applications with ease. [Read the REST API Documentation](https://documenter.getpostman.com/view/14761886/2s9YsFCYrf).
+
 == Changelog ==
 
 = Version 3.1.8.4(2024-12-03) =
