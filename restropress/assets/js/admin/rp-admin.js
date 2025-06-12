@@ -67,7 +67,7 @@ jQuery(function ($) {
           success: function (response) {
             if (response.status !== 'error') {
               tata.success(rpress_vars.success, rpress_vars.license_success, {
-                position: 'mr'
+                position: 'br'
               })
               _self.parent('.rpress-license-wrapper')
                 .addClass('rpress-updated');
@@ -75,9 +75,10 @@ jQuery(function ($) {
                 .find('.rpress-license-deactivate-wrapper')
                 .removeClass('hide')
                 .addClass('show');
+              $('.rpress-deactivate-license').prop('checked', true).trigger('change');
             } else {
               tata.error(rpress_vars.error, response.message, {
-                position: 'mr'
+                position: 'br'
               })
             }
             _self.text(rpress_vars.license_activate);
@@ -90,7 +91,7 @@ jQuery(function ($) {
           .find('.rpress-license-field')
           .addClass('empty-license-key');
         tata.error(rpress_vars.error, rpress_vars.empty_license, {
-          position: 'mr'
+          position: 'br'
         })
       }
     });
@@ -129,7 +130,7 @@ jQuery(function ($) {
           },
           success: function (response) {
             tata.info(rpress_vars.information, rpress_vars.license_deactivated, {
-              position: 'mr'
+              position: 'br'
             })
             if (response.status !== 'error') {
               _self.parents('.rpress-purchased-wrap')
@@ -715,125 +716,108 @@ jQuery(document)
       },
       add_fooditem: function () {
         // Add a New RestroPress from the Add RestroPress to Purchase Box
-        $('.rpress-edit-purchase-element')
-          .on('click', '#rpress-order-add-fooditem', function (e) {
-            e.preventDefault();
-            var selectedButton = $(this);
-            var order_fooditem_select = $('#rpress_order_fooditem_select'),
+        $('.rpress-edit-purchase-element').on('click', '#rpress-order-add-fooditem', function (e) {
+          e.preventDefault();
+        
+          var selectedButton = $(this);
+          var order_fooditem_select = $('#rpress_order_fooditem_select'),
               order_fooditem_quantity = $('#rpress-order-fooditem-quantity'),
               order_fooditem_price = $('#rpress-order-fooditem-price'),
-              order_fooditem_tax = $('#rpress-order-fooditem-tax'),
-              selected_price_option = $('.rpress_price_options_select option:selected');
-            selected_item_price = $('.rpress_selected_price');
-            var fooditem_id = order_fooditem_select.val();
-            var fooditem_title = order_fooditem_select.find(':selected')
-              .text();
-            var quantity = order_fooditem_quantity.val();
-            var item_price = selected_item_price.val();
-            var item_tax = order_fooditem_tax.val();
-            var price_id = selected_price_option.val();
-            var price_name = selected_price_option.text();
-            if (fooditem_id < 1) {
-              return false;
+              order_fooditem_tax = $('#rpress-order-fooditem-tax');
+        
+          // Safe handling for price option selection
+          var selected_price_option = $('.rpress_price_options_select').length
+            ? $('.rpress_price_options_select option:selected')
+            : null;
+        
+          var fooditem_id = order_fooditem_select.val();
+          var fooditem_title = order_fooditem_select.find(':selected').text();
+          var quantity = order_fooditem_quantity.val();
+        
+          var item_price = selected_price_option
+            ? parseFloat(selected_price_option.data('price'))
+            : parseFloat($('.rpress_selected_price').first().val());
+        
+          var item_tax = parseFloat(order_fooditem_tax.val());
+          var price_id = selected_price_option ? selected_price_option.val() : '';
+          var price_name = selected_price_option ? selected_price_option.text() : '';
+        
+          if (fooditem_id < 1) {
+            return false;
+          }
+        
+          if (!item_price) item_price = 0;
+          if (isNaN(item_price)) {
+            alert(rpress_vars.numeric_item_price);
+            return false;
+          }
+        
+          if (isNaN(item_tax)) {
+            alert(rpress_vars.numeric_item_tax);
+            return false;
+          }
+        
+          if (isNaN(parseInt(quantity))) {
+            alert(rpress_vars.numeric_quantity);
+            return false;
+          }
+        
+          if (price_name) {
+            fooditem_title = fooditem_title + ' - ' + price_name;
+          }
+        
+          var count = $('#rpress-purchased-items div.row').length;
+          var IndexCount = count - 1;
+          var clone = $('#rpress-purchased-items div.row:last').clone();
+        
+          clone.find('.fooditem span.rpress-purchased-fooditem-title')
+            .html('<a href="post.php?post=' + fooditem_id + '&action=edit"></a>');
+          clone.find('.fooditem span.rpress-purchased-fooditem-title a').text(fooditem_title);
+          clone.find('h3.rpress-purchased-item-name').text(fooditem_title);
+          clone.find('.rpress-payment-details-fooditem-item-price').val(item_price.toFixed(rpress_vars.currency_decimals));
+          clone.find('.rpress-payment-details-fooditem-item-tax').val(item_tax.toFixed(rpress_vars.currency_decimals));
+          clone.find('input.rpress-payment-details-fooditem-id').val(fooditem_id);
+          clone.find('input.rpress-payment-details-fooditem-price-id').val(price_id);
+          clone.find('.order-addon-items.special-instructions').remove();
+        
+          var item_total = (item_price * quantity) + item_tax;
+          item_total = item_total.toFixed(rpress_vars.currency_decimals);
+          clone.find('span.rpress-payment-details-fooditem-amount').text(item_total);
+          clone.find('input.rpress-payment-details-fooditem-amount').val(item_total);
+          clone.find('span.rpress-payment-details-fooditem-gross-amount').text(item_total);
+          clone.find('input.rpress-payment-details-fooditem-gross-amount').val(item_total);
+          clone.find('input.rpress-payment-details-fooditem-quantity').val(quantity);
+          clone.find('input.rpress-payment-details-fooditem-has-log').val(0);
+          clone.find('.rpress-copy-fooditem-link-wrapper').remove();
+          clone.find('.rpress-special-instruction').remove();
+        
+          clone.find('input').each(function () {
+            var name = $(this).attr('name');
+            if (name !== undefined) {
+              name = name.replace(/\[(\d+)\]/, '[' + parseInt(count) + ']');
+              $(this).attr('name', name).attr('id', name);
             }
-            if (!item_price) {
-              item_price = 0;
-            }
-            item_price = parseFloat(item_price);
-            if (isNaN(item_price)) {
-              alert(rpress_vars.numeric_item_price);
-              return false;
-            }
-            item_tax = parseFloat(item_tax);
-            if (isNaN(item_tax)) {
-              alert(rpress_vars.numeric_item_tax);
-              return false;
-            }
-            if (isNaN(parseInt(quantity))) {
-              alert(rpress_vars.numeric_quantity);
-              return false;
-            }
-            if (price_name) {
-              fooditem_title = fooditem_title + ' - ' + price_name;
-            }
-            var count = $('#rpress-purchased-items div.row')
-              .length;
-            var IndexCount = count - 1;
-            var clone = $('#rpress-purchased-items div.row:last')
-              .clone();
-            clone.find('.fooditem span.rpress-purchased-fooditem-title')
-              .html('<a href="post.php?post=' + fooditem_id + '&action=edit"></a>');
-            clone.find('.fooditem span.rpress-purchased-fooditem-title a')
-              .text(fooditem_title);
-            clone.find('h3.rpress-purchased-item-name')
-              .text(fooditem_title);
-            clone.find('.rpress-payment-details-fooditem-item-price')
-              .val(item_price.toFixed(rpress_vars.currency_decimals));
-            clone.find('.rpress-payment-details-fooditem-item-tax')
-              .val(item_tax.toFixed(rpress_vars.currency_decimals));
-            clone.find('input.rpress-payment-details-fooditem-id')
-              .val(fooditem_id);
-            clone.find('input.rpress-payment-details-fooditem-price-id')
-              .val(price_id);
-            clone.find('.order-addon-items.special-instructions')
-              .remove();
-            var item_total = (item_price * quantity) + item_tax;
-            item_total = item_total.toFixed(rpress_vars.currency_decimals);
-            clone.find('span.rpress-payment-details-fooditem-amount')
-              .text(item_total);
-            clone.find('input.rpress-payment-details-fooditem-amount')
-              .val(item_total);
-            clone.find('input.rpress-payment-details-fooditem-quantity')
-              .val(quantity);
-            clone.find('input.rpress-payment-details-fooditem-has-log')
-              .val(0);
-            clone.find('.rpress-copy-fooditem-link-wrapper')
-              .remove();
-            clone.find('.rpress-special-instruction')
-              .remove();
-            // Replace the name / id attributes
-            clone.find('input')
-              .each(function () {
-                var name = $(this)
-                  .attr('name');
-                if (name !== undefined) {
-                  name = name.replace(/\[(\d+)\]/, '[' + parseInt(count) + ']');
-                  $(this)
-                    .attr('name', name)
-                    .attr('id', name);
-                }
-              });
-            clone.find('select')
-              .each(function () {
-                var name = $(this)
-                  .attr('name');
-                var CustomName = 'rpress-payment-details-fooditems[' + count + '][addon_items][]';
-                $(this)
-                  .attr('name', CustomName);
-              });
-            clone.find('a.rpress-order-remove-fooditem')
-              .attr('data-key', parseInt(count));
-            // Flag the RestroPress section as changed
-            $('#rpress-payment-fooditems-changed')
-              .val(1);
-            setTimeout(function () {
-              rpress_get_addon_items_list(fooditem_id, clone);
-            }, 1000);
-            $(clone)
-              .insertAfter('#rpress-purchased-items div.row:last');
-            clone.find('select')
-              .html();
-            $('.rpress-order-payment-recalc-totals')
-              .show();
-            $('.rpress-add-fooditem-field')
-              .val('');
-            $("#rpress_order_fooditem_select")
-              .val('')
-              .trigger("chosen:updated");
-            $(".rp-add-update-elements")
-              .find('.rpress-fooditem-price')
-              .empty();
           });
+        
+          clone.find('select').each(function () {
+            var CustomName = 'rpress-payment-details-fooditems[' + count + '][addon_items][]';
+            $(this).attr('name', CustomName);
+          });
+        
+          clone.find('a.rpress-order-remove-fooditem').attr('data-key', parseInt(count));
+        
+          $('#rpress-payment-fooditems-changed').val(1);
+        
+          setTimeout(function () {
+            rpress_get_addon_items_list(fooditem_id, clone);
+          }, 1000);
+        
+          $(clone).insertAfter('#rpress-purchased-items div.row:last');
+          $('.rpress-order-payment-recalc-totals').show();
+          $('.rpress-add-fooditem-field').val('');
+          $("#rpress_order_fooditem_select").val('').trigger("chosen:updated");
+          $(".rp-add-update-elements").find('.rpress-fooditem-price').empty();
+        });             
       },
       edit_qty: function () {
         $(document.body)
@@ -841,106 +825,132 @@ jQuery(document)
             var selectedQty = $(this)
               .val();
             var row = $(this)
-              .parents('ul.rpress-purchased-items-list-wrapper');
+              .closest('ul.rpress-purchased-items-list-wrapper');
             row.find('input.rpress-payment-details-fooditem-quantity')
               .val(selectedQty);
           });
       },
       edit_price: function () {
-        $(document.body)
-          .on('change keyup', '.rpress-payment-item-input', function () {
-            var row = $(this)
-              .parents('ul.rpress-purchased-items-list-wrapper');
-            $('.rpress-order-payment-recalc-totals')
-              .show();
-            var quantity = row.find('input.rpress-payment-details-fooditem-quantity')
-              .val()
-              .replace(rpress_vars.thousands_separator, '');
-            var item_price = row.find('input.rpress-payment-details-fooditem-item-price')
-              .val()
-              .replace(rpress_vars.thousands_separator, '');
-            var item_tax = row.find('input.rpress-payment-details-fooditem-item-tax')
-              .val()
-              .replace(rpress_vars.thousands_separator, '');
-            if ($(this)
-              .hasClass('rpress-payment-details-fooditem-quantity')) {
-              var quantity = $(this)
-                .val();
-            }
-            item_price = parseFloat(item_price);
-            if (isNaN(item_price)) {
-              alert(rpress_vars.numeric_item_price);
-              return false;
-            }
-            item_tax = parseFloat(item_tax);
-            if (isNaN(item_tax)) {
-              item_tax = 0.00;
-            }
-            if (isNaN(parseInt(quantity))) {
-              quantity = 1;
-            }
-            var item_total = (item_price * quantity) + item_tax;
-            item_total = item_total.toFixed(rpress_vars.currency_decimals);
-            row.find('input.rpress-payment-details-fooditem-amount')
-              .val(item_total);
-            row.find('span.rpress-payment-details-fooditem-amount')
-              .text(item_total);
-          });
+        $(document.body).on('change keyup', '.rpress-payment-item-input', function () {
+          var row = $(this).closest('.rpress-order-items-wrapper'); // FIXED: correct scoping
+          $('.rpress-order-payment-recalc-totals').show();
+        
+          var quantity = row.find('input.rpress-payment-details-fooditem-quantity')
+            .val()
+            .replace(rpress_vars.thousands_separator, '');
+        
+          var item_price = row.find('input.rpress-payment-details-fooditem-item-price')
+            .val()
+            .replace(rpress_vars.thousands_separator, '');
+        
+          var item_tax = row.find('input.rpress-payment-details-fooditem-item-tax')
+            .val()
+            .replace(rpress_vars.thousands_separator, '');
+        
+          // Update quantity if this is the field being changed
+          if ($(this).hasClass('rpress-payment-details-fooditem-quantity')) {
+            quantity = $(this).val();
+          }
+        
+          item_price = parseFloat(item_price);
+          if (isNaN(item_price)) {
+            alert(rpress_vars.numeric_item_price);
+            return false;
+          }
+        
+          item_tax = parseFloat(item_tax);
+          if (isNaN(item_tax)) {
+            item_tax = 0.00;
+          }
+        
+          quantity = parseInt(quantity);
+          if (isNaN(quantity)) {
+            quantity = 1;
+          }
+        
+          var item_total = (item_price * quantity) + item_tax;
+          item_total = item_total.toFixed(rpress_vars.currency_decimals);
+        
+          row.find('input.rpress-payment-details-fooditem-amount').val(item_total);
+          row.find('span.rpress-payment-details-fooditem-amount').text(item_total);
+        
+          // Optionally trigger full total recalculation
+          // $('#rpress-order-recalc-total').trigger('click');
+        });               
       },
       recalculate_total: function () {
         // Update taxes and totals for any changes made.
-        $('#rpress-order-recalc-total')
-          .on('click', function (e) {
-            e.preventDefault();
-            var addonTotalPrice;
-            var addonTotal = 0;
-            $(".addon-items-list")
-              .each(function (key, item) {
-                var row = $(this)
-                  .parents('.rpress-order-items-wrapper');
-                var quantity = row.find('input.rpress-payment-details-fooditem-quantity')
-                  .val()
-                  .replace(rpress_vars.thousands_separator, '');
-                addonTotalPrice = $(this)
-                  .val();
-                if (addonTotalPrice !== null && addonTotalPrice !== '') {
-                  for (var i = 0; i < addonTotalPrice.length; i++) {
-                    addonData = addonTotalPrice[i].split('|');
-                    addonData = addonData[2] == '' ? 0 : addonData[2];
-                    addonTotal += parseFloat(addonData * quantity);
-                  }
+        $('#rpress-order-recalc-total').on('click', function (e) {
+          e.preventDefault();
+        
+          var addonTotal = 0;
+        
+          $('.addon-items-list').each(function () {
+            var $select = $(this);
+            var row = $select.closest('.rpress-order-items-wrapper');
+        
+            var quantity = parseInt(
+              row.find('input.rpress-payment-details-fooditem-quantity')
+                .val()
+                .replace(rpress_vars.thousands_separator, '')
+            );
+        
+            if (isNaN(quantity) || quantity < 1) {
+              quantity = 1; // fallback
+            }
+        
+            var selectedAddons = $select.val(); // should be an array if multiple
+        
+            if (Array.isArray(selectedAddons)) {
+              selectedAddons.forEach(function (addonString) {
+                var addonData = addonString.split('|');
+                var addonPrice = parseFloat(addonData[2] || 0);
+        
+                if (!isNaN(addonPrice)) {
+                  addonTotal += addonPrice * quantity;
                 }
               });
-            var total = 0,
-              tax = 0,
-              totals = $('#rpress-purchased-items .row input.rpress-payment-details-fooditem-amount'),
-              taxes = $('#rpress-purchased-items .row input.rpress-payment-details-fooditem-item-tax');
-            if (totals.length) {
-              totals.each(function () {
-                total += parseFloat($(this)
-                  .val());
-              });
             }
-            total += addonTotal;
-            if (taxes.length) {
-              taxes.each(function () {
-                tax += parseFloat($(this)
-                  .val());
-              });
-            }
-            if ($('.rpress-payment-fees')
-              .length) {
-              $('.rpress-payment-fees span.fee-amount')
-                .each(function () {
-                  total += parseFloat($(this)
-                    .data('fee'));
-                });
-            }
-            $('input[name=rpress-payment-total]')
-              .val(total.toFixed(rpress_vars.currency_decimals));
-            $('input[name=rpress-payment-tax]')
-              .val(tax.toFixed(rpress_vars.currency_decimals))
           });
+        
+          var total = 0;
+          var tax = 0;
+          
+          // $('#rpress-purchased-items .row input.rpress-payment-details-fooditem-amount').each(function () {
+          //   var val = parseFloat($(this).val());
+          //   console.log(val);
+          //   if (!isNaN(val)) total += val;
+          // });
+          $('#rpress-purchased-items .row').each(function () {
+            var row = $(this);
+            var item_price = parseFloat(row.find('input.rpress-payment-details-fooditem-item-price').val());
+            var quantity = parseInt(row.find('input.rpress-payment-details-fooditem-quantity').val());
+            var tax = parseFloat(row.find('input.rpress-payment-details-fooditem-item-tax').val());
+          
+            if (isNaN(item_price)) item_price = 0;
+            if (isNaN(quantity)) quantity = 1;
+            if (isNaN(tax)) tax = 0;
+          
+            total += (item_price * quantity) + tax;
+          });
+
+          $('#rpress-purchased-items .row input.rpress-payment-details-fooditem-item-tax').each(function () {
+            var val = parseFloat($(this).val());
+            if (!isNaN(val)) tax += val;
+          });
+        
+          if ($('.rpress-payment-fees').length) {
+            $('.rpress-payment-fees span.fee-amount').each(function () {
+              var fee = parseFloat($(this).data('fee'));
+              if (!isNaN(fee)) total += fee;
+            });
+          }
+
+          total += addonTotal;
+        
+          $('input[name=rpress-payment-total]').val(total.toFixed(rpress_vars.currency_decimals));
+          $('input[name=rpress-payment-tax]').val(tax.toFixed(rpress_vars.currency_decimals));
+        });        
       },
       variable_prices_check: function () {
         // On RestroPress Select, Check if Variable Prices Exist
@@ -958,7 +968,23 @@ jQuery(document)
                 data: postData,
                 url: ajaxurl,
                 success: function (response) {
+                  // Remove any existing price dropdowns before adding new
+                  $this.closest('.rpress-add-fooditem-to-purchase')
+                    .find('.rpress-get-variable-prices')
+                    .remove();
                   
+                  $this.closest('.rpress-add-fooditem-to-purchase')
+                    .find('.rpress-price-name')
+                    .remove();
+                  
+                  $this.closest('.rpress-add-fooditem-to-purchase')
+                    .find('.rpress_selected_price')
+                    .remove();
+        
+                  // Insert the new dropdown before the × sign
+                  $this.closest('.rpress-add-fooditem-to-purchase')
+                    .find('.rpress-fooditem-to-purchase-wrapper')
+                    .prepend(response);
                 }
               })
                 .fail(function (data) {
@@ -968,6 +994,11 @@ jQuery(document)
                 });
             }
           });
+          $(document).on('change', '.rpress_price_options_select', function () {
+            var selectedPrice = $(this).find('option:selected').data('price');
+            $(this).closest('.rpress-get-variable-prices').find('.rpress_selected_price').val(selectedPrice);
+          });
+          
       },
       add_note: function () {
         $('#rpress-add-payment-note')
@@ -1525,7 +1556,6 @@ jQuery(document)
         var menu_id = container.attr('id')
           .replace('_chosen', '');
         var select = container.prev();
-        var no_bundles = container.hasClass('no-bundles');
         var variations = container.hasClass('variations');
         var lastKey = e.which;
         var search_type = 'rpress_fooditem_search';
@@ -1563,7 +1593,6 @@ jQuery(document)
               data: {
                 action: search_type,
                 s: val,
-                no_bundles: no_bundles,
                 variations: variations,
               },
               dataType: "json",

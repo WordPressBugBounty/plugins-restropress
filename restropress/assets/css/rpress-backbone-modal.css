@@ -240,8 +240,3 @@ div.rp-order-preview .order-service-meta {
 .rp-order-preview-customer-details h2 {
   margin-top: 0px;
 }
-.rp-clear-fix {
-  display: block;
-  clear: both;
-  float: none;
-}

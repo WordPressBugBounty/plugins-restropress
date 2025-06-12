@@ -278,10 +278,13 @@ function get_fooditem_lists( $fooditem_id, $cart_key = '') {
                         <span><?php echo esc_attr( $child_addon_name ); ?></span>
                         <span class="control__indicator"></span>
                       </label>
+                      <div class="rpress-addon-quantity"> 
                       <?php if( $get_addon_price >= 0 ) : ?>
-                      <span class="cat_price total-addon-price">&nbsp;+&nbsp;<?php echo rpress_currency_filter( rpress_format_amount( $get_addon_price ) ); ?></span> <?php
+                      <span class="cat_price total-addon-price">&nbsp;+&nbsp;<?php echo rpress_currency_filter( rpress_format_amount( $get_addon_price ) ); ?></span> 
+                      
+                      <span class="cat_price"><?php apply_filters( 'rp_food_addon_column_extra_html',$child_addon_id, $get_addon_price, $addon_id ,$child_addon_slug ); ?></span> <?php
                       endif; ?>
-                    <span class="cat_price"><?php apply_filters( 'rp_food_addon_column_extra_html',$child_addon_id, $get_addon_price, $addon_id ,$child_addon_slug ); ?></span>
+                      </div>
                     </div> <?php
                   endforeach;
                 else:
@@ -299,8 +302,10 @@ function get_fooditem_lists( $fooditem_id, $cart_key = '') {
                     </label>
                     
                     <?php if( $get_addon_price >= 0 ) : ?>
-                    <span class="cat_price total-addon-price">&nbsp;+&nbsp;<?php echo rpress_currency_filter( rpress_format_amount( $get_addon_price ) ); ?></span> 
-                    <span class="cat_price"><?php apply_filters( 'rp_food_addon_column_extra_html',$child_addon_id, $get_addon_price, $addon_id ,$child_addon_slug ); ?></span>
+                    <div class="rpress-addon-quantity"> 
+                      <span class="cat_price total-addon-price">&nbsp;+&nbsp;<?php echo rpress_currency_filter( rpress_format_amount( $get_addon_price ) ); ?></span> 
+                      <span class="cat_price"><?php apply_filters( 'rp_food_addon_column_extra_html',$child_addon_id, $get_addon_price, $addon_id ,$child_addon_slug ); ?></span>
+                    </div>
                     <?php endif; ?>
                     
                      

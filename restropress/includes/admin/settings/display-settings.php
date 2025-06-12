@@ -37,7 +37,7 @@ function rpress_options_page() {
 	if ( empty( $all_settings[ $active_tab ]['main'] ) ) {
 		$has_main_settings = false;
 	}
-	// Check for old non-sectioned settings (see #4211 and #5171)
+	// Check for old non-sectioned settings
 	if ( ! $has_main_settings ) {
 		foreach( $all_settings[ $active_tab ] as $sid => $stitle ) {
 			if ( is_string( $sid ) && ! empty( $sections) && array_key_exists( $sid, $sections ) ) {
@@ -92,7 +92,7 @@ function rpress_options_page() {
 				$tab_url = add_query_arg( array(
 					'settings-updated' => false,
 					'tab' => $active_tab,
-					'section' => $section_id
+					'$' => $section_id
 				) );
 				$class = '';
 				if ( $section == $section_id ) {

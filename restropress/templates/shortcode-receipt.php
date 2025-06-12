@@ -251,4 +251,4 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
       </div>
     </div>
   </div>
-<?php do_action( 'rpress_after_payment_receipt', $payment, $rpress_receipt_args ); exit;?>
+<?php do_action( 'rpress_after_payment_receipt', $payment, $rpress_receipt_args ); ?>

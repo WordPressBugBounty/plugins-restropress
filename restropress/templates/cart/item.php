@@ -1,3 +1,18 @@
+<?php
+/**
+ * Template: Cart Item
+ *
+ * This template displays individual items in the cart including quantity,
+ * price, and available actions (edit/remove).
+ *
+ * @package RestroPress/Templates
+ * @version 1.0.0
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly.
+}
+?>
 <li class="rpress-cart-item" data-cart-key="{cart_item_id}">
 	<span class="rpress-cart-item-qty qty-class">{item_qty}</span>
 	<span class="separator">x</span>

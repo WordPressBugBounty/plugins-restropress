@@ -1530,6 +1530,7 @@ class RPRESS_Payment {
 				$meta['date'] = get_post_field( 'post_date', $this->ID );
 			}
 		}
+		
 		$meta = apply_filters( 'rpress_get_payment_meta_' . $meta_key, $meta, $this->ID );
 		if ( is_serialized( $meta ) ) {
 			preg_match( '/[oO]\s*:\s*\d+\s*:\s*"\s*(?!(?i)(stdClass))/', $meta, $matches );

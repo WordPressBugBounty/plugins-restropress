@@ -336,6 +336,17 @@ function rpress_reports_tab_export() {
 			<div id="post-body">
 				<div id="post-body-content">
 					<?php do_action( 'rpress_reports_tab_export_content_top' ); ?>
+					<div class="postbox rpress-export-fooditems">
+						<h3><span><?php esc_html_e('Export FoodItems in CSV','restropress' ); ?></span></h3>
+						<div class="inside">
+							<p><?php esc_html_e( 'Download a CSV of Food Items.', 'restropress' ); ?></p>
+							<form id="rpress-export-file-fooditems" class="rpress-export-form rpress-import-export-form" method="post">
+								<?php wp_nonce_field( 'rpress_ajax_export', 'rpress_ajax_export' ); ?>
+								<input type="hidden" name="rpress-export-class" value="RPRESS_Batch_RestroPress_Export"/>
+								<input type="submit" value="<?php esc_html_e( 'Generate CSV', 'restropress' ); ?>" class="button-secondary"/>
+							</form>
+						</div><!-- .inside -->
+					</div><!-- .postbox -->
 					<div class="postbox rpress-export-earnings-report">
 						<h3><span><?php esc_html_e( 'Export Earnings Report', 'restropress' ); ?></span></h3>
 						<div class="inside">
@@ -388,17 +399,6 @@ function rpress_reports_tab_export() {
 								<?php echo RPRESS()->html->product_dropdown( array( 'name' => 'fooditem', 'id' => 'rpress_customer_export_download', 'chosen' => true ) ); ?>
 								<?php wp_nonce_field( 'rpress_ajax_export', 'rpress_ajax_export' ); ?>
 								<input type="hidden" name="rpress-export-class" value="RPRESS_Batch_Customers_Export"/>
-								<input type="submit" value="<?php esc_html_e( 'Generate CSV', 'restropress' ); ?>" class="button-secondary"/>
-							</form>
-						</div><!-- .inside -->
-					</div><!-- .postbox -->
-					<div class="postbox rpress-export-fooditems">
-						<h3><span><?php esc_html_e('Export FoodItems in CSV','restropress' ); ?></span></h3>
-						<div class="inside">
-							<p><?php esc_html_e( 'Download a CSV of Food Items.', 'restropress' ); ?></p>
-							<form id="rpress-export-file-fooditems" class="rpress-export-form rpress-import-export-form" method="post">
-								<?php wp_nonce_field( 'rpress_ajax_export', 'rpress_ajax_export' ); ?>
-								<input type="hidden" name="rpress-export-class" value="RPRESS_Batch_RestroPress_Export"/>
 								<input type="submit" value="<?php esc_html_e( 'Generate CSV', 'restropress' ); ?>" class="button-secondary"/>
 							</form>
 						</div><!-- .inside -->

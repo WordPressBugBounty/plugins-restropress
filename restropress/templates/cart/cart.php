@@ -1,7 +1,16 @@
 <?php
 /**
- * This template is used to display the RestroPress cart widget.
+ * Template: Cart Widget
+ *
+ * This template is used to display the RestroPress cart widget in the sidebar.
+ *
+ * @package RestroPress/Templates
+ * @version 1.0.0
  */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly.
+}
 $cart_items    	= rpress_get_cart_contents();
 $cart_quantity 	= rpress_get_cart_quantity();
 $display       	= $cart_quantity > 0 ? '' : 'style="display:none;"';

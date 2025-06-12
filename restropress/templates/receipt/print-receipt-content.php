@@ -1,4 +1,19 @@
-<?php 
+<?php
+/**
+ * Template: Print Receipt Content
+ *
+ * This template handles the content section of the printed receipt,
+ * including order items, prices, taxes, and totals.
+ *
+ * @package RestroPress/Templates/Receipt
+ * @version 1.0.0
+ * @since 1.0
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly.
+}
+
 $payment_id     = absint( $_GET['payment_id'] );
 $payment        = new RPRESS_Payment( $payment_id );
 $cart_items     = $payment->cart_details;

@@ -155,6 +155,7 @@ class RP_FoodItem_Meta_Boxes {
           }
         }
       }
+      
       $addon_terms = array_unique( $addon_terms );
       $product_terms = wp_get_post_terms( $post_id,  'addon_category', array( 'fields' => 'ids' ) );
       if( ! is_wp_error( $product_terms ) ) {

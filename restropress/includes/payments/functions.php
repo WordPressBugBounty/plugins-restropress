@@ -596,6 +596,7 @@ function rpress_get_payment_statuses() {
 		'refunded' 		=> __( 'Refunded', 'restropress' ),
 		'failed' 		=> __( 'Failed', 'restropress' ),
     	'processing'	=> __( 'Processing', 'restropress' ),
+		'abandoned'		=> __( 'Abandoned', 'restropress' ),
 	);
 	return apply_filters( 'rpress_payment_statuses', $payment_statuses );
 }

@@ -1,4 +1,18 @@
 <?php
+/**
+ * Template: Cart Checkout
+ *
+ * This template handles the checkout section of the cart including subtotal, tax,
+ * total calculations and the checkout button.
+ *
+ * @package RestroPress/Templates
+ * @version 1.0.0
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly.
+}
+
 $cart_quantity = rpress_get_cart_quantity();
 $display       = $cart_quantity > 0 ? '' : ' style="display:none;"';
 ?>

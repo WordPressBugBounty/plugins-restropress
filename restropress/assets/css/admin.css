@@ -184,17 +184,7 @@
  
  /* Order History Styles
  -------------------------------------------------------------- */
- .edit-php.post-type-fooditem .wrap .wp-heading-inline,
- .fooditem_page_rpress-addons .wrap .wp-heading-inline {
-  display: none;
- }
- 
- .edit-php.post-type-fooditem .wrap > .page-title-action,
- .fooditem_page_rpress-addons .wrap > .page-title-action {
-  display: none;
- }
- 
- .edit-php.post-type-fooditem .wrap .nav-tab-wrapper .page-title-action,
+.edit-php.post-type-fooditem .wrap .nav-tab-wrapper .page-title-action,
  .fooditem_page_rpress-addons .wrap .nav-tab-wrapper .page-title-action {
   top: 7px;
   margin-left: 5px;
@@ -265,6 +255,8 @@
   margin-bottom: 18px;
   background: #FFF;
   border: 1px solid #e9e9e9;
+  width: 100%;
+  display: block;
  }
  
  #rpress-purchased-items .rpress-order-foodname-wrap {
@@ -302,12 +294,8 @@
   display: inline-block !important;
  }
  
- /*.rpress-purchased-items-list-wrapper .fooditem {
-  margin-right: %;
- }*/
- .rpress-purchased-items-list-wrapper {
+ .rpress-order-items-wrapper .rpress-purchased-items-list-wrapper {
   margin-bottom: 45px;
-  clear: both !important;
  }
  .rpres-order-price-wrap span, .rpres-order-quantity-wrap span, span.rpress-payment-details-label-mobile {
   text-transform: uppercase;
@@ -702,7 +690,7 @@
   width: 90%;
  }
  .rpress-edit-purchase-element ul li.fooditem {
-  width: 35%;
+  width: 20%;
  }
  .rpress-edit-purchase-element ul li.item_price {
   width: 20%;
@@ -835,6 +823,8 @@
  }
  .rpress-edit-purchase-element ul {
   font-size: 0;
+  display: block;
+  width: 100%;
  }
  .rpress-edit-purchase-element ul li {
   font-size: 13px;
@@ -1559,9 +1549,6 @@
  }
  ul.rpress-purchased-items-list-wrapper .rpress-payment-details-fooditem-item-price, #rpress-purchased-items .rpress-payment-details-fooditem-quantity, input.rpress-order-fooditem-price, .rpress-add-fooditem-to-purchase input {
   width: 60px;
- }
- #rpress-purchased-items .rpress-payment-details-fooditem-quantity {
- 
  }
  #rpress-item-tab-wrapper-list li {
   display: block;

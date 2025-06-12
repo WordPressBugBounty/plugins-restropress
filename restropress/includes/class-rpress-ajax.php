@@ -100,7 +100,6 @@ class RP_AJAX {
       'fooditem_search',
       'checkout_update_service_option',
       'remove_fees_after_empty_cart',
-      'reorder'
     );
     foreach ( $ajax_events_nopriv as $ajax_event ) {
       add_action( 'wp_ajax_rpress_' . $ajax_event, array( __CLASS__, $ajax_event ) );
@@ -126,99 +125,14 @@ class RP_AJAX {
       'show_order_details',
       'more_order_history',
       'delete_user_address',
-      'default_user_address'
+      'default_user_address',
+      'reorder'
     );
     foreach ( $ajax_events as $ajax_event ) {
       add_action( 'wp_ajax_rpress_' . $ajax_event, array( __CLASS__, $ajax_event ) );
     }
   }
-  /**
-   *  for order reorder.
-   */
-  public static function  reorder() {
-    
-    $user = rpress_get_payment_meta_user_info( absint( $_POST['order_id'] ) );
-    
-    if( get_current_user_id() !== $user['id'] ) return;
-    $order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : ''; 
-    $payment = get_post( $order_id );
-    if( empty( $payment ) ) return;
-    $cart = rpress_get_payment_meta_cart_details( $payment->ID, true );
-    if ( $cart ) {
-        foreach( $cart as $key=>$fooditem ) {
-            $instructions   = isset( $item['instruction'] ) ? $item['instruction'] : '';
-            $fooditem_id    = $fooditem['id'];
-            $quantity       = $fooditem['quantity'];
-            $items          = '';
-            $options        = array();
-            $addon_items    = $fooditem['addon_items'];
-            
-            foreach( $addon_items as $key => $value ) {
-                if ( is_array( $value ) && ! empty( $value ) ) {
-                    $options['addon_items'][$key]['addon_item_name'] = $value['addon_item_name'];
-                    $options['addon_items'][$key]['addon_id'] = $value['addon_id'];
-                    $options['addon_items'][$key]['price'] = $value['price'];
-                    $options['addon_items'][$key]['quantity'] = $value['quantity'];
-                }
-            }
-            //Check whether the fooditem has variable pricing
-            if ( rpress_has_variable_prices( $fooditem_id ) ) {
-                $price_id       = $fooditem['item_number']['options']['price_id'];
-                $options['price_id'] = $price_id;
-                $options['price']    = rpress_get_price_option_amount( $fooditem_id, $price_id );
-            } else {
-                $options['price'] = rpress_get_fooditem_price( $fooditem_id );
-            }
-            
-            
-            $options['id']          = $fooditem_id;
-            $options['quantity']    = $quantity;
-            $options['instruction'] = $instructions;
-            $key    = rpress_add_to_cart( $fooditem_id, $options );
-            $item   = array(
-              'id'      => $fooditem_id,
-              'options' => $options
-            );
-            $item   = apply_filters( 'rpress_ajax_pre_cart_item_template', $item );
-            $items .= rpress_get_cart_item_template( $key, $item, true, $data_key = $key );
-            $return = array(
-                'subtotal'      => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ), ENT_COMPAT, 'UTF-8' ),
-                'total'         => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ), ENT_COMPAT, 'UTF-8' ),
-                'cart_item'     => $items,
-                'cart_key'      => $key,
-                'cart_quantity' => html_entity_decode( rpress_get_cart_quantity() )
-            );
-            if ( rpress_use_taxes() ) {
-                $cart_tax = (float) rpress_get_cart_tax();
-                $return['taxes'] = html_entity_decode( rpress_currency_filter( rpress_format_amount( $cart_tax ) ), ENT_COMPAT, 'UTF-8' );
-            }
-            $return = apply_filters( 'rpress_cart_data', $return );
-        }
-    }
-    $html = '<div>
-    <header class="modal__header modal-header">
-        <h2 class="modal__title modal-title">'. __( 'Food Order', 'restropress' ) .'</h2>
-        <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
-    </header>
-    <main class="modal__content modal-body">
-        <div class="rpress-order-details">
-            <div class="rp-order-section-md-data">
-                <div class="rp-detils-content-view">
-                    <p>All Item from Order #'. $order_id .' have been added to your cart.</p>
-                    <a class="btn btn-primary btn-block" href="'. home_url( '/order-online' ) .'">'. __('Add more items', 'restropress').'</a>
-                    <a class="btn btn-primary btn-block" href="'. rpress_get_checkout_uri() .'">'. __('Checkout Now', 'restropress').'</a>
-                </div>
-            </div>
-        </div>
-    </main>
-    <footer class="modal__footer modal-footer"></footer>
-    </div>';
-    $response = array(
-      'html' => $html,
-    );
-    wp_send_json_success( $response );
-    rpress_die();
-  }
+
   /**
    * Add an variable price row.
    */
@@ -725,49 +639,56 @@ class RP_AJAX {
   public static function check_for_fooditem_price_variations() {
     // Check if current user can edit products.
     if ( ! current_user_can( 'edit_products' ) ) {
-      die( '-1' );
+        die( '-1' );
     }
+
     $fooditem_id = isset( $_POST['fooditem_id'] ) ? absint( $_POST['fooditem_id'] ) : '';
-    // Check fooditem has any variable pricing
-    if ( empty( $fooditem_id ) )
-      return;
+    if ( empty( $fooditem_id ) ) {
+        return;
+    }
+
     ob_start();
+
     if ( rpress_has_variable_prices( $fooditem_id ) ) :
-      $get_lowest_price_id = rpress_get_lowest_price_id( $fooditem_id );
-      $get_lowest_price    = rpress_get_lowest_price_option( $fooditem_id );
-      ?>
-      <div class="rpress-get-variable-prices">
-        <input type="hidden" class="rpress_selected_price" name="rpress_selected_price" value="<?php echo esc_attr( $get_lowest_price ); ?>">
-      <?php
-      foreach ( rpress_get_variable_prices( $fooditem_id ) as $key => $options ) :
-        $option_price = $options['amount'];
-        $price = rpress_currency_filter( rpress_format_amount( $option_price ) );
-        $option_name = $options['name'];
-        $option_name_slug = sanitize_title( $option_name );
-      ?>
-        <label for="<?php echo esc_attr( $option_name_slug ); ?>">
-          <input id="<?php echo esc_attr( $option_name_slug ); ?>" <?php checked( $get_lowest_price_id, $key, true ); ?> type="radio" name="rpres_price_name" value="<?php echo rpress_sanitize_amount( $option_price ) ; ?>">
-          <?php echo esc_html( $option_name ); ?>
-          <?php echo sprintf( __( '( %1$s )', 'restropress' ), $price );  ?>
-        </label>
-      <?php
-      endforeach;
-    ?>
-    </div>
-    <?php
+        $get_lowest_price_id = rpress_get_lowest_price_id( $fooditem_id );
+        $get_lowest_price    = rpress_get_lowest_price_option( $fooditem_id );
+        ?>
+        <div class="rpress-get-variable-prices">
+            <!-- This hidden input is optional if JavaScript handles price properly -->
+            <input type="hidden" class="rpress_selected_price" name="rpress_selected_price" value="<?php echo esc_attr( $get_lowest_price ); ?>">
+
+            <select name="rpres_price_name" class="rpress-price-dropdown rpress_price_options_select">
+                <?php foreach ( rpress_get_variable_prices( $fooditem_id ) as $key => $options ) : 
+                    $option_price = $options['amount'];
+                    $price = rpress_currency_filter( rpress_format_amount( $option_price ) );
+                    $option_name = $options['name'];
+                    $selected = selected( $get_lowest_price_id, $key, false );
+                ?>
+                    <option 
+                        value="<?php echo esc_attr( $key ); ?>" 
+                        data-price="<?php echo esc_attr( rpress_sanitize_amount( $option_price ) ); ?>"
+                        <?php echo $selected; ?>>
+                        <?php echo esc_html( $option_name . ' (' . $price . ')' ); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php
     else :
-      $normal_price = rpress_get_fooditem_price( $fooditem_id );
-      $price = rpress_currency_filter( rpress_format_amount( $normal_price  ) );
-      ?>
-      <span class="rpress-price-name"><?php echo rpress_sanitize_amount( $price ); ?></span>
-      <input type="hidden" class="rpress_selected_price" name="rpress_selected_price" value="<?php echo rpress_sanitize_amount( $normal_price ); ?>">
-      <?php
+        $normal_price = rpress_get_fooditem_price( $fooditem_id );
+        $price = rpress_currency_filter( rpress_format_amount( $normal_price ) );
+        ?>
+        <span class="rpress-price-name"><?php echo rpress_currency_symbol(); ?></span>
+        <input type="text" class="rpress_selected_price" name="rpress_selected_price" value="<?php echo rpress_sanitize_amount( $normal_price ); ?>">
+        <?php
     endif;
+
     $output = ob_get_contents();
     ob_end_clean();
-    echo  $output  ;
+    echo $output;
     rpress_die();
-  }
+}
+
   /**
   * Get addon items in the admin order screen
   */
@@ -845,6 +766,7 @@ class RP_AJAX {
    * @return void
    */
   public static function remove_discount() {
+    
     if ( isset( $_POST['code'] ) ) {
       rpress_unset_cart_discount( urldecode( $_POST['code'] ) );
       $total = rpress_get_cart_total();
@@ -1292,14 +1214,120 @@ class RP_AJAX {
    * @return void
    */
   public static function show_order_details() {
-    
+
+    //Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Authentication required.'], 401);
+        return;
+    }
+    //Validate nonce
     check_ajax_referer( 'show-order-details', 'security' );
     $user = rpress_get_payment_meta_user_info( absint( $_POST['order_id'] ) );
     
     if( get_current_user_id() !== $user['id'] ) return;
+
     ob_start();
     rpress_get_template_part( 'rpress', 'show-order-details' );
     $html = ob_get_clean();
+    $response = array(
+      'html' => $html,
+    );
+    wp_send_json_success( $response );
+    rpress_die();
+  }
+  /**
+   * Reorder items from order history
+   *
+   * @since 2.7.2
+   * @author RestroPress
+   * @return void
+   */
+  public static function  reorder() {
+
+    //Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Authentication required.'], 401);
+        return;
+    }
+    //Validate nonce
+    check_ajax_referer( 'show-order-details', 'security' );
+
+    $user = rpress_get_payment_meta_user_info( absint( $_POST['order_id'] ) );
+    
+    if( get_current_user_id() !== $user['id'] ) return;
+
+    $order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : ''; 
+    $payment = get_post( $order_id );
+    if( empty( $payment ) ) return;
+    $cart = rpress_get_payment_meta_cart_details( $payment->ID, true );
+    if ( $cart ) {
+        foreach( $cart as $key=>$fooditem ) {
+            $instructions   = isset( $item['instruction'] ) ? $item['instruction'] : '';
+            $fooditem_id    = $fooditem['id'];
+            $quantity       = $fooditem['quantity'];
+            $items          = '';
+            $options        = array();
+            $addon_items    = $fooditem['addon_items'];
+            
+            foreach( $addon_items as $key => $value ) {
+                if ( is_array( $value ) && ! empty( $value ) ) {
+                    $options['addon_items'][$key]['addon_item_name'] = $value['addon_item_name'];
+                    $options['addon_items'][$key]['addon_id'] = $value['addon_id'];
+                    $options['addon_items'][$key]['price'] = $value['price'];
+                    $options['addon_items'][$key]['quantity'] = $value['quantity'];
+                }
+            }
+            //Check whether the fooditem has variable pricing
+            if ( rpress_has_variable_prices( $fooditem_id ) ) {
+                $price_id       = $fooditem['item_number']['options']['price_id'];
+                $options['price_id'] = $price_id;
+                $options['price']    = rpress_get_price_option_amount( $fooditem_id, $price_id );
+            } else {
+                $options['price'] = rpress_get_fooditem_price( $fooditem_id );
+            }
+            
+            $options['id']          = $fooditem_id;
+            $options['quantity']    = $quantity;
+            $options['instruction'] = $instructions;
+            $key    = rpress_add_to_cart( $fooditem_id, $options );
+            $item   = array(
+              'id'      => $fooditem_id,
+              'options' => $options
+            );
+            $item   = apply_filters( 'rpress_ajax_pre_cart_item_template', $item );
+            $items .= rpress_get_cart_item_template( $key, $item, true, $data_key = $key );
+            $return = array(
+                'subtotal'      => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ), ENT_COMPAT, 'UTF-8' ),
+                'total'         => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ), ENT_COMPAT, 'UTF-8' ),
+                'cart_item'     => $items,
+                'cart_key'      => $key,
+                'cart_quantity' => html_entity_decode( rpress_get_cart_quantity() )
+            );
+            if ( rpress_use_taxes() ) {
+                $cart_tax = (float) rpress_get_cart_tax();
+                $return['taxes'] = html_entity_decode( rpress_currency_filter( rpress_format_amount( $cart_tax ) ), ENT_COMPAT, 'UTF-8' );
+            }
+            $return = apply_filters( 'rpress_cart_data', $return );
+        }
+    }
+    $html = '<div>
+    <header class="modal__header modal-header">
+        <h2 class="modal__title modal-title">'. __( 'Food Order', 'restropress' ) .'</h2>
+        <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+    </header>
+    <main class="modal__content modal-body">
+        <div class="rpress-order-details">
+            <div class="rp-order-section-md-data">
+                <div class="rp-detils-content-view">
+                    <p>All Item from Order #'. $order_id .' have been added to your cart.</p>
+                    <a class="btn btn-primary btn-block" href="'. home_url( '/order-online' ) .'">'. __('Add more items', 'restropress').'</a>
+                    <a class="btn btn-primary btn-block" href="'. rpress_get_checkout_uri() .'">'. __('Checkout Now', 'restropress').'</a>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="modal__footer modal-footer"></footer>
+    </div>';
     $response = array(
       'html' => $html,
     );

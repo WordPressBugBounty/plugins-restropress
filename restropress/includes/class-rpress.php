@@ -17,7 +17,7 @@ final class RestroPress {
    *
    * @var string
    */
-  public $version = '3.1.8.4';
+  public $version = '3.1.9';
 	/**
    * The single instance of the class.
    *
@@ -115,7 +115,6 @@ final class RestroPress {
 	public static function instance() {
     if ( ! isset( self::$instance ) && ! ( self::$instance instanceof RestroPress ) ) {
       self::$instance = new RestroPress;
-      add_action( 'plugins_loaded', array( self::$instance, 'load_textdomain' ) );
       self::$instance->includes();
       self::$instance->init_hooks();
       self::$instance->roles         = new RPRESS_Roles();
@@ -328,6 +327,11 @@ final class RestroPress {
 	public function frontend_includes() {
 		include_once RP_PLUGIN_DIR . 'includes/class-rpress-frontend-scripts.php';
 	}
+	
+	private function init_hooks() {
+        add_action( 'init', array( $this, 'load_rest_api' ) );
+		add_action( 'init', array( $this, 'load_textdomain' ) );
+    }
 	/**
 	 * Load Localisation files.
 	 *
@@ -337,9 +341,6 @@ final class RestroPress {
 		load_plugin_textdomain( 'restropress', false, dirname( plugin_basename( RP_PLUGIN_FILE ) ). '/languages/' );
 	}
     
-	private function init_hooks() {
-        add_action( 'init', array( $this, 'load_rest_api' ) );
-    }
       /**
      * Load REST API.
      */

@@ -9,7 +9,8 @@
  * @since       1.0
  */
 // Exit if accessed directly
-if ( ! defined( 'ABSPATH' ) ) exit;
+if (!defined('ABSPATH'))
+	exit;
 /**
  * Append Purchase Link
  *
@@ -19,12 +20,13 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @param int $fooditem_id Item ID
  * @return void
  */
-function rpress_append_purchase_link( $fooditem_id ) {
-	if ( ! get_post_meta( $fooditem_id, '_rpress_hide_purchase_link', true ) ) {
-		echo rpress_get_purchase_link( array( 'fooditem_id' => $fooditem_id ) );
+function rpress_append_purchase_link($fooditem_id)
+{
+	if (!get_post_meta($fooditem_id, '_rpress_hide_purchase_link', true)) {
+		echo rpress_get_purchase_link(array('fooditem_id' => $fooditem_id));
 	}
 }
-add_action( 'rpress_after_fooditem_content', 'rpress_append_purchase_link' );
+add_action('rpress_after_fooditem_content', 'rpress_append_purchase_link');
 /**
  * Get Purchase Link
  *
@@ -41,136 +43,146 @@ add_action( 'rpress_after_fooditem_content', 'rpress_append_purchase_link' );
  * @param array $args Arguments for display
  * @return string $purchase_form
  */
-function rpress_get_purchase_link( $args = array() ) {
+function rpress_get_purchase_link($args = array())
+{
 	global $post, $rpress_displayed_form_ids;
-	$purchase_page = rpress_get_option( 'purchase_page', false );
-	if ( ! $purchase_page || $purchase_page == 0 ) {
+	$purchase_page = rpress_get_option('purchase_page', false);
+	if (!$purchase_page || $purchase_page == 0) {
 		global $no_checkout_error_displayed;
-		if ( ! is_null( $no_checkout_error_displayed ) ) {
+		if (!is_null($no_checkout_error_displayed)) {
 			return false;
 		}
-		rpress_set_error( 'set_checkout', sprintf( __( 'No checkout page has been configured. Visit <a href="%s">Settings</a> to set one.', 'restropress' ), admin_url( 'admin.php?page=rpress-settings' ) ) );
+		rpress_set_error('set_checkout', sprintf(__('No checkout page has been configured. Visit <a href="%s">Settings</a> to set one.', 'restropress'), admin_url('admin.php?page=rpress-settings')));
 		rpress_print_errors();
 		$no_checkout_error_displayed = true;
 		return false;
 	}
-	$post_id = is_object( $post ) ? $post->ID : 0;
-	$button_behavior = rpress_get_fooditem_button_behavior( $post_id );
-	$defaults = apply_filters( 'rpress_purchase_link_defaults', array(
+	$post_id = is_object($post) ? $post->ID : 0;
+	$button_behavior = rpress_get_fooditem_button_behavior($post_id);
+	$defaults = apply_filters('rpress_purchase_link_defaults', array(
 		'fooditem_id' => $post_id,
-		'price'       => (bool) true,
-		'price_id'    => isset( $args['price_id'] ) ? $args['price_id'] : false,
-		'direct'      => $button_behavior == 'direct' ? true : false,
-		'text'        => $button_behavior == 'direct' ? rpress_get_option( 'buy_now_text', __( 'Buy Now', 'restropress' ) ) : rpress_get_option( 'add_to_cart_text', __( 'Purchase', 'restropress' ) ),
-		'checkout'    => rpress_get_option( 'checkout_button_text', _x( 'Checkout', 'text shown on the Add to Cart Button when the product is already in the cart', 'restropress' ) ),
-		'style'       => rpress_get_option( 'button_style', 'button' ),
-		'color'       => '',
-		'class'       => 'rpress-submit'
-	) );
-	$args = wp_parse_args( $args, $defaults );
+		'price' => (bool) true,
+		'price_id' => isset($args['price_id']) ? $args['price_id'] : false,
+		'direct' => $button_behavior == 'direct' ? true : false,
+		'text' => $button_behavior == 'direct' ? rpress_get_option('buy_now_text', __('Buy Now', 'restropress')) : rpress_get_option('add_to_cart_text', __('Purchase', 'restropress')),
+		'checkout' => rpress_get_option('checkout_button_text', _x('Checkout', 'text shown on the Add to Cart Button when the product is already in the cart', 'restropress')),
+		'style' => rpress_get_option('button_style', 'button'),
+		'color' => '',
+		'class' => 'rpress-submit'
+	));
+	$args = wp_parse_args($args, $defaults);
 	// Override the straight_to_gateway if the shop doesn't support it
-	if ( ! rpress_shop_supports_buy_now() ) {
+	if (!rpress_shop_supports_buy_now()) {
 		$args['direct'] = false;
 	}
-	$fooditem = new RPRESS_Fooditem( $args['fooditem_id'] );
-	if( empty( $fooditem->ID ) ) {
+	$fooditem = new RPRESS_Fooditem($args['fooditem_id']);
+	if (empty($fooditem->ID)) {
 		return false;
 	}
-	if( 'publish' !== $fooditem->post_status && ! current_user_can( 'edit_product', $fooditem->ID ) ) {
+	if ('publish' !== $fooditem->post_status && !current_user_can('edit_product', $fooditem->ID)) {
 		return false; // Product not published or user doesn't have permission to view drafts
 	}
-	$options          = array();
+	$options = array();
 	$variable_pricing = $fooditem->has_variable_prices();
-	$data_variable    = $variable_pricing ? ' data-variable-price="yes"' : 'data-variable-price="no"';
-	$type             = $fooditem->is_single_price_mode() ? 'data-price-mode=multi' : 'data-price-mode=single';
-	$show_price       = $args['price'] && $args['price'] !== 'no';
+	$data_variable = $variable_pricing ? ' data-variable-price="yes"' : 'data-variable-price="no"';
+	$type = $fooditem->is_single_price_mode() ? 'data-price-mode=multi' : 'data-price-mode=single';
+	$show_price = $args['price'] && $args['price'] !== 'no';
 	$data_price_value = 0;
-	$price            = false;
-	if ( $variable_pricing && false !== $args['price_id'] ) {
-		$price_id            = $args['price_id'];
-		$prices              = $fooditem->prices;
+	$price = false;
+	if ($variable_pricing && false !== $args['price_id']) {
+		$price_id = $args['price_id'];
+		$prices = $fooditem->prices;
 		$options['price_id'] = $args['price_id'];
-		$found_price         = isset( $prices[$price_id] ) ? $prices[$price_id]['amount'] : false;
-		$data_price_value    = $found_price;
-		if ( $show_price ) {
+		$found_price = isset($prices[$price_id]) ? $prices[$price_id]['amount'] : false;
+		$data_price_value = $found_price;
+		if ($show_price) {
 			$price = $found_price;
 		}
-	} elseif ( ! $variable_pricing ) {
+	} elseif (!$variable_pricing) {
 		$data_price_value = $fooditem->price;
-		if ( $show_price ) {
+		if ($show_price) {
 			$price = $fooditem->price;
 		}
 	}
-	$data_price  = 'data-price="' . $data_price_value . '"';
-	$button_text = ! empty( $args['text'] ) ? '&nbsp;&ndash;&nbsp;' . $args['text'] : '';
-	if ( false !== $price ) {
-		if ( 0 == $price ) {
-			$args['text'] = __( 'Free', 'restropress' ) . $button_text;
+	$data_price = 'data-price="' . $data_price_value . '"';
+	$button_text = !empty($args['text']) ? '&nbsp;&ndash;&nbsp;' . $args['text'] : '';
+	if (false !== $price) {
+		if (0 == $price) {
+			$args['text'] = __('Free', 'restropress') . $button_text;
 		} else {
-			$args['text'] = rpress_currency_filter( rpress_format_amount( $price ) ) . $button_text;
+			$args['text'] = rpress_currency_filter(rpress_format_amount($price)) . $button_text;
 		}
 	}
-	if ( rpress_item_in_cart( $fooditem->ID, $options ) && ( ! $variable_pricing || ! $fooditem->is_single_price_mode() ) ) {
-		$button_display   = '';
+	if (rpress_item_in_cart($fooditem->ID, $options) && (!$variable_pricing || !$fooditem->is_single_price_mode())) {
+		$button_display = '';
 		$checkout_display = '';
 	} else {
-		$button_display   = '';
+		$button_display = '';
 		$checkout_display = 'style="display:none;"';
 	}
 	// Collect any form IDs we've displayed already so we can avoid duplicate IDs
-	if ( isset( $rpress_displayed_form_ids[ $fooditem->ID ] ) ) {
-		$rpress_displayed_form_ids[ $fooditem->ID ]++;
+	if (isset($rpress_displayed_form_ids[$fooditem->ID])) {
+		$rpress_displayed_form_ids[$fooditem->ID]++;
 	} else {
-		$rpress_displayed_form_ids[ $fooditem->ID ] = 1;
+		$rpress_displayed_form_ids[$fooditem->ID] = 1;
 	}
-	$form_id = ! empty( $args['form_id'] ) ? $args['form_id'] : 'rpress_purchase_' . $fooditem->ID;
+	$form_id = !empty($args['form_id']) ? $args['form_id'] : 'rpress_purchase_' . $fooditem->ID;
 	// If we've already generated a form ID for this fooditem ID, append -#
-	if ( $rpress_displayed_form_ids[ $fooditem->ID ] > 1 ) {
-		$form_id .= '-' . $rpress_displayed_form_ids[ $fooditem->ID ];
+	if ($rpress_displayed_form_ids[$fooditem->ID] > 1) {
+		$form_id .= '-' . $rpress_displayed_form_ids[$fooditem->ID];
 	}
-	$args = apply_filters( 'rpress_purchase_link_args', $args );
+	$args = apply_filters('rpress_purchase_link_args', $args);
 	ob_start();
-?>
-	<form id="<?php echo esc_attr( $form_id ); ?>" class="rpress_fooditem_purchase_form rpress_purchase_<?php echo absint( $fooditem->ID ); ?>" method="post">
-		<?php do_action( 'rpress_purchase_link_top', $fooditem->ID, $args ); ?>
+	?>
+	<form id="<?php echo esc_attr($form_id); ?>"
+		class="rpress_fooditem_purchase_form rpress_purchase_<?php echo absint($fooditem->ID); ?>" method="post">
+		<?php do_action('rpress_purchase_link_top', $fooditem->ID, $args); ?>
 		<div class="rpress_purchase_submit_wrapper">
 			<?php
-			$class = implode( ' ', array( $args['style'], trim( $args['class'] ) ) );
-			if ( rpress_fooditem_available( $fooditem->ID ) ) :
-				if ( ! rpress_is_ajax_disabled() ) {
-					$add_to_cart_label = apply_filters( 'rpress_add_to_cart_text',
-					__( 'Add', 'restropress' ) );
-					echo '<a href="#" data-title="'.get_the_title( $fooditem->ID ).'" class="rpress-add-to-cart ' . esc_attr( $class ) . '" data-action="rpress_add_to_cart" data-fooditem-id="' . esc_attr( $fooditem->ID ) . '" ' . $data_variable . ' ' . $type . ' ' . $data_price . ' ' . $button_display . '><span class="rpress-add-to-cart-label rp-ajax-toggle-text">' . $add_to_cart_label . '</span> <span class="add-icon">
+			$class = implode(' ', array($args['style'], trim($args['class'])));
+			if (rpress_fooditem_available($fooditem->ID)):
+				if (!rpress_is_ajax_disabled()) {
+					$add_to_cart_label = apply_filters(
+						'rpress_add_to_cart_text',
+						__('Add', 'restropress')
+					);
+					echo '<a href="#" data-title="' . get_the_title($fooditem->ID) . '" class="rpress-add-to-cart ' . esc_attr($class) . '" data-action="rpress_add_to_cart" data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . $data_variable . ' ' . $type . ' ' . $data_price . ' ' . $button_display . '><span class="rpress-add-to-cart-label rp-ajax-toggle-text">' . $add_to_cart_label . '</span> <span class="add-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"></path></svg>
                       </span> </a>';
 				}
 				?>
 			<?php else: ?>
 				<?php
-				$not_available_lable = apply_filters( 'rpress_not_available',
-					__( 'Not Available', 'restropress' ), $fooditem->ID );
-					echo '<a href="javascript:void(0)" data-title="'.get_the_title( $fooditem->ID ).'" class="rpress-not-available ' . esc_attr( $class ) . '"  data-fooditem-id="' . esc_attr( $fooditem->ID ) . '" ' . ' ' . $button_display . '><span class="rpress-add-to-cart-label">' . $not_available_lable . '</span></a>';
+				$not_available_lable = apply_filters(
+					'rpress_not_available',
+					__('Not Available', 'restropress'),
+					$fooditem->ID
+				);
+				echo '<a href="javascript:void(0)" data-title="' . get_the_title($fooditem->ID) . '" class="rpress-not-available ' . esc_attr($class) . '"  data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . ' ' . $button_display . '><span class="rpress-add-to-cart-label">' . $not_available_lable . '</span></a>';
 				?>
 			<?php endif; ?>
 		</div><!--end .rpress_purchase_submit_wrapper-->
-		<input type="hidden" name="fooditem_id" value="<?php echo esc_attr( $fooditem->ID ); ?>">
+		<input type="hidden" name="fooditem_id" value="<?php echo esc_attr($fooditem->ID); ?>">
 		<input type="hidden" class="fooditem_qty" name="fooditem_qty" value="">
-		<?php if ( $variable_pricing && isset( $price_id ) && isset( $prices[$price_id] ) ): ?>
-			<input type="hidden" name="rpress_options[price_id][]" id="rpress_price_option_<?php echo esc_attr( $fooditem->ID ); ?>_1" class="rpress_price_option_<?php echo esc_attr( $fooditem->ID ); ?>" value="<?php echo esc_attr( $price_id ); ?>">
+		<?php if ($variable_pricing && isset($price_id) && isset($prices[$price_id])): ?>
+			<input type="hidden" name="rpress_options[price_id][]"
+				id="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>_1"
+				class="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>"
+				value="<?php echo esc_attr($price_id); ?>">
 		<?php endif; ?>
-		<?php if( ! empty( $args['direct'] ) && ! $fooditem->is_free( $args['price_id'] ) ) { ?>
+		<?php if (!empty($args['direct']) && !$fooditem->is_free($args['price_id'])) { ?>
 			<input type="hidden" name="rpress_action" class="rpress_action_input" value="straight_to_gateway">
 		<?php } else { ?>
 			<input type="hidden" name="rpress_action" class="rpress_action_input" value="add_to_cart">
 		<?php } ?>
-		<?php if( apply_filters( 'rpress_fooditem_redirect_to_checkout', rpress_straight_to_checkout(), $fooditem->ID, $args ) ) : ?>
+		<?php if (apply_filters('rpress_fooditem_redirect_to_checkout', rpress_straight_to_checkout(), $fooditem->ID, $args)): ?>
 			<input type="hidden" name="rpress_redirect_to_checkout" id="rpress_redirect_to_checkout" value="1">
 		<?php endif; ?>
-		<?php do_action( 'rpress_purchase_link_end', $fooditem->ID, $args ); ?>
+		<?php do_action('rpress_purchase_link_end', $fooditem->ID, $args); ?>
 	</form>
-<?php
+	<?php
 	$purchase_form = ob_get_clean();
-	return apply_filters( 'rpress_purchase_fooditem_form', $purchase_form, $args );
+	return apply_filters('rpress_purchase_fooditem_form', $purchase_form, $args);
 }
 /**
  * Output schema markup for products.
@@ -179,26 +191,27 @@ function rpress_get_purchase_link( $args = array() ) {
  * @param  int $fooditem_id The fooditem being output.
  * @return void
  */
-function rpress_purchase_link_pricing_schema( $fooditem_id = 0, $args = array() ) {
+function rpress_purchase_link_pricing_schema($fooditem_id = 0, $args = array())
+{
 	// Bail if we aren't showing schema data.
-	if ( ! rpress_add_schema_microdata() ) {
+	if (!rpress_add_schema_microdata()) {
 		return;
 	}
 	// Grab the information we need.
-	$fooditem = new RPRESS_Fooditem( $fooditem_id );
-	if( rpress_has_variable_prices( $fooditem_id ) ) {
-		$price = rpress_get_lowest_price_option( $fooditem_id );
+	$fooditem = new RPRESS_Fooditem($fooditem_id);
+	if (rpress_has_variable_prices($fooditem_id)) {
+		$price = rpress_get_lowest_price_option($fooditem_id);
 	} else {
 		$price = $fooditem->price;
 	}
 	?>
 	<span itemprop="offers" itemscope itemtype="http://schema.org/Offer">
-		<meta itemprop="price" content="<?php echo esc_attr( $price ); ?>" />
-		<meta itemprop="priceCurrency" content="<?php echo esc_attr( rpress_get_currency() ); ?>" />
+		<meta itemprop="price" content="<?php echo esc_attr($price); ?>" />
+		<meta itemprop="priceCurrency" content="<?php echo esc_attr(rpress_get_currency()); ?>" />
 	</span>
 	<?php
 }
-add_action( 'rpress_purchase_link_top', 'rpress_purchase_link_pricing_schema', 10, 2 );
+add_action('rpress_purchase_link_top', 'rpress_purchase_link_pricing_schema', 10, 2);
 /**
  *
  * Adds an action to the beginning of fooditem post content that can be hooked to
@@ -210,16 +223,17 @@ add_action( 'rpress_purchase_link_top', 'rpress_purchase_link_pricing_schema', 1
  * @param $content The the_content field of the fooditem object
  * @return string the content with any additional data attached
  */
-function rpress_before_fooditem_content( $content ) {
+function rpress_before_fooditem_content($content)
+{
 	global $post;
-	if ( $post && $post->post_type == 'fooditem' && is_singular( 'fooditem' ) && is_main_query() && !post_password_required() ) {
+	if ($post && $post->post_type == 'fooditem' && is_singular('fooditem') && is_main_query() && !post_password_required()) {
 		ob_start();
-		do_action( 'rpress_before_fooditem_content', $post->ID );
+		do_action('rpress_before_fooditem_content', $post->ID);
 		$content = ob_get_clean() . $content;
 	}
 	return $content;
 }
-add_filter( 'the_content', 'rpress_before_fooditem_content' );
+add_filter('the_content', 'rpress_before_fooditem_content');
 /**
  * After Item Content
  *
@@ -232,16 +246,17 @@ add_filter( 'the_content', 'rpress_before_fooditem_content' );
  * @param $content The the_content field of the fooditem object
  * @return string the content with any additional data attached
  */
-function rpress_after_fooditem_content( $content ) {
+function rpress_after_fooditem_content($content)
+{
 	global $post;
-	if ( $post && $post->post_type == 'fooditem' && is_singular( 'fooditem' ) && is_main_query() && !post_password_required() ) {
+	if ($post && $post->post_type == 'fooditem' && is_singular('fooditem') && is_main_query() && !post_password_required()) {
 		ob_start();
-		do_action( 'rpress_after_fooditem_content', $post->ID );
+		do_action('rpress_after_fooditem_content', $post->ID);
 		$content .= ob_get_clean();
 	}
 	return $content;
 }
-add_filter( 'the_content', 'rpress_after_fooditem_content' );
+add_filter('the_content', 'rpress_after_fooditem_content');
 /**
  * Get Button Colors
  *
@@ -250,42 +265,43 @@ add_filter( 'the_content', 'rpress_after_fooditem_content' );
  * @since 1.0
  * @return array $colors Button colors
  */
-function rpress_get_button_colors() {
+function rpress_get_button_colors()
+{
 	$colors = array(
-		'gray'      => array(
-			'label' => __( 'Gray', 'restropress' ),
-			'hex'   => '#f0f0f0'
+		'gray' => array(
+			'label' => __('Gray', 'restropress'),
+			'hex' => '#f0f0f0'
 		),
-		'blue'      => array(
-			'label' => __( 'Blue', 'restropress' ),
-			'hex'   => '#428bca'
+		'blue' => array(
+			'label' => __('Blue', 'restropress'),
+			'hex' => '#428bca'
 		),
-		'red'       => array(
-			'label' => __( 'Red', 'restropress' ),
-			'hex'   => '#d9534f'
+		'red' => array(
+			'label' => __('Red', 'restropress'),
+			'hex' => '#d9534f'
 		),
-		'green'     => array(
-			'label' => __( 'Green', 'restropress' ),
-			'hex'   => '#5cb85c'
+		'green' => array(
+			'label' => __('Green', 'restropress'),
+			'hex' => '#5cb85c'
 		),
-		'yellow'    => array(
-			'label' => __( 'Yellow', 'restropress' ),
-			'hex'   => '#f0ad4e'
+		'yellow' => array(
+			'label' => __('Yellow', 'restropress'),
+			'hex' => '#f0ad4e'
 		),
-		'orange'    => array(
-			'label' => __( 'Orange', 'restropress' ),
-			'hex'   => '#ed9c28'
+		'orange' => array(
+			'label' => __('Orange', 'restropress'),
+			'hex' => '#ed9c28'
 		),
 		'dark-gray' => array(
-			'label' => __( 'Dark Gray', 'restropress' ),
-			'hex'   => '#363636'
+			'label' => __('Dark Gray', 'restropress'),
+			'hex' => '#363636'
 		),
-		'inherit'	=> array(
-			'label' => __( 'Inherit', 'restropress' ),
-			'hex'   => ''
+		'inherit' => array(
+			'label' => __('Inherit', 'restropress'),
+			'hex' => ''
 		)
 	);
-	return apply_filters( 'rpress_button_colors', $colors );
+	return apply_filters('rpress_button_colors', $colors);
 }
 /**
  * Get Button Styles
@@ -295,12 +311,13 @@ function rpress_get_button_colors() {
  * @since  1.0.0
  * @return array $styles Button styles
  */
-function rpress_get_button_styles() {
+function rpress_get_button_styles()
+{
 	$styles = array(
-		'button'	=> __( 'Button', 'restropress' ),
-		'plain'     => __( 'Plain Text', 'restropress' )
+		'button' => __('Button', 'restropress'),
+		'plain' => __('Plain Text', 'restropress')
 	);
-	return apply_filters( 'rpress_button_styles', $styles );
+	return apply_filters('rpress_button_styles', $styles);
 }
 /**
  * Default formatting for fooditem excerpts
@@ -312,10 +329,11 @@ function rpress_get_button_styles() {
  * @return string $excerpt Content after filtering
  * @return string
  */
-function rpress_fooditems_default_excerpt( $excerpt ) {
-	return do_shortcode( wpautop( $excerpt ) );
+function rpress_fooditems_default_excerpt($excerpt)
+{
+	return do_shortcode(wpautop($excerpt));
 }
-add_filter( 'rpress_fooditems_excerpt', 'rpress_fooditems_default_excerpt' );
+add_filter('rpress_fooditems_excerpt', 'rpress_fooditems_default_excerpt');
 /**
  * Default formatting for full fooditem content
  *
@@ -325,17 +343,19 @@ add_filter( 'rpress_fooditems_excerpt', 'rpress_fooditems_default_excerpt' );
  * @param string $content Content before filtering
  * @return string $content Content after filtering
  */
-function rpress_fooditems_default_content( $content ) {
-	return do_shortcode( wpautop( $content ) );
+function rpress_fooditems_default_content($content)
+{
+	return do_shortcode(wpautop($content));
 }
-add_filter( 'rpress_fooditems_content', 'rpress_fooditems_default_content' );
+add_filter('rpress_fooditems_content', 'rpress_fooditems_default_content');
 /**
  * Returns the path to the RPRESS templates directory
  *
  * @since 1.0.0
  * @return string
  */
-function rpress_get_templates_dir() {
+function rpress_get_templates_dir()
+{
 	return RP_PLUGIN_DIR . 'templates';
 }
 /**
@@ -344,7 +364,8 @@ function rpress_get_templates_dir() {
  * @since 1.0.0
  * @return string
  */
-function rpress_get_templates_url() {
+function rpress_get_templates_url()
+{
 	return RP_PLUGIN_URL . 'templates';
 }
 /**
@@ -364,22 +385,23 @@ function rpress_get_templates_url() {
  * @uses load_template()
  * @uses get_template_part()
  */
-function rpress_get_template_part( $slug, $name = null, $load = true ) {
+function rpress_get_template_part($slug, $name = null, $load = true)
+{
 	// Execute code for this part
-	do_action( 'get_template_part_' . $slug, $slug, $name );
-	$load_template = apply_filters( 'rpress_allow_template_part_' . $slug . '_' . $name, true );
-	if ( false === $load_template ) {
+	do_action('get_template_part_' . $slug, $slug, $name);
+	$load_template = apply_filters('rpress_allow_template_part_' . $slug . '_' . $name, true);
+	if (false === $load_template) {
 		return '';
 	}
 	// Setup possible parts
 	$templates = array();
-	if ( isset( $name ) )
+	if (isset($name))
 		$templates[] = $slug . '-' . $name . '.php';
 	$templates[] = $slug . '.php';
 	// Allow template parts to be filtered
-	$templates = apply_filters( 'rpress_get_template_part', $templates, $slug, $name );
+	$templates = apply_filters('rpress_get_template_part', $templates, $slug, $name);
 	// Return the part that is found
-	return rpress_locate_template( $templates, $load, false );
+	return rpress_locate_template($templates, $load, false);
 }
 /**
  * Only allow the pending verification message to display once
@@ -388,15 +410,16 @@ function rpress_get_template_part( $slug, $name = null, $load = true ) {
  *
  * @return bool
  */
-function rpress_load_verification_template_once( $load_template ) {
+function rpress_load_verification_template_once($load_template)
+{
 	static $account_pending_loaded;
-	if ( ! is_null( $account_pending_loaded ) ) {
+	if (!is_null($account_pending_loaded)) {
 		return false;
 	}
 	$account_pending_loaded = true;
 	return $load_template;
 }
-add_filter( 'rpress_allow_template_part_account_pending', 'rpress_load_verification_template_once', 10, 1 );
+add_filter('rpress_allow_template_part_account_pending', 'rpress_load_verification_template_once', 10, 1);
 /**
  * Retrieve the name of the highest priority template file that exists.
  *
@@ -414,29 +437,30 @@ add_filter( 'rpress_allow_template_part_account_pending', 'rpress_load_verificat
  *   Has no effect if $load is false.
  * @return string The template filename if one is located.
  */
-function rpress_locate_template( $template_names, $load = false, $require_once = true ) {
+function rpress_locate_template($template_names, $load = false, $require_once = true)
+{
 	// No file found yet
 	$located = false;
 	// Try to find a template file
-	foreach ( (array) $template_names as $template_name ) {
+	foreach ((array) $template_names as $template_name) {
 		// Continue if template is empty
-		if ( empty( $template_name ) )
+		if (empty($template_name))
 			continue;
 		// Trim off any slashes from the template name
-		$template_name = ltrim( $template_name, '/' );
+		$template_name = ltrim($template_name, '/');
 		// try locating this template file by looping through the template paths
-		foreach( rpress_get_theme_template_paths() as $template_path ) {
-			if( file_exists( $template_path . $template_name ) ) {
+		foreach (rpress_get_theme_template_paths() as $template_path) {
+			if (file_exists($template_path . $template_name)) {
 				$located = $template_path . $template_name;
 				break;
 			}
 		}
-		if( $located ) {
+		if ($located) {
 			break;
 		}
 	}
-	if ( ( true == $load ) && ! empty( $located ) )
-		load_template( $located, $require_once );
+	if ((true == $load) && !empty($located))
+		load_template($located, $require_once);
 	return $located;
 }
 /**
@@ -445,17 +469,18 @@ function rpress_locate_template( $template_names, $load = false, $require_once =
  * @since 1.0.0
  * @return mixed|void
  */
-function rpress_get_theme_template_paths() {
+function rpress_get_theme_template_paths()
+{
 	$template_dir = rpress_get_theme_template_dir_name();
 	$file_paths = array(
-		1 => trailingslashit( get_stylesheet_directory() ) . $template_dir,
-		10 => trailingslashit( get_template_directory() ) . $template_dir,
+		1 => trailingslashit(get_stylesheet_directory()) . $template_dir,
+		10 => trailingslashit(get_template_directory()) . $template_dir,
 		100 => rpress_get_templates_dir()
 	);
-	$file_paths = apply_filters( 'rpress_template_paths', $file_paths );
+	$file_paths = apply_filters('rpress_template_paths', $file_paths);
 	// sort the file paths based on priority
-	ksort( $file_paths, SORT_NUMERIC );
-	return array_map( 'trailingslashit', $file_paths );
+	ksort($file_paths, SORT_NUMERIC);
+	return array_map('trailingslashit', $file_paths);
 }
 /**
  * Returns the template directory name.
@@ -464,9 +489,10 @@ function rpress_get_theme_template_paths() {
  *
  * @since 1.0.0
  * @return string
-*/
-function rpress_get_theme_template_dir_name() {
-	return trailingslashit( apply_filters( 'rpress_templates_dir', 'restropress' ) );
+ */
+function rpress_get_theme_template_dir_name()
+{
+	return trailingslashit(apply_filters('rpress_templates_dir', 'restropress'));
 }
 /**
  * Should we add schema.org microdata?
@@ -474,10 +500,11 @@ function rpress_get_theme_template_dir_name() {
  * @since  1.0.0
  * @return bool
  */
-function rpress_add_schema_microdata() {
+function rpress_add_schema_microdata()
+{
 	// Don't modify anything until after wp_head() is called
-	$ret = (bool)did_action( 'wp_head' );
-	return apply_filters( 'rpress_add_schema_microdata', $ret );
+	$ret = (bool) did_action('wp_head');
+	return apply_filters('rpress_add_schema_microdata', $ret);
 }
 /**
  * Add Microdata to fooditem titles
@@ -488,17 +515,18 @@ function rpress_add_schema_microdata() {
  * @param int $id Post ID
  * @return string $title New title
  */
-function rpress_microdata_title( $title, $id = 0 ) {
+function rpress_microdata_title($title, $id = 0)
+{
 	global $post;
-	if( ! rpress_add_schema_microdata() || ! is_object( $post ) ) {
+	if (!rpress_add_schema_microdata() || !is_object($post)) {
 		return $title;
 	}
-	if ( $post->ID == $id && is_singular( 'fooditem' ) && 'fooditem' == get_post_type( intval( $id ) ) ) {
+	if ($post->ID == $id && is_singular('fooditem') && 'fooditem' == get_post_type(intval($id))) {
 		$title = '<span itemprop="name">' . $title . '</span>';
 	}
 	return $title;
 }
-add_filter( 'the_title', 'rpress_microdata_title', 10, 2 );
+add_filter('the_title', 'rpress_microdata_title', 10, 2);
 /**
  * Start Microdata to wrapper fooditem
  *
@@ -507,18 +535,19 @@ add_filter( 'the_title', 'rpress_microdata_title', 10, 2 );
  *
  * @return void
  */
-function rpress_microdata_wrapper_open( $query ) {
+function rpress_microdata_wrapper_open($query)
+{
 	global $post;
 	static $microdata_open = NULL;
-	if( ! rpress_add_schema_microdata() || true === $microdata_open || ! is_object( $query ) ) {
+	if (!rpress_add_schema_microdata() || true === $microdata_open || !is_object($query)) {
 		return;
 	}
-	if ( $query && ! empty( $query->query['post_type'] ) && $query->query['post_type'] == 'fooditem' && is_singular( 'fooditem' ) && $query->is_main_query() ) {
+	if ($query && !empty($query->query['post_type']) && $query->query['post_type'] == 'fooditem' && is_singular('fooditem') && $query->is_main_query()) {
 		$microdata_open = true;
 		echo '<span itemscope itemtype="http://schema.org/Product">';
 	}
 }
-add_action( 'loop_start', 'rpress_microdata_wrapper_open', 10 );
+add_action('loop_start', 'rpress_microdata_wrapper_open', 10);
 /**
  * End Microdata to wrapper fooditem
  *
@@ -527,18 +556,19 @@ add_action( 'loop_start', 'rpress_microdata_wrapper_open', 10 );
  *
  * @return void
  */
-function rpress_microdata_wrapper_close() {
+function rpress_microdata_wrapper_close()
+{
 	global $post;
 	static $microdata_close = NULL;
-	if( ! rpress_add_schema_microdata() || true === $microdata_close || ! is_object( $post ) ) {
+	if (!rpress_add_schema_microdata() || true === $microdata_close || !is_object($post)) {
 		return;
 	}
-	if ( $post && $post->post_type == 'fooditem' && is_singular( 'fooditem' ) && is_main_query() ) {
+	if ($post && $post->post_type == 'fooditem' && is_singular('fooditem') && is_main_query()) {
 		$microdata_close = true;
 		echo '</span>';
 	}
 }
-add_action( 'loop_end', 'rpress_microdata_wrapper_close', 10 );
+add_action('loop_end', 'rpress_microdata_wrapper_close', 10);
 /**
  * Add Microdata to fooditem description
  *
@@ -548,19 +578,20 @@ add_action( 'loop_end', 'rpress_microdata_wrapper_close', 10 );
  * @param $content
  * @return mixed|void New title
  */
-function rpress_microdata_description( $content ) {
+function rpress_microdata_description($content)
+{
 	global $post;
 	static $microdata_description = NULL;
-	if( ! rpress_add_schema_microdata() || true === $microdata_description || ! is_object( $post ) ) {
+	if (!rpress_add_schema_microdata() || true === $microdata_description || !is_object($post)) {
 		return $content;
 	}
-	if ( $post && $post->post_type == 'fooditem' && is_singular( 'fooditem' ) && is_main_query() ) {
+	if ($post && $post->post_type == 'fooditem' && is_singular('fooditem') && is_main_query()) {
 		$microdata_description = true;
-		$content = apply_filters( 'rpress_microdata_wrapper', '<div itemprop="description">' . $content . '</div>' );
+		$content = apply_filters('rpress_microdata_wrapper', '<div itemprop="description">' . $content . '</div>');
 	}
 	return $content;
 }
-add_filter( 'the_content', 'rpress_microdata_description', 10 );
+add_filter('the_content', 'rpress_microdata_description', 10);
 /**
  * Add no-index and no-follow to RPRESS checkout and purchase confirmation pages
  *
@@ -568,38 +599,41 @@ add_filter( 'the_content', 'rpress_microdata_description', 10 );
  *
  * @return void
  */
-function rpress_checkout_meta_tags() {
-	$pages   = array();
-	$pages[] = rpress_get_option( 'success_page' );
-	$pages[] = rpress_get_option( 'failure_page' );
-	$pages[] = rpress_get_option( 'order_history_page' );
-	if( ! rpress_is_checkout() && ! is_page( $pages ) ) {
+function rpress_checkout_meta_tags()
+{
+	$pages = array();
+	$pages[] = rpress_get_option('success_page');
+	$pages[] = rpress_get_option('failure_page');
+	$pages[] = rpress_get_option('order_history_page');
+	if (!rpress_is_checkout() && !is_page($pages)) {
 		return;
 	}
 	echo '<meta name="rpress-chosen-gateway" content="' . rpress_get_chosen_gateway() . '"/>' . "\n";
 	echo '<meta name="robots" content="noindex,nofollow" />' . "\n";
 }
-add_action( 'wp_head', 'rpress_checkout_meta_tags' );
+add_action('wp_head', 'rpress_checkout_meta_tags');
 /**
  * Adds RPRESS Version to the <head> tag
  *
  * @since 1.0.0
  * @return void
-*/
-function rpress_version_in_header(){
+ */
+function rpress_version_in_header()
+{
 	echo '<meta name="generator" content="RestroPress v' . RP_VERSION . '" />' . "\n";
 }
-add_action( 'wp_head', 'rpress_version_in_header' );
+add_action('wp_head', 'rpress_version_in_header');
 /**
  * Determines if we're currently on the Order History page.
  *
  * @since  1.0.0
  * @return bool True if on the Order History page, false otherwise.
  */
-function rpress_is_order_history_page() {
-	$ret = rpress_get_option( 'order_history_page', false );
-	$ret = $ret ? is_page( $ret ) : false;
-	return apply_filters( 'rpress_is_order_history_page', $ret );
+function rpress_is_order_history_page()
+{
+	$ret = rpress_get_option('order_history_page', false);
+	$ret = $ret ? is_page($ret) : false;
+	return apply_filters('rpress_is_order_history_page', $ret);
 }
 /**
  * Adds body classes for RPRESS pages
@@ -608,9 +642,10 @@ function rpress_is_order_history_page() {
  * @param array $class current classes
  * @return array Modified array of classes
  */
-function rpress_add_body_classes( $class ) {
+function rpress_add_body_classes($class)
+{
 	$classes = (array) $class;
-	switch ( true ) {
+	switch (true) {
 		case rpress_is_checkout():
 			$classes[] = 'rpress-checkout';
 			$classes[] = 'rpress-page';
@@ -634,9 +669,9 @@ function rpress_add_body_classes( $class ) {
 			$classes[] = 'rpress';
 			break;
 	}
-	return array_unique( $classes );
+	return array_unique($classes);
 }
-add_filter( 'body_class', 'rpress_add_body_classes' );
+add_filter('body_class', 'rpress_add_body_classes');
 /**
  * Adds post classes for fooditems
  *
@@ -646,72 +681,75 @@ add_filter( 'body_class', 'rpress_add_body_classes' );
  * @param int $post_id The ID of the current post
  * @return array Modified array of classes
  */
-function rpress_add_fooditem_post_classes( $classes, $class = '', $post_id = false ) {
-	if( ! $post_id || get_post_type( $post_id ) !== 'fooditem' || is_admin() ) {
+function rpress_add_fooditem_post_classes($classes, $class = '', $post_id = false)
+{
+	if (!$post_id || get_post_type($post_id) !== 'fooditem' || is_admin()) {
 		return $classes;
 	}
-	$fooditem = rpress_get_fooditem( $post_id );
-	if( $fooditem ) {
+	$fooditem = rpress_get_fooditem($post_id);
+	if ($fooditem) {
 		$classes[] = 'rpress-fooditem';
 		// Add category slugs
-		$categories = get_the_terms( $post_id, 'addon_category' );
-		if( ! empty( $categories ) ) {
-			foreach( $categories as $key => $value ) {
+		$categories = get_the_terms($post_id, 'addon_category');
+		if (!empty($categories)) {
+			foreach ($categories as $key => $value) {
 				$classes[] = 'rpress-fooditem-cat-' . $value->slug;
 			}
 		}
 		// Add tag slugs
-		$tags = get_the_terms( $post_id, 'fooditem_tag' );
-		if( ! empty( $tags ) ) {
-			foreach( $tags as $key => $value ) {
+		$tags = get_the_terms($post_id, 'fooditem_tag');
+		if (!empty($tags)) {
+			foreach ($tags as $key => $value) {
 				$classes[] = 'rpress-fooditem-tag-' . $value->slug;
 			}
 		}
 		// Add rpress-fooditem
-		if( is_singular( 'fooditem' ) ) {
+		if (is_singular('fooditem')) {
 			$classes[] = 'rpress-fooditem';
 		}
 	}
 	return $classes;
 }
-add_filter( 'post_class', 'rpress_add_fooditem_post_classes', 20, 3 );
+add_filter('post_class', 'rpress_add_fooditem_post_classes', 20, 3);
 /**
  * Adds item product price to oembed display
  *
  * @since 1.0.0
  * @return void
  */
-function rpress_add_oembed_price() {
-	if( 'fooditem' !== get_post_type( get_the_ID() ) ) {
+function rpress_add_oembed_price()
+{
+	if ('fooditem' !== get_post_type(get_the_ID())) {
 		return;
 	}
-	$show = ! get_post_meta( get_the_ID(), '_rpress_hide_purchase_link', true );
-	if ( apply_filters( 'rpress_show_oembed_purchase_links', $show ) ) {
+	$show = !get_post_meta(get_the_ID(), '_rpress_hide_purchase_link', true);
+	if (apply_filters('rpress_show_oembed_purchase_links', $show)) {
 		echo '<style>.wp-embed-rpress-price { margin: 20px 0 0 0; }</style>';
 		echo '<div class="wp-embed-rpress-price">';
-			if ( rpress_has_variable_prices( get_the_ID() ) ) {
-				echo rpress_price_range( get_the_ID() );
-			} else {
-				rpress_price( get_the_ID(), true );
-			}
+		if (rpress_has_variable_prices(get_the_ID())) {
+			echo rpress_price_range(get_the_ID());
+		} else {
+			rpress_price(get_the_ID(), true);
+		}
 		echo '</div>';
 	}
 }
-add_action( 'embed_content', 'rpress_add_oembed_price' );
+add_action('embed_content', 'rpress_add_oembed_price');
 /**
  * Remove comments button for fooditem embeds
  *
  * @since 1.0.0
  * @return  void
  */
-function rpress_remove_embed_comments_button() {
+function rpress_remove_embed_comments_button()
+{
 	global $post;
-	$hide_comments = apply_filters( 'rpress_embed_hide_comments', true, $post );
-	if ( ! empty( $post ) && $post->post_type == 'fooditem' && true === $hide_comments ) {
-		remove_action( 'embed_content_meta', 'print_embed_comments_button' );
+	$hide_comments = apply_filters('rpress_embed_hide_comments', true, $post);
+	if (!empty($post) && $post->post_type == 'fooditem' && true === $hide_comments) {
+		remove_action('embed_content_meta', 'print_embed_comments_button');
 	}
 }
-add_action( 'embed_content_meta', 'rpress_remove_embed_comments_button', 5 );
+add_action('embed_content_meta', 'rpress_remove_embed_comments_button', 5);
 /**
  * Get a fully formatted title of a bundle item
  *
@@ -720,14 +758,15 @@ add_action( 'embed_content_meta', 'rpress_remove_embed_comments_button', 5 );
  * @param array $bundle_item Bundle item.
  * @return string Bundle item title.
  */
-function rpress_get_bundle_item_title( $bundle_item ) {
-	$bundle_item_pieces = explode( '_', $bundle_item );
+function rpress_get_bundle_item_title($bundle_item)
+{
+	$bundle_item_pieces = explode('_', $bundle_item);
 	$bundle_item_id = $bundle_item_pieces[0];
-	$bundle_price_id = isset( $bundle_item_pieces[1] ) ? $bundle_item_pieces[1] : null;
-	$prices = rpress_get_variable_prices( $bundle_item_id );
-	$bundle_title = get_the_title( $bundle_item_id );
-	if ( null !== $bundle_price_id ) {
-		$bundle_title .= ' - ' . $prices[ $bundle_price_id ]['name'];
+	$bundle_price_id = isset($bundle_item_pieces[1]) ? $bundle_item_pieces[1] : null;
+	$prices = rpress_get_variable_prices($bundle_item_id);
+	$bundle_title = get_the_title($bundle_item_id);
+	if (null !== $bundle_price_id) {
+		$bundle_title .= ' - ' . $prices[$bundle_price_id]['name'];
 	}
 	return $bundle_title;
 }
@@ -739,8 +778,9 @@ function rpress_get_bundle_item_title( $bundle_item ) {
  * @param array $bundle_item Bundle item.
  * @return string Bundle item ID.
  */
-function rpress_get_bundle_item_id( $bundle_item ) {
-	$bundle_item_pieces = explode( '_', $bundle_item );
+function rpress_get_bundle_item_id($bundle_item)
+{
+	$bundle_item_pieces = explode('_', $bundle_item);
 	$bundle_item_id = $bundle_item_pieces[0];
 	return $bundle_item_id;
 }
@@ -752,10 +792,11 @@ function rpress_get_bundle_item_id( $bundle_item ) {
  * @param array $bundle_item Bundle item.
  * @return string Bundle item ID.
  */
-function rpress_get_bundle_item_price_id( $bundle_item ) {
-	$bundle_item_pieces = explode( '_', $bundle_item );
+function rpress_get_bundle_item_price_id($bundle_item)
+{
+	$bundle_item_pieces = explode('_', $bundle_item);
 	$bundle_item_id = $bundle_item_pieces[0];
-	$bundle_price_id = isset( $bundle_item_pieces[1] ) ? $bundle_item_pieces[1] : null;
+	$bundle_price_id = isset($bundle_item_pieces[1]) ? $bundle_item_pieces[1] : null;
 	return $bundle_price_id;
 }
 /**
@@ -770,13 +811,14 @@ function rpress_get_bundle_item_price_id( $bundle_item ) {
  * @param array $atts The [fooditems] shortcode attributes.
  * @param int   $i The current item count.
  */
-function rpress_fooditem_shortcode_item( $atts, $i ) {
+function rpress_fooditem_shortcode_item($atts, $i)
+{
 	global $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i;
 	$rpress_fooditem_shortcode_item_atts = $atts;
 	$rpress_fooditem_shortcode_item_i = $i;
-	rpress_get_template_part( 'fooditem/single' );
+	rpress_get_template_part('fooditem/single');
 }
-add_action( 'rpress_fooditem_shortcode_item', 'rpress_fooditem_shortcode_item', 10, 2 );
+add_action('rpress_fooditem_shortcode_item', 'rpress_fooditem_shortcode_item', 10, 2);
 /**
  * Get category title
  *
@@ -786,22 +828,24 @@ add_action( 'rpress_fooditem_shortcode_item', 'rpress_fooditem_shortcode_item', 
  * @param int $id
  * @param array $var
  */
-function rpress_get_category_title( $term_slug, $id, $var ) {
-  	global $fooditem_term_slug, $rpress_fooditem_id, $curr_cat_var;
-  	$fooditem_term_slug = $term_slug;
-  	$rpress_fooditem_id = $id;
-  	rpress_get_template_part( 'fooditem/category' );
+function rpress_get_category_title($term_slug, $id, $var)
+{
+	global $fooditem_term_slug, $rpress_fooditem_id, $curr_cat_var;
+	$fooditem_term_slug = $term_slug;
+	$rpress_fooditem_id = $id;
+	rpress_get_template_part('fooditem/category');
 }
-add_action( 'rpress_fooditems_category_title', 'rpress_get_category_title', 10, 3 );
+add_action('rpress_fooditems_category_title', 'rpress_get_category_title', 10, 3);
 /**
  * Get Cart Items
  *
  * @since 2.7.2
  */
-function rpress_get_cart_items() {
+function rpress_get_cart_items()
+{
 	rpress_shopping_cart();
 }
-add_action( 'rpress_get_cart', 'rpress_get_cart_items' );
+add_action('rpress_get_cart', 'rpress_get_cart_items');
 /**
  * Get Delivery steps 
  *
@@ -809,12 +853,17 @@ add_action( 'rpress_get_cart', 'rpress_get_cart_items' );
  *
  * @param int $fooditem_id
  */
-function rpress_get_delivery_steps( $fooditem_id ) {
-  ob_start();
-  rpress_get_template_part( 'rpress', 'delivery-steps' );
-  $data = ob_get_clean();
-  $data = str_replace( '{fooditem_id}', $fooditem_id, $data );
-  return $data;
+function rpress_get_delivery_steps($fooditem_id)
+{
+	ob_start();
+	rpress_get_template_part('rpress', 'delivery-steps');
+	$data = ob_get_clean();
+	if ($fooditem_id) {
+		$data = str_replace('{fooditem_id}', $fooditem_id, $data);
+		return $data;
+	}
+	$data = str_replace('{fooditem_id}', "", $data);
+	return $data;
 }
 /**
  * Add delivery steps
@@ -823,7 +872,8 @@ function rpress_get_delivery_steps( $fooditem_id ) {
  *
  * @param int $fooditem_id
  */
-add_action( 'rpress_get_delivery_steps', 'rpress_add_delivery_steps' );
-function rpress_add_delivery_steps() {
- 	echo rpress_get_delivery_steps('');
+add_action('rpress_get_delivery_steps', 'rpress_add_delivery_steps');
+function rpress_add_delivery_steps()
+{
+	echo rpress_get_delivery_steps('');
 }

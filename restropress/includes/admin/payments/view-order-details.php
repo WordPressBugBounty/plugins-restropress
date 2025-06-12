@@ -169,7 +169,7 @@ $customer_email = is_array( isset( $payment_meta['user_info'] ) ) ? $payment_met
                     <div class="rpress-admin-box-inside">
 						<p class="rpress-order-payment-subtotal">
 							<span class="label"><?php esc_html_e( 'Subtotal', 'restropress' ); ?>:</span>&nbsp;
-                            <span class="value"><?php echo rpress_currency_symbol( $payment->currency );echo esc_attr( rpress_format_amount( $payment->subtotal ) ); ?></span>
+                            <span class="value"><?php echo rpress_currency_symbol( $payment->currency ); echo esc_attr( rpress_format_amount( $payment->subtotal ) ); ?></span>
 						</p>
 					</div>
 					<?php
@@ -605,16 +605,16 @@ $customer_email = is_array( isset( $payment_meta['user_info'] ) ) ? $payment_met
                   						<?php printf( _x( '%s Total Price', 'payment details purchased item total - mobile', 'restropress' ), rpress_get_label_singular() ); ?>
                   					</span>
                   					<span class="rpress-price-currency"><?php echo rpress_currency_symbol( $currency_code ); ?></span>
-                  					<span class="price-text rpress-payment-details-fooditem-amount"><?php echo rpress_format_amount( $price ); ?></span>
-                  					<input type="hidden" name="rpress-payment-details-fooditems[<?php echo $key; ?>][amount]" class="rpress-payment-details-fooditem-amount" value="<?php echo esc_attr( $item_price ); ?>"/>
+                  					<span class="price-text rpress-payment-details-fooditem-amount"><?php echo rpress_format_amount( $item_price * $quantity ); ?></span>
+                  					<input type="hidden" name="rpress-payment-details-fooditems[<?php echo $key; ?>][amount]" class="rpress-payment-details-fooditem-amount" value="<?php echo esc_attr( $item_price * $quantity ); ?>"/>
                   				</li>
                                   <li class="item_gross_price">
                   					<span class="rpress-payment-details-label-mobile">
                   						<?php printf( _x( '%s Gross Total Price', 'payment details purchased item total - mobile', 'restropress' ), rpress_get_label_singular() ); ?>
                   					</span>
                   					<span class="rpress-price-currency"><?php echo rpress_currency_symbol( $currency_code ); ?></span>
-                  					<span class="price-text rpress-payment-details-fooditem-gross-amount"><?php echo rpress_format_amount( $item_price * $quantity ); ?></span>
-                  					<input type="hidden" name="rpress-payment-details-fooditems[<?php echo $key; ?>][gross_amount]" class="rpress-payment-details-fooditem-gross-amount" value="<?php echo esc_attr( $item_price * $quantity ); ?>"/>
+                  					<span class="price-text rpress-payment-details-fooditem-gross-amount"><?php echo rpress_format_amount( $price ); ?></span>
+                  					<input type="hidden" name="rpress-payment-details-fooditems[<?php echo $key; ?>][gross_amount]" class="rpress-payment-details-fooditem-gross-amount" value="<?php echo esc_attr( $item_price ); ?>"/>
                   				</li>
                   			</ul>
                   			<!-- Addon Items Starts Here -->
@@ -742,7 +742,7 @@ $customer_email = is_array( isset( $payment_meta['user_info'] ) ) ? $payment_met
 							_ex( ' & Quantity', 'payment details add item quantity - mobile', 'restropress' ); ?>
 						</span>
 						<span class="rpress-fooditem-to-purchase-wrapper">
-	                        <span class="rpress-fooditem-variations"></span>
+	                        <span class="rpress-get-variable-prices"></span>
 	                        <span class="rpress-fooditem-price"></span>
 	                    </span>
 	                    <span>&nbsp;&times;&nbsp;</span>

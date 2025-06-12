@@ -802,14 +802,16 @@
                         $terms = get_the_terms( $product[ 'post_id' ], "food-category" ); 
                         $terms_name = isset($terms[0]->name);
                     
-                        $image_url = esc_url(get_the_post_thumbnail_url($product['post_id'], 'full') );
+                        $image_url = esc_url( get_the_post_thumbnail_url($product['post_id']) );
                         $sales_count  = get_post_meta($product['post_id'], '_rpress_fooditem_sales', true);
                     ?>
                     <div class="rp-bestselling-product-wrap mt-6">
                         <div class="flex items-center">
+                            <?php if( !empty( $image_url) ): ?>
                             <div class="flex items-center rp-bestselling-product-image">
                                 <img src="<?php echo esc_html( $image_url ); ?>">
                             </div>
+                            <?php endif; ?>
                             <div class="mr-auto ml-3">
                                 <div class="rp-bestselling-product-name"><?php echo esc_html($post_title); ?></div>
                                 <div class="rp-bestselling-product-description"><?php echo esc_html($post_content); ?>
@@ -945,7 +947,7 @@
                                     <br/>
                                 <# } #>
                             </div>
-                            <div class="rp-clear-fix"></div>
+                            <div class="rpress-clearfix"></div>
                             <div class="order-service-meta">
                                 <# if (data.payment_via) { #>
                                     <span>

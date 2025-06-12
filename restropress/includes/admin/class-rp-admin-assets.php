@@ -20,7 +20,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       add_action( 'admin_enqueue_scripts', array( $this, 'admin_styles' ) );
       add_action( 'admin_enqueue_scripts', array( $this, 'admin_scripts' ) );
       add_action( 'admin_enqueue_scripts', array( $this, 'register_styles' ), 100 );
-      add_action( 'admin_head', array( $this, 'admin_icons' ) );
+      add_action( 'admin_head', array( $this, 'admin_icons_buttons' ) );
       add_action( 'wp_ajax_selected_filter', array( $this, 'selected_filter' ) );
       add_action( 'wp_ajax_nopriv_selected_filter',array( $this, 'selected_filter' ) );
       add_action( 'wp_ajax_rpress_do_ajax_export', array($this, 'rpress_do_ajax_export' ) );
@@ -102,7 +102,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       $is_custom_cordinates_enabled = !empty( rpress_get_option( 'use_custom_latlng' ) ) ? 'yes' : 'no';
       $admin_params = array(
         'ajaxurl'                     => rpress_get_ajax_url(),
-        'please_wait'                 => esc_html__( 'Please Waitsss', 'restropress' ),
+        'please_wait'                 => esc_html__( 'Please Wait...', 'restropress' ),
         'success'                     => esc_html__( 'Success', 'restropress' ),
         'error'                       => esc_html__( 'Error', 'restropress' ),
         'information'                 => esc_html__( 'Information', 'restropress' ),
@@ -331,9 +331,30 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     * @since 1.0
     * @return void
     */
-    public function admin_icons() {
+    public function admin_icons_buttons() {
       $svg_images_url = esc_url( RP_PLUGIN_URL . 'assets/svg/restropress-icon.svg' );
-      ?>
+      $screen = get_current_screen();
+    
+    // Ensure we're on the fooditem post type listing page
+    if ($screen->id == 'edit-fooditem') {
+    ?>
+    <script type="text/javascript">
+    jQuery(document).ready(function($) {
+        const importBtn = $('<a>')
+            .addClass('page-title-action')
+            .attr('href', '<?php echo admin_url('admin.php?page=rpress-tools&tab=import_export'); ?>')
+            .text('<?php esc_html_e( 'Import', 'restropress' ); ?>')
+
+        const exportBtn = $('<a>')
+            .addClass('page-title-action')
+            .attr('href', '<?php echo admin_url('admin.php?page=rpress-reports&tab=export'); ?>')
+            .text('<?php esc_html_e( 'Export', 'restropress' ); ?>');
+
+        // Append buttons after "Add New"
+        $('.wrap .page-title-action').last().after(exportBtn).after(importBtn);
+    });
+    </script>
+    <?php } ?>
       <style type="text/css" media="screen">
         #dashboard_right_now .fooditem-count:before {
           background-image: url(<?php echo esc_url( $svg_images_url ); ?>);

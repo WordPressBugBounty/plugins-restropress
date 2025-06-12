@@ -61,7 +61,7 @@ class RP_Shortcodes {
     // @codingStandardsIgnoreStart
     echo empty( $wrapper['before'] ) ? '<div class="restropress ' . apply_filters( 'restropress_container_class', esc_attr( $wrapper['class'] ) )  . '">' : $wrapper['before'];
     call_user_func( $function, $escaped_atts ); 
-    echo empty( $wrapper['after'] ) ? '</div>' : $wrapper['after'];
+    echo empty( $wrapper['after'] ) ? '<div class="clearfix"></div></div>' : $wrapper['after'];
     // @codingStandardsIgnoreEnd
     return ob_get_clean();
   }
@@ -119,7 +119,6 @@ class RP_Shortcodes {
    */
   public static function rpress_receipt( $atts = array(), $content = null ) {
     global $rpress_receipt_args;
-    $escaped_atts = esc_js($atts);
     $rpress_receipt_args = shortcode_atts( array(
       'error'           => __( 'Sorry, trouble retrieving payment receipt.', 'restropress' ),
       'price'           => true,
@@ -130,21 +129,26 @@ class RP_Shortcodes {
       'payment_key'     => false,
       'payment_method'  => true,
       'payment_id'      => true
-    ), $escaped_atts, 'rpress_receipt' );
+    ), $atts, 'rpress_receipt' );
     $session = rpress_get_purchase_session();
-    if ( isset( $_GET['payment_key'] ) ) {
-      $payment_key = urldecode( sanitize_text_field( $_GET['payment_key'] ) );
-    } else if ( $session ) {
-      $payment_key = $session['purchase_key'];
-    } elseif ( $rpress_receipt_args['payment_key'] ) {
-      $payment_key = $rpress_receipt_args['payment_key'];
+    $payment_key = '';
+
+    if ( ! empty( $_GET['payment_key'] ) ) {
+        $payment_key = urldecode( sanitize_text_field( $_GET['payment_key'] ) );
+    } elseif ( ! empty( $session['purchase_key'] ) ) {
+        $payment_key = sanitize_text_field( $session['purchase_key'] );
+    } elseif ( ! empty( $rpress_receipt_args['payment_key'] ) ) {
+        $payment_key = sanitize_text_field( $rpress_receipt_args['payment_key'] );
     }
+
     // No key found
-    if ( ! isset( $payment_key ) ) {
+    if ( empty( $payment_key ) ) {
       return '<p class="rpress-alert rpress-alert-error">' . $rpress_receipt_args['error'] . '</p>';
     }
+
     $payment_id    = rpress_get_purchase_id_by_key( $payment_key );
     $user_can_view = rpress_can_view_receipt( $payment_key );
+    
     // Key was provided, but user is logged out. Offer them the ability to login and view the receipt
     if ( ! $user_can_view && ! empty( $payment_key ) && ! is_user_logged_in() && ! rpress_is_guest_payment( $payment_id ) ) {
       global $rpress_login_redirect;

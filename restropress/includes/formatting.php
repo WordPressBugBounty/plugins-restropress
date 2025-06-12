@@ -90,6 +90,7 @@ function rpress_format_amount( $amount, $decimals = true ) {
 	if ( empty( $amount ) ) {
 		$amount = 0;
 	}
+	$amount = rpress_sanitize_amount( $amount );
 	$decimals  = apply_filters( 'rpress_format_amount_decimals', $decimals ? 2 : 0, $amount );
 	$formatted = number_format( $amount, $decimals, $decimal_sep, $thousands_sep );
 	return apply_filters( 'rpress_format_amount', $formatted, $amount, $decimals, $decimal_sep, $thousands_sep );

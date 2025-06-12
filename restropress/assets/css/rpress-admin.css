@@ -722,11 +722,13 @@ ul#adminmenu li#menu-posts-fooditem img {
 	margin: 0 auto
 }
 .rpress-add-ons-view-wrapper .rp-col-sm-4{
-	width: 30.333333%
+	width: 33.33333%;
+	padding-left: 0;
+	padding-right: 30px;
 }
-.rpress-add-ons-view-wrapper .rp-col-sm-4{
+/*.rpress-add-ons-view-wrapper .rp-col-sm-4{
 	width: 30.333333%
-}
+}*/
 /* Tooltips */
 .rpress-help-tip {
 	cursor: help
@@ -801,6 +803,23 @@ table.rpress_emails tr:nth-child(odd) td {
 }
 .rpress-add-ons-view-wrapper {
 	height: 50px
+}
+.no-addons-wrapper {
+    padding: 50px 0;
+    text-align: center;
+}
+.rpress-add-ons-view-wrapper .no-addons-wrapper p.no-addons-message {
+    font-size: 16px;
+    font-weight: 500;
+	padding: 0;
+	margin: 0;
+    text-decoration: none;
+    color: #595f6aa3;
+	text-align: center;
+}
+.no-addons-wrapper img{
+    max-width: 250px !important;
+    margin: 0 !important;
 }
 #rpress-add-ons h2 .button-primary {
 	position: absolute
@@ -1187,21 +1206,6 @@ input[class*="rpress-price-field"] {
 }
 #rpress-edit-order-form input.large-text {
 	width: 90%
-}
-.rpress-edit-purchase-element ul li.fooditem {
-	width: 35%
-}
-.rpress-edit-purchase-element ul li.item_price {
-	width: 25%
-}
-.rpress-edit-purchase-element ul li.item_price.item_quantity {
-	width: 25%
-}
-.rpress-edit-purchase-element ul li.item_tax {
-	width: 15%
-}
-.rpress-edit-purchase-element ul li.price {
-	width: 20%
 }
 .rpress-admin-box .label {
 	font-weight: 600
@@ -2362,10 +2366,189 @@ form#delivery-options label {
 	line-height: 1.6em;
 	font-size: 19px
 }
+/*-----Add On Items-filter_part/title-part-----*/
+.rpress-about-body{
+	display: flex;
+	-ms-flex-align: center;
+	align-items: center;
+	gap: 10px;
+	margin:2rem 0rem 3rem;
+	justify-content: flex-start;
+	padding: 0;
+	position: relative;
+	min-height: 50px;
+	width: 100%;
+}
+.rpress-about-body .page-header-icon {
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    align-self: start;
+    background: #FFFFFF;
+    box-shadow: 0px 3px 24px rgb(0 0 0 / 6%);
+    border-radius: 100px;
+}
+#rpress-add-ons h2 {
+    color: #3A3535;
+    font-weight: bold;
+    font-size: 24px;
+    margin: 0;
+}
+.rpress-about-body .about-text {
+	font-size: 16px;
+	font-weight: 400;
+	margin:6px 0 0;
+	min-height: auto;
+	line-height: normal;
+}
+body.restropress_page_rpress-extensions{
+	background: transparent;
+}
+#rpress-add-ons .rpress-plugin-filter {
+	width: 80%;
+	position: relative;
+	border-radius: 9px;
+	background-color: #F9FAFC;
+	border: 1px solid #EFF0F2;
+	padding:4px 20px 4px 4px;
+}
+#rpress-add-ons .rpress-plugin-filter>div{
+	display: flex;
+    gap: 10px;
+}
+#rpress-add-ons .rpress-plugin-filter a{
+	cursor: pointer;
+	font-size: 16px;
+	font-weight: 500;
+	padding: 12px 20px;
+	text-decoration: none;
+	color: #595F6A;
+	transition-property: all;
+	transition-duration: 0.2s;
+	transition-timing-function: linear;
+	transition-delay: 0s;
+}
+#rpress-add-ons .rpress-plugin-filter a.current,
+#rpress-add-ons .rpress-plugin-filter a:hover{
+	background-color: #FFFFFF;
+	box-shadow: 0px 3px 20px rgb(0 0 0 / 6%);
+	border-radius: 8px;
+	transition: width 0.2s linear 0s, transform 0.2s ease-out 0s;
+	transition-property: all;
+	transition-duration: 0.2s;
+	transition-timing-function: linear;
+	transition-delay: 0.05s;
+}
+.rpress-search-wrap.rpress-live-search {
+    position: relative;
+}
+.rpress-search-wrap.rpress-live-search svg{
+	position: absolute;
+	top: 15px;
+	left: 15px;
+	z-index: 2;
+	display: block;
+	text-align: center;
+	pointer-events: none;
+	color: #6D6F7B;
+}
+input#rpress-plugin-search {
+    background: #fff;
+    border: 0.0625rem solid #f0f1f5;
+    padding:10px 20px 10px 45px;
+    color: #3A3535;
+    min-height: auto;
+    height: auto;
+    display: block;
+    width: 100%;
+    max-width: 500px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    border-radius:9px;
+}
+input#rpress-plugin-search:focus {
+	border-color: #c4c4c7;
+	box-shadow: none;
+}
+.rpress-plugin-filter-wrapper.d-flex{
+	display: flex;
+	gap: 20px;
+	align-items: center;
+}
+/* ------Add On Items-toggle-design------ */
+.rp-license-deactivate-inner .switch {
+    position: absolute;
+    display: block;
+    width: 60px;
+    height: 32px;
+}
+.rp-license-deactivate-inner .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.rp-license-deactivate-inner .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+.rp-license-deactivate-inner .slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 6px;
+    bottom: 5px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+.rp-license-deactivate-inner input:checked + .slider {
+    background-color: #11CC79;
+}
+.rp-license-deactivate-inner input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+.rp-license-deactivate-inner input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+}
+.rp-license-deactivate-inner .slider.round {
+    border-radius: 34px;
+}
+.rp-license-deactivate-inner .slider.round:before {
+    border-radius: 50%;
+}
+.rp-license-deactivate-inner .switch {
+    position: relative;
+}
+.rp-license-deactivate-inner .switch input:checked + .slider {
+    background-color: #1A5CF0;
+}
 /* Add On Items-------------------------------------------------------------- */
 div.restropress-addons-all {
 	margin-bottom: 40px;
 	padding-top: 40px
+}
+div.restropress-addon-item .rp-addon-main-wrap{
+	padding: 1rem 0rem 0rem 0rem;
+	border: 0px solid whitesmoke;
+	border-radius: 0;
+}
+div.restropress-addon-item .rp-addon-main-wrap .rp-addon-info {
+    padding: 0rem 2rem 1rem 1.6rem;
 }
 div.restropress-addons-all .restropress-addon-item {
 	box-sizing: border-box;
@@ -2394,27 +2577,30 @@ div.restropress-addons-all .restropress-addon-item {
 	max-width: 100%;
 	vertical-align: top;
 	object-fit: cover;
-	height: 165px;
-	border-top-left-radius: 12px;
-	border-top-right-radius: 12px
+	height: 70px;
+	border-radius:8px;
 }
 .rpress-purchased-wrap {
 	display: block;
 	clear: both;
-	margin-top: 15px
+	margin-top: 15px;
+
+	border-top: 1.8px solid #E5E6E8;
+	position: relative;
+	padding: 1.8rem 1.5rem;
 }
 .rpress-license-wrapper {
 	display: flex;
-	margin-top: 13px;
+	margin-top: 0px;
 	clear: both;
-	overflow: hidden
+	overflow: visible;
 }
 .rpress-license-wrapper.rpress-updated {
 	display: none
 }
 .rpress-license-deactivate-wrapper {
 	clear: both;
-	overflow: hidden;
+	overflow: inherit;
 	margin-top: 0px;
 	height: 35px
 }
@@ -2474,17 +2660,28 @@ div.restropress-btn-group.rpress-purchase-section span {
 	border: 1px solid #d8d8d8
 }
 .rpress-license-wrapper button.button {
+	color: #fff;
+	background: #39424B;
+	border-color: transparent;
 	width: 38%;
 	height: 37px;
+	min-width: 130px;
+    line-height: 2.8;
+    font-weight: 700;
+	margin: 0;
 	border-radius: 0 5px 5px 0;
 	-webkit-border-radius: 0 5px 5px 0;
 	-moz-border-radius: 0 5px 5px 0;
-	background: #ffe9e9;
-	color: #ff6464;
-	font-weight: 600;
-	border-color: transparent;
-	font-size: 12px;
-	margin: 0
+	box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}
+.rpress-license-wrapper button.button:hover,
+.rpress-license-wrapper button.button:focus,
+.rpress-license-wrapper button.button:visited
+{
+	color: #fff;
+	background: #333;
+	border-color: #333;
+	box-shadow: #39424B;
 }
 .restropress-addon-item.inactive .rpress-license-wrapper{
 	display: none 
@@ -2602,34 +2799,44 @@ select.rp_payment_current_status.processing, #rpress-payments-filter span.proces
 	color: #fff
 }
 .restropress-addon-img-wrap {
-	height: 165px;
-	overflow: hidden
+	/*height: 165px;
+	overflow: hidden;*/
+	position: absolute;
+    right: 8px;
+    top: 8px;
+    height: 70px;
+    width: 70px;
 }
 .restropress-addon-item {
 	margin-bottom: 30px
 }
 .rp-addin-item-inner-wrap {
-	padding: 10px;
+	/*padding: 10px;
 	background: #fff;
 	box-shadow: 1px 2px 10px #dddddd6b;
 	border-radius: 12px;
 	height: 365px;
 	max-height: 365px
+	padding: 0.5rem 1.5rem;*/
+	position: relative;
+	border: 1.8px solid #E5E6E8;
+	border-radius: 14px;
+	box-shadow: 0px 3px 20px rgb(0 0 0 / 6%);
+	background: rgb(247,247,247);
+	background: linear-gradient(250deg, rgba(247,247,247,1) 0%, rgba(255,255,255,1) 100%);
+	transition: all .5s ease-in-out;
+	    height: 280px;
 }
 .rp-addon-info span {
-	text-decoration: none !important;
-	line-height: 1.4;
-	max-height: 80px;
-	width: 100%;
-	overflow: hidden;
-	text-align: left;
+	color: #717A90;
+	font-weight: 400;
+	font-size: 18px;
+	line-height: 1.5;	
 	text-overflow: ellipsis;
 	display: -webkit-box;
-	-webkit-line-clamp: 4;
-	font-size: 14px;
-	-webkit-box-orient: vertical;
-	font-weight: 400;
-	color: #1d1d1d
+	-webkit-line-clamp: 2;
+	max-height: 50px;
+	overflow: hidden;
 }
 button.button.pull-left.rpress-deactivate-license {
 	color: #35c476;
@@ -2640,15 +2847,24 @@ button.button.pull-left.rpress-deactivate-license {
 	vertical-align: top
 }
 small.rpress-addon-item-pricing{
-	font-weight: 600;
-	font-size: 16px;
-	color: #9c9999;
-	line-height: 2.15384615
+    color: #0F172A;
+    font-size: 16px;
+	line-height: 2.15384615;
+    font-weight: 500;
+    text-align: left;
 }
-.rp-license-deactivate-inner {
-	display: flex;
-	justify-content: space-between;
-	vertical-align: middle
+.rp-license-deactivate-inner .card-footer{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.rp-license-deactivate-inner .card-footer span.status-text.text-green{
+    color: #35C476;
+    background-color: #E9F8F0;
+    padding: 0.7rem 1rem;
+    border-radius: 11px;
+    font-size: 16px;
+    font-weight: 500;
 }
 div.rpress-add-ons-view-wrapper div.installed .rpress-license-default-wrapper.hide {
 	display: none
@@ -2660,8 +2876,15 @@ div.rpress-add-ons-view-wrapper div.installed .rpress-license-default-wrapper.sh
 	display: none
 }
 .rp-addin-item-inner-wrap h3{
-	margin: 0;
-	padding: 10px 10px 20px 10px
+	padding: 1rem 2rem 0rem 1.6rem;
+	margin: 15px 50px 5px 0;
+	font-size: 20px;
+	/* height: 80px; */
+	line-height: 26px;
+	font-weight: 700;
+	letter-spacing: -0.2px;
+	text-align: left;
+	color:#0F172A;
 }
 .restropress-btn-group.rpress-addon-details-section.pull-left{
 	display: flex;
@@ -2669,25 +2892,45 @@ div.rpress-add-ons-view-wrapper div.installed .rpress-license-default-wrapper.sh
 	vertical-align: middle
 }
 .restropress-btn-group.rpress-addon-details-section.pull-left a{
-	background: #f6f1e6;
+	/*background: #f6f1e6;
 	border-color: transparent;
-	color: #e0b962;
-	text-shadow: none;
-	font-weight: 700;
-	text-transform: uppercase;
-	display: inline-block;
-	text-decoration: none;
+	color: #e0b962;*/
+	color: #39424B;
+	background-color: transparent;
+	border: 1px solid #D3D4D6;
+	margin: 0;
+	padding: 2px 15px;
 	font-size: 13px;
 	line-height: 2.8;
+	font-weight: 700;
+	text-transform: uppercase;
+	text-shadow: none;
+	display: inline-block;
+	text-decoration: none;
 	min-height: 30px;
-	margin: 0;
 	cursor: pointer;
-	border-width: 1px;
-	border-style: solid;
-	-webkit-appearance: none;
-	border-radius: 3px;
+	border-radius: 11px;
 	white-space: nowrap;
-	box-sizing: border-box
+	-webkit-appearance: none;
+	box-sizing: border-box;	
+}
+.restropress-btn-group.rpress-addon-details-section.pull-left a:hover{
+	background: #39424B;
+	border-color: #39424B;
+	color: #fff;
+}
+.addon-link-wrap{
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
+	gap:10px;
+	padding: 0rem 2rem 1rem 1.6rem;
+}
+.addon-link-wrap span{
+    color: #0F172A;
+    font-size: 15px;
+    font-weight: 500;
 }
 /* Payment Status Color Schemes */
 #rpress-payments-filter mark.status-pending,#rpress-payments-filter .rp_order_status.rp_current_status_pending,.rp-backbone-modal.rp-order-preview .status-pending span {
@@ -3436,30 +3679,3 @@ form#rpress-export-payments input.button-secondary.button-disabled {
 	  transform: rotate(360deg);
 	}
   }
-  /*----admin-food-item-purchase-section----*/
-ul.rpress-purchased-items-list-wrapper li,
-ul.rpress-purchased-items-list-header li{
-	width: 160px !important;
-}
-.rpress-order-items-wrapper{
-    width: 100% !important;
-}
-div#rpress-purchased-items .rpress-purchased-items-header.row.header ul.rpress-purchased-items-list-header{
-	display: flex;
-    width: 100% !important;
-    align-items: center;
-}
-.rpress-order-items-wrapper ul.rpress-purchased-items-list-wrapper.\30 {
-    display: flex;
-    align-items: center;
-}
-.rpress-purchased-items-header ul.rpress-purchased-items-list-wrapper li,
-.rpress-purchased-items-header ul.rpress-purchased-items-list-header li,
-#rpress-purchased-items .rpress-order-items-wrapper .rpress-purchased-items-list-wrapper .fooditem{
-	width:160px !important;
-}
-#rpress-purchased-items .rpress-purchased-items-list-wrapper .item_price,
-#rpress-purchased-items .rpress-purchased-items-list-wrapper .item_tax,
-#rpress-purchased-items .rpress-purchased-items-list-wrapper .price {
-	top: 0px;
-}

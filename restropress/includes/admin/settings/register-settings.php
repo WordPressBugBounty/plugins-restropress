@@ -950,20 +950,39 @@ function rpress_get_registered_settings() {
 					'show_agree_to_terms' => array(
 						'id'   => 'show_agree_to_terms',
 						'name' => esc_html__( 'Agree to Terms', 'restropress' ),
-						'desc' => esc_html__( 'Check this to show an <b><i>Agree to Terms</i></b> on checkout that users must check before creating orders.', 'restropress' ),
+						'desc' => wp_kses(
+							__( 'Check this to show an <b><i>Agree to Terms</i></b> on checkout that users must check before creating orders.', 'restropress' ),
+							array(
+								'b' => array(),
+								'i' => array(),
+								'strong' => array()
+							)
+						),
 						'type' => 'checkbox',
 					),
 					'agree_label' => array(
 						'id'   => 'agree_label',
 						'name' => esc_html__( 'Agree to Terms Label', 'restropress' ),
-						'desc' => esc_html__( 'Label shown next to <b><i>Agree to Terms</i></b> checkbox.', 'restropress' ),
+						'desc' => wp_kses(
+							__( 'Label shown next to <b><i>Agree to Terms</i></b> checkbox.', 'restropress' ),
+							array(
+								'b' => array(),
+								'i' => array()
+							)
+						),
 						'type' => 'text',
 						'size' => 'regular',
 					),
 					'agree_text' => array(
 						'id'   => 'agree_text',
 						'name' => esc_html__( 'Agreement Text', 'restropress' ),
-						'desc' => esc_html__( 'If <b><i>Agree to Terms</i></b> is checked, enter the agreement terms here.', 'restropress' ),
+						'desc' => wp_kses(
+							__( 'If <b><i>Agree to Terms</i></b> is checked, enter the agreement terms here.', 'restropress' ),
+							array(
+								'b' => array(),
+								'i' => array()
+							)
+						),
 						'type' => 'rich_editor',
 					),
 				),

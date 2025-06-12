@@ -7,7 +7,7 @@ $userlname = esc_html( $current_user->user_lastname );
 $userdname = esc_html( $current_user->display_name );
 $userid = esc_html( $current_user->ID );
 $useravatar = get_avatar( $current_user->ID, 96 ); // 96 is the size in pixels
-$user_phone = get_user_meta( $current_user->ID, 'phone_number', true );
+$user_phone = get_user_meta( $current_user->ID, '_rpress_phone', true );
 $paged = '';
 $args = array(  
     'post_type'         => 'rpress_payment',
@@ -508,12 +508,12 @@ if ( ! is_user_logged_in() ) {
 </div>
     <?php
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['submit_profile_form'] == "Submit") {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_profile_form']) ) {
     // Get submitted form data
-    $new_user_fname = sanitize_input( $_POST['first_name']);
-    $new_user_lname = sanitize_input( $_POST['last_name']);
-    $new_user_email = sanitize_input( $_POST['email']);
-    $new_user_phone = sanitize_input( $_POST['phone']);
+    $new_user_fname = sanitize_text_field( $_POST['first_name']);
+    $new_user_lname = sanitize_text_field( $_POST['last_name']);
+    $new_user_email = sanitize_email( $_POST['email']);
+    $new_user_phone = sanitize_text_field( $_POST['phone']);
     // Update user data
     $current_user = wp_get_current_user();
     $user_id = $current_user->ID;
@@ -531,11 +531,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['submit_profile_form'] == "Su
     }
     // Update phone
     if (!empty($new_user_phone)) {
-        update_user_meta($user_id, 'phone_number', $new_user_phone);
+        update_user_meta($user_id, '_rpress_phone', $new_user_phone);
     }
     
     // Output JavaScript to reload the page
-    echo esc_js('<script>window.location.href = window.location.href;</script>');
+//     echo esc_js('<script>window.location.href = window.location.href;</script>');
+	echo '<script>window.location.href = "' . esc_url($_SERVER['REQUEST_URI']) . '";</script>';
     exit;
 }
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_user_address'])) {

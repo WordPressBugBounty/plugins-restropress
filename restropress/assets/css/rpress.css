@@ -1351,7 +1351,7 @@ html body .rpress-popup-actions input.qty.qty-style {
 	letter-spacing: 0.72px;
 	text-transform: uppercase;
 	text-align: center;
-	color: rgb(255, 255, 255);
+	/* color: rgb(255, 255, 255); */
 	font-weight: 600;
 	border-radius: 4px;
 	padding: 12px 15px;

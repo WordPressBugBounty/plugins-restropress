@@ -345,6 +345,247 @@ function rpress_tools_import_export_display() {
 		return;
 	}
 	do_action( 'rpress_tools_import_export_before' ); ?>
+	<div class="postbox rpress-import-fooditems">
+		<h3><span><?php esc_html_e( 'Import Food Items', 'restropress' ); ?></span></h3>
+		<div class="inside">
+			<p><?php esc_html_e( 'Import a CSV file of Food Items.', 'restropress' ); ?></p>
+			<form id="rpress-import-fooditems" class="rpress-import-form rpress-import-export-form" action="<?php echo esc_url( add_query_arg( 'rpress_action', 'upload_import_file', admin_url() ) ); ?>" method="post" enctype="multipart/form-data">
+				<div class="rpress-import-file-wrap">
+					<?php wp_nonce_field( 'rpress_ajax_import', 'rpress_ajax_import' ); ?>
+					<input type="hidden" name="rpress-import-class" value="RPRESS_Batch_FoodItems_Import"/>
+					<p>
+						<input name="rpress-import-file" id="rpress-fooditems-import-file" type="file" />
+					</p>
+					<span>
+						<input type="submit" value="<?php esc_html_e( 'Import CSV', 'restropress' ); ?>" class="button-secondary"/>
+						<span class="spinner"></span>
+					</span>
+				</div>
+				<div class="rpress-import-options" id="rpress-import-fooditems-options" style="display:none;">
+					<p>
+						<?php
+						printf(
+							esc_html(esc_html__( 'Each column loaded from the CSV needs to be mapped to a Food Item field. Select the column that should be mapped to each field below. Any columns not needed can be ignored.', 'restropress' )
+							)
+						);
+						?>
+					</p>
+					<table class="widefat rpress_repeatable_table striped" width="100%" cellpadding="0" cellspacing="0">
+						<thead>
+							<tr>
+								<th><strong><?php esc_html_e( 'Product Field', 'restropress' ); ?></strong></th>
+								<th><strong><?php esc_html_e( 'CSV Column', 'restropress' ); ?></strong></th>
+								<th><strong><?php esc_html_e( 'Data Preview', 'restropress' ); ?></strong></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><?php esc_html_e( 'Product Author', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[post_author]" class="rpress-import-csv-column" data-field="Author">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Categories', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[categories]" class="rpress-import-csv-column" data-field="Categories">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Addons', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[addons]" class="rpress-import-csv-column" data-field="Addons">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Addons Prices', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[addon_prices]" class="rpress-import-csv-column" data-field="Addon Prices">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Addons Is Required', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[addon_is_required]" class="rpress-import-csv-column" data-field="Addons Is Required">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Max Addons', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[addon_max]" class="rpress-import-csv-column" data-field="Max Addons">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Variable Price Label', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[variable_price_label]" class="rpress-import-csv-column" data-field="Variable Price Label">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Default Addons', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[default_addons]" class="rpress-import-csv-column" data-field="Default Addons">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Creation Date', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[post_date]" class="rpress-import-csv-column" data-field="Date Created">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Description', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[post_content]" class="rpress-import-csv-column" data-field="Description">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Excerpt', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[post_excerpt]" class="rpress-import-csv-column" data-field="Excerpt">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Image', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[featured_image]" class="rpress-import-csv-column" data-field="Featured Image">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Notes', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[notes]" class="rpress-import-csv-column" data-field="Notes">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Price(s)', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[price]" class="rpress-import-csv-column" data-field="Price">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product SKU', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[sku]" class="rpress-import-csv-column" data-field="SKU">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Slug', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[post_name]" class="rpress-import-csv-column" data-field="Slug">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Status', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[post_status]" class="rpress-import-csv-column" data-field="Status">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Tags', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[tags]" class="rpress-import-csv-column" data-field="Tags">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Tag Mark', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[tag_mark]" class="rpress-import-csv-column" data-field="None/Veg/Non-Veg">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Product Title', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[post_title]" class="rpress-import-csv-column" data-field="Name">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Sale Count', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[sales]" class="rpress-import-csv-column" data-field="Sales">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e( 'Total Earnings', 'restropress' ); ?></td>
+								<td>
+									<select name="rpress-import-field[earnings]" class="rpress-import-csv-column" data-field="Earnings">
+										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
+									</select>
+								</td>
+								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
+							</tr>
+						</tbody>
+					</table>
+					<p class="submit">
+						<button class="rpress-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'restropress' ); ?></button>
+					</p>
+				</div>
+			</form>
+		</div><!-- .inside -->
+	</div><!-- .postbox -->
 	<div class="postbox rpress-import-payment-history">
 		<h3><span><?php esc_html_e( 'Import Order History', 'restropress' ); ?></span></h3>
 		<div class="inside">
@@ -622,7 +863,7 @@ function rpress_tools_import_export_display() {
 			</form>
 		</div><!-- .inside -->
 	</div><!-- .postbox -->
-<div class="postbox rpress-import-customer-history">
+	<div class="postbox rpress-import-customer-history">
 		<h3><span><?php esc_html_e( 'Import Customers ', 'restropress' ); ?></span></h3>
 		<div class="inside">
 			<p><?php esc_html_e( 'Import a CSV file of customer records.', 'restropress' ); ?></p>
@@ -798,247 +1039,6 @@ function rpress_tools_import_export_display() {
 								<td><?php esc_html_e( 'Country', 'restropress' ); ?></td>
 								<td>
 									<select name="rpress-import-field[country]" class="rpress-import-csv-column" data-field="Country/Region">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-						</tbody>
-					</table>
-					<p class="submit">
-						<button class="rpress-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'restropress' ); ?></button>
-					</p>
-				</div>
-			</form>
-		</div><!-- .inside -->
-	</div><!-- .postbox -->
-	<div class="postbox rpress-import-fooditems">
-		<h3><span><?php esc_html_e( 'Import Food Items', 'restropress' ); ?></span></h3>
-		<div class="inside">
-			<p><?php esc_html_e( 'Import a CSV file of Food Items.', 'restropress' ); ?></p>
-			<form id="rpress-import-fooditems" class="rpress-import-form rpress-import-export-form" action="<?php echo esc_url( add_query_arg( 'rpress_action', 'upload_import_file', admin_url() ) ); ?>" method="post" enctype="multipart/form-data">
-				<div class="rpress-import-file-wrap">
-					<?php wp_nonce_field( 'rpress_ajax_import', 'rpress_ajax_import' ); ?>
-					<input type="hidden" name="rpress-import-class" value="RPRESS_Batch_FoodItems_Import"/>
-					<p>
-						<input name="rpress-import-file" id="rpress-fooditems-import-file" type="file" />
-					</p>
-					<span>
-						<input type="submit" value="<?php esc_html_e( 'Import CSV', 'restropress' ); ?>" class="button-secondary"/>
-						<span class="spinner"></span>
-					</span>
-				</div>
-				<div class="rpress-import-options" id="rpress-import-fooditems-options" style="display:none;">
-					<p>
-						<?php
-						printf(
-							esc_html(esc_html__( 'Each column loaded from the CSV needs to be mapped to a Food Item field. Select the column that should be mapped to each field below. Any columns not needed can be ignored.', 'restropress' )
-							)
-						);
-						?>
-					</p>
-					<table class="widefat rpress_repeatable_table striped" width="100%" cellpadding="0" cellspacing="0">
-						<thead>
-							<tr>
-								<th><strong><?php esc_html_e( 'Product Field', 'restropress' ); ?></strong></th>
-								<th><strong><?php esc_html_e( 'CSV Column', 'restropress' ); ?></strong></th>
-								<th><strong><?php esc_html_e( 'Data Preview', 'restropress' ); ?></strong></th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr>
-								<td><?php esc_html_e( 'Product Author', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[post_author]" class="rpress-import-csv-column" data-field="Author">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Categories', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[categories]" class="rpress-import-csv-column" data-field="Categories">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Addons', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[addons]" class="rpress-import-csv-column" data-field="Addons">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Addons Prices', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[addon_prices]" class="rpress-import-csv-column" data-field="Addon Prices">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Addons Is Required', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[addon_is_required]" class="rpress-import-csv-column" data-field="Addons Is Required">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Max Addons', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[addon_max]" class="rpress-import-csv-column" data-field="Max Addons">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Variable Price Label', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[variable_price_label]" class="rpress-import-csv-column" data-field="Variable Price Label">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Default Addons', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[default_addons]" class="rpress-import-csv-column" data-field="Default Addons">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Creation Date', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[post_date]" class="rpress-import-csv-column" data-field="Date Created">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Description', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[post_content]" class="rpress-import-csv-column" data-field="Description">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Excerpt', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[post_excerpt]" class="rpress-import-csv-column" data-field="Excerpt">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Image', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[featured_image]" class="rpress-import-csv-column" data-field="Featured Image">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Notes', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[notes]" class="rpress-import-csv-column" data-field="Notes">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Price(s)', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[price]" class="rpress-import-csv-column" data-field="Price">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product SKU', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[sku]" class="rpress-import-csv-column" data-field="SKU">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Slug', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[post_name]" class="rpress-import-csv-column" data-field="Slug">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Status', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[post_status]" class="rpress-import-csv-column" data-field="Status">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Tags', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[tags]" class="rpress-import-csv-column" data-field="Tags">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Tag Mark', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[tag_mark]" class="rpress-import-csv-column" data-field="None/Veg/Non-Veg">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Product Title', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[post_title]" class="rpress-import-csv-column" data-field="Name">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Sale Count', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[sales]" class="rpress-import-csv-column" data-field="Sales">
-										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
-									</select>
-								</td>
-								<td class="rpress-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'restropress' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Total Earnings', 'restropress' ); ?></td>
-								<td>
-									<select name="rpress-import-field[earnings]" class="rpress-import-csv-column" data-field="Earnings">
 										<option value=""><?php esc_html_e( '- Ignore this field -', 'restropress' ); ?></option>
 									</select>
 								</td>

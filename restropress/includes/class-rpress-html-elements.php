@@ -34,7 +34,6 @@ class RPRESS_HTML_Elements {
 			'selected'    => 0,
 			'chosen'      => false,
 			'number'      => -1,
-			'bundles'     => true,
 			'variations'  => false,
 			'placeholder' => sprintf( __( 'Choose a %s', 'restropress' ), rpress_get_label_singular() ),
 			'data'        => array(
@@ -61,17 +60,7 @@ class RPRESS_HTML_Elements {
 			// If we didn't get an array, fallback to 'publish'.
 			$product_args['post_status'] = array( 'publish' );
 		}
-		// Maybe disable bundles
-		if( ! $args['bundles'] ) {
-			$product_args['meta_query'] = array(
-				'relation'       => 'AND',
-				array(
-					'key'        => '_rpress_product_type',
-					'value'      => 'bundle',
-					'compare'    => 'NOT EXISTS'
-				)
-			);
-		}
+
 		$product_args = apply_filters( 'rpress_product_dropdown_args', $product_args );
 		// Since it's possible to have selected items not within the queried limit, we need to include the selected items.
 		$products     = get_posts( $product_args );
@@ -100,16 +89,17 @@ class RPRESS_HTML_Elements {
 		$options[0] = '';
 		if ( $products ) {
 			foreach ( $products as $product ) {
-				$options[ absint( $product->ID ) ] = esc_html( $product->post_title );
 				if ( $args['variations'] && rpress_has_variable_prices( $product->ID ) ) {
  					$prices = rpress_get_variable_prices( $product->ID );
  					foreach ( $prices as $key => $value ) {
  						$name = ! empty( $value['name'] )   ? $value['name']   : '';
  						if ( $name ) {
- 							$options[ absint( $product->ID ) . '_' . $key ] = esc_html( $product->post_title . ': ' . $name );
+ 							$options[ absint( $product->ID ) . '_' . intval($key + 1) ] = esc_html( $product->post_title . ' - ' . $name );
  						}
  					}
  				}
+				else
+					$options[ absint( $product->ID ) ] = esc_html( $product->post_title );
 			}
 		}
 		// This ensures that any selected products are included in the drop down
@@ -145,9 +135,6 @@ class RPRESS_HTML_Elements {
 					$options[ $parsed_item['fooditem_id'] ] = get_the_title( $parsed_item['fooditem_id'] );
 				}
 			}
-		}
-		if ( ! $args['bundles'] ) {
-			$args['class'] .= ' no-bundles';
 		}
 		if ( $args['variations'] ) {
 			$args['class'] .= ' variations';

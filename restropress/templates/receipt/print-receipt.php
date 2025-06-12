@@ -1,6 +1,13 @@
 <?php
 /**
- * This template is used to display the printer receipt
+ * Template: Print Receipt
+ *
+ * This template is used to display the printer receipt for orders.
+ * It includes store information, order details, and customer information.
+ *
+ * @package RestroPress/Templates/Receipt
+ * @version 1.0.0
+ * @since 1.0
  */
 defined( 'ABSPATH' ) || exit;
 ?>
