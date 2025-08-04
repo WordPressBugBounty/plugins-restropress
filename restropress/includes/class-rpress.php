@@ -17,7 +17,7 @@ final class RestroPress {
    *
    * @var string
    */
-  public $version = '3.1.9';
+  public $version = '3.1.9.2';
 	/**
    * The single instance of the class.
    *
@@ -262,6 +262,8 @@ final class RestroPress {
 		require_once RP_PLUGIN_DIR . 'includes/tax-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/process-purchase.php';
 		require_once RP_PLUGIN_DIR . 'includes/login-register.php';
+		require_once RP_PLUGIN_DIR . "includes/firebase/class-rpress-firebase-fcm-impl.php";
+
 		// Must be loaded on frontend to ensure cron runs
 		require_once RP_PLUGIN_DIR . 'includes/admin/tracking.php';
 		require_once RP_PLUGIN_DIR . 'includes/privacy-functions.php';

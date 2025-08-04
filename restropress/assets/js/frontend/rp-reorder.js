@@ -1,4 +1,3 @@
-console.log(rp_scripts);
 jQuery(function ($) {
     $(document).on('click', '.rpress-reorder-btn', function (e) {
         e.preventDefault();

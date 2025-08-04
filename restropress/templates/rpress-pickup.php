@@ -27,14 +27,22 @@
        <?php if( is_array( $store_timings ) ) :
          foreach( $store_timings as $key => $time ) :
           $loop_time = gmdate( $time_format, $time );
+
+          // Apply your custom hook to potentially remove certain times
+          $filtered_time = apply_filters( 'rpress_store_delivery_timings_slot_remaining', $loop_time );
+
+          // Skip this iteration if the filtered time is empty (indicating it's been "removed")
+          if ( empty( $filtered_time ) ) {
+            continue;
+          }
+
           if(class_exists('RPRESS_SlotLimit')){
-            ?><option value='<?php echo $loop_time; ?>' <?php selected( $selected_time,$loop_time,$asap_option, true ); ?>>
-            <?php 
-              echo apply_filters( 'rpress_store_delivery_timings_slot_remaining', $loop_time ); // Applying hook to add additional text
             ?>
+            <option value='<?php echo $loop_time; ?>' <?php selected( $selected_time,$filtered_time,$asap_option, true ); ?>>
+              <?php echo $filtered_time; ?>
             </option><?php
           } else {
-            ?><option value='<?php echo ( $asap_option && $key == 0 ) ?  'ASAP' . esc_html( $pickup_asap_text ) : $loop_time; ?>'<?php selected( $selected_time, $loop_time, $asap_option, true ); ?>><?php echo ( $asap_option && $key == 0 ) ? __( 'ASAP' , 'restropress' ) . ' ' . esc_html( $pickup_asap_text ) : $loop_time; ?></option><?php
+            ?><option value='<?php echo ( $asap_option && $key == 0 ) ?  'ASAP' . esc_html( $pickup_asap_text ) : $filtered_time; ?>'<?php selected( $selected_time, $filtered_time, $asap_option, true ); ?>><?php echo ( $asap_option && $key == 0 ) ? __( 'ASAP' , 'restropress' ) . ' ' . esc_html( $pickup_asap_text ) : $filtered_time; ?></option><?php
           }
         endforeach; ?>
        <?php endif; ?>

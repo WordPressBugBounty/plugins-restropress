@@ -2718,6 +2718,9 @@ form#rpress-payments-filter table th, form#rpress-payments-filter table td {
 #rpress-payments-filter span.rp-service-type.badge-pickup, .rp-backbone-modal-header .service-type.badge-pickup{
 	background: #6c757d
 }
+#rpress-payments-filter span.rp-service-type.badge-dinein, .rp-backbone-modal-header .service-type.badge-dinein{
+	background: #820002
+}
 #rpress-payments-filter span.rp-service-type, .rp-backbone-modal-header .service-type {
 	color: #FFF;
 	font-size: 80%;

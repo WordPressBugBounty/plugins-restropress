@@ -485,12 +485,12 @@ function rp_get_store_service_hours( $service_type, $current_time_aware = true, 
         $selected_time = str_replace( ' ', '', $selected_time );
         if( $current_time_aware ) {
           if ( strtotime( $store_time ) > strtotime( $current_time ) ) { ?>
-            <option <?php selected( $selected_time, $timing_slug, $asap_option ); ?> value='<?php echo ( $asap_option && $key == 0 ) ? 'ASAP' : $store_time; ?>'>
+            <option <?php selected( $selected_time, $timing_slug, true ); ?> value='<?php echo ( $asap_option && $key == 0 ) ? 'ASAP' : $store_time; ?>'>
               <?php echo ( $asap_option && $key == 0 ) ? __( 'ASAP' , 'restropress' ) : $store_time; ?>
             </option>
           <?php }
         } else { ?>
-          <option <?php selected( $selected_time, $timing_slug, $asap_option ); ?> value='<?php echo ( $asap_option && $key == 0 ) ? 'ASAP' : $store_time; ?>'>
+          <option <?php selected( $selected_time, $timing_slug, true ); ?> value='<?php echo ( $asap_option && $key == 0 ) ? 'ASAP' : $store_time; ?>'>
               <?php echo ( $asap_option && $key == 0 ) ? __( 'ASAP' , 'restropress' ) : $store_time; ?>
             </option>
         <?php }

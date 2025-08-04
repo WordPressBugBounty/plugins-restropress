@@ -877,3 +877,4 @@ function rpress_add_delivery_steps()
 {
 	echo rpress_get_delivery_steps('');
 }
+

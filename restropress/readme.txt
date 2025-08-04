@@ -121,10 +121,17 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Changelog ==
 
-= Version 3.1.9.1(205-06-13) =
+= Version 3.1.9.2(2025-08-04) =
+* Added: Dinein searvice type hook
+* Added: New filter added to manage the pickup time slots
+* Fixed: Order service time issue fixed
+* Fixed: Service type option design and responsive issue fixed
+* Added: Firebase FCM implemented for restropress pos
+
+= Version 3.1.9.1(2025-06-13) =
 * Fixed: Minor bug issue
 
-= Version 3.1.9(205-06-12) =
+= Version 3.1.9(2025-06-12) =
 
 * Added: Abandoned payment status
 * Added: Import/Export option directly on food items screen
@@ -714,7 +721,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.1.9.1 =
+= 3.1.9.2 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

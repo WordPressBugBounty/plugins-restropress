@@ -124,7 +124,6 @@ html body .datepicker-days .today.day {
 }
 .rpress-delivery-options ul#rpressdeliveryTab.nav>li>a {
 	text-align: center;
-	width: 170px;
 	padding: 7px;
 	max-width: 100%;
 	line-height: 29px;
@@ -136,13 +135,20 @@ html body .datepicker-days .today.day {
 	text-align: center
 }
 .rpress-delivery-options ul#rpressdeliveryTab {
-	display: inline-block;
 	border: 1px solid #d8d8d8;
 	list-style: none;
 	text-align: center;
 	padding-left: 0;
 	border-radius: 3px;
-	margin: 0
+    display: flex;
+    margin: 0 auto;
+     width: 90%;
+}
+#rpressModal .nav-pills>li {
+    width: 100%;
+}
+.rpress-delivery-options ul#rpressdeliveryTab.nav>li>a {
+    width: 100%;
 }
 html body .modal-backdrop.fade.in {
 	z-index: 99999
@@ -2272,9 +2278,6 @@ form#rpress_purchase_form #rpress-purchase-button {
 }
 }
 @media (max-width: 767px) {
-	.rpress-delivery-options ul#rpressdeliveryTab.nav>li>a {
-		width: 130px
-}
 	.rpress-popup-actions {
 		padding: 0
 }
@@ -2330,9 +2333,9 @@ html body.fancybox-active {
 	padding-right: 0px;
 	margin: 0 auto
 }
-html body .rpress-delivery-options.service-option-pickup ul#rpressdeliveryTab, html body .rpress-delivery-options.service-option-delivery ul#rpressdeliveryTab {
+/*html body .rpress-delivery-options.service-option-pickup ul#rpressdeliveryTab, html body .rpress-delivery-options.service-option-delivery ul#rpressdeliveryTab {
 	display: none
-}
+}*/
 /* Additional CSS for popup design */
 .quantity::-webkit-inner-spin-button, .quantity::-webkit-outer-spin-button {
 	-webkit-appearance: none !important;
@@ -3249,6 +3252,9 @@ a.rpress_checkout_register_login.rpress-submit.button.rp-loading:after{
 .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav>li.active>a {
     border-radius: 3px;
 }
+.rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav>li{
+	width:100%;
+}
 .rp-checkout-service-option .nav#rpressdeliveryTab>li>a:hover,
 .rp-checkout-service-option .nav#rpressdeliveryTab>li>a:focus {
 	background-color: transparent
@@ -3257,7 +3263,7 @@ a.rpress_checkout_register_login.rpress-submit.button.rp-loading:after{
     border-radius: 3px;
 }
 .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav>li>a {
-	width: 50%;
+	width: 100%;
 	float: left;
 	display: inline-block
 }

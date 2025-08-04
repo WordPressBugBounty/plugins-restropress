@@ -2,6 +2,9 @@
 global $rpress_options;
 $service_type = rpress_get_option( 'enable_service', 'delivery_and_pickup' );
 $services = $service_type == 'delivery_and_pickup' ? [ 'delivery', 'pickup' ] : [ $service_type ];
+
+$services = apply_filters('rpress_enable_services', $services );
+
 $store_time = rp_get_store_timings( true, '' );
 $store_times = apply_filters( 'rpress_store_delivery_timings', $store_time );
 $current_time = current_time( 'timestamp' );
