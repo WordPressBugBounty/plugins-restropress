@@ -59,6 +59,13 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       wp_enqueue_style( 'backbone-modal' );
       // Sitewide Admin Icons.
       wp_enqueue_style( 'rpress_admin_icon_styles' );
+
+      if ( isset( $_GET['page'] ) && $_GET['page'] === 'rpress-setup' ) {
+        wp_register_style( 'rpress-admin-home', RP_PLUGIN_URL . 'assets/css/admin-home.css', '', RP_VERSION );
+        wp_enqueue_style( 'rpress-admin-home' );
+        wp_register_script( 'rpress-home', RP_PLUGIN_URL . 'assets/js/admin-home.js', array( 'jquery' ), RP_VERSION );
+        wp_enqueue_script( 'rpress-home' );
+      }
     }
     /**
      * Enqueue scripts.

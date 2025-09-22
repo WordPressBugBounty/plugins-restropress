@@ -4,8 +4,8 @@ Tags: Online ordering, Restaurant Ordering, Food Delivery, Takeaway, Restaurant 
 Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
-Tested up to: 6.8.1
-Stable tag: 3.1.9.1
+Tested up to: 6.8
+Stable tag: 3.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -121,9 +121,18 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Changelog ==
 
+= Version 3.2(2025-09-23) =
+* Updated: New UI design implemented
+* Added: Add to cart button style option
+* Added: New button style option
+* Updated: Email template new design implemented
+* Fixed: Addon price reset issue on version update
+* Added: Predefined service type feature implemented
+* Added: Welcome setup widgets
+
 = Version 3.1.9.2(2025-08-04) =
-* Added: Dinein searvice type hook
-* Added: New filter added to manage the pickup time slots
+* Added: Dinein service type hook
+* Added: A New filter has been added to manage the pickup time slots
 * Fixed: Order service time issue fixed
 * Fixed: Service type option design and responsive issue fixed
 * Added: Firebase FCM implemented for restropress pos
@@ -134,13 +143,13 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 = Version 3.1.9(2025-06-12) =
 
 * Added: Abandoned payment status
-* Added: Import/Export option directly on food items screen
+* Added: Import/Export option directly on the food items screen
 * Updated: UI for the extensions page
 * Fixed: Variable product issue for order edit screen
 * Fixed: Subtotal calculation after changing product price on order edit screen
-* Fixed: Addon price update issue for variable products on order edit screen
+* Fixed: Addon price update issue for variable products on the order edit screen
 * Fixed: UI issues on order edit screen
-* Fixed: Security issue with reorder option on user's order list
+* Fixed: Security issue with reorder option on the user's order list
 
 = Version 3.1.8.4(2024-12-03) =
 * Fixed: Inclusive Tax calculation issue
@@ -165,12 +174,12 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Fixed: Safari browser compatibility issue
 * Fixed: Discount code calculation issue in Percent and Flat mode
 * Added: Updated restropress Rest Api
-* Updated: Order details Data in admin dashboard
+* Updated: Order details Data in the admin dashboard
 
 = Version 3.1.7(2024-06-07) = 
-* Fixed: Category based shortcode issue
-* Fixed: Safari browser comaptiblity issue for ASAP option
-* Fixed: Paypal gateway faild status issue
+* Fixed: Category-based shortcode issue
+* Fixed: Safari browser compatibility issue for ASAP option
+* Fixed: PayPal gateway failed status issue
 
 = Version 3.1.6(2024-06-03) = 
 * Added: Cheaper item discount feature
@@ -209,7 +218,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Code cleanup
 
 = Version 3.1.2 (2024-03-06) =
-* Added: Order id prefix and postfix added for user dashboard and user dashboard
+* Added: Order id prefix and postfix added for the user dashboard
 * Added: ASAP time limit option added as per the specific service type
 * Added: Lost password link added for checkout section login form
 * Added: Saved address option added for customer dashboard
@@ -234,7 +243,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Added: Admin dashboard
 * Added: User dashboard
 * Added: Reorder feature
-* Added: Service based discount
+* Added: Service-based discount
 * Added: RestroPress POS new endpoints 
 * Fixed: Checkout page input field validation issue
 * Fixed: Place order button disable issue
@@ -252,7 +261,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 = Version 2.9.8 (2023-11-17) =
 * Fixed: "Store timing and delivery cutoff extension" current day holiday issue.
 * Fixed: Auto-update state list as per the selected country issue for checkout billing form.
-* Added: Blur section and warning message added for checkout page until the payment completion.
+* Added: Blur section and warning message added for checkout page until payment completion.
 
 = Version 2.9.7 (2023-09-15) =
 * Fixed: PayPal live transaction issue "payment status is showing as failed even if customer has paid successfully"
@@ -319,7 +328,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Fixed: Date filter issue for orders
 * Fixed: Discount coupon-related issues
 * Fixed: Extensions price display issue in admin section
-* Fixed: Export order history issue for all status
+* Fixed: Export order history issue for all statuses
 * Minor code cleanup
 
 = Version 2.8.5 (2021-10-30) =
@@ -329,7 +338,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Fixed: Tax calculation on the order confirmation page
 * New: Ability to re-arrange addons by drag & drop
 * New: Added select all option for add-ons
-* Fixed: Issue with default checkbox on add-on
+* Fixed: Issue with the default checkbox on the add-on
 * Updated: Variation label for simple products
 * Updated: Print receipt text/design
 * Minor code cleanup
@@ -337,7 +346,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Misc enhancements
 
 = Version 2.8.4 (2021-08-09) =
-* Added: Print receipt option to print orders from dashboard
+* Added: Print receipt option to print orders from the dashboard
 * Added: Pending order count on orders menu
 * Updated: Migration script
 * Fixed: Admin settings issues
@@ -361,22 +370,22 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 = Version 2.8.2 (2021-05-31) =
 * Fixed: Subtotal issue with the variation and multiple add-ons.
 * Fixed: Decimal point issue on Add to cart button.
-* Fixed: Email order receipt isse.
+* Fixed: Email order receipt issue.
 * Cleared cart text update.
 
 = Version 2.8.1 (2021-05-23) =
 * Added: Option to set an add-on as default
 * Updated: Decimal point option
-* Updated: Allowed HTML on for item names
+* Updated: Allowed HTML on item names
 * Fixed: Responsive view issues
 * Fixed: Tax calculation issues
 * Fixed: Email receipt calculation issues
-* Fixed: PickUp time issue on cart
+* Fixed: Pick-up time issue on cart
 * Minor code cleanup
 
 = Version 2.8 (2021-04-30) =
-* Updated: The layout of order history page
-* Updated: Extensions related hooks
+* Updated: The layout of the order history page
+* Updated: Extensions-related hooks
 * Updated: Store Address on order confirmation page
 * Updated: Service type on checkout page
 * Updated: Buttons loader added
@@ -384,7 +393,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Fixed: fooditem_cart shortcode issue
 * Fixed: Addon price on tax calculation issue
 * Fixed: Category filter on item search issue
-* Fixed: Discount amout calculation issue
+* Fixed: Discount amount calculation issue
 * Minor code cleanup
 
 = Version 2.7.2.1 (2021-02-07) =
@@ -456,19 +465,19 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Fixed tax calculation issue on fees.
 * Fixed order count issue.
 * Fixed food item display issue on the order details page.
-* Added selected variation name in the emails, order details.
+* Added selected variation name in the emails and order details.
 * Added fooditem description in the popup.
 * Added option for minimum order amount for pickup.
 
 = Version 2.6 =
 * Added variable pricing for food items.
-* Added Email notifications based on different order status.
+* Added Email notifications based on different order statuses.
 * Added filter for updating Order and Payment status color codes.
 * Updated Tax options.
-* Updated billing fields to have the option to enable/disable on tax setting.
-* Updated Add/Edit food item page with item data tabs.
+* Updated billing fields to have the option to enable/disable on tax settings.
+* Updated the Add/Edit food item page with item data tabs.
 * Updated admin order listing UI and functionality.
-* Fixed Emails Tags and Labels for Tax.
+* Fixed Email Tags and Labels for Tax.
 * Added category menu on mobile.
 * Code optimized for faster checkout.
 * UI improvements throughout the frontend and admin screens.
@@ -626,7 +635,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 = Version 2.0.5 =
 * Fixed issue with string offset notice with WordPress version 5.3
-* Fixed issue with no fooditems found message
+* Fixed issue with no food items found message
 * Fixed issue with Gutenberg error
 * Fixed issue with default store open and close time
 * Fixed addon page css
@@ -664,25 +673,25 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * fixed template part issue for before and after food items
 * Added prefix rp for bootstrap classes
 * Added option to open the food image in lightbox.
-* Removed view option from admin food items
-* Removed view option from admin add-on category
+* Removed the view option from admin food items
+* Removed the view option from admin add-on category
 * Removed view option from admin food category
 * Fixed cart shortcode template issue
 * Added delivery hours hooks for the add-on
 * Renamed food item add-on category into add-on category
 * Added option to choose if you want to disable the bootstrap files of the plugin.
-* Fixed email template issue when order placed
+* Fixed email template issue when order is placed
 = Version 2.0 =
 * Changed checkout layout
 * Changed quantity box design
-* Fixed css issues
+* Fixed CSS issues
 * Fixed option for color theme
 * Js modified for change delivery options
-* Added add-ons page in the admin
+* Added the add-ons page in the admin
 = Version 1.0.7 =
-* Fixed email issue when order placed
+* Fixed email issue when order was placed
 * Fixed store open hours issue
-* Replaced bootstrap modal with fancybox
+* Replaced Bootstrap modal with fancybox
 * Fixed responsive issues
 * Styles and script modified.
 = Version 1.0.6 =
@@ -691,7 +700,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Option to use Google address autocomplete on the checkout page.
 * Modified process to ask for pickup or delivery before adding item to cart.
 * Cash on delivery method added in the payment gateway
-* Fixed issue for address in order history
+* Fixed the issue with the address in the order history
 * Design fixes.
 = Version 1.0.5 =
 * Payment gateway link modified
@@ -705,10 +714,10 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Checked plugin compatibility with different themes
 * Removed slug generation from food items custom post type
 = Version 1.0.3 =
-* Added loader in popup when Ajax calls
+* Added loader in pop-up when Ajax calls
 * Style fixed for the checkbox
 * Added label for delivery options
-* Added heading for delivery time select
+* Added heading for delivery time selection
 = Version 1.0.2 =
 * Fixed issue with currency option in add-on food items.
 = Version 1.0.1 =
@@ -719,9 +728,10 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 = Version 1.0 =
 * Initial public release.
 
+
 == Upgrade Notice ==
 
-= 3.1.9.2 =
+= 3.2 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

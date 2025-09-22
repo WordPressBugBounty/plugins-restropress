@@ -20,7 +20,7 @@ $category_array   = explode( ',', $category_string );
 $disable_category = rpress_get_option( 'disable_category_menu', false );
 if ( ! $disable_category ) :
 	?>
-<div class="rp-col-lg-2 rp-col-md-2 rp-col-sm-3 rp-col-xs-12 sticky-sidebar cat-lists">
+<div class="rp-col-lg-4 rp-col-md-4 rp-col-sm-3 rp-col-xs-12 sticky-sidebar cat-lists">
 	<div class="rpress-filter-wrapper">
 	<div class="rpress-categories-menu">
 	<?php do_action( 'rpress_before_category_list' ); ?>
@@ -35,7 +35,18 @@ if ( ! $disable_category ) :
 			}
 			?>
 		<li class="rpress-category-item ">
-			<a href="#<?php echo esc_html( $get_all_item->slug ); ?>" data-id="<?php echo esc_attr( $get_all_item->term_id ); ?>" class="rpress-category-link nav-scroller-item"><?php echo wp_kses_post( $get_all_item->name ); ?></a>
+			<?php
+			// Get the count of published fooditems in this category
+			$count = $get_all_item->count;
+
+			// Build the link text with count
+			$link_text = $get_all_item->name . ' (' . intval($count) . ')';
+			?>
+			<a href="#<?php echo esc_html( $get_all_item->slug ); ?>" 
+			data-id="<?php echo esc_attr( $get_all_item->term_id ); ?>" 
+			class="rpress-category-link nav-scroller-item">
+					<?php echo esc_html( $link_text ); ?>
+				</a>
 		</li>
 		<?php endforeach; ?>
 		</ul>
@@ -46,7 +57,6 @@ if ( ! $disable_category ) :
 	</div>
 	</div>
 </div>
-<div class="rp-mb-cat-ft-btn"><span class="rp-mb-cat-txt"><i class="fa fa-cutlery" aria-hidden="true"></i><?php esc_html_e( 'Menu', 'restropress' ); ?></span></div>
 	<?php
 endif;
 echo ob_get_clean();

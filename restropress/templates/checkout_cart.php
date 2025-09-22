@@ -149,7 +149,6 @@ global $post;
     <tr class="rpress_cart_footer_row">
       <?php do_action( 'rpress_checkout_table_footer_first' ); ?>
       <th colspan="<?php echo rpress_checkout_cart_columns(); ?>" class="rpress_cart_total"><?php esc_html_e( 'Total', 'restropress' ); ?>: <span class="rpress_cart_amount pull-right" data-subtotal="<?php echo rpress_get_cart_subtotal(); ?>" data-total="<?php echo rpress_get_cart_total(); ?>"><?php rpress_cart_total(); ?></span>
-        <?php echo get_delivery_options( true ); ?>
       </th>
       <?php do_action( 'rpress_checkout_table_footer_last' ); ?>
     </tr>

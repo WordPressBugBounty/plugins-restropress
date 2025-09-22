@@ -248,20 +248,8 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
     $total_price = 0;
     $show_names = apply_filters( 'rpress_email_show_names', true );
   ?>
-  <table id="email-table" class="display responsive no-wrap order-column" width="100%" style="border: 1px solid black; border-collapse: collapse;">
-    <thead>
-      <tr>
-        <th style="border: 1px solid black; border-collapse: collapse;">
-          <?php esc_html_e( 'Food Item Purchased', 'restropress' ); ?>
-        </th>
-        <th class="center" style="text-align: center; border: 1px solid black; border-collapse: collapse;">
-          <?php esc_html_e( 'Quantity', 'restropress' ); ?>
-        </th>
-        <th class="center" style="text-align: center; border: 1px solid black; border-collapse: collapse;">
-          <?php esc_html_e( 'Price', 'restropress' ); ?>
-        </th>
-      </tr>
-    </thead>
+  <table id="email-table" class="display responsive no-wrap order-column" width="100%" style="border-collapse: collapse;">
+
     <tbody>
       <?php
       foreach ( $cart_items as $item ) :
@@ -285,7 +273,7 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
         $special_instruction = isset( $item['instruction'] ) ? $item['instruction'] : '';
         ?>
         <tr>
-          <td style="border: 1px solid black; border-collapse: collapse;">
+          <td style="border-bottom: 1px solid black; border-collapse: collapse;">
             <?php echo esc_html( $title ); ?>
             <?php
             if (isset( $item['addon_items'] ) && !empty($item['addon_items'])  && is_array( $item['addon_items'] )  ) {
@@ -307,10 +295,11 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
             }
             ?>
           </td>
-          <td class="center" style="border: 1px solid black; border-collapse: collapse; text-align: center;">
+          <td class="center" style="border-bottom: 1px solid black; border-collapse: collapse; text-align: center;">
             <span><?php echo esc_html( $quantity ); ?></span>          
             <?php
             $addon_items =  isset( $item['addon_items'] ) ? $item['addon_items'] : array() ;
+            if($addon_items) {
               foreach( $addon_items as $k => $addon_item ) {
                 $cart = new RPRESS_Cart();
                 
@@ -319,12 +308,14 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
                <?php
                do_action( 'rpress_purchase_receipt_after_qantity_table', $addon_item );
               }
+            }
             ?>
           </td>
-          <td class="center" style="border: 1px solid black; border-collapse: collapse; text-align: center;">
+          <td class="center" style="border-bottom: 1px solid black; border-collapse: collapse; text-align: center;">
             <span><?php echo esc_html( rpress_currency_filter( rpress_format_amount( $item_price ) ) ); ?></span>
             <?php
             $addon_items =  isset( $item['addon_items'] ) ? $item['addon_items'] : array() ;
+            if($addon_items) {
               foreach( $addon_items as $k => $addon_item ) {
                 $cart = new RPRESS_Cart();
                 $item_addon_price = !empty( $addon_item['price'] ) ? $addon_item['price'] : 0.00;
@@ -333,6 +324,7 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
                   <div style="margin: 0;font-size: 14px; color:#444;"><small><?php echo esc_html( rpress_currency_filter( rpress_format_amount( $addon_price ) ) ); ?><small></div>
                <?php
               }
+            }
             ?>
           </td>
         </tr>
@@ -342,20 +334,20 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
     </tbody>
     <tfoot>
       <tr>
-        <td colspan="2" class="right" style="border: 1px solid black; border-collapse: collapse; text-align:right; padding-right: 10px; border-top: none;border-bottom: none;">
+        <td colspan="2" class="right" style="border-bottom: 1px solid black; border-collapse: collapse; padding-right: 10px; border-top: none;">
           <strong><?php esc_html_e( 'Sub Total', 'restropress' ); ?>:</strong>
         </td>
-        <td class="right" style="border: 1px solid black; border-collapse: collapse; text-align:center; border-top: none;border-bottom: none;">
+        <td class="right" style="border-bottom: 1px solid black; border-collapse: collapse; text-align:center; border-top: none;">
           <span><?php echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_payment_subtotal( $payment_id ) ) ) ); ?></span>
         </td>
       </tr>
       <?php if ( ( $fees = rpress_get_payment_fees( $payment_id, 'fee' ) ) ) : ?>
         <tr>
           <?php foreach( $fees as $fee ) : ?>
-            <td colspan="2" class="right" style="border: 1px solid black; border-collapse: collapse; text-align:right; padding-right: 10px; border-top: none;border-bottom: none;">
+            <td colspan="2" class="right" style="border-bottom: 1px solid black; border-collapse: collapse; padding-right: 10px; border-top: none;">
               <strong><?php echo esc_html( $fee['label'] ); ?>:</strong>
             </td>
-            <td class="right" style="border: 1px solid black; border-collapse: collapse; text-align:center; border-top: none;border-bottom: none;">
+            <td class="right" style="border-bottom: 1px solid black; border-collapse: collapse; text-align:center; border-top: none;">
               <span><?php echo esc_html( rpress_currency_filter( rpress_format_amount( $fee['amount'] ) ) ); ?></span>
             </td>
           <?php endforeach; ?>
@@ -364,10 +356,10 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
       <?php if( rpress_use_taxes() ) : ?>
         <?php do_action( 'rpress_purchase_receipt_before_tax_table', $payment_id ); ?>
         <tr>
-            <td colspan="2" class="right" style="border: 1px solid black; border-collapse: collapse; text-align:right; padding-right: 10px; border-top: none;border-bottom: none;">
+            <td colspan="2" class="right" style="border-bottom: 1px solid black; border-collapse: collapse; padding-right: 10px; border-top: none;">
               <strong><?php echo esc_html( rpress_get_tax_name() ); ?>:</strong>
             </td>
-            <td class="right" style="border: 1px solid black; border-collapse: collapse; text-align:center; border-top: none;border-bottom: none;">
+            <td class="right" style="border-bottom: 1px solid black; border-collapse: collapse; text-align:center; border-top: none;">
               <span><?php echo esc_html( rpress_payment_tax( $payment_id ) ); ?>  </span>
             </td>
         </tr>
@@ -375,19 +367,19 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
       <?php endif; ?>
       <?php if( isset( $user['discount'] ) && $user['discount'] != 'none' ) : ?>
         <tr>
-            <td colspan="2" class="right" style="border: 1px solid black; border-collapse: collapse; text-align:right; padding-right: 10px; border-top: none;border-bottom: none;">
+            <td colspan="2" class="right" style="border-bottom: 1px solid black; border-collapse: collapse; padding-right: 10px; border-top: none;">
               <strong><?php esc_html_e( 'Discount(s)', 'restropress' ); ?>:</strong>
             </td>
-            <td class="right" style="border: 1px solid black; border-collapse: collapse; text-align:center; border-top: none;border-bottom: none;">
+            <td class="right" style="border-bottom: 1px solid black; border-collapse: collapse; text-align:center; border-top: none;">
               <strong><?php echo esc_html( rpress_get_discount_price_by_payment_id( $payment_id ) ); ?></strong>
             </td>
         </tr>
       <?php endif; ?>
       <tr>
-        <td colspan="2" class="right" style="border: 1px solid black; border-collapse: collapse; text-align:right; padding-right: 10px; border-top: none;">
+        <td colspan="2" class="right" style="border-collapse: collapse; padding-right: 10px; border-top: none;">
           <strong><?php esc_html_e( 'Total', 'restropress' ); ?>:</strong>
         </td>
-        <td class="right" style="border: 1px solid black; border-collapse: collapse; text-align:center; border-top: none;">
+        <td class="right" style="border-collapse: collapse; text-align:center; border-top: none;">
           <span><?php echo esc_html( rpress_payment_amount( $payment_id ) ); ?></span>
         </td>
       </tr>

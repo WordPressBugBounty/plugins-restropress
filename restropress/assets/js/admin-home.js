@@ -1,50 +1,90 @@
-jQuery(document).ready(function($){
-    // tab_js 
-    let tabs = document.querySelectorAll('.tab');
+jQuery(document).ready(function($) {
+    let tabs = $('.tab');
     let currentTab = 0;
-    let prevButton = document.querySelector('#prevBtn');
-    let nextButton = document.querySelector('#nextBtn');
-    let skiptext = document.querySelector('#skiptext');
-    let finish = $('input.button.button-primary.next-prev-btn');
-    
+    let prevButton = $('#prevBtn');
+    let nextButton = $('#nextBtn');
+    let skiptext = $('#skiptext');
+    let finish = $('.finish-btn');
+
     showTab(currentTab);
+
     function showTab(n) {
-        // Select tab
-        
-        tabs[n].style.display = 'flex';
-        // Fix Buttons
-        if (n == 0) {
-            prevButton.style.display = 'none';
+        tabs.hide(); // Hide all tabs
+        $(tabs[n]).show(); // Show current
+
+        // Handle buttons
+        if (n === 0) {
+            prevButton.hide();
         } else {
-            prevButton.style.display = 'inline-block';
+            prevButton.show();
         }
-        // Fix next Button
-        if ( n == (tabs.length - 1 )) {
-            nextButton.innerHTML = 'Finish';   
-            nextButton.disabled = true;
-            prevButton.style.display = 'none';
-            nextButton.style.display = 'none';
-            skiptext.innerHTML = 'Finish.';
-            skiptext.disabled = true;
-            finish.style.display = 'flex';
+
+        if (n === (tabs.length - 1)) {
+            nextButton.hide();
+            prevButton.hide();
+            skiptext.text('Finish.');
+            finish.show();
         } else {
-            nextButton.innerHTML = 'Next';
-            finish.style.display = 'none';
+            nextButton.text('Next').show();
+            finish.hide();
         }
-        let pageNumber = parseInt( n + 1 );
-        document.querySelector('.current-page-num').innerHTML = pageNumber;   
-        fixStepIndicator(n)
-    };
+
+        // Update step number
+        $('.current-page-num').text(n + 1);
+        fixStepIndicator(n);
+    }
+
     $('body').on('click', '.next-prev-btn', function() {
-        var n = parseInt( $(this).attr('nextTab') );
-        tabs[currentTab].style.display = 'none';
-        currentTab = parseInt( currentTab + n );
+        const step = parseInt($(this).attr('nextTab'));
+        if (isNaN(step)) return;
+
+        $(tabs[currentTab]).hide();
+        currentTab += step;
+
+        if (currentTab >= tabs.length) currentTab = tabs.length - 1;
+        if (currentTab < 0) currentTab = 0;
+
         showTab(currentTab);
     });
+
     function fixStepIndicator(n) {
-        jQuery('.multiStep__circles .step').removeClass('active');
-        for (let i = 0 ; i <= n; i++) {
-            jQuery(`.multiStep__circles .step:eq(${i})`).addClass('active');
+        $('.multiStep__circles .step').removeClass('active');
+        for (let i = 0; i <= n; i++) {
+            $('.multiStep__circles .step').eq(i).addClass('active');
+        }
     }
-    }
+});
+
+/*file upload*/
+function readURL(input) {
+  if (input.files && input.files[0]) {
+
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+    //   $('.image-upload-wrap').hide();
+
+      $('.file-upload-image').attr('src', e.target.result);
+      $('.file-upload-content').show();
+
+      $('.image-title').html(input.files[0].name);
+    };
+
+    reader.readAsDataURL(input.files[0]);
+
+  } else {
+    removeUpload();
+  }
+}
+
+function removeUpload() {
+  $('.file-upload-input').replaceWith($('.file-upload-input').clone());
+  $('.file-upload-content').hide();
+  $('.image-upload-wrap').show();
+}
+$('.image-upload-wrap').bind('dragover', function () {
+    $('.image-upload-wrap').addClass('image-dropping');
+  });
+  $('.image-upload-wrap').bind('dragleave', function () {
+    $('.image-upload-wrap').removeClass('image-dropping');
 });

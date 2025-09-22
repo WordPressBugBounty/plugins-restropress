@@ -3,9 +3,6 @@
   <?php $image_placeholder = rpress_get_option( 'enable_image_placeholder', false ); ?>
   <h3<?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_title">
     <span class="food-title" itemprop="url">
-      <?php if ( ! has_post_thumbnail( $post->ID ) ) : ?>
-        <?php echo rpress_get_fooditem_icon(); ?>
-      <?php endif; ?>
       <?php the_title();?>
     </span>
   </h3>

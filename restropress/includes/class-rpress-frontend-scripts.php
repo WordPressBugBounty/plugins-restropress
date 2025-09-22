@@ -241,8 +241,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     $please_wait_text          = esc_html__( 'Please Wait...', 'restropress' );
     $color                     = rpress_get_option( 'primary_color', 'red' );
     $service_options           = !empty( rpress_get_option( 'enable_service' ) ) ? rpress_get_option( 'enable_service' ) : 'delivery_and_pickup' ;
+    $default_service           = !empty( rpress_get_option( 'default_service' ) ) ? rpress_get_option( 'default_service' ) : '' ;
+    $default_time           = !empty( rpress_get_option( 'default_time' ) ) ? rpress_get_option( 'default_time' ) : '' ;
     $minimum_order_error_title = !empty( rpress_get_option( 'minimum_order_error_title' ) ) ? rpress_get_option( 'minimum_order_error_title' ) : __( 'Minimum Order Error', 'restropress' ) ;
     $expire_cookie_time        = !empty( rpress_get_option( 'expire_service_cookie' ) ) ? rpress_get_option( 'expire_service_cookie' ) : 90;
+    $cart_quantity = rpress_get_cart_quantity();
     $params = array(
       'estimated_tax'             => rpress_get_tax_name(),
       'total_text'                => esc_html__( 'Subtotal', 'restropress'),
@@ -259,6 +262,8 @@ if ( ! defined( 'ABSPATH' ) ) {
       'service_type_nonce'        => wp_create_nonce( 'service-type' ),
       'order_details_nonce'       => wp_create_nonce( 'show-order-details' ),
       'service_options'           => $service_options,
+      'default_service'           => $default_service,
+      '$default_time'             => $$default_time,
       'minimum_order_title'       => $minimum_order_error_title,
       'edit_cart_fooditem_nonce'  => wp_create_nonce( 'edit-cart-fooditem' ),
       'update_cart_item_nonce'    => wp_create_nonce( 'update-cart-item' ),
@@ -267,7 +272,7 @@ if ( ! defined( 'ABSPATH' ) ) {
       'proceed_checkout_nonce'    => wp_create_nonce( 'proceed-checkout' ),
       'error'                     => esc_html__( 'Error', 'restropress' ),
       'change_txt'                => esc_html__( 'Change?', 'restropress' ),
-      'asap_txt'                => esc_html__( 'ASAP', 'restropress' ),
+      'asap_txt'                  => esc_html__( 'ASAP', 'restropress' ),
       'currency'                  => rpress_get_currency(),
       'currency_sign'             => rpress_currency_filter(),
       'currency_pos'              => rpress_get_option( 'currency_position', 'before' ),
@@ -275,7 +280,10 @@ if ( ! defined( 'ABSPATH' ) ) {
       'confirm_empty_cart'        => esc_html__( 'Are you sure! You want to clear the cart?', 'restropress' ),
       'success'                   => esc_html__( 'Success', 'restropress' ),
       'success_empty_cart'        => esc_html__( 'Cart cleared', 'restropress' ),
-      'decimal_separator'           => rpress_get_option( 'decimal_separator', '.' ),
+      'decimal_separator'         => rpress_get_option( 'decimal_separator', '.' ),
+      'cart_quantity'             => $cart_quantity,
+      'items'                     => esc_html__( 'Items', 'restropress' ),
+      'no_image'                  => RP_PLUGIN_URL . 'assets/images/no-image.png',
     );
     wp_localize_script( 'rp-frontend', 'rp_scripts', $params );
     $co_params = array(
@@ -464,30 +472,97 @@ if ( ! defined( 'ABSPATH' ) ) {
     if ( rpress_get_option( 'disable_styles', false ) || !is_object( $post ) ) {
       return;
     }
-    $primary_color = esc_html( rpress_get_option( 'primary_color', '#9E1B10' ) );
+    $primary_color = esc_html( rpress_get_option( 'primary_color', '#ED5575' ) );
+    $add_button_bg_color = esc_html( rpress_get_option( 'add_button_background_color', '#ED5575' ) );
+    $add_button_text_color = esc_html( rpress_get_option( 'add_button_text_color', '#ED5575' ) );
     ?>
     <style type="text/css">
+      .rp-loading:after {
+        content: " ";
+        display: block;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        margin: 2px auto;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        border-color: #fff transparent #fff transparent;
+        animation: lds-dual-ring 1.2s linear infinite;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 4px;
+        bottom: 0;
+      }
+      .rpress-add-to-cart.rp-loading:after {
+        content: " ";
+        display: block;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        margin: 2px auto;
+        border-radius: 50%;
+        border: 3px solid <?php echo sanitize_hex_color( $add_button_bg_color ) ?>;
+        border-color: <?php echo sanitize_hex_color( $add_button_bg_color ) ?> transparent <?php echo sanitize_hex_color( $add_button_bg_color ) ?> transparent;
+        animation: lds-dual-ring 1.2s linear infinite;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 4px;
+        bottom: 0;
+      }
+      .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit {
+        color: #fff;
+        background: <?php echo sanitize_hex_color( $add_button_bg_color ) ?>;
+        border: 1px solid <?php echo sanitize_hex_color( $add_button_bg_color ) ?>;
+        padding: 4px 16px 3px;
+        width: auto;
+        height: 32px;
+        margin-top: 0px;
+        border-radius: 18px;
+        text-transform: uppercase;
+        text-decoration: none;
+      }
+      .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit .rpress-add-to-cart-label {
+        color: <?php echo sanitize_hex_color( $add_button_text_color ) ?>;
+      }
+      .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit span.add-icon svg {
+        fill: <?php echo sanitize_hex_color( $add_button_text_color ) ?>;
+      }
       .rpress-categories-menu ul li a:hover,
       .rpress-categories-menu ul li a.active,
-      .rpress-price-holder span.price {
+      .rpress-price-holder span.price,
+      .qtyplus-wrap input[type="button"]:hover,
+      .qtyminus-wrap input[type="button"]:hover,
+      div.rpress-popup-actions .btn-count input[type="button"]:hover,
+      .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit:hover .rpress-add-to-cart-label {
         color: <?php echo sanitize_hex_color( $primary_color ); ?>;
       }
       div.rpress-search-wrap input#rpress-food-search,
       .rpress_fooditem_tags span.fooditem_tag {
         border-color: <?php echo sanitize_hex_color( $primary_color ); ?>;
       }
+      ul.rpress-category-lists .rpress-category-item.current {
+        border-left: 4px solid <?php echo sanitize_hex_color( $primary_color ); ?>;
+      }
       .button.rpress-submit,
       .btn.btn-block.btn-primary,
-      .cart_item.rpress_checkout a,
-      .rpress-popup-actions .submit-fooditem-button,
       .rpress-mobile-cart-icons .rp-cart-right-wrap,
       .button.rpress-status {
         background: <?php echo sanitize_hex_color( $primary_color ); ?>;
         color: #fff;
         border: 1px solid <?php echo sanitize_hex_color( $primary_color ); ?>;
       }
-      .rpress_fooditem.rpress-grid .rpress_purchase_submit_wrapper span.add-icon svg,
-      .rpress_fooditem.rpress-list .rpress_purchase_submit_wrapper span.add-icon svg {
+      .rpress-popup-actions .submit-fooditem-button {
+        background: <?php echo sanitize_hex_color( $primary_color ); ?>;
+        border: 1px solid <?php echo sanitize_hex_color( $primary_color ); ?>;
+      }
+      .cart_item.rpress_checkout a {
+        background: <?php echo sanitize_hex_color( $primary_color ); ?>;
+        border: 1px solid <?php echo sanitize_hex_color( $primary_color ); ?>;
+      }
+      .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit:hover span.add-icon svg path,
+      div.rpress_fooditems_grid .rpress_fooditem.rpress-list .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit:hover span.add-icon svg {
         fill: <?php echo sanitize_hex_color( $primary_color ); ?>;
       }
       .button.rpress-submit:active,
@@ -495,7 +570,7 @@ if ( ! defined( 'ABSPATH' ) ) {
       .button.rpress-submit:hover,
       .btn.btn-block.btn-primary:hover,
       .cart_item.rpress_checkout a:hover,
-      .rpress-popup-actions .submit-fooditem-button:hover {
+      .rpress-popup-actions .submit-fooditem-button:hover, {
         border: 1px solid <?php echo sanitize_hex_color( $primary_color ); ?>;
       }
       .delivery-change,
@@ -529,7 +604,11 @@ if ( ! defined( 'ABSPATH' ) ) {
       .nav#rpressdeliveryTab > li.active > a,
       .nav#rpressdeliveryTab > li.active > a:hover,
       .nav#rpressdeliveryTab > li.active > a:focus,
-      .close-cart-ic {
+      .close-cart-ic,
+      #rpress_checkout_wrap .nav#rpressdeliveryTab > li.active > a,
+      #rpress_checkout_wrap .nav#rpressdeliveryTab > li.active > a:hover,
+      #rpress_checkout_wrap .nav#rpressdeliveryTab > li.active > a:focus,
+      [type=submit].rpress-submit {
         background-color: <?php echo sanitize_hex_color( $primary_color ); ?>;
         color: #fff;
       } 
@@ -546,6 +625,44 @@ if ( ! defined( 'ABSPATH' ) ) {
       body a.rpress-add-to-cart.button.rpress-submit.rp-loading:after{
         border-top-color: <?php echo sanitize_hex_color( $primary_color ) ?>;
         border-bottom-color: <?php echo sanitize_hex_color( $primary_color ) ?>;
+      }
+      .rpress-cart .cart-action-wrap a.rpress-remove-from-cart,
+      ul.rpress-category-lists .rpress-category-item:hover {
+        background-color: rgba(<?php echo implode(',', sscanf( $primary_color, "#%02x%02x%02x" )); ?>, 0.1);
+      }
+      .rpress-edit-address-popup button.rpress-editaddress-submit-btn {
+        background: <?php echo sanitize_hex_color( $primary_color ) ?>;
+        border: 1px solid <?php echo sanitize_hex_color( $primary_color ) ?>;
+      }
+      .cd-dropdown-wrapper .cd-dropdown-content li a.mnuactive {
+        color: #000;
+        background-color: rgba(<?php echo implode(',', sscanf( $primary_color, "#%02x%02x%02x" )); ?>, 0.1);
+        border-left: 4px solid <?php echo sanitize_hex_color( $primary_color ) ?>;
+        border-bottom: 0;
+        border-right: 0;
+      }
+      .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit:hover {
+        color: <?php echo sanitize_hex_color( $primary_color ) ?>;
+        background: #fff;
+        border: 1px solid <?php echo sanitize_hex_color( $primary_color ) ?>;
+      }
+      .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit.plain:hover {
+        color: <?php echo sanitize_hex_color( $primary_color ) ?>;
+      }
+      .pn-ProductNav_Indicator {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        width: 100px;
+        background-color: <?php echo sanitize_hex_color( $primary_color ) ?> !important;
+        transform-origin: 0 0;
+        transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+      }
+      .pn-ProductNav_Link[aria-selected=true], .pn-ProductNav_Link:hover {
+        color: <?php echo sanitize_hex_color( $primary_color ) ?>;
+        outline: 0;
+      }
     </style>
     <?php
   }

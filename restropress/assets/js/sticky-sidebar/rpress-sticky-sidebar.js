@@ -13,7 +13,8 @@
         };
         options = $.extend(defaults, options);
         // Validate options
-        options.additionalMarginTop = parseInt(options.additionalMarginTop) || 0;
+        // options.additionalMarginTop = parseInt(options.additionalMarginTop) || 0;
+        options.additionalMarginTop = 40;
         options.additionalMarginBottom = parseInt(options.additionalMarginBottom) || 0;
         tryInitOrHookIntoEvents(options, this);
         // Try doing init, otherwise hook into window.resize and document.scroll and try again then.

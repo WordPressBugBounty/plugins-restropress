@@ -33,9 +33,9 @@ function rpress_extensions_page() {
             </div>
 			<div>
 				<h2>
-					<?php esc_html_e( 'RestroPress Extensions & Apps', 'restropress' ); ?>
+					<?php esc_html_e( 'Extensions', 'restropress' ); ?>
 				</h2>
-				<div class="about-text"><?php esc_html_e('Browse, activate, and manage your RestroPress extensions', 'restropress');?></div>
+				<div class="about-text"><?php esc_html_e('Improve your workspace.', 'restropress');?></div>
 			</div>
 		</div>
 		<div class="rpress-plugin-filter-wrapper d-flex">
@@ -100,10 +100,10 @@ function rpress_add_ons_get_feed() {
 
 		// Check if no filtered items exist
 		if ( empty( $filtered_items ) ) {
-			$image_url = RP_PLUGIN_URL . 'assets/images/not-active.png';
+			$image_url = RP_PLUGIN_URL . 'assets/images/not-active.png'; // Adjust path to match your plugin structure
 			$data .= '<div class="no-addons-wrapper">';
 			$data .= '<img src="' . esc_url( $image_url ) . '" alt="No Addons" style="max-width:150px; margin-bottom: 10px;" />';
-			$data .= '<p class="no-addons-message">' . esc_html__('No active extensions found.', 'restropress') . '</p>';
+			$data .= '<p class="no-addons-message">No ' . esc_html( ucfirst( $status ) ) . ' addons found.</p>';
 			$data .= '</div>';
 			echo $data;
 			return;
@@ -178,7 +178,11 @@ function rpress_add_ons_get_feed() {
 							<div class="clear"></div>
 							<div class="rpress-license-deactivate-wrapper <?php echo esc_attr( $deactive_class ); ?>">
 								<div class="rp-license-deactivate-inner">
-									<!--deactivate license-->
+									<!-- <button data-action="rpress_deactivate_addon_license" class="button  pull-left rpress-deactivate-license"><?php // esc_html_e('Deactivate', 'restropress'); ?></button>
+									<small class="rpress-addon-item-pricing"><?php // esc_html_e('From ', 'restropress') . rpress_currency_filter( rpress_format_amount( $item->price_range ) ); ?></small> -->
+								
+
+									<!--de-activated-->
 									<div class="card-footer d-flex justify-content-between align-items-center mt-3">
 										<span class="status-text text-green">License Activated</span>
 										<label class="switch">

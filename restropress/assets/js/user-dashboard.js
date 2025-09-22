@@ -140,3 +140,8 @@ function editaddress(event) {
     $('#edit_user_address_index').val(addressIndex);
     $('#default-address-checkboxInput6').prop('checked', defaultIndex);
 }
+jQuery(function($) {
+    if (window.location.pathname === '/order-online/') {
+        $('body').addClass('order-online');
+    }
+});

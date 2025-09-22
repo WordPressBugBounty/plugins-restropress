@@ -501,6 +501,25 @@ function rpress_get_registered_settings() {
 						),
 						'std' => 'delivery_and_pickup',
 					),
+					'default_service' => array(
+						'id' => 'default_service',
+						'name'    => esc_html__( 'Default Services', 'restropress' ),
+						'type' => 'radio',
+						'options' => array(
+							'delivery'  => esc_html__( 'Delivery', 'restropress' ),
+							'pickup'  => esc_html__( 'Pickup', 'restropress' ),
+						),
+						'std' => 'delivery',
+					),
+					'default_time' => array(
+						'id'            => 'default_time',
+						'name'          => esc_html__( 'Default Time', 'restropress' ),
+						'desc'          => esc_html__( 'Select restaurant default time', 'restropress' ),
+						'type'          => 'text',
+						'std'       	=> '9:00am',
+						'field_class' 	=> 'rpress_timings',
+						'allow_blank'	=> false,
+					),
 					'store_time_format' => array(
 						'id'            => 'store_time_format',
 						'name'          => esc_html__( 'Store Time Format', 'restropress' ),
@@ -827,22 +846,22 @@ function rpress_get_registered_settings() {
 						'desc'          => esc_html__( 'Enable showing the items tags in menu page.', 'restropress' ),
 						'type'          => 'checkbox',
 					),
-					'disable_category_menu' => array(
-						'id'            => 'disable_category_menu',
-						'name'          => esc_html__( 'Disable Category Menu', 'restropress' ),
-						'desc'          => esc_html__( 'Disable Category Menu In Food Item Page', 'restropress' ),
-						'type'          => 'checkbox',
-					),
-					'option_view_food_items' => array(
-						'id'            => 'option_view_food_items',
-						'type'          => 'radio',
-						'desc'          => esc_html__( 'For Use This List View And Grid View Option First Check Disable Category Menu Option', 'restropress' ),
-						'options' 		=> array(
-							'list_view'  => esc_html__( 'List View', 'restropress' ),
-							'grid_view'  => esc_html__( 'Grid View', 'restropress' ),
-						),
-						'std' => 'list_view',
-					),
+					// 'disable_category_menu' => array(
+					// 	'id'            => 'disable_category_menu',
+					// 	'name'          => esc_html__( 'Disable Category Menu', 'restropress' ),
+					// 	'desc'          => esc_html__( 'Disable Category Menu In Food Item Page', 'restropress' ),
+					// 	'type'          => 'checkbox',
+					// ),
+					// 'option_view_food_items' => array(
+					// 	'id'            => 'option_view_food_items',
+					// 	'type'          => 'radio',
+					// 	'desc'          => esc_html__( 'For Use This List View And Grid View Option First Check Disable Category Menu Option', 'restropress' ),
+					// 	'options' 		=> array(
+					// 		'list_view'  => esc_html__( 'List View', 'restropress' ),
+					// 		'grid_view'  => esc_html__( 'Grid View', 'restropress' ),
+					// 	),
+					// 	'std' => 'list_view',
+					// ),
 					'button_header' => array(
 						'id'   => 'button_header',
 						'name' => '<strong>' . esc_html__( 'Buttons', 'restropress' ) . '</strong>',
@@ -856,11 +875,47 @@ function rpress_get_registered_settings() {
 						'type'    => 'select',
 						'options' => rpress_get_button_styles(),
 					),
+					'add_button_style' => array(
+						'id'      => 'add_button_style',
+						'name'    => esc_html__( 'Add Button Style', 'restropress' ),
+						'desc'    => esc_html__( 'Choose the style you want to use for the Add Buttons.', 'restropress' ),
+						'type'    => 'select',
+						'options' => rpress_get_add_button_styles(),
+					),
+					'add_button_background_color' => array(
+						'id'      => 'add_button_background_color',
+						'name'    => esc_html__( 'Add Button Background Color', 'restropress' ),
+						'desc'    => esc_html__( 'Choose the color you want to use for the add button.', 'restropress' ),
+						'type'    => 'color',
+					),
+					'add_button_text_color' => array(
+						'id'      => 'add_button_text_color',
+						'name'    => esc_html__( 'Add Button Text Color', 'restropress' ),
+						'desc'    => esc_html__( 'Choose the color you want to use for the add button.', 'restropress' ),
+						'type'    => 'color',
+					),
 					'primary_color' => array(
 						'id'      => 'primary_color',
 						'name'    => esc_html__( 'Theme Color', 'restropress' ),
 						'desc'    => esc_html__( 'Choose the color you want to use for the buttons and links.', 'restropress' ),
 						'type'    => 'color',
+					),
+					'template' => array(
+						'id'      => 'template',
+						'name'    => __( 'Food Item Template', 'restropress' ),
+						'desc'    => __( 'Choose a layout template for the food item.', 'restropress' ),
+						'type'    => 'radio_image',
+						'options' => array(
+							'list' => array(
+								'label' => __( 'List', 'restropress' ),
+								'img'   => plugin_dir_url( RP_PLUGIN_FILE ) . 'assets/images/list.png',
+							),
+							'grid' => array(
+								'label' => __( 'Grid', 'restropress' ),
+								'img'   => plugin_dir_url( RP_PLUGIN_FILE ) . 'assets/images/grid.png',
+							),
+						),
+						'std' => 'list',
 					),
 				),
 			)

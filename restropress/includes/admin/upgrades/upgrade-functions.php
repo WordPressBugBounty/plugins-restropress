@@ -490,7 +490,7 @@ function rpress_v226_upgrade_payments_price_logs_db() {
 		wp_redirect( admin_url() ); exit;
 	}
 }
-add_action( 'rpress_upgrade_payments_price_logs_db', 'rpress_v226_upgrade_payments_price_logs_db' );
+// add_action( 'rpress_upgrade_payments_price_logs_db', 'rpress_v226_upgrade_payments_price_logs_db' );
 /**
  * Upgrades payment taxes for 2.3
  *

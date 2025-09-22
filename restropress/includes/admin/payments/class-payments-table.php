@@ -383,7 +383,6 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
         		$value   = rpress_currency_filter( rpress_format_amount( $amount ), rpress_get_payment_currency_code( $payment->ID ) );
 			break;
 			case 'date' :
-
 				$date    = strtotime( $payment->date );
         		$value   = date_i18n( get_option( 'date_format' ), $date ). ', '. date_i18n( 'g:ia', $date );
 			break;

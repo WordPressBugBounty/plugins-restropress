@@ -64,25 +64,33 @@ class RP_Shortcode_Fooditems {
 	 * @param array $atts Shortcode attributes.
 	 */
 	public static function output( $atts ) {
-		if ( !apply_filters( 'restropress_output_fooditem_shortcode_content', true ) ) {
+		if ( ! apply_filters( 'restropress_output_fooditem_shortcode_content', true ) ) {
 			return;
 		}
-		
-		$exclude_terms = "";
-		if(!empty($atts['category_exclude'])) {
+
+		$exclude_terms = '';
+		if ( ! empty( $atts['category_exclude'] ) ) {
 			$exclude_terms = $atts['category_exclude'];
 		}
+
 		$atts = shortcode_atts( array(
-        'category'          => '',
-        'category_menu'     => '',
-        'fooditem_orderby'  => 'title',
-        'fooditem_order'    => 'ASC',
-        'relation'          => 'OR',
-        'cat_orderby'       => 'include',
-        'cat_order'         => 'ASC',
-		'category_exclude'  => $exclude_terms,
-	    ), $atts, 'fooditems' );
-	    RP_Shortcode_Fooditems::$atts = apply_filters( 'rpress_set_fooditems_attributes', $atts );
-	    rpress_get_template_part( 'fooditem/fooditems' );
+			'category'          => '',
+			'category_menu'     => '',
+			'fooditem_orderby'  => 'title',
+			'fooditem_order'    => 'ASC',
+			'relation'          => 'OR',
+			'cat_orderby'       => 'include',
+			'cat_order'         => 'ASC',
+			'category_exclude'  => $exclude_terms,
+		), $atts, 'fooditems' );
+
+		// Save the attributes globally for use in templates
+		RP_Shortcode_Fooditems::$atts = apply_filters( 'rpress_set_fooditems_attributes', $atts );
+
+		// Fetch template setting: 'list' or 'grid'
+		$template = rpress_get_option( 'template', 'list' );
+
+		// Load the correct template file
+		rpress_get_template_part( $template . '/fooditems' );
 	}
 }

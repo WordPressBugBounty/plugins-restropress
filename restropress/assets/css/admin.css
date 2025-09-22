@@ -255,8 +255,6 @@
   margin-bottom: 18px;
   background: #FFF;
   border: 1px solid #e9e9e9;
-  width: 100%;
-  display: block;
  }
  
  #rpress-purchased-items .rpress-order-foodname-wrap {
@@ -690,7 +688,7 @@
   width: 90%;
  }
  .rpress-edit-purchase-element ul li.fooditem {
-  width: 20%;
+  width: 35%;
  }
  .rpress-edit-purchase-element ul li.item_price {
   width: 20%;
@@ -3209,4 +3207,41 @@
   display: inline-block;
   margin-right: 10px;
  }
- 
+ .rpress-radio-image-options {
+	display: flex;
+	gap: 20px;
+	align-items: flex-start;
+	margin-top: 10px;
+}
+
+.rpress-radio-image-label {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	cursor: pointer;
+	text-align: center;
+	position: relative;
+}
+
+.rpress-radio-image-label input[type="radio"] {
+	display: none;
+}
+
+.rpress-radio-image-label img {
+	width: 150px; /* control image size */
+	height: auto;
+	border: 2px solid transparent;
+	border-radius: 6px;
+	transition: border-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.rpress-radio-image-label input[type="radio"]:checked + img {
+	border-color: #0073aa; /* WP admin blue */
+	transform: scale(1.03);
+}
+
+.rpress-radio-image-label div {
+	margin-top: 8px;
+	font-weight: 500;
+}

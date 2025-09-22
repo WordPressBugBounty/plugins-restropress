@@ -127,25 +127,93 @@ add_action( 'template_redirect', 'rpress_display_email_template_preview' );
  * @return string $email_body Body of the email
  */
 function rpress_get_email_body_content( $payment_id = 0, $payment_data = array(), $order_status='' ) {
-    $default_email_body = __( "Dear", "restropress" ) . " {name},\n\n";
-    $default_email_body .= __( "Thank you for your order. Here are the list of items that you have ordered", "restropress" ) . "\n\n";
-    $default_email_body .= "{fooditem_list}\n\n";
-    $default_email_body .= "{sitename}";
+
+    // Status logic remains the same
     $status_order = rpress_get_order_status( $payment_id );
-    
+
+    // Default styled HTML template
+    $default_email_body = '
+    <div style="max-width:600px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
+      
+      <!-- Header -->
+      <div style="background:#000;color:#fff;padding:15px;text-align:center;font-size:20px;font-weight:bold;">
+        {sitename}
+      </div>
+
+      <!-- Order Status -->
+      <div style="padding:20px;text-align:center;background:#f9f9f9;">
+	  	<h3 style="display:flex;align-items:center;gap:8px;justify-content:center;">
+			<img src="' . RP_PLUGIN_URL . 'assets/images/status/' . strtolower($status_order) . '.png" 
+				alt="' . esc_attr($status_order) . ' icon" 
+				style="width:40px;height:40px;display:inline-block;vertical-align:middle;" />
+			' . ucfirst($status_order) . '
+		</h3>
+        <h2 style="margin:0 0 10px 0;">Thank you for your order, {name}</h2>
+        <p style="margin:0;font-size:14px;color:#666;">
+          Your order is being prepared. You’ll receive another email once your order has shipped.
+        </p>
+      </div>
+
+      <!-- Order Info -->
+      <div style="padding:20px;font-size:14px;line-height:1.6;color:#333;">
+        <table width="100%" cellspacing="0" cellpadding="8" border="0" style="border-collapse:collapse;">
+          <tr>
+            <td width="50%" valign="top" style="border-bottom:1px solid #eee;">
+              <strong>ORDER NUMBER:</strong><br>#{order_id}
+            </td>
+            <td width="50%" valign="top" style="border-bottom:1px solid #eee;">
+              <strong>ORDER DATE:</strong><br>{date}
+            </td>
+          </tr>
+          <tr>
+            <td width="50%" valign="top" style="border-bottom:1px solid #eee;">
+              <strong>BILLING INFO:</strong><br>{payment_method} – {price}
+            </td>
+            <td width="50%" valign="top" style="border-bottom:1px solid #eee;">
+              <strong>BILLING ADDRESS:</strong><br>{billing_address}
+            </td>
+          </tr>
+          <tr>
+            <td width="50%" valign="top" style="border-bottom:1px solid #eee;">
+              <strong>SHIPPING ADDRESS:</strong><br>{delivery_address}
+            </td>
+            <td width="50%" valign="top" style="border-bottom:1px solid #eee;">
+              <strong>PHONE:</strong><br>{phone}
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Payment Summary -->
+      <div style="background:#f9f9f9;padding:20px;font-size:14px;">
+        <h3 style="margin-top:0;">Product Details</h3>
+        <div>{fooditem_list}</div>
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#000;color:#fff;text-align:center;padding:15px;font-size:12px;">
+        {sitename} • {store_address}<br>
+      </div>
+
+    </div>';
     if( $order_status ){
-    	$status_order = $order_status ;
+        $status_order = $order_status;
     }
+
     $order_notification_settings = rpress_get_option( $status_order );
     $email = isset( $order_notification_settings['content'] ) ? $order_notification_settings['content'] : '';
+
     if ( $status_order == 'pending' && empty( $email ) ) {
         $email = rpress_get_option( 'purchase_receipt', false );
     }
+
     $email = $email ? stripslashes( $email ) : $default_email_body;
     $email_body = apply_filters( 'rpress_email_template_wpautop', true ) ? wpautop( $email ) : $email;
     $email_body = apply_filters( 'rpress_purchase_receipt_' . RPRESS()->emails->get_template(), $email_body, $payment_id, $payment_data );
+
     return apply_filters( 'rpress_purchase_receipt', $email_body, $payment_id, $payment_data );
 }
+
 /**
  * Order Notification Template Body
  *

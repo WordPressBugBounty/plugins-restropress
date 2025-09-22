@@ -112,17 +112,20 @@ function get_addon_item_formatted( $addon_items ) {
           			$cart = new RPRESS_Cart();
           			$addon_price = $cart->get_addon_price( $addon_id, $addon_items, $item_addon_price );
           			$addon_price = !empty( $addon_price ) ? rpress_currency_filter( rpress_format_amount( $addon_price ) ) : '';
-          			if ( $addon_data ) :
-            			$addon_item_name = $addon_data->name;
-            			$html.= '<li class="rpress-cart-item">
-						<span>' . $item_addon_quantity ." ". 'x' . '</span>
-			              <span class="rpress-cart-item-title">'.$addon_item_name.'</span>
-			              <span class="addon-item-price cart-item-quantity-wrap">
-			                <span class="rpress-cart-item-price qty-class">' . $addon_price . '</span>
-							
-			              </span>
-			            </li>';
-			        endif;
+					if ( $addon_data ) :
+						$addon_item_name = $addon_data->name;
+						$html .= '<li class="rpress-cart-item">';
+					
+						if ( is_plugin_active( 'restropress-addon-quantity/rpress_addon_quantity.php' ) ) {
+							$html .= '<span>' . $item_addon_quantity . ' x</span>';
+						}
+					
+						$html .= '<span class="rpress-cart-item-title">' . $addon_item_name . '</span>
+								  <span class="addon-item-price cart-item-quantity-wrap">
+									<span class="rpress-cart-item-price qty-class">' . $addon_price . '</span>
+								  </span>
+								</li>';
+					endif;					
 			    endif;
 			endif;
 		endforeach;

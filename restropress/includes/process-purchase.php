@@ -29,6 +29,21 @@ function rpress_process_purchase_form() {
 	} else {
 		// Validate the form $_POST data
 		$valid_data = rpress_purchase_form_validate_fields();
+
+		// Check cookies for service type and service time
+		$service_type = isset( $_COOKIE['service_type'] ) ? sanitize_text_field( $_COOKIE['service_type'] ) : '';
+		$service_time = isset( $_COOKIE['service_time'] ) ? sanitize_text_field( $_COOKIE['service_time'] ) : '';
+
+		if ( empty( $service_type ) ) {
+			$valid_data = false;
+			set_error( 'missing_service_type', __( 'Please select a service type.', 'restropress' ) );
+		}
+
+		if ( empty( $service_time ) ) {
+			$valid_data = false;
+			rpress_set_error( 'missing_service_time', __( 'Please select a service time.', 'restropress' ) );
+		}
+		
 		// Allow themes and plugins to hook to errors
 		do_action( 'rpress_checkout_error_checks', $valid_data, $data );
 	}

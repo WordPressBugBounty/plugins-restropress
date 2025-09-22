@@ -17,7 +17,7 @@ final class RestroPress {
    *
    * @var string
    */
-  public $version = '3.1.9.2';
+  public $version = '3.2';
 	/**
    * The single instance of the class.
    *
@@ -262,13 +262,12 @@ final class RestroPress {
 		require_once RP_PLUGIN_DIR . 'includes/tax-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/process-purchase.php';
 		require_once RP_PLUGIN_DIR . 'includes/login-register.php';
-		require_once RP_PLUGIN_DIR . "includes/firebase/class-rpress-firebase-fcm-impl.php";
-
 		// Must be loaded on frontend to ensure cron runs
 		require_once RP_PLUGIN_DIR . 'includes/admin/tracking.php';
 		require_once RP_PLUGIN_DIR . 'includes/privacy-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/shortcodes.php';
         require_once RP_PLUGIN_DIR . 'includes/vendor/autoload.php';
+		require_once RP_PLUGIN_DIR . "includes/firebase/class-rpress-firebase-fcm-impl.php";
 		/**
 		 * Migrating 3.0 Features to 2.x
 		 *
@@ -297,6 +296,7 @@ final class RestroPress {
 			// Add admin discount codes
 			require_once RP_PLUGIN_DIR . 'includes/admin/discounts/discount-actions.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/discounts/discount-codes.php';
+			require_once RP_PLUGIN_DIR . 'includes/admin/home/rpress-home.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/import/import-actions.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/import/import-functions.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/payments/actions.php';

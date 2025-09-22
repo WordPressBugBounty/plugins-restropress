@@ -67,7 +67,7 @@ jQuery(function ($) {
           success: function (response) {
             if (response.status !== 'error') {
               tata.success(rpress_vars.success, rpress_vars.license_success, {
-                position: 'br'
+                position: 'mr'
               })
               _self.parent('.rpress-license-wrapper')
                 .addClass('rpress-updated');
@@ -78,7 +78,7 @@ jQuery(function ($) {
               $('.rpress-deactivate-license').prop('checked', true).trigger('change');
             } else {
               tata.error(rpress_vars.error, response.message, {
-                position: 'br'
+                position: 'mr'
               })
             }
             _self.text(rpress_vars.license_activate);
@@ -91,7 +91,7 @@ jQuery(function ($) {
           .find('.rpress-license-field')
           .addClass('empty-license-key');
         tata.error(rpress_vars.error, rpress_vars.empty_license, {
-          position: 'br'
+          position: 'mr'
         })
       }
     });
@@ -130,7 +130,7 @@ jQuery(function ($) {
           },
           success: function (response) {
             tata.info(rpress_vars.information, rpress_vars.license_deactivated, {
-              position: 'br'
+              position: 'mr'
             })
             if (response.status !== 'error') {
               _self.parents('.rpress-purchased-wrap')
@@ -2466,4 +2466,21 @@ jQuery(function($) {
   
     });
    });
+});
+jQuery(document).ready(function($) {
+  let currentStep = 1;
+
+  function showStep(step) {
+      $('.rpress-setup-step').hide();
+      $('.rpress-setup-step[data-step="' + step + '"]').show();
+      currentStep = step;
+  }
+
+  $('.next-step').on('click', function() {
+      showStep(currentStep + 1);
+  });
+
+  $('.back-step').on('click', function() {
+      showStep(currentStep - 1);
+  });
 });

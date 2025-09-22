@@ -66,7 +66,7 @@ function rpress_get_purchase_link($args = array())
 		'direct' => $button_behavior == 'direct' ? true : false,
 		'text' => $button_behavior == 'direct' ? rpress_get_option('buy_now_text', __('Buy Now', 'restropress')) : rpress_get_option('add_to_cart_text', __('Purchase', 'restropress')),
 		'checkout' => rpress_get_option('checkout_button_text', _x('Checkout', 'text shown on the Add to Cart Button when the product is already in the cart', 'restropress')),
-		'style' => rpress_get_option('button_style', 'button'),
+		'style' => rpress_get_option('add_button_style', 'rounded'),
 		'color' => '',
 		'class' => 'rpress-submit'
 	));
@@ -149,6 +149,150 @@ function rpress_get_purchase_link($args = array())
 					echo '<a href="#" data-title="' . get_the_title($fooditem->ID) . '" class="rpress-add-to-cart ' . esc_attr($class) . '" data-action="rpress_add_to_cart" data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . $data_variable . ' ' . $type . ' ' . $data_price . ' ' . $button_display . '><span class="rpress-add-to-cart-label rp-ajax-toggle-text">' . $add_to_cart_label . '</span> <span class="add-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"></path></svg>
                       </span> </a>';
+				}
+				?>
+			<?php else: ?>
+				<?php
+				$not_available_lable = apply_filters(
+					'rpress_not_available',
+					__('Not Available', 'restropress'),
+					$fooditem->ID
+				);
+				echo '<a href="javascript:void(0)" data-title="' . get_the_title($fooditem->ID) . '" class="rpress-not-available ' . esc_attr($class) . '"  data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . ' ' . $button_display . '><span class="rpress-add-to-cart-label">' . $not_available_lable . '</span></a>';
+				?>
+			<?php endif; ?>
+		</div><!--end .rpress_purchase_submit_wrapper-->
+		<input type="hidden" name="fooditem_id" value="<?php echo esc_attr($fooditem->ID); ?>">
+		<input type="hidden" class="fooditem_qty" name="fooditem_qty" value="">
+		<?php if ($variable_pricing && isset($price_id) && isset($prices[$price_id])): ?>
+			<input type="hidden" name="rpress_options[price_id][]"
+				id="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>_1"
+				class="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>"
+				value="<?php echo esc_attr($price_id); ?>">
+		<?php endif; ?>
+		<?php if (!empty($args['direct']) && !$fooditem->is_free($args['price_id'])) { ?>
+			<input type="hidden" name="rpress_action" class="rpress_action_input" value="straight_to_gateway">
+		<?php } else { ?>
+			<input type="hidden" name="rpress_action" class="rpress_action_input" value="add_to_cart">
+		<?php } ?>
+		<?php if (apply_filters('rpress_fooditem_redirect_to_checkout', rpress_straight_to_checkout(), $fooditem->ID, $args)): ?>
+			<input type="hidden" name="rpress_redirect_to_checkout" id="rpress_redirect_to_checkout" value="1">
+		<?php endif; ?>
+		<?php do_action('rpress_purchase_link_end', $fooditem->ID, $args); ?>
+	</form>
+	<?php
+	$purchase_form = ob_get_clean();
+	return apply_filters('rpress_purchase_fooditem_form', $purchase_form, $args);
+}
+function rpress_get_purchase_link_grid($args = array())
+{
+	global $post, $rpress_displayed_form_ids;
+	$purchase_page = rpress_get_option('purchase_page', false);
+	if (!$purchase_page || $purchase_page == 0) {
+		global $no_checkout_error_displayed;
+		if (!is_null($no_checkout_error_displayed)) {
+			return false;
+		}
+		rpress_set_error('set_checkout', sprintf(__('No checkout page has been configured. Visit <a href="%s">Settings</a> to set one.', 'restropress'), admin_url('admin.php?page=rpress-settings')));
+		rpress_print_errors();
+		$no_checkout_error_displayed = true;
+		return false;
+	}
+	$post_id = is_object($post) ? $post->ID : 0;
+	$button_behavior = rpress_get_fooditem_button_behavior($post_id);
+	$defaults = apply_filters('rpress_purchase_link_defaults', array(
+		'fooditem_id' => $post_id,
+		'price' => (bool) true,
+		'price_id' => isset($args['price_id']) ? $args['price_id'] : false,
+		'direct' => $button_behavior == 'direct' ? true : false,
+		'text' => $button_behavior == 'direct' ? rpress_get_option('buy_now_text', __('Buy Now', 'restropress')) : rpress_get_option('add_to_cart_text', __('Purchase', 'restropress')),
+		'checkout' => rpress_get_option('checkout_button_text', _x('Checkout', 'text shown on the Add to Cart Button when the product is already in the cart', 'restropress')),
+		'style' => rpress_get_option('add_button_style', 'button'),
+		'color' => '',
+		'class' => 'rpress-submit'
+	));
+	$args = wp_parse_args($args, $defaults);
+	// Override the straight_to_gateway if the shop doesn't support it
+	if (!rpress_shop_supports_buy_now()) {
+		$args['direct'] = false;
+	}
+	$fooditem = new RPRESS_Fooditem($args['fooditem_id']);
+	if (empty($fooditem->ID)) {
+		return false;
+	}
+	if ('publish' !== $fooditem->post_status && !current_user_can('edit_product', $fooditem->ID)) {
+		return false; // Product not published or user doesn't have permission to view drafts
+	}
+	$options = array();
+	$variable_pricing = $fooditem->has_variable_prices();
+	$data_variable = $variable_pricing ? ' data-variable-price="yes"' : 'data-variable-price="no"';
+	$type = $fooditem->is_single_price_mode() ? 'data-price-mode=multi' : 'data-price-mode=single';
+	$show_price = $args['price'] && $args['price'] !== 'no';
+	$data_price_value = 0;
+	$price = false;
+	if ($variable_pricing && false !== $args['price_id']) {
+		$price_id = $args['price_id'];
+		$prices = $fooditem->prices;
+		$options['price_id'] = $args['price_id'];
+		$found_price = isset($prices[$price_id]) ? $prices[$price_id]['amount'] : false;
+		$data_price_value = $found_price;
+		if ($show_price) {
+			$price = $found_price;
+		}
+	} elseif (!$variable_pricing) {
+		$data_price_value = $fooditem->price;
+		if ($show_price) {
+			$price = $fooditem->price;
+		}
+	}
+	$data_price = 'data-price="' . $data_price_value . '"';
+	$button_text = !empty($args['text']) ? '&nbsp;&ndash;&nbsp;' . $args['text'] : '';
+	if (false !== $price) {
+		if (0 == $price) {
+			$args['text'] = __('Free', 'restropress') . $button_text;
+		} else {
+			$args['text'] = rpress_currency_filter(rpress_format_amount($price)) . $button_text;
+		}
+	}
+	if (rpress_item_in_cart($fooditem->ID, $options) && (!$variable_pricing || !$fooditem->is_single_price_mode())) {
+		$button_display = '';
+		$checkout_display = '';
+	} else {
+		$button_display = '';
+		$checkout_display = 'style="display:none;"';
+	}
+	// Collect any form IDs we've displayed already so we can avoid duplicate IDs
+	if (isset($rpress_displayed_form_ids[$fooditem->ID])) {
+		$rpress_displayed_form_ids[$fooditem->ID]++;
+	} else {
+		$rpress_displayed_form_ids[$fooditem->ID] = 1;
+	}
+	$form_id = !empty($args['form_id']) ? $args['form_id'] : 'rpress_purchase_' . $fooditem->ID;
+	// If we've already generated a form ID for this fooditem ID, append -#
+	if ($rpress_displayed_form_ids[$fooditem->ID] > 1) {
+		$form_id .= '-' . $rpress_displayed_form_ids[$fooditem->ID];
+	}
+	$args = apply_filters('rpress_purchase_link_args', $args);
+	ob_start();
+	?>
+	<form id="<?php echo esc_attr($form_id); ?>"
+		class="rpress_fooditem_purchase_form rpress_purchase_<?php echo absint($fooditem->ID); ?>" method="post">
+		<?php do_action('rpress_purchase_link_top', $fooditem->ID, $args); ?>
+		<div class="rpress_purchase_submit_wrapper">
+			<?php
+			$class = implode(' ', array($args['style'], trim($args['class'])));
+			if (rpress_fooditem_available($fooditem->ID)):
+				if (!rpress_is_ajax_disabled()) {
+					$add_to_cart_label = apply_filters(
+						'rpress_add_to_cart_text',
+						__('Add', 'restropress')
+					);
+					echo '<a href="#" data-title="' . get_the_title($fooditem->ID) . '" class="rpress-add-to-cart ' . esc_attr($class) . '" data-action="rpress_add_to_cart" data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . $data_variable . ' ' . $type . ' ' . $data_price . ' ' . $button_display . '>
+					  <span class="add-icon">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"></path></svg>
+					  </span>
+						<span class="rpress-add-to-cart-label rp-ajax-toggle-text">' . $add_to_cart_label . '</span> 					   
+					  </a>';
 				}
 				?>
 			<?php else: ?>
@@ -314,10 +458,30 @@ function rpress_get_button_colors()
 function rpress_get_button_styles()
 {
 	$styles = array(
-		'button' => __('Button', 'restropress'),
-		'plain' => __('Plain Text', 'restropress')
+		'th-rectangle' => __('Rectangle Button', 'restropress'),
+		'th-rounded' => __('Rounded button', 'restropress'),
+		'th-rectangle' => __('Rectangle Button', 'restropress'),
+		'th-plain' => __('Plain Text', 'restropress'),
 	);
 	return apply_filters('rpress_button_styles', $styles);
+}
+/**
+ * Get Button Styles
+ *
+ * Returns an array of button styles.
+ *
+ * @since  1.0.0
+ * @return array $styles Button styles
+ */
+function rpress_get_add_button_styles()
+{
+	$styles = array(
+		'circle' => __('Circle', 'restropress'),
+		'rounded' => __('Rounded', 'restropress'),
+		'rectangle' => __('Rectangle', 'restropress'),
+		
+	);
+	return apply_filters('rpress_add_button_styles', $styles);
 }
 /**
  * Default formatting for fooditem excerpts
@@ -811,14 +975,18 @@ function rpress_get_bundle_item_price_id($bundle_item)
  * @param array $atts The [fooditems] shortcode attributes.
  * @param int   $i The current item count.
  */
-function rpress_fooditem_shortcode_item($atts, $i)
-{
+function rpress_fooditem_shortcode_item( $atts, $i ) {
 	global $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i;
 	$rpress_fooditem_shortcode_item_atts = $atts;
-	$rpress_fooditem_shortcode_item_i = $i;
-	rpress_get_template_part('fooditem/single');
+	$rpress_fooditem_shortcode_item_i    = $i;
+
+	// Get selected template from settings (default to 'list')
+	$template = rpress_get_option( 'template', 'list' );
+
+	// Load the appropriate template part from the selected folder
+	rpress_get_template_part( $template . '/single' );
 }
-add_action('rpress_fooditem_shortcode_item', 'rpress_fooditem_shortcode_item', 10, 2);
+add_action( 'rpress_fooditem_shortcode_item', 'rpress_fooditem_shortcode_item', 10, 2 );
 /**
  * Get category title
  *
@@ -878,3 +1046,31 @@ function rpress_add_delivery_steps()
 	echo rpress_get_delivery_steps('');
 }
 
+function rpress_radio_image_callback( $args ) {
+	$option_value = rpress_get_option( $args['id'], $args['std'] );
+	$name_attr    = 'rpress_settings[' . esc_attr( $args['id'] ) . ']';
+
+	echo '<div class="rpress-radio-image-options">';
+
+	foreach ( $args['options'] as $key => $data ) {
+		// Fallback image logic
+		$image_url = ! empty( $data['img'] )
+			? $data['img']
+			: plugin_dir_url( dirname( __FILE__ ) ) . 'assets/images/' . $key . '.png';
+
+		$label   = isset( $data['label'] ) ? $data['label'] : ucfirst( $key );
+		$checked = checked( $option_value, $key, false );
+
+		echo '<label class="rpress-radio-image-label">';
+		echo '<input type="radio" name="' . esc_attr( $name_attr ) . '" value="' . esc_attr( $key ) . '" ' . $checked . ' />';
+		echo '<img src="' . esc_url( $image_url ) . '" alt="' . esc_attr( $label ) . '" />';
+		echo '<div>' . esc_html( $label ) . '</div>';
+		echo '</label>';
+	}
+
+	echo '</div>';
+
+	if ( ! empty( $args['desc'] ) ) {
+		echo '<p class="description">' . wp_kses_post( $args['desc'] ) . '</p>';
+	}
+}

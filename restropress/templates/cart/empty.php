@@ -8,9 +8,7 @@ $display       = $cart_quantity > 0 ? '' : ' style="display:none;"';
 <li class="cart_item rpress-cart-meta rpress_cart_tax" style="display:none;"><?php esc_html_e( 'Estimated Tax:', 'restropress' ); ?> <span class="cart-tax"><?php echo ( rpress_currency_filter( rpress_format_amount( rpress_get_cart_tax() ) ) ); ?></span></li>
 <?php endif; ?>
 <li class="cart_item rpress-cart-meta rpress_total" style="display:none;"><?php esc_html_e( 'Total (', 'restropress' ); ?><span class="rpress-cart-quantity" <?php echo wp_kses_post( $display ); ?>><?php echo ( $cart_quantity ); ?></span> <?php esc_html_e( ' Items)', 'restropress' ); ?><span class="cart-total"><?php echo ( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ) ); ?></span></li>
-<li class="delivery-items-options" style="display:none">
-	<?php echo ( get_delivery_options( true ) ); ?>
-</li>
+
 <li class="cart_item rpress_checkout" style="display:none;"><a class="rpress-checkout-cart button rpress-submit" data-url="<?php echo esc_url( rpress_get_checkout_uri() ); ?>" href="#"><span class="rpress-checkout-label rp-ajax-toggle-text">
   			<?php
     		$confirm_order_text = apply_filters( 'rp_confirm_order_text', esc_html_e( 'Checkout', 'restropress' ) );

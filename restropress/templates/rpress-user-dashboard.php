@@ -88,7 +88,7 @@ if ( ! is_user_logged_in() ) {
                                         )
                                     ) );
                                 } else {
-                                    ?><img src="http://rpress-user-admin.local/wp-content/uploads/2024/02/avatar-1.png" class="rounded-circle"><?php
+                                    ?><img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/avatar-1.png' ); ?>" class="rounded-circle"><?php
                                 } ?>
                             </a>
                             <div class="avtar-details-wrap">

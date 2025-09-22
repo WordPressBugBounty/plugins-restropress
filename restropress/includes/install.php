@@ -36,6 +36,10 @@ function rpress_install( $network_wide = false ) {
 	} else {
 		rpress_run_install();
 	}
+	// Only set if not already set, so it doesn't override
+	if ( false === get_option( 'rpress_show_setup_wizard' ) ) {
+		add_option( 'rpress_show_setup_wizard', true );
+	}
 }
 register_activation_hook( RP_PLUGIN_FILE, 'rpress_install' );
 /**
@@ -143,6 +147,35 @@ function rpress_run_install() {
 	} else {
 		$options['food_items_page'] = $current_options['food_items_page'];
 	}
+	// Page definitions
+    $pages = [
+        'login' => [
+            'title'   => 'Login',
+            'content' => '[rpress_login]'
+        ],
+        'register' => [
+            'title'   => 'Register',
+            'content' => '[rpress_register]'
+		],
+		'forgot-password' => [
+			'title'   => 'Forgot Password',
+			'content' => '[custom_forgot_password]'
+		]
+    ];
+
+    foreach ($pages as $slug => $page) {
+        // Check if page already exists by slug
+        $existing = get_page_by_path($slug);
+        if (!$existing) {
+            wp_insert_post([
+                'post_title'   => $page['title'],
+                'post_name'    => $slug,
+                'post_content' => $page['content'],
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ]);
+        }
+    }
 	// Populate some default values
 	foreach( rpress_get_registered_settings() as $tab => $sections ) {
 		foreach( $sections as $section => $settings) {
@@ -265,6 +298,24 @@ function rpress_after_install() {
 	}
 }
 add_action( 'admin_init', 'rpress_after_install' );
+
+function rpress_maybe_redirect_to_setup_wizard() {
+	// Only run for admins, in the dashboard
+	if ( ! current_user_can( 'manage_options' ) || ! is_admin() ) {
+		return;
+	}
+
+	// Avoid redirect loops or if already on the setup page
+	if ( get_option( 'rpress_show_setup_wizard' ) && ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'rpress-setup' ) ) {
+		// Remove flag so it only happens once
+		delete_option( 'rpress_show_setup_wizard' );
+
+		// Redirect to your wizard page
+		wp_redirect( admin_url( 'admin.php?page=rpress-setup' ) );
+		exit;
+	}
+}
+add_action( 'admin_init', 'rpress_maybe_redirect_to_setup_wizard' );
 /**
  * Install user roles on sub-sites of a network
  *

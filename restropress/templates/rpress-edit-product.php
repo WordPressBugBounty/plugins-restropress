@@ -1,4 +1,4 @@
-<div class="fooditem-description">{itemdescription}</div>
+<div class="fooditem-description"></div>
 <div class="view-food-item-wrap">
 	<form id="fooditem-update-details" class="row">{fooditemslist}</form>
 	<div class="clear"></div>

@@ -34,10 +34,14 @@ a:hover{
 .mt-3 {
     margin-top: 1rem;
 }
+.admin_page_rpress-setup{
+    background-color: #fff;
+}
 .rpress-welcome-wrap .d-flex {
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
+        gap: 10px;
 }
 .text-align-center{
     text-align: center;
@@ -51,32 +55,6 @@ a:hover{
     -ms-flex-direction: row-reverse !important;
     flex-direction: row-reverse !important;
 }
-@media (min-width: 992px) {
-    .col-lg-5 {
-        flex: 0 0 41.66667%;
-        max-width: 41.66667%;
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    .col-lg-6 {
-        flex: 0 0 50%;
-        max-width: 50%;
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    .col-lg-7 {
-        flex: 0 0 58.33333%;
-        max-width: 58.33333%;
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    .col-lg-12 {
-        flex: 0 0 auto;
-        width: 100%;
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-}
 .rpress-welcome-wrap .button {
     font-family: 'Roboto', sans-serif;
     font-weight: 500;   
@@ -88,11 +66,15 @@ a:hover{
     cursor:pointer;
     outline:0;
 }
-.rpress-welcome-wrap .button-primary{
+.rpress-welcome-wrap .button-primary,
+.rpress-welcome-wrap .button-primary:focus
+{
     background-color: #007AFF;
     border:2px solid #007AFF;
 }
-.rpress-welcome-wrap .button-primary:hover {
+.rpress-welcome-wrap .button-primary:hover,
+.rpress-welcome-wrap .welcome-step-3 .file-upload-btn:hover
+{
     background-color: #06aff1;
     border:2px solid #06aff1;
 }
@@ -108,14 +90,17 @@ a:hover{
     transition: all .5s ease-in-out;
     position: relative;
     border: 0rem solid transparent;
-    border-radius: 12px;
-    box-shadow: 0px 1px 10px 1px rgb(0 0 0 / 5%);
+    border-radius: 10px;
+    box-shadow: 0px 2px 30px 0px #0000000F;
     max-width: initial;
+}
+.rpress-welcome-wrap .card.checked{
+    border: 2px solid #5DA8FA;
 }
 .rpress-welcome-wrap .card-header{
     position: relative;
     background: transparent;
-    padding: 0.5rem 1.5rem;
+    padding: 1rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -126,10 +111,21 @@ a:hover{
 }
 .rpress-welcome-wrap .card-body {
     flex: 1 1 auto;
-    padding: 2rem 2rem;
+    padding: 0rem 0.5rem;
+}
+.service-offer-wrap.offer-tab2 .card-body,
+.welcome-step-3 .card-body{
+    padding: 1rem 0.5rem;
+}
+.rpress-welcome-wrap .card-body .text-align-center {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
 }
 .rpress-welcome-wrap.graybg {
-    background-color: #FAFAFA;
+    background-color:#FAFAFA;
+    box-shadow: 0px 2.11px 14.07px 0px #0000000F;
     margin: 4rem 6rem;
     padding: 0;
 }
@@ -148,12 +144,24 @@ a:hover{
     column-gap: 10px;
     align-items: center;
 }
-.rpress-welcome-wrap .card-body p.mg-b-0,
 .service-offer-wrap.offer-tab2 .mg-b-0,
-.rpress-welcome-wrap .welcome-step-3 p.finish_text{
+.welcome-step-3 span.tooltiptext{
+    font-size: 14px;
+    font-weight: 400;
+    color:#e9e9e9;
+}
+.rpress-welcome-wrap .service-offer-wrap .col-lg-6 {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.rpress-welcome-wrap .card-body p.main-title-description{
+    color: #787A7C;
     font-size: 16px;
     font-weight: 400;
-    color: #787A7C;
+    margin: 10px 0;
+}
+.rpress-welcome-wrap .card-body p.main-title-description b{
+    color: #2D2F32;    
 }
 .rpress-welcome-wrap .card-body div.br-b-3 {
     border-bottom: 2px solid #E9E9E9;
@@ -167,23 +175,30 @@ a:hover{
     margin-right: -10px;
 }
 .rpress-welcome-wrap .service-offer-wrap h3{
-    font-size:1.17em;
+    font-size:18px;   
+    text-align: left;
+    margin-bottom: 0;
 }
 .rpress-welcome-wrap p.service-offer-description {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 400;
-    color: #BBB9C2;
+    text-align: left;
+    color:#787A7C;
     line-height: 22px;
-    padding: 0 5%;
+    padding: 0 10% 0 0;
 }
 .rpress-welcome-wrap .service-offer-icon {
-    height: 200px;
+    height: 185px;
 }
 .rpress-welcome-wrap p.service-offer-alert-description {
     color: #A3A0AF;
     font-size: 16px;
+    font-weight: 400;
     align-items: center;
     line-height: inherit;
+}
+.welcome-step-1 p.service-offer-alert-description{
+    margin: 4em 0 1em;
 }
 .rpress-welcome-wrap p.service-offer-alert-description svg{
     margin-right:10px;
@@ -191,7 +206,7 @@ a:hover{
 /*--tab--*/
 .rpress-welcome-wrap form.multiStep{
     position:relative;
-    padding:0px 40px 0;
+    padding:40px 40px 40px;
 }
 .rpress-welcome-wrap .tab {
     display: flex;
@@ -226,6 +241,7 @@ a:hover{
     position: relative;
 }
 .rpress-welcome-wrap .multiStep__circles li.step:before {
+    content: "";
     position: absolute;
     top: 3px;
     right: calc(-63% - -45px / 2);
@@ -236,7 +252,6 @@ a:hover{
     display: block;
     width: 115%;
     height: 3px;
-    content: "";
     background-color: #F0F1F2;
     z-index: 1;
 }
@@ -245,6 +260,240 @@ a:hover{
 }
 .rpress-welcome-wrap .multiStep__circles li.step:first-child:before {
     display:none;
+}
+.services-option_wrap{
+    background-color: #F9F9F9;
+    border: 1px solid #E6E6E6;
+    border-radius: 10px;
+    padding: 15px 5px;
+}
+.services-option_wrap h4{
+    margin:20px 0 10px;
+    font-size: 17px;
+}
+.services-option_wrap .col-lg-6>div{
+    margin-bottom: 30px;
+}
+.services-option_wrap .col-lg-6,
+.rpress-welcome-wrap .welcome-step-3 .col-lg-6
+{
+    position:relative;
+}
+/* .services-option_wrap .col-lg-6:first-of-type:after, */
+.rpress-welcome-wrap .welcome-step-3 .col-lg-6:first-of-type:after{
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 50px;
+    height: 87%;
+    border-right: 2px solid #ECECEC;
+}
+.welcome-step-1 .services-option_wrap .col-lg-6:first-child{
+    border-right: 2px solid #ECECEC;
+}
+.welcome-step-1 .services-option_wrap .col-lg-6:last-child{
+    padding-left: 40px;
+}
+.open-close_time-wrap{
+    display: flex;
+    align-items: center;    
+    justify-content: start;
+    gap: 15px;
+}
+.open-close_time-wrap>div{
+    flex-grow: 1
+}
+.light-gray-txt{
+    color: #787A7C;
+}
+/*-----tool-tip-----*/
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width:max-content;
+  font-size: 12px;
+  background-color:#2C3447;
+  color: #fff;
+  text-align: center;
+  padding:1px 10px;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+}
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+/*----radio_button----*/
+.default-service-type_wrap .l-radio {
+    border-radius: 50px;
+    display: inline-flex;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+.default-service-type_wrap .l-radio input {
+    vertical-align: middle;
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    background: none;
+    border: 0;
+    box-shadow: inset 0 0 0 1.5px #D0D0D0;
+    box-shadow: inset 0 0 0 1.5px #D0D0D0;
+    appearance: none;
+    padding: 0;
+    margin: 0;
+    transition: box-shadow 150ms cubic-bezier(0.95, 0.15, 0.5, 1.25);
+    pointer-events: none;
+}
+.default-service-type_wrap .l-radio input:focus {
+    outline: none;
+}
+.default-service-type_wrap .l-radio input:checked {
+    box-shadow: inset 0 0 0 6px #007AFF;
+}
+input[type=radio]:checked::before{
+    display: none;
+}
+.default-service-type_wrap .l-radio span {
+    vertical-align: middle;
+    display: inline-block;
+    line-height: 20px;
+    padding: 0 8px;
+}
+/*----checkbox_design----*/
+.enable-asap-option_wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+}
+.rpress-welcome-wrap .enable-asap-option_wrap label{
+    padding-right: 15%;
+}
+.enable-asap-option_wrap input[type=checkbox] {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    color: #363839;
+    border: 2px solid #D0D0D0;
+    border-radius: 4px;
+    -webkit-appearance: none;
+        -moz-appearance: none;
+            appearance: none;
+    outline: 0;
+    cursor: pointer;
+    transition: background 175ms cubic-bezier(0.1, 0.1, 0.25, 1);
+}
+.services-option_wrap .enable-asap-option_wrap.enable-asap-option_wrap input[type=checkbox],
+.enable-order-notification_wrap.enable-asap-option_wrap input[type=checkbox]{
+   width: 23px;
+    min-width: 1.4rem;
+    height: 23px;
+    top: 6px;
+    left:0;
+}
+.rpress-welcome-wrap label,
+.rpress-welcome-wrap .store-time_wrap p,
+.store-logo-wrap h4{
+    color: #2D2F32;
+    font-family: Roboto;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 400;
+    margin: 0;
+}
+.welcome-step-3 label,
+.store-logo-wrap h4{
+    font-weight: 500;    
+}
+.rpress-welcome-wrap .service-offer-wrap.offer-tab2 label.col-form-label{
+    font-size: 17px !important;
+    font-weight: 600;
+    color: #2C3447;
+    margin-bottom: 3px !important;
+    display: block;
+}
+.enable-asap-option_wrap input[type=checkbox]::before {
+    position: absolute;
+    content: "";
+    display: block;
+    top: 5px;
+    left: 10px;
+    width: 6px;
+    height: 11px;
+    border-style: solid;
+    border-color: #fff;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+    opacity: 0;
+}
+.enable-asap-option_wrap input[type=checkbox]:checked {
+    color: #fff;
+    border-color: #007AFF;
+    background: #007AFF;
+}
+.enable-asap-option_wrap input[type=checkbox]:checked::before {
+    opacity: 1;
+}
+.store-time_wrap input[type=checkbox]:checked::before{
+    display: none;
+}
+.enable-asap-option_wrap input[type=checkbox]:checked ~ label::before {
+    -webkit-clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+/*----store_time-toggle----*/
+.rpress-welcome-wrap .store-time_wrap {
+    position:relative;
+    display: flex;
+    align-items: center;
+}
+.rpress-welcome-wrap .store-time_wrap .switch {
+    width: 50px;
+    height: 24px;
+    top:-4px;
+    right: 40%;
+}
+.rpress-welcome-wrap .store-time_wrap .switch input {
+    opacity: 1;
+    width: 0;
+    height: 0;
+    border: 0;
+    box-shadow: none;
+}
+.rpress-welcome-wrap .store-time_wrap .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0px;
+    transition: .4s;
+    border-radius: 30px;
+}
+.rpress-welcome-wrap .store-time_wrap .slider:before {
+    position: absolute;
+    content: "";
+    height: 1em;
+    width: 1em;
+    border-radius: 16px;
+    left: 4.2px;
+    top: 3px;
+    bottom: 0;
+    background-color: white;
+    box-shadow: 0 2px 5px #999999;
+    transition: .4s;
+}
+.rpress-welcome-wrap .store-time_wrap input:checked + .slider {
+    background-color:#007AFF;
+    border: 1px solid transparent;
+}
+.rpress-welcome-wrap .store-time_wrap input:checked + .slider:before {
+    transform: translateX(1.5em);
 }
 /*---tab2---*/
 .rpress-welcome-wrap .service-offer-wrap.offer-tab2 label.col-form-label {
@@ -268,13 +517,25 @@ a:hover{
     height: 50px;
     line-height: 50px;
     padding: 0px 10px 0 18px;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 400;
     color: #1A2235;
-    border: 1px solid #f0f1f5;
+    border: 1px solid #E6E6E6;
     border-radius: 13px;
     transition: all 0.3s ease;
-    box-shadow:none;
+    box-shadow: 0px 2px 30px 0px #00000005;
+}
+.rpress-welcome-wrap .welcome-step-1 select.chosen-select{
+    height:43px;
+    line-height: 43px;
+    padding-left: 38px;
+    border-radius: 10px;
+    background-image: url(../../assets/svg/clock-gray.svg), url("data:image/svg+xml,%3Csvg class='ast-arrow-svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='26px' height='16.043px' fill='%23334155' viewBox='57 35.171 26 16.043' enable-background='new 57 35.171 26 16.043' xml:space='preserve' %3E%3Cpath d='M57.5,38.193l12.5,12.5l12.5-12.5l-2.5-2.5l-10,10l-10-10L57.5,38.193z'%3E%3C/path%3E%3C/svg%3E");
+    background-size: 16px, 12px;
+    background-repeat: no-repeat;
+    background-position: 12px 12px, 93% 50%;
+    outline: 0;   
+    -webkit-appearance: none;
 }
 .rpress-welcome-wrap .service-offer-wrap.offer-tab2 .form-control {
     background: #fff;
@@ -300,29 +561,197 @@ a:hover{
 }
 /*--------tab3------*/
 .rpress-welcome-wrap .welcome-step-3 {
-    padding:80px 0 100px;
+    padding:0px 0 50px;
 }
-.rpress-welcome-wrap .welcome-step-3 h1{
+.rpress-welcome-wrap .welcome-step-3 .col-lg-6 .d-flex{
+    display: flex;
+}
+/*----tab3_Radio-box----*/
+.rpress-welcome-wrap .welcome-step-3 .grid-col-auto {
+    grid-auto-flow: column;
+    grid-template-rows: auto;
+}
+.rpress-welcome-wrap .welcome-step-3 .grid-wrapper {
+    display: grid;
+    grid-gap: 20px;
+    place-items: flex-start;
+    place-content: flex-start;
+    margin-top: 20px;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card {
+    cursor: pointer;
+    position:relative;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card input[type=radio] {
+    position: absolute;
+    top: 6px;
+    right: 0px;
+    visibility:hidden;
+    z-index: 1;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card .card-content-wrapper {
+    background: #fff;
+    border-radius: 5px;
+    max-width: 280px;
+    padding: 0;
+    display: grid;
+    box-shadow: 0 2px 4px 0 rgba(219, 215, 215, 0.04);
+    transition: 200ms linear;
+    position:relative;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card .check-icon {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    border: solid 2px #e3e3e3;
+    border-radius: 50%;
+    transition: 200ms linear;
+    opacity: 0;
+    position: absolute;
+    right: -2px;
+    top: -10px;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card .check-icon:before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:url('../svg/radio-check.svg');
+    background-repeat: no-repeat;
+    background-size: 12px;
+    background-position: center center;
+    transform: scale(1.6);
+    transition: 200ms linear;
+    opacity: 0;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card input[type=radio]:checked + .card-content-wrapper .check-icon:before {
+    transform: scale(1);
+    opacity: 1;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card input[type=radio] + .card-content-wrapper .card-content svg{
+    background-color: #F3F9FF;
+    box-shadow: none;
+    padding: 15px;
+    border-radius: 10px;
+    height: 60px;
+    width: 60px;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card input[type=radio]:checked + .card-content-wrapper .card-content svg{
+    background-color: #007AFF;
+    box-shadow: none;
+    padding: 15px;
+    border-radius: 10px;
+    height: 60px;
+    width: 60px;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card input[type=radio] + .card-content-wrapper .card-content svg path{
+    fill: #007AFF;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card input[type=radio]:checked + .card-content-wrapper .card-content svg path{
+    fill: #fff;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card input[type=radio]:checked + .card-content-wrapper .check-icon {
+    background: #fff;
+    border-color: #fff;
+    transform: scale(1.2);
+    box-shadow: 0px 2px 30px 0px #00000033;
+    opacity: 1;
+}
+.rpress-welcome-wrap .welcome-step-3 label.radio-card .card-content h4 {
     margin: 0;
-    font-size: 35px;
-    font-weight: bold;
-    color: #26292C;
+    color: #2D2F32;
+    font-size: 13px;
+    text-align: center;
 }
-.rpress-welcome-wrap .welcome-step-3 p.success_text{
-    font-size: 20px;
-    font-weight: 400;
+/*-----file_upload-----*/
+.rpress-welcome-wrap .welcome-step-3 .file-upload {
+    margin: 0 auto;
+    padding: 10px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.rpress-welcome-wrap .welcome-step-3 .file-upload-btn {
+    width: auto;
+    margin: 0;
+    color: #fff;
+    background: #007AFF;    
+    border:2px solid #007AFF;
+    padding: 10px 15px;
+    border-radius: 7px;
+    transition: all .2s ease;
+    outline: none;
+    font-size: 14px;
+    font-weight: 500;
+    height: 38px;
+    cursor: pointer;
+}
+.rpress-welcome-wrap .welcome-step-3 .file-upload-btn:active {
+    border: 0;
+    transition: all .2s ease;
+}
+.rpress-welcome-wrap .welcome-step-3 .file-upload-content {
+    text-align: center;
+    border: 1px solid #4DA2FF;
+    background: #F3F9FF;
+    width: 80px;
+    height: 80px;
+    border-radius: 100px;
+    overflow: hidden;
+    display: flex;
+}
+.rpress-welcome-wrap .welcome-step-3 .file-upload-input {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    outline: none;
+    opacity: 0;
+    cursor: pointer;
+}
+.rpress-welcome-wrap .welcome-step-3 .image-upload-wrap {
+    position: relative;
+    background-color: #fff;
+    border: 2px solid #E6E6E6;
+    box-shadow: 0px 2.11px 14.07px 0px #0000000F;
+    border-radius: 7px;
+    height: 40px;
+}
+.rpress-welcome-wrap .welcome-step-3 .store-time_wrap .image-upload-wrap-box p{
+    font-size: 12px;
     color: #787A7C;
-    margin-top: 8px;
+    margin: 5px 0 0;
 }
-.rpress-welcome-wrap .welcome-step-3 svg{
-    margin:25px 0;
+.rpress-welcome-wrap .welcome-step-3 .image-title-wrap {
+  padding: 0 15px 15px 15px;
+  color: #222;
+}
+.rpress-welcome-wrap .welcome-step-3 .drag-text h3 {
+    font-size: 14px;
+    font-weight: 400;
+    color: #2D2F32;
+}
+.rpress-welcome-wrap .welcome-step-3 .file-upload {
+    margin: unset;
+    padding: 20px 0;
+}
+.rpress-welcome-wrap .welcome-step-3 .file-upload-image {
+    max-height: 80px;
+    max-width:80px;
+    margin: auto;
+    padding: 20px;
 }
 /*---toggle_btn---*/
 .rpress-welcome-wrap .switch {
     position: absolute;
+    right: 10px;
+    top: 10px;
     display: block;
-    width: 60px;
-    height: 32px;
+    width: 50px;
+    height: 27px;
 }
 .rpress-welcome-wrap .switch input {
     opacity: 0;
@@ -336,35 +765,358 @@ a:hover{
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color:#E1E1E5;
     -webkit-transition: .4s;
     transition: .4s;
 }
 .rpress-welcome-wrap .slider:before {
     position: absolute;
     content: "";
-    height: 22px;
-    width: 22px;
-    left: 6px;
+    height: 18px;
+    width: 18px;
+    left: 5px;
     bottom: 5px;
-    background-color: white;
+    background-color: #fff;
+    box-shadow: 0px 0.7px 4.22px 0px #00000029;
     -webkit-transition: .4s;
     transition: .4s;
 }
 .rpress-welcome-wrap input:checked + .slider {
-    background-color: #11CC79;
+    background-color: #007AFF;
 }
 .rpress-welcome-wrap input:focus + .slider {
     box-shadow: 0 0 1px #2196F3;
 }
 .rpress-welcome-wrap input:checked + .slider:before {
-    -webkit-transform: translateX(26px);
-    -ms-transform: translateX(26px);
-    transform: translateX(26px);
+    -webkit-transform: translateX(22px);
+    -ms-transform: translateX(22px);
+    transform: translateX(22px);
 }
 .rpress-welcome-wrap .slider.round {
     border-radius: 34px;
 }
 .rpress-welcome-wrap .slider.round:before {
     border-radius: 50%;
+}
+/*----responsive----*/
+@media (min-width: 992px) {
+    .col-lg-5 {
+        flex: 0 0 41.66667%;
+        max-width: 41.66667%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    .col-lg-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    .col-lg-7 {
+        flex: 0 0 58.33333%;
+        max-width: 58.33333%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    .col-lg-12 {
+        flex: 0 0 auto;
+        width: 100%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+@media only screen and (min-width:1201px) and (max-width:1400px){
+    .rpress-welcome-wrap .welcome-step-2 .service-offer-wrap.offer-tab2 .d-flex {
+        justify-content:center;
+    }
+    .rpress-welcome-wrap.graybg {
+        margin: 4rem 1rem;
+    }
+    .rpress-welcome-wrap form.multiStep {
+        padding: 40px 20px 40px;
+    }
+   .rpress-welcome-wrap .store-time_wrap .slider:before {
+        top: 4px;
+    }
+    .welcome-step-1 .services-option_wrap .enable-asap-option_wrap.enable-asap-option_wrap input[type=checkbox]{
+        width: 30px;
+        outline: 0;
+        box-shadow: none;
+    }
+    .rpress-welcome-wrap input[type=checkbox]{
+        width: 24px;
+        height: 24px;
+    }
+}
+@media only screen and (min-width:1025px) and (max-width:1200px) {
+    .rpress-welcome-wrap .store-time_wrap .slider:before {
+        top: 4px;
+    }
+    .rpress-welcome-wrap .store-time_wrap input:checked + .slider:before {
+        transform: translateX(1.8em);
+    }
+    .rpress-welcome-wrap.graybg {
+        margin: 2rem 0rem;
+    }
+    .rpress-welcome-wrap .card-body {
+        padding: 1rem 0.5rem;
+    }
+    .services-option_wrap .col-lg-6:first-of-type:after{
+        right: 34px;
+    }
+    .open-close_time-wrap {
+        gap: 10px;
+    }
+    .rpress-welcome-wrap .welcome-step-1 select.chosen-select{
+        font-size: 14px;
+        padding-left: 31px;
+        background-size: 14px, 12px;
+        background-position: 10px 12px, 93% 50%;
+    }
+    .welcome-step-1 .services-option_wrap h4 {
+        font-size: 15px;
+    }
+    .rpress-welcome-wrap .welcome-step-1 label{
+        font-size: 14px;
+    }
+    .rpress-welcome-wrap .welcome-step-1 .service-offer-icon {
+        height: 170px;
+    }
+    .rpress-welcome-wrap .welcome-step-1 .service-offer-wrap h3 {
+        font-size: 16px;
+    }
+    .rpress-welcome-wrap .welcome-step-1 p.service-offer-description {
+        font-size: 14px;
+    }
+    .enable-order-notification_wrap.enable-asap-option_wrap input[type=checkbox] {
+        width: 22px;
+        min-width: 1.3rem;
+        height: 22px;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .col-lg-6:first-of-type:after {
+        border-right: 0px solid #ECECEC;
+    }
+    .rpress-welcome-wrap form.multiStep {
+        padding: 0;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .store-logo-wrap {
+        margin-top: 30px;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .col-lg-6 .d-flex {
+        justify-content: flex-start;
+    }
+}
+@media only screen and (min-width:769px) and (max-width:1024px) {
+    .rpress-welcome-wrap .welcome-step-1 .service-offer-wrap .col-lg-6 {
+        max-width: 100%;
+    }
+    .rpress-welcome-wrap.graybg {
+        margin: 3rem 2rem 0;
+    }
+    .rpress-welcome-wrap .service-offer-wrap {
+        flex-direction: column;
+    }
+    .rpress-welcome-wrap form.multiStep {
+        padding: 20px;
+    }
+    .rpress-welcome-wrap .welcome-step-1 .services-option_wrap .col-lg-6{
+        width: 100%;        
+        max-width: 100%;
+        padding: 0;
+    }
+    .welcome-step-1 .services-option_wrap .col-lg-6:first-child{
+        border-right: 0px solid #ECECEC;
+    }
+    .services-option_wrap .col-lg-6:first-of-type:after, 
+    .rpress-welcome-wrap .welcome-step-3 .col-lg-6:first-of-type:after {
+        border-right: 0px solid #ECECEC;
+    }
+    .rpress-welcome-wrap .d-flex {
+        justify-content: center;
+    }
+    .rpress-welcome-wrap p.d-flex.service-offer-alert-description{
+        justify-content: normal;
+        margin: 1em 0 3em;
+    }
+    .rpress-welcome-wrap .welcome-step-2 .card{
+        margin-bottom: 0;
+    }
+   .rpress-welcome-wrap .welcome-step-1 .services-option_wrap {
+        padding:0 20px;
+        flex-direction: column;
+    }
+    .rpress-welcome-wrap .service-offer-wrap.offer-tab2 .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .rpress-welcome-wrap .service-offer-wrap.offer-tab2 .col-lg-12,
+    .rpress-welcome-wrap .service-offer-wrap.offer-tab2 .card-body .col-lg-6
+    {
+        width: 100%;
+    }
+    .rpress-welcome-wrap select.chosen-select,
+    .rpress-welcome-wrap .service-offer-wrap.offer-tab2 .card-body .col-lg-6,
+    .rpress-welcome-wrap .service-offer-wrap.offer-tab2 .form-control
+    {
+        max-width: 100%;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .d-flex {
+        justify-content: flex-start;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .store-logo-wrap {
+        margin-top: 30px;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .col-lg-6 {
+        max-width: 100%;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .row {
+        margin-right: 0;
+        margin-left: 0;
+        flex-direction: column;
+    }
+}
+@media only screen and (min-width:320px) and (max-width:768px) {    
+    .rpress-welcome-wrap .welcome-step-1 .services-option_wrap .col-lg-6{
+        padding: 0;
+    }
+    .welcome-step-1 .services-option_wrap .col-lg-6:first-child{
+        border-right: 0px solid #ECECEC;
+    }
+    #wpbody-content {
+        overflow: hidden;
+    }
+    .wrap {
+        margin-right: 0;
+    }
+    .rpress-welcome-wrap.graybg {
+        margin: 1rem 1rem 1rem 0;
+    }
+    .rpress-welcome-wrap .service-offer-wrap {
+        display: block;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .rpress-welcome-wrap form.multiStep {
+        padding: 0px;
+    }
+    .services-option_wrap .col-lg-6{
+        width: 100%;
+    }
+    .rpress-welcome-wrap .card-body .text-align-center {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .rpress-welcome-wrap p.service-offer-description {
+        padding: 0 0 0 0;
+    }
+    .rpress-welcome-wrap .store-time_wrap .switch {
+        right: 0;
+    }
+    .rpress-welcome-wrap p.service-offer-alert-description {
+        margin: 0em 0 3em;
+    }
+    .services-option_wrap .enable-asap-option_wrap.enable-asap-option_wrap input[type=checkbox],
+    .enable-order-notification_wrap.enable-asap-option_wrap input[type=checkbox],
+    .enable-printing-invoice_wrap.enable-asap-option_wrap input[type=checkbox]
+    {
+        width: 20px;
+        min-width: 1.2rem;
+        height: 20px;
+    }
+    .rpress-welcome-wrap .welcome-step-1 .store-time_wrap .switch input::before{
+        display: none;
+    }
+    .rpress-welcome-wrap .card-body h2.main-content-title {
+        font-size: 25px;
+        line-height: 25px;
+    }
+    .rpress-welcome-wrap .card-header {
+        padding: 1rem 0.5rem;
+    }
+    .rpress-welcome-wrap .card-body,
+    .welcome-step-3 .card-body
+    {
+        padding:1rem 0.8rem !important;
+    }
+    .services-option_wrap .col-lg-6:first-of-type:after, 
+    .rpress-welcome-wrap .welcome-step-3 .col-lg-6:first-of-type:after {
+        border-right: 0px solid #ECECEC;
+    }
+    .services-option_wrap {
+        padding: 10px 20px 0px;
+        border: 0px solid #E6E6E6;
+    }
+    .rpress-welcome-wrap .service-offer-wrap .col-lg-6{
+        padding-left: 0;
+        padding-right: 0;
+    }
+    /* .services-option_wrap .enable-asap-option_wrap.enable-asap-option_wrap input[type=checkbox] {
+        width: 40px;
+    } */
+    /* body .d-flex.align-items-center.mb-3 .enable-asap-option_wrap input[type=checkbox]{
+        width: 30px !important;
+    } */
+    /* .enable-asap-option_wrap input[type=checkbox]::before {
+        left: 12px;
+    } */
+    .rpress-welcome-wrap .store-time_wrap .slider:before {
+        top: 4px;
+    }
+    .rpress-welcome-wrap .card-body p.main-title-description {
+        font-size: 14px;
+    }
+    .rpress-welcome-wrap .d-flex.flex-row-reverse {
+        flex-direction: column !important;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .rpress-welcome-wrap .d-flex.flex-row-reverse .buttons {
+        width: 100%;
+    }
+    .open-close_time-wrap {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .open-close_time-wrap>div {
+        width: 100%;
+    }
+    .rpress-welcome-wrap .button {
+        width: 100%;
+    }
+    .rpress-welcome-wrap .multiStep-white-wrap {
+        column-gap: 0;
+        margin-right: 0;
+    }
+    /*---tab2---*/
+    .rpress-welcome-wrap .service-offer-wrap.offer-tab2 .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .service-offer-wrap.offer-tab2 .col-lg-6{
+        width: 100%;
+        display: block;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .grid-wrapper {
+        grid-gap: 5px;
+        padding: 0 5px;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .store-logo-wrap {
+        margin-top: 20px;
+        padding: 0 10px;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .col-lg-6 .d-flex {
+        flex-direction: column;
+        padding: 0 10px;
+    }
+    .rpress-welcome-wrap .store-time_wrap {
+        position: relative;
+        display: block;
+    }
+    .rpress-welcome-wrap .welcome-step-3 .col-lg-6 {
+        width:100%;
+        padding: 0 10px;
+    }
+
+
 }

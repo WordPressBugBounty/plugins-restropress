@@ -1207,6 +1207,27 @@ input[class*="rpress-price-field"] {
 #rpress-edit-order-form input.large-text {
 	width: 90%
 }
+.rpress-edit-purchase-element ul li.fooditem {
+	width: 35%
+}
+.rpress-edit-purchase-element ul li.item_price {
+	width: 25%
+}
+.postbox.rpress-edit-purchase-element.rp-add-update-elements ul li.fooditem {
+    width: 35% !important;
+}
+.postbox.rpress-edit-purchase-element.rp-add-update-elements ul li.item_price {
+    width: 25% !important;
+}
+.rpress-edit-purchase-element ul li.item_price.item_quantity {
+	width: 25%
+}
+.rpress-edit-purchase-element ul li.item_tax {
+	width: 15%
+}
+.rpress-edit-purchase-element ul li.price {
+	width: 20%
+}
 .rpress-admin-box .label {
 	font-weight: 600
 }
@@ -2660,12 +2681,12 @@ div.restropress-btn-group.rpress-purchase-section span {
 	border: 1px solid #d8d8d8
 }
 .rpress-license-wrapper button.button {
-	color: #fff;
-	background: #39424B;
+	color: #ff6464;
+	background: #fff;
 	border-color: transparent;
 	width: 38%;
 	height: 37px;
-	min-width: 130px;
+	font-size: 13px;
     line-height: 2.8;
     font-weight: 700;
 	margin: 0;
@@ -2679,9 +2700,9 @@ div.restropress-btn-group.rpress-purchase-section span {
 .rpress-license-wrapper button.button:visited
 {
 	color: #fff;
-	background: #333;
-	border-color: #333;
-	box-shadow: #39424B;
+	background: #ff6464;
+	border-color: #ff6464;
+	box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 .restropress-addon-item.inactive .rpress-license-wrapper{
 	display: none 
@@ -2717,9 +2738,6 @@ form#rpress-payments-filter table th, form#rpress-payments-filter table td {
 }
 #rpress-payments-filter span.rp-service-type.badge-pickup, .rp-backbone-modal-header .service-type.badge-pickup{
 	background: #6c757d
-}
-#rpress-payments-filter span.rp-service-type.badge-dinein, .rp-backbone-modal-header .service-type.badge-dinein{
-	background: #820002
 }
 #rpress-payments-filter span.rp-service-type, .rp-backbone-modal-header .service-type {
 	color: #FFF;
@@ -2831,6 +2849,19 @@ select.rp_payment_current_status.processing, #rpress-payments-filter span.proces
 	    height: 280px;
 }
 .rp-addon-info span {
+	/*text-decoration: none !important;
+	line-height: 1.4;
+	max-height: 80px;
+	width: 100%;
+	overflow: hidden;
+	text-align: left;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 4;
+	font-size: 14px;
+	-webkit-box-orient: vertical;
+	font-weight: 400;
+	color: #1d1d1d;*/
 	color: #717A90;
 	font-weight: 400;
 	font-size: 18px;
@@ -3682,3 +3713,30 @@ form#rpress-export-payments input.button-secondary.button-disabled {
 	  transform: rotate(360deg);
 	}
   }
+  /*----admin-food-item-purchase-section----*/
+ul.rpress-purchased-items-list-wrapper li,
+ul.rpress-purchased-items-list-header li{
+	width: 160px !important;
+}
+.rpress-order-items-wrapper{
+    width: 100% !important;
+}
+div#rpress-purchased-items .rpress-purchased-items-header.row.header ul.rpress-purchased-items-list-header{
+	display: flex;
+    width: 100% !important;
+    align-items: center;
+}
+.rpress-order-items-wrapper ul.rpress-purchased-items-list-wrapper.\30 {
+    display: flex;
+    align-items: center;
+}
+.rpress-purchased-items-header ul.rpress-purchased-items-list-wrapper li,
+.rpress-purchased-items-header ul.rpress-purchased-items-list-header li,
+#rpress-purchased-items .rpress-order-items-wrapper .rpress-purchased-items-list-wrapper .fooditem{
+	width:160px !important;
+}
+#rpress-purchased-items .rpress-purchased-items-list-wrapper .item_price,
+#rpress-purchased-items .rpress-purchased-items-list-wrapper .item_tax,
+#rpress-purchased-items .rpress-purchased-items-list-wrapper .price {
+	top: 0px;
+}

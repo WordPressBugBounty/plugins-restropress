@@ -217,7 +217,7 @@ class RPRESS_Cart {
         	$addon_tax_price = $item_addon_prices = 0;
         	if ( !empty( $item['addon_items'] ) ) {
 	    		foreach ( $item['addon_items'] as  &$addon_item ) {
-	    			$addon_tax_price += !empty( $addon_item['price'] ) ? $addon_item['price'] : 0.00;
+	    			$addon_tax_price += !empty( $addon_item['price'] ) ? (float) $addon_item['price'] : 0.00;
 	    			$addon_price = (float) $this->get_addon_price( $addon_item['addon_id'], $item, $addon_item['price'] );
 	    			$addon_price = round($addon_price,rpress_currency_decimal_filter());
                     $item_addon_prices += $addon_price;
@@ -268,7 +268,8 @@ class RPRESS_Cart {
 				'subtotal'    => round( $subtotal, rpress_currency_decimal_filter() ),
 				'tax'         => round( $tax, rpress_currency_decimal_filter() ),
 				'fees'        => $fees,
-				'price'       => round( $total, rpress_currency_decimal_filter() )
+				'price'       => round( $total, rpress_currency_decimal_filter() ),
+				'addon_items' => ! empty( $item['addon_items'] ) ? $item['addon_items'] : array()
 			);
 			if ( $rpress_is_last_cart_item ) {
 				$rpress_is_last_cart_item   = false;
@@ -517,7 +518,7 @@ class RPRESS_Cart {
         $addon_tax_price  = 0.0;
 		if( isset($item['addon_items']) && !empty( $item['addon_items']) ) {
             foreach ( $item['addon_items'] as  &$addon_item ) {
-                $addon_tax_price += !empty( $addon_item['price'] ) ? $addon_item['price'] : 0.00;
+                $addon_tax_price += !empty( $addon_item['price'] ) ? (float) $addon_item['price'] : 0.00;
                 $addon_price = (float) $this->get_addon_price( $addon_item['addon_id'], $item, $addon_item['price'] );
                 $addon_price = round( $addon_price, rpress_currency_decimal_filter() );
                 $price += $addon_price;
