@@ -901,12 +901,9 @@ div#rpressModal {
 	text-transform: uppercase;
 	text-align: center;
 	font-weight: 600;
-	border-radius: 100px;
 	padding: 12px 15px;
 	position: relative;
 	width: 100%;
-	/* height: 68px;
-    line-height: 68px; */
 }
 #rpressModal .rpress-popup-actions .submit-fooditem-button span.cart-item-price{
 	font-size: 14px;
