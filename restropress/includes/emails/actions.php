@@ -50,7 +50,7 @@ function rpress_resend_purchase_receipt( $data ) {
 		$customer = new RPRESS_Customer( rpress_get_payment_customer_id( $purchase_id ) );
 		$email    = $customer->email;
 	}
-	rpress_email_purchase_receipt( $purchase_id, false, $email );
+	rpress_email_purchase_receipt( $purchase_id, false, '' );
 	// Grab all fooditems of the purchase and update their file fooditem limits, if needed
 	// This allows admins to resend purchase receipts to grant additional file fooditems
 	$fooditems = rpress_get_payment_meta_cart_details( $purchase_id, true );
@@ -82,7 +82,7 @@ function send_customer_purchase_notification( $payment_id, $new_status ) {
     if ( !empty( $payment_id ) && $check_notification_enabled && $new_status !== 'pending' ) {
         $customer = new RPRESS_Customer( rpress_get_payment_customer_id( $payment_id ) );
         $email    = $customer->email;
-        rpress_email_purchase_receipt( $payment_id, false, $email, null, $new_status );
+        rpress_email_purchase_receipt( $payment_id, false, '', null, $new_status );
     }
 }
 add_action( 'rpress_update_order_status', 'send_customer_purchase_notification' , 10, 2 );

@@ -887,18 +887,21 @@ function rpress_get_registered_settings() {
 						'name'    => esc_html__( 'Add Button Background Color', 'restropress' ),
 						'desc'    => esc_html__( 'Choose the color you want to use for the add button.', 'restropress' ),
 						'type'    => 'color',
+						'std' 	  => '#FEE2E8',
 					),
 					'add_button_text_color' => array(
 						'id'      => 'add_button_text_color',
 						'name'    => esc_html__( 'Add Button Text Color', 'restropress' ),
 						'desc'    => esc_html__( 'Choose the color you want to use for the add button.', 'restropress' ),
 						'type'    => 'color',
+						'std' 	  => '#000000',
 					),
 					'primary_color' => array(
 						'id'      => 'primary_color',
 						'name'    => esc_html__( 'Theme Color', 'restropress' ),
 						'desc'    => esc_html__( 'Choose the color you want to use for the buttons and links.', 'restropress' ),
 						'type'    => 'color',
+						'std' 	  => '#ED5575',
 					),
 					'template' => array(
 						'id'      => 'template',

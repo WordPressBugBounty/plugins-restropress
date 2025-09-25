@@ -33,7 +33,7 @@
         $terms = get_the_terms( get_the_id(), 'fooditem_tag' );
         if( $terms ) {
           echo '<div class="rpress_fooditem_tags">';
-          foreach ($terms as $key => $term) {
+          foreach (array_slice($terms, 0, 3) as $key => $term) {
             echo '<span class="fooditem_tag '.$term->slug.'">'.$term->name.'</span>';
           }
           echo '</div>';
@@ -52,7 +52,7 @@
     $terms = get_the_terms( get_the_id(), 'fooditem_tag' );
     if( $terms ) {
       echo '<div class="rpress_fooditem_tags">';
-      foreach ($terms as $key => $term) {
+      foreach (array_slice($terms, 0, 3) as $key => $term) {
         echo '<span class="fooditem_tag '.$term->slug.'">'.$term->name.'</span>';
       }
       echo '</div>';

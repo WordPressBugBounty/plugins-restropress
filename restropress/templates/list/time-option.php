@@ -2,6 +2,10 @@
 // Get service time/date from cookies if set
 $service_date = isset($_COOKIE['service_date']) ? sanitize_text_field($_COOKIE['service_date']) : '';
 $service_time = isset($_COOKIE['service_time']) ? sanitize_text_field($_COOKIE['service_time']) : '';
+if ( stripos($service_time, 'ASAP') !== false ) {
+    // ensure "ASAP " instead of "ASAP"
+    $service_time = str_ireplace('ASAP', 'ASAP ', $service_time);
+}
 $delivery_address = isset($_COOKIE['delivery_address']) ? sanitize_text_field($_COOKIE['delivery_address']) : '';
 if(isset($_COOKIE['branch_name'])) {
     $delivery_address = $_COOKIE['branch_name'];

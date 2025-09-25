@@ -111,6 +111,47 @@ function update_modal_live_price(fooditem_container) {
   jQuery('#rpressModal .cart-item-price')
     .attr('data-current', single_price.toFixed(2));
 }
+function isStoreOpen() {
+  if (typeof rp_scripts === 'undefined') return true; // fail-safe
+
+  var open = rp_scripts.open_hours;   // e.g. "09:00am" or "12:00am"
+  var close = rp_scripts.close_hours; // e.g. "11:00pm"
+
+  // Convert to 24hr Date objects for today
+  function parseTime(t) {
+    var d = new Date();
+    var time = t.toLowerCase().replace(/\s/g, '');
+    var match = time.match(/(\d+):(\d+)(am|pm)/);
+
+    if (!match) return d; // fallback to now
+
+    var hours = parseInt(match[1], 10);
+    var minutes = parseInt(match[2], 10);
+    var ampm = match[3];
+
+    if (ampm === "pm" && hours < 12) hours += 12;
+    if (ampm === "am" && hours === 12) hours = 0;
+
+    d.setHours(hours);
+    d.setMinutes(minutes);
+    d.setSeconds(0);
+    return d;
+  }
+
+  var now = new Date();
+  var openTime = parseTime(open);
+  var closeTime = parseTime(close);
+
+  // Handle case where close time is after midnight (e.g. open 6pm close 2am)
+  if (closeTime <= openTime) {
+    if (now < openTime && now > closeTime) {
+      return false;
+    }
+    return true;
+  }
+
+  return (now >= openTime && now <= closeTime);
+}
 /* RestroPress Frontend Functions */
 jQuery(function ($) {
   // Show order details on popup
@@ -235,6 +276,48 @@ jQuery(function ($) {
   $('.rpress-add-to-cart')
     .click(function (e) {
       e.preventDefault();
+      if (!isStoreOpen()) {
+        tata.error('Error', 'Store is currently closed', { position: "tr" });
+        return;
+      }
+      var delivery_zip = rp_getCookie('delivery_zip');
+      var delivery_location = rp_getCookie('delivery_location');
+      var delivery_address = rp_getCookie('delivery_address');
+      
+      if(!delivery_zip){
+        var $rp_delivery_zone = $('input#rp_delivery_zone'); // adjust selector if needed
+        // Check if the delivery zone input exists and has a value
+        if ($rp_delivery_zone.length > 0 && !$rp_delivery_zone.val().trim()) {
+          // Show error
+          tata.error('Error', 'Please enter ZIP code', { position: "tr" });
+
+          // Trigger Edit button click after 1 second
+          setTimeout(function () {
+            $('#editDateTime').trigger('click');
+          }, 500);
+
+          return; // stop further execution
+        }
+      }
+      
+      if(!delivery_location){
+        var $rp_delivery_location = $('input#rp_delivery_location'); // adjust selector if needed
+        if(!delivery_address) {
+          // Check if the delivery zone input exists and has a value
+          if ($rp_delivery_location.length > 0 && !$rp_delivery_location.val().trim()) {
+            // Show error
+            tata.error('Error', 'Please enter location', { position: "tr" });
+
+            // Trigger Edit button click after 1 second
+            setTimeout(function () {
+              $('#editDateTime').trigger('click');
+            }, 500);
+
+            return; // stop further execution
+          }
+        }
+      }
+
       var serviceType = rp_getCookie('service_type');
       if (!serviceType) {
         serviceType = rp_scripts.default_service || 'delivery';
@@ -252,6 +335,21 @@ jQuery(function ($) {
         if ($opt.length) {
           var val = $opt.val();
           rp_setCookie('service_time', val, rp_scripts.expire_cookie_time);
+        }
+      } else {
+        var $sel = $('#rpress-delivery-hours');
+        if (!$sel.length) return;
+        // cookie exists, check against options
+        if ($sel.find('option[value="' + serviceTime + '"]').length) {
+          // valid option exists → select it
+          // $sel.val(serviceTime).trigger('change');
+        } else {
+          // invalid cookie value → select first option
+          var $firstOpt = $sel.find('option').first();
+          if ($firstOpt.length) {
+              // $sel.val($firstOpt.val()).trigger('change');
+              rp_setCookie('service_time', $firstOpt.val(), rp_scripts.expire_cookie_time);
+          }
         }
       }
       var rp_get_delivery_data = rp_get_storage_data();
@@ -705,6 +803,7 @@ jQuery(function ($) {
                 }
                 // Target subtotal and total li elements
                 var $subtotal = $('.rpress-cart .rpress_subtotal');
+                var $tax      = $('ul.rpress-cart li.rpress_cart_tax');
                 var $total = $('.rpress-cart .rpress_total');
 
                 // Remove any previously added wrapper
@@ -712,7 +811,7 @@ jQuery(function ($) {
                 
                 // Wrap them together only if they exist
                 if ($subtotal.length && $total.length) {
-                    $subtotal.add($total).wrapAll('<div class="rpress-cart-total-wrap"></div>');
+                    $subtotal.add($tax).add($total).wrapAll('<div class="rpress-cart-total-wrap"></div>');
                 }
                 $(document.body)
                   .trigger('rpress_added_to_cart', [response]);
@@ -1058,6 +1157,20 @@ jQuery(function ($) {
       if ($opt.length) {
           var val = $opt.val();
           $sel.val(val).trigger('change');
+      }
+    } else {
+      var $sel = $('#rpress-delivery-hours');
+      if (!$sel.length) return;
+      // cookie exists, check against options
+      if ($sel.find('option[value="' + serviceTime + '"]').length) {
+        // valid option exists → select it
+        $sel.val(serviceTime).trigger('change');
+      } else {
+        // invalid cookie value → select first option
+        var $firstOpt = $sel.find('option').first();
+        if ($firstOpt.length) {
+            $sel.val($firstOpt.val()).trigger('change');
+        }
       }
     }
 
@@ -2359,4 +2472,151 @@ jQuery(function ($) {
           $(this).addClass('checked');
       }
   });
+});
+jQuery(document).ready(function($) {
+  $('.menu-category-wrap').first().addClass('first-menu-category-wrap');
+
+
+  var $nav = $('#pnProductNav');
+
+  function checkOverflow() {
+      if ($nav.attr('data-overflowing') !== 'right') {
+          $nav.parent('.pn-ProductNav_Wrapper').addClass('background-hidden');
+      } else {
+          $nav.parent('.pn-ProductNav_Wrapper').removeClass('background-hidden');
+      }
+  }
+
+  // Run once on page load
+  checkOverflow();
+
+  // // Watch for changes in data-overflowing
+  // var observer = new MutationObserver(function () {
+  //     checkOverflow();
+  // });
+
+  // observer.observe($nav[0], {
+  //     attributes: true,
+  //     attributeFilter: ['data-overflowing']
+  // });
+
+  function updateTooManyAdds($span) {
+    var textOnly = $span.text().trim();
+    var $parent = $span.closest('.rpress-price-holder');
+
+    if ($parent.length) {
+      if (textOnly.length > 3) {
+          $parent.addClass('too-many-adds');
+      } else {
+          $parent.removeClass('too-many-adds');
+      }
+    }
+  }
+
+  // Initial check on page load
+  $('span.rpress-add-to-cart-label.rp-ajax-toggle-text').each(function () {
+      updateTooManyAdds($(this));
+  });
+
+  // Observe only the spans
+  $('span.rpress-add-to-cart-label.rp-ajax-toggle-text').each(function () {
+      var targetNode = this;
+
+      var observer = new MutationObserver(function () {
+          updateTooManyAdds($(targetNode));
+      });
+
+      observer.observe(targetNode, {
+          characterData: true,
+          subtree: true,
+          childList: true
+      });
+  });
+});
+
+jQuery(document).ready(function($) {
+
+  var serviceType = rp_getCookie('service_type');
+  if (!serviceType) {
+    if(rp_scripts.service_options == 'delivery' || rp_scripts.service_options == 'pickup'){
+      serviceType = rp_scripts.default_service || 'delivery';
+      rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
+      location.reload();
+    }
+  }
+
+  var $select = $('#rpress-delivery-hours');
+  var serviceTime = rp_getCookie('service_time');
+
+  if ($select.length > 0) {
+      // Check if the select has an option matching the cookie value
+      if (!serviceTime || $select.find('option').filter(function() {
+          return $(this).text().trim() === serviceTime;
+      }).length === 0) {
+          // Cookie missing or not in options, fallback to first option
+          serviceTime = $select.find('option:first').text().trim();
+      }
+  }
+
+  // Print the value in the span
+  $('#deliveryTime').text(serviceTime);
+  
+  function initStickyMenu() {
+      var $menu = $('.desktop-scroll-menu .make-me-sticky');
+      var $sidebar = $('.sticky-sidebar');
+
+      if ($(window).width() > 991 && $menu.length > 0) {
+          // Fixed offset from top
+          var stickyTop = 0;
+
+          var menuOffset = $menu.offset().top;
+
+          $(window).off('.stickyMenu'); // Remove previous events
+
+          $(window).on('scroll.stickyMenu', function() {
+              var scrollTop = $(window).scrollTop();
+
+              if (scrollTop + stickyTop >= menuOffset) {
+                  $menu.css({
+                      'position': 'fixed',
+                      'top': stickyTop + 'px',
+                      'left': $menu.offset().left + 'px',
+                      'width': $menu.outerWidth(),
+                      'z-index': 999
+                  });
+              } else {
+                  $menu.css({
+                      'position': 'static',
+                      'width': '',
+                      'top': '',
+                      'left': '',
+                      'z-index': ''
+                  });
+              }
+          });
+
+          // Recalculate left & width on resize
+          $(window).on('resize.stickyMenu', function() {
+              $menu.css({
+                  'position': 'static',
+                  'width': '',
+                  'top': '',
+                  'left': '',
+                  'height': $sidebar.length > 0 ? $sidebar.outerHeight() : 'auto'
+              });
+              menuOffset = $menu.offset().top;
+          });
+
+      } else {
+          // Reset sticky behavior on mobile
+          $menu.css({
+              'position': 'static',
+              'height': 'auto'
+          });
+      }
+  }
+
+  initStickyMenu();
+  $(window).on('resize', initStickyMenu);
+
 });

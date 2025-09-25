@@ -1974,8 +1974,10 @@ function my_plugin_handle_setup_form() {
 		exit;
 	}
 }
-// Always add on the static homepage (hacky but simple)
-add_filter( 'body_class', function( $c ){
-  if ( is_front_page() && ! in_array( 'order-online', $c, true ) ) $c[] = 'order-online';
-  return $c;
+add_filter( 'body_class', function( $classes ) {
+  // Add your custom class
+  if ( ! in_array( 'order-online', $classes, true ) ) {
+      $classes[] = 'order-online';
+  }
+  return $classes;
 });

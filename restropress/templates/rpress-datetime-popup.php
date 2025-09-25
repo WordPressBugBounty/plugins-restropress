@@ -57,7 +57,8 @@ $selected_date      = isset($_COOKIE['service_date']) ? $_COOKIE['service_date']
 
 $asap_option        = rpress_get_option('enable_asap_option', '');
 $asap_option_only   = rpress_get_option('enable_asap_option_only', '');
-$delivery_asap_text = rpress_get_option('delivery_asap_text', '');
+$key = $default . '_asap_text';
+$delivery_asap_text = rpress_get_option( $key, '' );
 
 // If "ASAP Only", keep only first slot
 if ($asap_option_only == 1) {

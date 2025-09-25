@@ -239,9 +239,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     $update_cart               = apply_filters( 'rp_update_cart', __( 'Update Cart', 'restropress' ) );
     $added_to_cart             = apply_filters( 'rp_added_to_cart', __( ' is added to cart', 'restropress' ) );
     $please_wait_text          = esc_html__( 'Please Wait...', 'restropress' );
-    $color                     = rpress_get_option( 'primary_color', 'red' );
+    $color                     = rpress_get_option( 'primary_color', '#ED5575' );
     $service_options           = !empty( rpress_get_option( 'enable_service' ) ) ? rpress_get_option( 'enable_service' ) : 'delivery_and_pickup' ;
-    $default_service           = !empty( rpress_get_option( 'default_service' ) ) ? rpress_get_option( 'default_service' ) : '' ;
+    if(rpress_get_option('enable_service') == 'delivery_and_pickup') {
+        $default_service = !empty(rpress_get_option('default_service')) ? rpress_get_option('default_service') : '';
+    } else {
+        $default_service = !empty(rpress_get_option('enable_service')) ? rpress_get_option('enable_service') : '';
+    }
     $default_time           = !empty( rpress_get_option( 'default_time' ) ) ? rpress_get_option( 'default_time' ) : '' ;
     $minimum_order_error_title = !empty( rpress_get_option( 'minimum_order_error_title' ) ) ? rpress_get_option( 'minimum_order_error_title' ) : __( 'Minimum Order Error', 'restropress' ) ;
     $expire_cookie_time        = !empty( rpress_get_option( 'expire_service_cookie' ) ) ? rpress_get_option( 'expire_service_cookie' ) : 90;
@@ -263,7 +267,7 @@ if ( ! defined( 'ABSPATH' ) ) {
       'order_details_nonce'       => wp_create_nonce( 'show-order-details' ),
       'service_options'           => $service_options,
       'default_service'           => $default_service,
-      '$default_time'             => $$default_time,
+      '$default_time'             => $default_time,
       'minimum_order_title'       => $minimum_order_error_title,
       'edit_cart_fooditem_nonce'  => wp_create_nonce( 'edit-cart-fooditem' ),
       'update_cart_item_nonce'    => wp_create_nonce( 'update-cart-item' ),
@@ -284,6 +288,8 @@ if ( ! defined( 'ABSPATH' ) ) {
       'cart_quantity'             => $cart_quantity,
       'items'                     => esc_html__( 'Items', 'restropress' ),
       'no_image'                  => RP_PLUGIN_URL . 'assets/images/no-image.png',
+      'open_hours'                => ( rpress_get_option('enable_always_open') ) ? '12:00am' : rpress_get_option('open_time'),
+      'close_hours'               => ( rpress_get_option('enable_always_open') ) ? '11:59pm' : rpress_get_option('close_time'),
     );
     wp_localize_script( 'rp-frontend', 'rp_scripts', $params );
     $co_params = array(
@@ -473,8 +479,8 @@ if ( ! defined( 'ABSPATH' ) ) {
       return;
     }
     $primary_color = esc_html( rpress_get_option( 'primary_color', '#ED5575' ) );
-    $add_button_bg_color = esc_html( rpress_get_option( 'add_button_background_color', '#ED5575' ) );
-    $add_button_text_color = esc_html( rpress_get_option( 'add_button_text_color', '#ED5575' ) );
+    $add_button_bg_color = esc_html( rpress_get_option( 'add_button_background_color', '#FEE2E8' ) );
+    $add_button_text_color = esc_html( rpress_get_option( 'add_button_text_color', '#000000' ) );
     ?>
     <style type="text/css">
       .rp-loading:after {
