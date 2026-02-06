@@ -41,7 +41,7 @@ class ImageAttachment {
 		$upload = wc_rest_upload_image_from_url( esc_url_raw( $src ) );
 		if ( is_wp_error( $upload ) ) {
 			if ( ! apply_filters( 'restropress_rest_suppress_image_upload_error', false, $upload, $this->object_id, $images ) ) {
-				throw new \WC_REST_Exception( 'restropress_product_image_upload_error', $upload->get_error_message(), 400 );
+				throw new \WC_REST_Exception( 'restropress_product_image_upload_error', esc_html($upload->get_error_message()), 400 );
 			} else {
 				return;
 			}
@@ -49,7 +49,7 @@ class ImageAttachment {
 		$this->id = wc_rest_set_uploaded_image_as_attachment( $upload, $this->object_id );
 		if ( ! wp_attachment_is_image( $this->id ) ) {
 			/* translators: %s: image ID */
-			throw new \WC_REST_Exception( 'restropress_product_invalid_image_id', sprintf( __( '#%s is an invalid image ID.', 'restropress' ), $this->id ), 400 );
+			throw new \WC_REST_Exception( 'restropress_product_invalid_image_id', sprintf( esc_html__( '#%s is an invalid image ID.', 'restropress' ), esc_html($this->id) ), 400 );
 		}
 	}
 	/**

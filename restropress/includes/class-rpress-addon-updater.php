@@ -150,8 +150,8 @@ class RestroPress_Addon_Updater {
 		}
 		printf(
 			'<tr class="plugin-update-tr mgaddon-update %3$s" id="%1$s-update" data-slug="%1$s" data-plugin="%2$s">',
-			$this->slug,
-			$file,
+			esc_attr( $this->slug ),
+    		esc_attr( $file ),
 			in_array( $this->name, $this->get_active_plugins(), true ) ? 'active' : 'inactive'
 		);
 		echo '<td colspan="4" class="plugin-update colspanchange">';
@@ -179,17 +179,17 @@ class RestroPress_Addon_Updater {
 		);
 		printf(
 			/* translators: the plugin name. */
-			esc_html__( 'There is a new version of %1$s available.', 'easy-digital-downloads' ),
+			esc_html__( 'There is a new version of %1$s available.', 'restropress' ),
 			esc_html( $plugin['Name'] )
 		);
 		if ( ! current_user_can( 'update_plugins' ) ) {
 			echo ' ';
-			esc_html_e( 'Contact your network administrator to install the update.', 'easy-digital-downloads' );
+			esc_html_e( 'Contact your network administrator to install the update.', 'restropress' );
 		} elseif ( empty( $update_cache->response[ $this->name ]->package ) && ! empty( $changelog_link ) ) {
 			echo ' ';
 			printf(
 				/* translators: 1. opening anchor tag, do not translate 2. the new plugin version 3. closing anchor tag, do not translate. */
-				__( '%1$sView version %2$s details%3$s.', 'easy-digital-downloads' ),
+				esc_html__( '%1$sView version %2$s details%3$s.', 'restropress' ),
 				'<a target="_blank" class="thickbox open-plugin-details-modal" href="' . esc_url( $changelog_link ) . '">',
 				esc_html( $update_cache->response[ $this->name ]->new_version ),
 				'</a>'
@@ -198,7 +198,7 @@ class RestroPress_Addon_Updater {
 			echo ' ';
 			printf(
 				/* translators: 1. opening anchor tag, do not translate 2. the new plugin version 3. closing anchor tag, do not translate 4. opening anchor tag, do not translate 5. closing anchor tag, do not translate. */
-				__( '%1$sView version %2$s details%3$s or %4$supdate now%5$s.', 'easy-digital-downloads' ),
+				esc_html__( '%1$sView version %2$s details%3$s or %4$supdate now%5$s.', 'restropress' ),
 				'<a target="_blank" class="thickbox open-plugin-details-modal" href="' . esc_url( $changelog_link ) . '">',
 				esc_html( $update_cache->response[ $this->name ]->new_version ),
 				'</a>',
@@ -209,7 +209,7 @@ class RestroPress_Addon_Updater {
 			printf(
 				' %1$s%2$s%3$s',
 				'<a target="_blank" class="update-link" href="' . esc_url( wp_nonce_url( $update_link, 'upgrade-plugin_' . $file ) ) . '">',
-				esc_html__( 'Update now.', 'easy-digital-downloads' ),
+				esc_html__( 'Update now.', 'restropress' ),
 				'</a>'
 			);
 		}
@@ -396,7 +396,7 @@ class RestroPress_Addon_Updater {
 			return;
 		}
 		if( ! current_user_can( 'update_plugins' ) ) {
-			wp_die( esc_html__( 'You do not have permission to install plugin updates', 'easy-digital-downloads' ), esc_html__( 'Error', 'easy-digital-downloads' ), array( 'response' => 403 ) );
+			wp_die( esc_html__( 'You do not have permission to install plugin updates', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 		}
 		$update_cache = get_site_transient( 'update_plugins' );
 		$version_info = $update_cache->response[$_REQUEST['plugin']];

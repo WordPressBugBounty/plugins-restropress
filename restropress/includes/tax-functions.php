@@ -99,7 +99,7 @@ function rpress_calculate_tax( $amount = 0, $country = false, $state = false ,$i
  * @return void
 */
 function rpress_sales_tax_for_year( $year = null ) {
-	echo rpress_currency_filter( rpress_format_amount( rpress_get_sales_tax_for_year( $year ) ) );
+	echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_sales_tax_for_year( $year ) ) ) );
 }
 /**
  * Gets the sales tax for the given year

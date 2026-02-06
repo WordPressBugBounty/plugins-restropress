@@ -102,6 +102,7 @@ class IpnListener {
         if ($this->response === false || $this->response_status == '0') {
             $errno = curl_errno($ch);
             $errstr = curl_error($ch);
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionMessage
             throw new Exception("cURL error: [$errno] $errstr");
         }
     }
@@ -131,6 +132,7 @@ class IpnListener {
         
         if (!$fp) { 
             // fsockopen error
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionMessage
             throw new Exception("fsockopen error: [$errno] $errstr");
         } 
         $header .= "POST /cgi-bin/webscr HTTP/1.0\r\n";
@@ -265,6 +267,7 @@ class IpnListener {
         else $this->fsockPost($encoded_data);
         
         if (strpos($this->response_status, '200') === false) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             throw new Exception("Invalid response status: ".$this->response_status);
         }
         

@@ -24,7 +24,7 @@
       <tr>
         <td>
           <div class="rpress_email_receipt_product_name">
-            <?php echo wp_kses_post(  $item['quantity'] ); ?> X <?php echo wp_kses_post( get_the_title( $item['id'] ) ); ?> (<?php echo rpress_price( $item['id'] ); ?>)
+            <?php echo wp_kses_post(  $item['quantity'] ); ?> X <?php echo wp_kses_post( get_the_title( $item['id'] ) ); ?> (<?php echo esc_html(rpress_price( $item['id'] )); ?>)
             <?php
               if( !empty( $item['options'] ) ) {
                 foreach( $item['options'] as $k => $v ) {
@@ -32,7 +32,7 @@
                     array_push( $row_price, $v['price'] );
                     if( !empty( $v['addon_item_name'] ) ) {
                       ?>
-                      <br/>&nbsp;&nbsp;<small class="rpress-receipt-addon-item"><?php echo wp_kses_post( $v['addon_item_name'] ); ?> (<?php echo rpress_currency_filter(rpress_format_amount($v['price'])); ?>)</small>
+                      <br/>&nbsp;&nbsp;<small class="rpress-receipt-addon-item"><?php echo wp_kses_post( $v['addon_item_name'] ); ?> (<?php echo esc_html(rpress_currency_filter(rpress_format_amount($v['price']))); ?>)</small>
                       <?php
                     }
                   }
@@ -46,7 +46,7 @@
           $addon_price = array_sum( $row_price );
           $total_price = $addon_price + rpress_get_fooditem_price( $item['id'] );
           ?>
-          <?php echo rpress_currency_filter( rpress_format_amount( $total_price ) ); ?>
+          <?php echo esc_html(rpress_currency_filter( rpress_format_amount( $total_price ) )); ?>
         </td>
       </tr>
     <?php endforeach; ?>

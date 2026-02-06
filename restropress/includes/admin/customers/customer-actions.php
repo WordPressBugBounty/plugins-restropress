@@ -319,7 +319,7 @@ function rpress_customer_save_note( $args ) {
 		?>
 		<div class="customer-note-wrapper dashboard-comment-wrap comment-item">
 			<span class="note-content-wrap">
-				<?php echo stripslashes( $new_note ); ?>
+				<?php echo esc_html( stripslashes( $new_note ) ); ?>
 			</span>
 		</div>
 		<?php

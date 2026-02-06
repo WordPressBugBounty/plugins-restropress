@@ -243,7 +243,7 @@ class RPRESS_Discount {
 		} else if ( property_exists( $this, $key ) ) {
 			return $this->{$key};
 		} else {
-			return new WP_Error( 'rpress-discount-invalid-property', sprintf( __( 'Can\'t get property %s', 'restopress' ), $key ) );
+			return new WP_Error( 'rpress-discount-invalid-property', sprintf( __( 'Can\'t get property %s', 'restropress' ), $key ) );
 		}
 	}
 	/**

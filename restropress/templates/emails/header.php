@@ -13,6 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-		<title><?php echo get_bloginfo( 'name' ); ?></title>
+		<title><?php echo esc_html( get_bloginfo( 'name' ) ); ?></title>
 	</head>
 	<body>

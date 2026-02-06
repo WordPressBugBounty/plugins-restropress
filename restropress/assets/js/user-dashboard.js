@@ -1,4 +1,3 @@
-var $ = jQuery;
 jQuery('document').ready(function($) {
     if (typeof DataTable !== 'undefined') {
     new DataTable('#user-orders', {
@@ -112,7 +111,6 @@ function editaddress(event) {
     }
     // Find the nearest parent element with class 'address-wrap'
     var addressWrap = $(event.target).closest('.address-wrap');
-    console.log(addressWrap);
     
     // Get the values within the nearest 'address-wrap' element
     var addressType     = addressWrap.find('.type-of-address').text();

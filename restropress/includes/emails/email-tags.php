@@ -342,8 +342,8 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
         </td>
       </tr>
       <?php if ( ( $fees = rpress_get_payment_fees( $payment_id, 'fee' ) ) ) : ?>
-        <tr>
           <?php foreach( $fees as $fee ) : ?>
+          <tr>
             <td colspan="2" class="right" style="border-bottom: 1px solid black; border-collapse: collapse; padding-right: 10px; border-top: none;">
               <strong><?php echo esc_html( $fee['label'] ); ?>:</strong>
             </td>

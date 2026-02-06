@@ -13,7 +13,15 @@
     $include_tax  = rpress_get_option( 'prices_include_tax', true );
     $tax_inc_exc_item_option = rpress_get_option('tax_item', true );
     if ( $variable_pricing ) {
-      echo  rpress_price_range( $post->ID );
+      echo wp_kses(
+        rpress_price_range( $post->ID ),
+        array(
+            'span' => array(
+                'class' => true,
+                'id'    => true,
+            ),
+        )
+      ); 
     } else {
  /** 
     * Condition added to show the item price as included or excluded Tax
@@ -31,15 +39,76 @@
         $price = get_post_meta( $post->ID,'rpress_price', true ) ;
       }
       if ( $variable_pricing ) {
-        echo apply_filters( 'rpress_item_price_display', rpress_price_range( $post->ID ), $post );
+        echo wp_kses(
+          apply_filters( 'rpress_item_price_display', rpress_price_range( $post->ID ), $post ),
+          array(
+            'span' => array(
+              'class' => true,
+              'id'    => true,
+            ),
+            'del' => array(),
+            'ins' => array(),
+          )
+        );
       } else {
-        echo apply_filters( 'rpress_item_price_display', rpress_currency_filter( rpress_format_amount( $price ) ), $post );
-      }
+        echo esc_html(
+          apply_filters(
+            'rpress_item_price_display',
+            rpress_currency_filter( rpress_format_amount( $price ) ),
+            $post
+          )
+        );
+      }      
     }
     ?>
   </span>
   
   <div class="rpress_fooditem_buy_button">
-    <?php echo rpress_get_purchase_link( array( 'fooditem_id' => get_the_ID() ) ); ?>
+    <?php
+    echo wp_kses(
+      rpress_get_purchase_link( array( 'fooditem_id' => get_the_ID() ) ),
+      array(
+        'form' => array(
+          'id'    => true,
+          'class' => true,
+          'method'=> true,
+          'action'=> true,
+        ),
+        'div' => array(
+          'class' => true,
+        ),
+        'a' => array(
+          'href' => true,
+          'class' => true,
+          'data-title' => true,
+          'data-action' => true,
+          'data-fooditem-id' => true,
+          'data-variable-price' => true,
+          'data-price' => true,
+          'data-price-mode' => true,
+          'style' => true,
+        ),
+        'span' => array(
+          'class' => true,
+        ),
+        'svg' => array(
+          'xmlns' => true,
+          'width' => true,
+          'height' => true,
+          'viewBox' => true,
+        ),
+        'path' => array(
+          'd' => true,
+        ),
+        'input' => array(
+          'type' => true,
+          'name' => true,
+          'class' => true,
+          'value' => true,
+          'id' => true,
+        ),
+      )
+    );
+    ?>
   </div>
 </div>

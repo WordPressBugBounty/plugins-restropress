@@ -28,8 +28,8 @@ $discounts = 0;
   <?php if ( is_array( $cart_items ) && !empty( $cart_items ) ) : ?>
   <thead>
     <tr>
-      <td style="padding: 6px 0;"><strong><?php echo apply_filters( 'rpress_receipt_product_column', esc_html_e( 'Items', 'restropress' ) ); ?></strong></td>
-      <td style="padding: 6px 0; text-align: right;"><strong><?php echo apply_filters( 'rpress_receipt_price_column', esc_html_e( 'Price', 'restropress' ) ); ?></strong></td>
+      <td style="padding: 6px 0;"><strong><?php echo esc_html( apply_filters( 'rpress_receipt_product_column', esc_html_e( 'Items', 'restropress' ) ) ); ?></strong></td>
+      <td style="padding: 6px 0; text-align: right;"><strong><?php echo esc_html( apply_filters( 'rpress_receipt_price_column', esc_html_e( 'Price', 'restropress' ) ) ); ?></strong></td>
     </tr>
   </thead>
   <tbody>
@@ -45,8 +45,8 @@ $discounts = 0;
       $discounts = $discounts + $item['discount'];
       ?>
       <tr>
-        <td style="padding: 4px 0; vertical-align: top;"><?php echo $item_qty; ?> x <?php echo $item_name; ?></td>
-        <td style="padding: 4px 0; text-align: right; font-weight: bold; vertical-align: top;"><?php echo rpress_currency_filter( rpress_format_amount( $item_price ) ); ?></td>
+        <td style="padding: 4px 0; vertical-align: top;"><?php echo esc_html($item_qty); ?> x <?php echo esc_html($item_name); ?></td>
+        <td style="padding: 4px 0; text-align: right; font-weight: bold; vertical-align: top;"><?php echo esc_html(rpress_currency_filter( rpress_format_amount( $item_price ) )); ?></td>
       </tr>
       <?php if ( isset($item['item_number']['options']) && is_array( $item['item_number']['options'] )  ) : ?>
         <?php foreach( $item['item_number']['options'] as $key => $addon_item ): ?>
@@ -57,15 +57,15 @@ $discounts = 0;
               $addon_price = rpress_currency_filter( rpress_format_amount( $addon_item['price'] ) );
               $x = 'x';
               ?>              
-              <td style="padding: 4px 0; font-size: 10pt;"><?php if(class_exists( 'Rpress_addon_quantity_Admin' )) { echo $addon_qty . " " . $x . " "; } ?><?php echo $addon_item_name; ?></td>
-              <td style="padding: 4px 0; font-size: 10pt; text-align: right; vertical-align: top;"><?php echo $addon_price; ?></td>
+              <td style="padding: 4px 0; font-size: 10pt;"><?php if(class_exists( 'Rpress_addon_quantity_Admin' )) { echo esc_html($addon_qty) . " " . esc_html($x) . " "; } ?><?php echo esc_html($addon_item_name); ?></td>
+              <td style="padding: 4px 0; font-size: 10pt; text-align: right; vertical-align: top;"><?php echo esc_html($addon_price); ?></td>
             <?php endif; ?>
           </tr>
         <?php endforeach; ?>
         <?php endif; ?>
         <?php if( $item['instruction'] != '' ): ?>
           <tr>
-            <td colspan="3" style="padding: 6px 0;"><b><?php echo apply_filters( 'rpress_receipt_item_note_label', esc_html_e( 'Customer Note:&nbsp;', 'restropress' ) ); ?></b><?php echo $item['instruction']; ?></td>
+            <td colspan="3" style="padding: 6px 0;"><b><?php echo esc_html(apply_filters( 'rpress_receipt_item_note_label', esc_html_e( 'Customer Note:&nbsp;', 'restropress' ) )); ?></b><?php echo esc_html($item['instruction']); ?></td>
           </tr>
         <?php endif; ?>
       <?php endif; ?>
@@ -75,26 +75,26 @@ $discounts = 0;
 </table>
 <table style="width: 100%; margin-top: 12px; font-size: 14px;">
   <tr>
-    <td style="width: 70%; text-align: left;"><?php echo apply_filters( 'rpress_receipt_subtotal_amount', esc_html_e( 'Subtotal', 'restropress' ) ); ?>:</td>
-    <td style="width: 30%; text-align: right"><b><?php echo rpress_currency_filter( $subtotal, $currency_code ); ?></b></td>
+    <td style="width: 70%; text-align: left;"><?php echo esc_html(apply_filters( 'rpress_receipt_subtotal_amount', esc_html_e( 'Subtotal', 'restropress' ) )); ?>:</td>
+    <td style="width: 30%; text-align: right"><b><?php echo esc_html(rpress_currency_filter( $subtotal, $currency_code )); ?></b></td>
   </tr>
   <?php if( $discounts > 0 ) : ?>
     <tr>
-      <td style="width: 70%; text-align: left;"><?php echo apply_filters( 'rpress_receipt_discount_price', esc_html_e( 'Discounts', 'restropress' ) ); ?>:</td>
-      <td style="width: 30%; text-align: right"><b><?php echo rpress_currency_filter( $discounts, $currency_code ); ?></b></td>
+      <td style="width: 70%; text-align: left;"><?php echo esc_html(apply_filters( 'rpress_receipt_discount_price', esc_html_e( 'Discounts', 'restropress' ) )); ?>:</td>
+      <td style="width: 30%; text-align: right"><b><?php echo esc_html(rpress_currency_filter( $discounts, $currency_code )); ?></b></td>
     </tr>
   <?php endif; ?>
   <?php if( $taxes > 0 ) : ?>
     <tr>
-      <td style="width: 70%; text-align: left;"><?php echo apply_filters( 'rpress_receipt_tax_price', rpress_get_tax_name() ); ?>:</td>
-      <td style="width: 30%; text-align: right"><b><?php echo rpress_currency_filter( $taxes, $currency_code ); ?></b></td>
+      <td style="width: 70%; text-align: left;"><?php echo esc_html(apply_filters( 'rpress_receipt_tax_price', rpress_get_tax_name() )); ?>:</td>
+      <td style="width: 30%; text-align: right"><b><?php echo esc_html(rpress_currency_filter( $taxes, $currency_code )); ?></b></td>
     </tr>
   <?php endif; ?>
   <?php if ( ! empty( $payment_fees ) ) : ?>
     <?php foreach( $payment_fees as $fee ) : ?>
       <tr>
-        <td style="width: 70%; text-align: left;"><?php echo $fee['label']; ?>:</td>
-        <td style="width: 30%; text-align: right"><b><?php echo rpress_currency_filter( $fee['amount'], $currency_code ); ?></b></td>
+        <td style="width: 70%; text-align: left;"><?php echo esc_html($fee['label']); ?>:</td>
+        <td style="width: 30%; text-align: right"><b><?php echo esc_html(rpress_currency_filter( $fee['amount'], $currency_code )); ?></b></td>
       </tr>
     <?php endforeach; ?>
   <?php endif; ?>
@@ -102,8 +102,8 @@ $discounts = 0;
     <td colspan="2"><hr></td>
   </tr>
   <tr>
-    <td style="width: 70%; text-align: left;"><?php echo apply_filters( 'rpress_receipt_total_price', esc_html_e( 'Total', 'restropress' ) ); ?>:</td>
-    <td style="width: 30%; text-align: right"><b><?php echo $payment_amount; ?></b></td>
+    <td style="width: 70%; text-align: left;"><?php echo esc_html(apply_filters( 'rpress_receipt_total_price', esc_html_e( 'Total', 'restropress' ) )); ?>:</td>
+    <td style="width: 30%; text-align: right"><b><?php echo esc_html($payment_amount); ?></b></td>
   </tr>
   <tr>
     <td colspan="2"><hr></td>

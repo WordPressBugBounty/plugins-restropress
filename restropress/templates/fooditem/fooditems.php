@@ -92,7 +92,7 @@ defined( 'ABSPATH' ) || exit;
 			endforeach;
 		else :
 			/* translators: %s: post singular name */
-			printf( _x( 'No %s found', 'rpress post type name', 'restropress' ), rp_get_label_plural() );
+			printf( esc_html_x( 'No %s found', 'rpress post type name', 'restropress' ), esc_html(rp_get_label_plural()) );
 		endif;
 		?>
 	</div>
@@ -138,7 +138,7 @@ defined( 'ABSPATH' ) || exit;
 			endforeach;
 		else :
 			/* translators: %s: post singular name */
-			printf( _x( 'No %s found', 'rpress post type name', 'restropress' ), rp_get_label_plural() );
+			printf( esc_html_x( 'No %s found', 'rpress post type name', 'restropress' ), esc_html(rp_get_label_plural()) );
 		endif;
 		?>
 	</div>

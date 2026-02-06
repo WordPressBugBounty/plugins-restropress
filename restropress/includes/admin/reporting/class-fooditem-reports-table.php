@@ -164,7 +164,20 @@ class RPRESS_Fooditem_Reports_Table extends WP_List_Table {
 	 */
 	public function category_filter() {
 		if( get_terms( 'addon_category' ) ) {
-			echo RPRESS()->html->category_dropdown( 'category', $this->get_category() );
+			echo wp_kses(
+				RPRESS()->html->category_dropdown( 'category', esc_attr($this->get_category()) ),
+				array(
+					'select' => array(
+						'name'  => array(),
+						'id'    => array(),
+						'class' => array(),
+					),
+					'option' => array(
+						'value'    => array(),
+						'selected' => array(),
+					),
+				)
+			);
 		}
 	}
 	/**

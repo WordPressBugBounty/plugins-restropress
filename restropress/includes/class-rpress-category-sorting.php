@@ -119,8 +119,8 @@ class RP_Food_Category_Sorting {
         $screen->add_help_tab(
             array(
                 'id'      => 'rp_sorting_help_tab',
-                'title'   => __( 'Category Ordering', 'rp-pro-starter' ),
-                'content' => '<p>' . __( 'To reposition a category in the list, simply drag & drop it into the desired position. Each time you reposition a category, the data will update in the database and on the front end of your site.', 'rp-pro-starter' ) . '</p>',
+                'title'   => __( 'Category Ordering', 'restropress' ),
+                'content' => '<p>' . __( 'To reposition a category in the list, simply drag & drop it into the desired position. Each time you reposition a category, the data will update in the database and on the front end of your site.', 'restropress' ) . '</p>',
             )
         );
     }

@@ -160,11 +160,38 @@ class RPRESS_API_Keys_Table extends WP_List_Table {
 			return;
 		}
 		?>
-		<form id="api-key-generate-form" method="post" action="<?php echo admin_url( 'admin.php?page=rpress-tools&tab=api_keys' ); ?>">
+		<form id="api-key-generate-form" method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=rpress-tools&tab=api_keys' ) ); ?>">
 			<input type="hidden" name="rpress_action" value="process_api_key" />
 			<input type="hidden" name="rpress_api_process" value="generate" />
 			<?php wp_nonce_field( 'rpress-api-nonce' ); ?>
-			<?php echo RPRESS()->html->ajax_user_search(); ?>
+			<?php
+			// Define allowed HTML tags and attributes
+			$allowed_html = array(
+				'span' => array(
+					'class' => true,
+					'id'    => true,
+				),
+				'a' => array(
+					'href'  => true,
+					'class' => true,
+					'aria-label' => true,
+				),
+				'input' => array(
+					'type'        => true,
+					'name'        => true,
+					'value'       => true,
+					'id'          => true,
+					'class'       => true,
+					'placeholder' => true,
+					'autocomplete'=> true,
+					'disabled'    => true,
+					'data-*'      => true, // allow data attributes
+				),
+			);
+
+			// Output the ajax user search safely
+			echo wp_kses( RPRESS()->html->ajax_user_search(), $allowed_html );
+			?>
 			<?php submit_button( esc_html__( 'Generate New API Keys', 'restropress' ), 'secondary', 'submit', false ); ?>
 		</form>
 		<?php

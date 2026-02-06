@@ -53,7 +53,7 @@ function rp_addon_activation_notice() {
   if( !empty( $statuses ) && ( in_array( 'empty', $statuses) || in_array( 'invalid', $statuses) ) ) {
     $class = 'notice notice-error';
     $message = esc_html__( 'You have invalid or expired license keys for one or more addons of RestroPress. Please go to the Extensions page to update your licenses.', 'restropress' );
-    printf( '<div class="%1$s"><p>' . $message . '</p></div>', esc_attr( $class ) );
+    printf( '<div class="%1$s"><p>' . esc_html__($message) . '</p></div>', esc_attr( $class ) );
   }
 }
 add_action( 'admin_notices', 'rp_addon_activation_notice' );

@@ -5,7 +5,7 @@
 	<?php if( apply_filters( 'rpress_special_instructions', true ) ) : ?>
 	<div class="rp-col-md-12 md-12-top special-inst">
 		<span class="special-instructions-link">
-			<?php echo apply_filters( 'rpress_special_instruction_text', __('Special Instructions?', 'restropress' ) ); ?>
+			<?php echo esc_html( apply_filters( 'rpress_special_instruction_text', __('Special Instructions?', 'restropress' ) ) ); ?>
 		</span>
 		<textarea placeholder="<?php esc_html_e( 'e.g. allergies, extra spicy, etc.', 'restropress' ); ?>" class="rp-col-md-12 special-instructions" name="special_instruction">{cartinstructions}</textarea>
 	</div>

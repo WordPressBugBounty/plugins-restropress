@@ -48,12 +48,25 @@ if ( $purchases ) :
 	<div id="rpress_fooditem_history_pagination" class="rpress_pagination navigation">
 		<?php
 		$big = 999999;
-		echo paginate_links( array(
+		$pagination = paginate_links( array(
 			'base'    => esc_url( str_replace( $big, '%#%', get_pagenum_link( $big ) ) ),
 			'format'  => '?paged=%#%',
 			'current' => max( 1, get_query_var( 'paged' ) ),
 			'total'   => ceil( rpress_count_purchases_of_customer() / 20 ) // 20 items per page
 		) );
+		echo wp_kses(
+			$pagination,
+			array(
+				'a' => array(
+					'href'   => true,
+					'class'  => true,
+					'aria-current' => true,
+				),
+				'span' => array(
+					'class' => true,
+				),
+			)
+		);		
 		?>
 	</div>
 	<?php do_action( 'rpress_after_fooditem_history' ); ?>

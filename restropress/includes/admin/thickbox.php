@@ -74,10 +74,25 @@ function rpress_admin_footer_for_thickbox() {
 		</script>
 		<div id="choose-fooditem" style="display: none;">
 			<div class="wrap" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-				<p><?php echo sprintf( esc_html__( 'Use the form below to insert the shortcode for purchasing a %s', 'restropress' ), rpress_get_label_singular() ); ?></p>
+				<p><?php echo sprintf( esc_html__( 'Use the form below to insert the shortcode for purchasing a %s', 'restropress' ), esc_html(rpress_get_label_singular()) ); ?></p>
 				<div>
-					<?php echo RPRESS()->html->product_dropdown( array( 'chosen' => true )); ?>
-				</div>
+				<?php 
+				echo wp_kses(
+					RPRESS()->html->product_dropdown( array( 'chosen' => true ) ),
+					array(
+						'select' => array(
+							'name' => array(),
+							'id'   => array(),
+							'class'=> array(),
+							'multiple' => array(),
+						),
+						'option' => array(
+							'value'    => array(),
+							'selected' => array(),
+						),
+					)
+				); 
+				?>				</div>
 				<?php if( rpress_shop_supports_buy_now() ) : ?>
 					<div>
 						<select id="select-rpress-direct" style="clear: both; display: block; margin-bottom: 1em; margin-top: 1em;">
@@ -93,7 +108,7 @@ function rpress_admin_footer_for_thickbox() {
 						<?php
 							$styles = array( 'button', 'text link' );
 							foreach ( $styles as $style ) {
-								echo '<option value="' . $style . '">' . $style . '</option>';
+								echo '<option value="' . esc_attr($style) . '">' . esc_html($style) . '</option>';
 							}
 						?>
 					</select>
@@ -106,7 +121,7 @@ function rpress_admin_footer_for_thickbox() {
 						<option value=""><?php esc_html_e('Choose a button color','restropress' ); ?></option>
 						<?php
 							foreach ( $colors as $key => $color ) {
-								echo '<option value="' . str_replace( ' ', '_', $key ) . '">' . $color['label'] . '</option>';
+								echo '<option value="' . esc_attr(str_replace( ' ', '_', $key ) ) . '">' . esc_html($color['label']) . '</option>';
 							}
 						?>
 					</select>

@@ -16,7 +16,47 @@
  */
 function rpress_profile_editor_logged_out() {
 	echo '<p class="rpress-logged-out">' . esc_html__( 'You need to log in to edit your profile.', 'restropress' ) . '</p>';
-	echo rpress_login_form(); // WPCS: XSS ok.
+	// Define allowed HTML tags and attributes
+	$allowed_html = array(
+		'form' => array(
+			'action' => true,
+			'method' => true,
+			'id'     => true,
+			'class'  => true,
+		),
+		'input' => array(
+			'type'        => true,
+			'name'        => true,
+			'value'       => true,
+			'id'          => true,
+			'class'       => true,
+			'placeholder' => true,
+		),
+		'label' => array(
+			'for'   => true,
+			'class' => true,
+		),
+		'button' => array(
+			'type'  => true,
+			'class' => true,
+		),
+		'div' => array(
+			'class' => true,
+			'id'    => true,
+		),
+		'span' => array(
+			'class' => true,
+			'id'    => true,
+		),
+		'a' => array(
+			'href'  => true,
+			'class' => true,
+			'title' => true,
+		),
+	);
+	
+	// Output the login form safely
+	echo wp_kses( rpress_login_form(), $allowed_html );
 }
 add_action( 'rpress_profile_editor_logged_out', 'rpress_profile_editor_logged_out' );
 /**

@@ -324,18 +324,7 @@ class RP_REST_Cart_V1_Controller extends WP_REST_Controller {
 			return $this->get_cart_content( $request );
 		}
 	}
-	public function add_cart_permissions_check( WP_REST_Request $request ) {
-		$result = new RP_JWT_Verifier( $request );
-		return $result;
-	}
-	public function get_cart_permissions_check( WP_REST_Request $request ) {
-		$result = new RP_JWT_Verifier( $request );
-		return $result;
-	}
-	public function delete_cart_permissions_check( WP_REST_Request $request ) {
-		$result = new RP_JWT_Verifier( $request );
-		return $result;
-	}
+	
 	/**
 	 * Update cart permission
 	 *
@@ -343,8 +332,52 @@ class RP_REST_Cart_V1_Controller extends WP_REST_Controller {
 	 * @return boolean | WP_Error
 	 * @since 3.0.0
 	 * * */
-	public function update_cart_permissions_check( WP_REST_Request $request ) {
-		$result = new RP_JWT_Verifier( $request );
-		return $result;
+
+
+	/**
+	 * Permission checking for cart operations
+	 *
+	 * @param WP_REST_Request $request
+	 * @return bool|WP_Error
+	 */
+	public function get_cart_permissions_check( WP_REST_Request $request ) {
+		return $this->check_application_password_auth( $request );
 	}
+	
+	public function add_cart_permissions_check( WP_REST_Request $request ) {
+		return $this->check_application_password_auth( $request );
+	}
+	
+	public function delete_cart_permissions_check( WP_REST_Request $request ) {
+		return $this->check_application_password_auth($request);
+	}
+	
+	/**
+	 * Update cart permission
+	 *
+	 * @param WP_REST_Request $request
+	 * @return boolean|WP_Error
+	 * @since 3.0.0
+	 */
+	public function update_cart_permissions_check( WP_REST_Request $request ) {
+		return $this->check_application_password_auth( $request );
+	}
+	
+	/**
+	 * Check authentication using WordPress Application Passwords
+	 *
+	 * @return boolean|WP_Error
+	 */
+	private function check_application_password_auth(WP_REST_Request $request) {
+		// Check if user is already authenticated (e.g., via cookies for web users)
+		if (is_user_logged_in() && current_user_can('manage_options')) {
+			return true;
+		}
+		return new WP_Error(
+			'rest_forbidden',
+			apply_filters('rp_api_auth_error_message', __('Authentication failed. Please check your credentials.', 'restropress')),
+			array('status' => rest_authorization_required_code())
+		);
+	}
+
 }

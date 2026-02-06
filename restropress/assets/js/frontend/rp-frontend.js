@@ -114,6 +114,8 @@ function update_modal_live_price(fooditem_container) {
 function isStoreOpen() {
   if (typeof rp_scripts === 'undefined') return true; // fail-safe
 
+  if (rp_scripts.open_hours === '' || rp_scripts.close_hours === '') return false; // no hours set, assume close
+
   var open = rp_scripts.open_hours;   // e.g. "09:00am" or "12:00am"
   var close = rp_scripts.close_hours; // e.g. "11:00pm"
 
@@ -277,14 +279,16 @@ jQuery(function ($) {
     .click(function (e) {
       e.preventDefault();
       if (!isStoreOpen()) {
-        tata.error('Error', 'Store is currently closed', { position: "tr" });
+        tata.error('Error', rp_scripts.closed_message, { position: "tr" });
         return;
       }
       var delivery_zip = rp_getCookie('delivery_zip');
       var delivery_location = rp_getCookie('delivery_location');
       var delivery_address = rp_getCookie('delivery_address');
-      
-      if(!delivery_zip){
+      var serviceDate = rp_getCookie('delivery_date');
+
+
+      if (!delivery_zip) {
         var $rp_delivery_zone = $('input#rp_delivery_zone'); // adjust selector if needed
         // Check if the delivery zone input exists and has a value
         if ($rp_delivery_zone.length > 0 && !$rp_delivery_zone.val().trim()) {
@@ -299,10 +303,10 @@ jQuery(function ($) {
           return; // stop further execution
         }
       }
-      
-      if(!delivery_location){
+
+      if (!delivery_location) {
         var $rp_delivery_location = $('input#rp_delivery_location'); // adjust selector if needed
-        if(!delivery_address) {
+        if (!delivery_address) {
           // Check if the delivery zone input exists and has a value
           if ($rp_delivery_location.length > 0 && !$rp_delivery_location.val().trim()) {
             // Show error
@@ -324,9 +328,7 @@ jQuery(function ($) {
         rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
       }
       var serviceTime = rp_getCookie('service_time');
-      if (!serviceTime) {
-        // serviceTime = rp_scripts.default_time || '';
-        // rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
+      if (!serviceTime.trim()) {
         var $sel = $('#rpress-delivery-hours');
         if (!$sel.length) return;
 
@@ -347,8 +349,8 @@ jQuery(function ($) {
           // invalid cookie value → select first option
           var $firstOpt = $sel.find('option').first();
           if ($firstOpt.length) {
-              // $sel.val($firstOpt.val()).trigger('change');
-              rp_setCookie('service_time', $firstOpt.val(), rp_scripts.expire_cookie_time);
+            // $sel.val($firstOpt.val()).trigger('change');
+            rp_setCookie('service_time', $firstOpt.val(), rp_scripts.expire_cookie_time);
           }
         }
       }
@@ -380,6 +382,8 @@ jQuery(function ($) {
         action: action,
         fooditem_id: fooditem_id,
         security: security,
+        service_type: serviceType,
+        selected_date: serviceDate
       };
       $.ajax({
         type: "POST",
@@ -400,11 +404,16 @@ jQuery(function ($) {
           _self.find('.add-icon').removeClass('icon-loading-toggle');
           _self.find('.rp-ajax-toggle-text')
             .removeClass('rp-text-visibility');
+
+        },
+        success: function (response) {
+          if (response?.success === false && response?.data?.status === 'error') {
+            tata.error('Error', response?.data?.error_msg, { position: "tr" });
+            return;
+          }
           MicroModal.show('rpressModal', {
             disableScroll: true
           });
-        },
-        success: function (response) {
           $('#rpressModal').removeClass('loading');
 
           $('#rpressModal .modal-title')
@@ -417,18 +426,11 @@ jQuery(function ($) {
             .html(response.data.description);
 
           $('#rpressModal .item-image').attr('src', '');
-          if(response.data.image_url) {
+          if (response.data.image_url) {
             $('#rpressModal .item-image').attr('src', response.data.image_url);
-          } 
-          // else {
-          //   $('#rpressModal .item-image').attr('src', rp_scripts.no_image);
-          // }
+          }
           $('#rpressModal .cart-item-price')
             .attr('data-price', response.data.price_raw);
-          // if ($('.rpress-tabs-wrapper')
-          //   .length) {
-          //   $('#rpressdeliveryTab > li:first-child > a')[0].click();
-          // }
           // Trigger event so themes can refresh other areas.
           $(document.body)
             .trigger('opened_service_options', [response.data]);
@@ -521,9 +523,9 @@ jQuery(function ($) {
               .find('.submit-fooditem-button')
               .attr('data-title', FoodItemName);
             $('#rpressModal .item-image').attr('src', '');
-            if(response.data.image_url) {
+            if (response.data.image_url) {
               $('#rpressModal .item-image').attr('src', response.data.image_url);
-            } 
+            }
             $('#rpressModal')
               .find('.submit-fooditem-button')
               .attr('data-cart-key', CartItemId);
@@ -552,7 +554,7 @@ jQuery(function ($) {
             if (response.data.addon_items) {
               $.each(response.data.addon_items, function (i, addon) {
                 var addonId = addon.addon_id;
-                var qty     = addon.quantity;
+                var qty = addon.quantity;
 
                 // Find all checkboxes that belong to this addon_id (multiple clones may exist)
                 var $checkboxes = $('#rpressModal .modal-body input[type="checkbox"][value^="' + addonId + '|"]');
@@ -582,331 +584,360 @@ jQuery(function ($) {
     });
   // Add to Cart / Update Cart Button From Popup
   $(document).on('click', '.submit-fooditem-button', function (e) {
-      e.preventDefault();
-      var self = $(this);
-      var cartAction = self.attr('data-cart-action');
-      var text = self.find('span.cart-action-text').text();
-      var validation = '';
-      // Checking the Required & Max addon settings for Addons
-      if (jQuery('.addons-wrapper').length > 0) {
-        jQuery('.addons-wrapper').each(function (index, el) {
-            var _self = jQuery(this);
-            var addon = _self.attr('data-id');
-            var is_required = _self.children('input.addon_is_required').val();
-            var max_addons = _self.children('input.addon_max_limit').val();
-            var min_addons = _self.children('input.addon_min_limit').val();
-            var checked = _self.find('.food-item-list.active input:checked').length;
-            
-            _self.find('.rp-addon-error')
-              .removeClass('rp-addon-error');
-            if (is_required == 'yes' && checked == 0) {
-              _self.find('.rp-addon-required').addClass('rp-addon-error');
-              validation = 1;
-            } else if (max_addons != 0 && checked > max_addons) {
-              _self.find('.rp-addon-required').addClass('rp-addon-error');
-              _self.find('.rp-max-addon').addClass('rp-addon-error');
-              validation = 1;
-            } else if (min_addons != 0 && checked < min_addons) {
-              _self.find('.rp-addon-required').addClass('rp-addon-error');
-              _self.find('.rp-min-addon').addClass('rp-addon-error');
-              validation = 1;
-            }
+    e.preventDefault();
+    var self = $(this);
+    var cartAction = self.attr('data-cart-action');
+    var text = self.find('span.cart-action-text').text();
+    var validation = '';
+    // Checking the Required & Max addon settings for Addons
+    if (jQuery('.addons-wrapper').length > 0) {
+      jQuery('.addons-wrapper').each(function (index, el) {
+        var _self = jQuery(this);
+        var addon = _self.attr('data-id');
+        var is_required = _self.children('input.addon_is_required').val();
+        var max_addons = _self.children('input.addon_max_limit').val();
+        var min_addons = _self.children('input.addon_min_limit').val();
+        var checked = _self.find('.food-item-list.active input:checked').length;
 
-            if (validation != '') {
+        var customValidation = {
+          isValid: true,
+          message: '',
+          element: _self,
+          minAddons: min_addons,
+          maxAddons: max_addons,
+          checkedAddons: checked
+        };
+
+        // Trigger custom validation hook
+        $(document).trigger('rpress_addon_validation', customValidation);
+        _self.find('.rp-addon-error')
+          .removeClass('rp-addon-error');
+        if (is_required == 'yes' && checked == 0) {
+          _self.find('.rp-addon-required').addClass('rp-addon-error');
+          validation = 1;
+        } else if (max_addons != 0 && checked > max_addons) {
+          _self.find('.rp-addon-required').addClass('rp-addon-error');
+          _self.find('.rp-max-addon').addClass('rp-addon-error');
+          _self.find(".rpress-addon-category").addClass('rp-addon-error');
+
+          validation = 1;
+        } else if (min_addons != 0 && checked < min_addons) {
+          _self.find('.rp-addon-required').addClass('rp-addon-error');
+          _self.find('.rp-min-addon').addClass('rp-addon-error');
+          _self.find(".rpress-addon-category").addClass('rp-addon-error');
+
+          validation = 1;
+        } else if (!customValidation.isValid) {
+          _self.find('.rp-addon-required').addClass('rp-addon-error');
+          _self.find('.rp-min-addon').addClass('rp-addon-error');
+          _self.find(".rpress-addon-category").addClass('rp-addon-error');
+          validation = 1;
+        }
+
+        if (validation === 1) {
+          var $error = $('#rpressModal .rp-addon-error').first();
+          if ($error.length) {
+            $error[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+
+        if (validation != '') {
+          self.removeClass('disable_click');
+          self.find('.cart-action-text')
+            .text(text);
+          return false;
+        }
+      });
+    }
+    if (cartAction == 'add-cart' && validation == '') {
+      self.addClass('disable_click');
+      var this_form = self.parents('.modal')
+        .find('form#fooditem-details .food-item-list.active input');
+      var itemId = self.attr('data-item-id');
+      var itemName = self.attr('data-title');
+      var itemQty = self.attr('data-item-qty');
+      var FormData = this_form.serializeArray();
+      var SpecialInstruction = self.parents('.modal')
+        .find('textarea.special-instructions')
+        .val();
+      var action = 'rpress_add_to_cart';
+      var data = {
+        action: action,
+        fooditem_id: itemId,
+        fooditem_qty: itemQty,
+        special_instruction: SpecialInstruction,
+        post_data: FormData,
+        security: rp_scripts.add_to_cart_nonce
+      };
+      if (itemId !== '') {
+        $.ajax({
+          type: "POST",
+          data: data,
+          dataType: "json",
+          url: rp_scripts.ajaxurl,
+          xhrFields: {
+            withCredentials: true
+          },
+          beforeSend: (jqXHR, object) => {
+            self.addClass('rp-loading');
+            self.find('.rp-ajax-toggle-text')
+              .addClass('rp-text-visibility')
+          },
+          complete: (jqXHR, object) => {
+            self.removeClass('rp-loading');
+            self.find('.rp-ajax-toggle-text')
+              .removeClass('rp-text-visibility')
+          },
+          success: function (response) {
+            if (response) {
+              $('.rpress-mobile-cart-icons')
+                .css({
+                  display: 'flex'
+                });
               self.removeClass('disable_click');
               self.find('.cart-action-text')
                 .text(text);
-              return false;
-            }
-          });
-      }
-      if (cartAction == 'add-cart' && validation == '') {
-        self.addClass('disable_click');
-        var this_form = self.parents('.modal')
-          .find('form#fooditem-details .food-item-list.active input');
-        var itemId = self.attr('data-item-id');
-        var itemName = self.attr('data-title');
-        var itemQty = self.attr('data-item-qty');
-        var FormData = this_form.serializeArray();
-        var SpecialInstruction = self.parents('.modal')
-          .find('textarea.special-instructions')
-          .val();
-        var action = 'rpress_add_to_cart';
-        var data = {
-          action: action,
-          fooditem_id: itemId,
-          fooditem_qty: itemQty,
-          special_instruction: SpecialInstruction,
-          post_data: FormData,
-          security: rp_scripts.add_to_cart_nonce
-        };
-        if (itemId !== '') {
-          $.ajax({
-            type: "POST",
-            data: data,
-            dataType: "json",
-            url: rp_scripts.ajaxurl,
-            xhrFields: {
-              withCredentials: true
-            },
-            beforeSend: (jqXHR, object) => {
-              self.addClass('rp-loading');
-              self.find('.rp-ajax-toggle-text')
-                .addClass('rp-text-visibility')
-            },
-            complete: (jqXHR, object) => {
-              self.removeClass('rp-loading');
-              self.find('.rp-ajax-toggle-text')
-                .removeClass('rp-text-visibility')
-            },
-            success: function (response) {
-              if (response) {
-                $('.rpress-mobile-cart-icons')
-                  .css({
-                    display: 'flex'
-                  });
-                self.removeClass('disable_click');
-                self.find('.cart-action-text')
-                  .text(text);
-                var serviceType = rp_getCookie('service_type');
-                var serviceTime = rp_getCookie('service_time');
-                var serviceTimeText = rp_getCookie('service_time_text');
-                var serviceDate = rp_getCookie('delivery_date');
-                $('ul.rpress-cart')
-                  .find('li.cart_item.empty')
-                  .remove();
-                $('ul.rpress-cart')
-                  .find('li.cart_item.rpress_subtotal')
-                  .remove();
-                $('ul.rpress-cart')
-                  .find('li.cart_item.cart-sub-total')
-                  .remove();
-                $('ul.rpress-cart')
-                  .find('li.cart_item.rpress_cart_tax')
-                  .remove();
-                $('ul.rpress-cart')
-                  .find('li.cart_item.rpress-cart-meta.rpress-delivery-fee')
-                  .remove();
-                $('ul.rpress-cart')
-                  .find('li.cart_item.rpress-cart-meta.rpress_subtotal')
-                  .remove();
-                var $target = $('ul.rpress-cart div.rpress-cart-total-wrap');
+              var serviceType = rp_getCookie('service_type');
+              var serviceTime = rp_getCookie('service_time');
+              var serviceTimeText = rp_getCookie('service_time_text');
+              var serviceDate = rp_getCookie('delivery_date');
+              $('ul.rpress-cart')
+                .find('li.cart_item.empty')
+                .remove();
+              $('ul.rpress-cart')
+                .find('li.cart_item.rpress_subtotal')
+                .remove();
+              $('ul.rpress-cart')
+                .find('li.cart_item.cart-sub-total')
+                .remove();
+              $('ul.rpress-cart')
+                .find('li.cart_item.rpress_cart_tax')
+                .remove();
+              $('ul.rpress-cart')
+                .find('li.cart_item.rpress-cart-meta.rpress-delivery-fee')
+                .remove();
+              $('ul.rpress-cart')
+                .find('li.cart_item.rpress-cart-meta.rpress_subtotal')
+                .remove();
+              var $target = $('ul.rpress-cart div.rpress-cart-total-wrap');
 
-                if ($target.length) {
-                  $(response.cart_item).insertBefore($target);
-                } else {
-                  $(response.cart_item).insertBefore('ul.rpress-cart li.cart_item.rpress_total');
-                }
-                  
-                if ($('.rpress-cart')
-                  .find('.rpress-cart-meta.rpress_subtotal')
-                  .is(':first-child')) {
-                  $(this)
-                    .hide();
-                }
-                $('.rpress-cart-quantity')
-                  .show();
-                $('.rp-mb-price')
-                  .text(response.total);
-                $('.rp-mb-quantity')
-                  .text(response.cart_quantity);
-                $('.cart_item.rpress-cart-meta.rpress_total')
-                  .find('.cart-total')
-                  .text(response.total);
-                $('.cart_item.rpress-cart-meta.rpress_subtotal')
-                  .find('.subtotal')
-                  .text(response.total);
-                $('.cart_item.rpress-cart-meta.rpress_total')
-                  .css('display', 'block');
-                $('.cart_item.rpress-cart-meta.rpress_subtotal')
-                  .css('display', 'block');
-                $('.cart_item.rpress_checkout')
-                  .addClass(rp_scripts.button_color);
-                $('.cart_item.rpress_checkout')
-                  .css('display', 'block');
-                if (serviceType !== undefined) {
-                  serviceLabel = window.localStorage.getItem('serviceLabel');
-                  var orderInfo = '<span class="delMethod">' + serviceLabel + ', ' + serviceDate + '</span>';
-                  if (serviceTime !== undefined) {
-                    // Check if the string contains 'ASAP'
-                    if (serviceTime.includes('ASAP')) {
-                      // Remove 'ASAP' from the string
-                      serviceTimeText = serviceTime.replace('ASAP', '');
-                      serviceTimeText = rp_scripts.asap_txt + ' ' + serviceTimeText;
-                    }
-                    orderInfo += '<span class="delTime">, ' + serviceTimeText + '</span>';
+              if ($target.length) {
+                $(response.cart_item).insertBefore($target);
+              } else {
+                $(response.cart_item).insertBefore('ul.rpress-cart li.cart_item.rpress_total');
+              }
+
+              if ($('.rpress-cart')
+                .find('.rpress-cart-meta.rpress_subtotal')
+                .is(':first-child')) {
+                $(this)
+                  .hide();
+              }
+              $('.rpress-cart-quantity')
+                .show();
+              $('.rp-mb-price')
+                .text(response.total);
+              $('.rp-mb-quantity')
+                .text(response.cart_quantity);
+              $('.cart_item.rpress-cart-meta.rpress_total')
+                .find('.cart-total')
+                .text(response.total);
+              $('.cart_item.rpress-cart-meta.rpress_subtotal')
+                .find('.subtotal')
+                .text(response.total);
+              $('.cart_item.rpress-cart-meta.rpress_total')
+                .css('display', 'block');
+              $('.cart_item.rpress-cart-meta.rpress_subtotal')
+                .css('display', 'block');
+              $('.cart_item.rpress_checkout')
+                .addClass(rp_scripts.button_color);
+              $('.cart_item.rpress_checkout')
+                .css('display', 'block');
+              if (serviceType !== undefined) {
+                serviceLabel = window.localStorage.getItem('serviceLabel');
+                var orderInfo = '<span class="delMethod">' + serviceLabel + ', ' + serviceDate + '</span>';
+                if (serviceTime !== undefined) {
+                  // Check if the string contains 'ASAP'
+                  if (serviceTime.includes('ASAP')) {
+                    // Remove 'ASAP' from the string
+                    serviceTimeText = serviceTime.replace('ASAP', '');
+                    serviceTimeText = rp_scripts.asap_txt + ' ' + serviceTimeText;
                   }
-                  $('.delivery-items-options')
-                    .find('.delivery-opts')
-                    .html(orderInfo);
-                  if ($('.delivery-wrap .delivery-change')
-                    .length == 0) {
-                    $("<a href='#' class='delivery-change'>" + rp_scripts.change_txt + "</a>")
-                      .insertAfter(".delivery-opts");
-                  }
+                  orderInfo += '<span class="delTime">, ' + serviceTimeText + '</span>';
                 }
                 $('.delivery-items-options')
-                  .css('display', 'block');
-                var subTotal = '<li class="cart_item rpress-cart-meta rpress_subtotal">' + rp_scripts.total_text + '<span class="cart-subtotal">' + response.subtotal + '</span></li>';
-                if (response.subtotal) {
-                  var cartLastChild = $('ul.rpress-cart>li.rpress-cart-item:last');
-                  $(subTotal).insertAfter(cartLastChild);
-                  // $('ul.rpress-cart>div.rpress-cart-total-wrap').prepend(subTotal);
+                  .find('.delivery-opts')
+                  .html(orderInfo);
+                if ($('.delivery-wrap .delivery-change')
+                  .length == 0) {
+                  $("<a href='#' class='delivery-change'>" + rp_scripts.change_txt + "</a>")
+                    .insertAfter(".delivery-opts");
                 }
-                var newCartKey = $('ul.rpress-cart li.rpress-cart-item').last().attr('data-cart-key');
-                if(newCartKey){
-                  let carttotal = parseInt( newCartKey ) + 1;
-                  $('.cart_item.rpress-cart-meta.rpress_total')
-                    .find('.rpress-cart-quantity')
-                    .text(carttotal);
-                } else {
-                  let carttotal = 1;
-                  $('.cart_item.rpress-cart-meta.rpress_total')
-                    .find('.rpress-cart-quantity')
-                    .text(carttotal);
-                }
-                if (response.taxes) {
-                  var taxHtml = '<li class="cart_item rpress-cart-meta rpress_cart_tax">' + rp_scripts.estimated_tax + '<span class="cart-tax">' + response.taxes + '</span></li>';
-                  $(taxHtml)
-                    .insertBefore('ul.rpress-cart li.cart_item.rpress_total');
-                }
-                if (response.taxes === undefined) {
-                  $('ul.rpress-cart')
-                    .find('.cart_item.rpress-cart-meta.rpress_subtotal')
-                    .remove();
-                  var cartLastChild = $('ul.rpress-cart>li.rpress-cart-item:last');
-                  $(subTotal).insertAfter(cartLastChild);
-                  // $('ul.rpress-cart>div.rpress-cart-total-wrap').prepend(subTotal);
-                }
-                if ($('div.rpress.item-order').length == 0) {
-                  var orderitems = $('<div class="rpress item-order"><h4>Ordered menu</h4><span>1 items</span></div>');
-                  $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').removeClass('empty-cart');
-                  $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').prepend(orderitems);
-                } else {
-                  // $('div.rpress.item-order span').html(rp_scripts.cart_quantity + " " + rp_scripts.items);
-                }
-                $(document.body)
-                  .trigger('rpress_added_to_cart', [response]);
-                $('ul.rpress-cart')
-                  .find('.cart-total')
-                  .html(response.total);
-                $('ul.rpress-cart')
-                  .find('.cart-subtotal')
-                  .html(response.subtotal);
-                if ($('li.rpress-cart-item')
-                  .length > 0) {
-                  $('a.rpress-clear-cart')
-                    .show();
-                } else {
-                  $('a.rpress-clear-cart')
-                    .hide();
-                }
-                // Target subtotal and total li elements
-                var $subtotal = $('.rpress-cart .rpress_subtotal');
-                var $tax      = $('ul.rpress-cart li.rpress_cart_tax');
-                var $total = $('.rpress-cart .rpress_total');
-
-                // Remove any previously added wrapper
-                $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').find('.rpress-cart-total-wrap').children().unwrap();
-                
-                // Wrap them together only if they exist
-                if ($subtotal.length && $total.length) {
-                    $subtotal.add($tax).add($total).wrapAll('<div class="rpress-cart-total-wrap"></div>');
-                }
-                $(document.body)
-                  .trigger('rpress_added_to_cart', [response]);
-                MicroModal.close('rpressModal');
-                tata.success(window.rp_scripts.success, self.attr('data-title') + window.rp_scripts.added_to_cart, {
-                  position: "tr"
-                })
               }
-            }
-          })
-        }
-      }
-      if (cartAction == 'update-cart' && validation == '') {
-        self.addClass('disable_click');
-        var this_form = self.parents('.modal')
-          .find('form#fooditem-update-details .food-item-list.active input');
-        var itemId = self.attr('data-item-id');
-        var itemPrice = self.attr('data-item-price');
-        var cartKey = self.attr('data-cart-key');
-        var itemQty = self.attr('data-item-qty');
-        var FormData = this_form.serializeArray();
-        var SpecialInstruction = self.parents('.modal')
-          .find('textarea.special-instructions')
-          .val();
-        var action = 'rpress_update_cart_items';
-        var data = {
-          action: action,
-          fooditem_id: itemId,
-          fooditem_qty: itemQty,
-          fooditem_cartkey: cartKey,
-          special_instruction: SpecialInstruction,
-          post_data: FormData,
-          security: rp_scripts.update_cart_item_nonce
-        };
-        if (itemId !== '') {
-          $.ajax({
-            type: "POST",
-            data: data,
-            dataType: "json",
-            url: rp_scripts.ajaxurl,
-            xhrFields: {
-              withCredentials: true
-            },
-            success: function (response) {
-              self.removeClass('disable_click');
-              self.find('.cart-action-text')
-                .text(text);
-              if (response) {
-                html = response.cart_item;
+              $('.delivery-items-options')
+                .css('display', 'block');
+              var subTotal = '<li class="cart_item rpress-cart-meta rpress_subtotal">' + rp_scripts.total_text + '<span class="cart-subtotal">' + response.subtotal + '</span></li>';
+              if (response.subtotal) {
+                var cartLastChild = $('ul.rpress-cart>li.rpress-cart-item:last');
+                $(subTotal).insertAfter(cartLastChild);
+                // $('ul.rpress-cart>div.rpress-cart-total-wrap').prepend(subTotal);
+              }
+              var newCartKey = $('ul.rpress-cart li.rpress-cart-item').last().attr('data-cart-key');
+              if (newCartKey) {
+                let carttotal = parseInt(newCartKey) + 1;
+                $('.cart_item.rpress-cart-meta.rpress_total')
+                  .find('.rpress-cart-quantity')
+                  .text(carttotal);
+              } else {
+                let carttotal = 1;
+                $('.cart_item.rpress-cart-meta.rpress_total')
+                  .find('.rpress-cart-quantity')
+                  .text(carttotal);
+              }
+              if (response.taxes) {
+                var taxHtml = '<li class="cart_item rpress-cart-meta rpress_cart_tax">' + rp_scripts.estimated_tax + '<span class="cart-tax">' + response.taxes + '</span></li>';
+                $(taxHtml)
+                  .insertBefore('ul.rpress-cart li.cart_item.rpress_total');
+              }
+              if (response.taxes === undefined) {
                 $('ul.rpress-cart')
-                  .find('li.cart_item.empty')
+                  .find('.cart_item.rpress-cart-meta.rpress_subtotal')
                   .remove();
-                $('.rpress-cart >li.rpress-cart-item')
-                  .each(function (index, item) {
-                    $(this)
-                      .find("[data-cart-item]")
-                      .attr('data-cart-item', index);
-                    $(this)
-                      .attr('data-cart-key', index);
-                    $(this)
-                      .attr('data-remove-item', index);
-                  });
-                $('ul.rpress-cart')
-                  .find('li.edited')
-                  .replaceWith(function () {
-                    let obj = $(html);
-                    obj.attr('data-cart-key', response.cart_key);
-                    obj.find("a.rpress-edit-from-cart")
-                      .attr("data-cart-item", response.cart_key);
-                    obj.find("a.rpress-edit-from-cart")
-                      .attr("data-remove-item", response.cart_key);
-                    obj.find("a.rpress_remove_from_cart")
-                      .attr("data-cart-item", response.cart_key);
-                    obj.find("a.rpress_remove_from_cart")
-                      .attr("data-remove-item", response.cart_key);
-                    return obj;
-                  });
-                $('ul.rpress-cart')
-                  .find('.cart-total')
-                  .html(response.total);
-                $('ul.rpress-cart')
-                  .find('.cart-subtotal')
-                  .html(response.subtotal);
-                $('ul.rpress-cart')
-                  .find('.cart-tax')
-                  .html(response.tax);
-                $(document.body)
-                  .trigger('rpress_items_updated', [response]);
-                MicroModal.close('rpressModal');
+                var cartLastChild = $('ul.rpress-cart>li.rpress-cart-item:last');
+                $(subTotal).insertAfter(cartLastChild);
+                // $('ul.rpress-cart>div.rpress-cart-total-wrap').prepend(subTotal);
               }
+              if ($('div.rpress.item-order').length == 0) {
+                var orderitems = $('<div class="rpress item-order"><h4>Ordered menu</h4><span>1 items</span></div>');
+                $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').removeClass('empty-cart');
+                $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').prepend(orderitems);
+              } else {
+                // $('div.rpress.item-order span').html(rp_scripts.cart_quantity + " " + rp_scripts.items);
+              }
+              $(document.body)
+                .trigger('rpress_added_to_cart', [response]);
+              $('ul.rpress-cart')
+                .find('.cart-total')
+                .html(response.total);
+              $('ul.rpress-cart')
+                .find('.cart-subtotal')
+                .html(response.subtotal);
+              if ($('li.rpress-cart-item')
+                .length > 0) {
+                $('a.rpress-clear-cart')
+                  .show();
+              } else {
+                $('a.rpress-clear-cart')
+                  .hide();
+              }
+              // Target subtotal and total li elements
+              var $subtotal = $('.rpress-cart .rpress_subtotal');
+              var $tax = $('ul.rpress-cart li.rpress_cart_tax');
+              var $total = $('.rpress-cart .rpress_total');
+
+              // Remove any previously added wrapper
+              $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').find('.rpress-cart-total-wrap').children().unwrap();
+
+              // Wrap them together only if they exist
+              if ($subtotal.length && $total.length) {
+                $subtotal.add($tax).add($total).wrapAll('<div class="rpress-cart-total-wrap"></div>');
+              }
+              $(document.body)
+                .trigger('rpress_added_to_cart', [response]);
+              MicroModal.close('rpressModal');
+              tata.success(window.rp_scripts.success, self.attr('data-title') + window.rp_scripts.added_to_cart, {
+                position: "tr"
+              })
             }
-          });
-        }
+          }
+        })
       }
-    });
+    }
+    if (cartAction == 'update-cart' && validation == '') {
+
+      self.addClass('disable_click');
+      var this_form = self.parents('.modal')
+        .find('form#fooditem-update-details .food-item-list.active input');
+      var itemId = self.attr('data-item-id');
+      var itemPrice = self.attr('data-item-price');
+      var cartKey = self.attr('data-cart-key');
+      var itemQty = self.attr('data-item-qty');
+      var FormData = this_form.serializeArray();
+      var SpecialInstruction = self.parents('.modal')
+        .find('textarea.special-instructions')
+        .val();
+      var action = 'rpress_update_cart_items';
+      var data = {
+        action: action,
+        fooditem_id: itemId,
+        fooditem_qty: itemQty,
+        fooditem_cartkey: cartKey,
+        special_instruction: SpecialInstruction,
+        post_data: FormData,
+        security: rp_scripts.update_cart_item_nonce
+      };
+
+      if (itemId !== '') {
+        $.ajax({
+          type: "POST",
+          data: data,
+          dataType: "json",
+          url: rp_scripts.ajaxurl,
+          xhrFields: {
+            withCredentials: true
+          },
+          success: function (response) {
+            self.removeClass('disable_click');
+            self.find('.cart-action-text')
+              .text(text);
+            if (response) {
+              html = response.cart_item;
+              $('ul.rpress-cart')
+                .find('li.cart_item.empty')
+                .remove();
+              $('.rpress-cart >li.rpress-cart-item')
+                .each(function (index, item) {
+                  $(this)
+                    .find("[data-cart-item]")
+                    .attr('data-cart-item', index);
+                  $(this)
+                    .attr('data-cart-key', index);
+                  $(this)
+                    .attr('data-remove-item', index);
+                });
+              $('ul.rpress-cart')
+                .find('li.edited')
+                .replaceWith(function () {
+                  let obj = $(html);
+                  obj.attr('data-cart-key', response.cart_key);
+                  obj.find("a.rpress-edit-from-cart")
+                    .attr("data-cart-item", response.cart_key);
+                  obj.find("a.rpress-edit-from-cart")
+                    .attr("data-remove-item", response.cart_key);
+                  obj.find("a.rpress_remove_from_cart")
+                    .attr("data-cart-item", response.cart_key);
+                  obj.find("a.rpress_remove_from_cart")
+                    .attr("data-remove-item", response.cart_key);
+                  return obj;
+                });
+              $('ul.rpress-cart')
+                .find('.cart-total')
+                .html(response.total);
+              $('ul.rpress-cart')
+                .find('.cart-subtotal')
+                .html(response.subtotal);
+              $('ul.rpress-cart')
+                .find('.cart-tax')
+                .html(response.tax);
+              $(document.body)
+                .trigger('rpress_items_updated', [response]);
+              MicroModal.close('rpressModal');
+            }
+          }
+        });
+      }
+    }
+  });
   // Add Service Date and Time
   $('body')
     .on('click', '.rpress-delivery-opt-update', function (e) {
@@ -929,16 +960,15 @@ jQuery(function ($) {
       var serviceTime = _self.parents('.rpress-tabs-wrapper')
         .find('.delivery-settings-wrapper.active .rpress-hrs')
         .val();
+      if (!serviceTime && rp_getCookie('service_time')) {
+        serviceTime = rp_getCookie('service_time');
+      }
       var serviceTimeText = _self.parents('.rpress-tabs-wrapper')
         .find('.delivery-settings-wrapper.active .rpress-hrs option:selected')
         .text();
       var serviceDate = _self.parents('.rpress-tabs-wrapper')
         .find('.delivery-settings-wrapper.active .rpress_get_delivery_dates')
         .val();
-      // if (serviceTime === undefined && (rpress_scripts.pickup_time_enabled == 1 && serviceType == 'pickup' || rpress_scripts.delivery_time_enabled == 1 && serviceType == 'delivery')) {
-      //   tata.error(rp_scripts.error, select_time_error + serviceLabel);
-      //   return false;
-      // }
       var sDate = serviceDate === undefined ? rpress_scripts.current_date : serviceDate;
       var action = 'rpress_check_service_slot';
       var data = {
@@ -1000,7 +1030,9 @@ jQuery(function ($) {
                 .trigger('click');
               MicroModal.close('rpressModal');
             } else {
-              MicroModal.close('rpressModal');
+              if (jQuery('#rpressModal').length) {
+                MicroModal.close('rpressModal');
+              }
               if (typeof serviceType !== 'undefined' && typeof serviceTime !== 'undefined') {
                 $('.delivery-wrap .delivery-opts')
                   .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + Cookies.get('delivery_date') + ', ' + serviceTimeText + '</span>');
@@ -1016,13 +1048,13 @@ jQuery(function ($) {
               .trigger('rpress_checked_slots', [response]);
             //If it's checkout page then refresh the page to reflect the updated changes.
             // if (rpress_scripts.is_checkout == '1')
-              window.location.reload();
+            window.location.reload();
           }
         }
       });
     });
-    $('body')
-    .on('click','.rpress-editaddress-submit-btn', function (e) {
+  $('body')
+    .on('click', '.rpress-editaddress-submit-btn', function (e) {
       e.preventDefault();
       var _self = $(this);
       var foodItemId = _self.attr('data-food-id');
@@ -1087,22 +1119,6 @@ jQuery(function ($) {
             tata.error(rp_scripts.error, response.msg);
             return false;
           } else {
-            // rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
-            // if (serviceDate === undefined) {
-            //   rp_setCookie('service_date', rpress_scripts.current_date, rp_scripts.expire_cookie_time);
-            //   rp_setCookie('delivery_date', rpress_scripts.display_date, rp_scripts.expire_cookie_time);
-            // } else {
-            //   var delivery_date = $('.delivery-settings-wrapper.active .rpress_get_delivery_dates option:selected')
-            //     .text();
-            //   rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
-            //   rp_setCookie('delivery_date', delivery_date, rp_scripts.expire_cookie_time);
-            // }
-            // if (serviceTime === undefined) {
-            //   rp_setCookie('service_time', '', rp_scripts.expire_cookie_time);
-            // } else {
-            //   rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
-            //   rp_setCookie('service_time_text', serviceTimeText, rp_scripts.expire_cookie_time);
-            // }
             $('#rpressModal')
               .removeClass('show-service-options');
             if (foodItemId) {
@@ -1141,7 +1157,7 @@ jQuery(function ($) {
   $(document).on('click', '#editDateTime', function (e) {
     e.preventDefault();
     var self = $(this);
-    
+
     var serviceType = rp_getCookie('service_type');
     if (!serviceType) {
       serviceType = rp_scripts.default_service || 'delivery';
@@ -1151,12 +1167,12 @@ jQuery(function ($) {
     if (!serviceTime) {
       var $sel = $('#rpress-delivery-hours');
       if (!$sel.length) return;
-  
+
       // find option marked selected in HTML
       var $opt = $sel.find('option').first();
       if ($opt.length) {
-          var val = $opt.val();
-          $sel.val(val).trigger('change');
+        var val = $opt.val();
+        $sel.val(val).trigger('change');
       }
     } else {
       var $sel = $('#rpress-delivery-hours');
@@ -1169,13 +1185,13 @@ jQuery(function ($) {
         // invalid cookie value → select first option
         var $firstOpt = $sel.find('option').first();
         if ($firstOpt.length) {
-            $sel.val($firstOpt.val()).trigger('change');
+          $sel.val($firstOpt.val()).trigger('change');
         }
       }
     }
 
     $('.rpress-mobile-cart-icons').hide();
-    
+
     MicroModal.show('rpressDateTime', {
       disableScroll: true
     });
@@ -1189,22 +1205,16 @@ jQuery(function ($) {
 
     // Get selected time
     var deliveryTime = $modal.find('#rpress-delivery-hours').val();
-    
+
     var deliveryTimeText = $modal.find('.rpress-hrs option:selected').text();
 
     // Get selected date
     var deliveryDate = $modal.find('.rpress_get_delivery_dates').val();
 
-    // Validate if needed
-    // if (!deliveryDate) {
-    //   alert('Please select a delivery date.');
-    //   return false;
-    // }
-
     // Update cookies
     rp_setCookie('service_time', deliveryTime, rp_scripts.expire_cookie_time);
     rp_setCookie('service_time_text', deliveryTimeText, rp_scripts.expire_cookie_time);
-    if(deliveryDate) {
+    if (deliveryDate) {
       rp_setCookie('service_date', deliveryDate, rp_scripts.expire_cookie_time);
       rp_setCookie('delivery_date', deliveryDate, rp_scripts.expire_cookie_time);
     }
@@ -1338,6 +1348,8 @@ jQuery(function ($) {
               .html(`${response.cart_quantity}<span>${rpress_scripts.items}</span>`);
             $('.rp-mb-price')
               .text(response.total);
+            $('.rp-mb-quantity')
+              .text(response.cart_quantity);
             $(document.body)
               .trigger('rpress_quantity_updated', [response.cart_quantity]);
             if (rpress_scripts.taxes_enabled) {
@@ -1485,6 +1497,7 @@ jQuery(function ($) {
         action: action,
         security: rp_scripts.proceed_checkout_nonce,
       }
+
       $.ajax({
         type: "POST",
         data: data,
@@ -1505,7 +1518,8 @@ jQuery(function ($) {
             _self.children('.rp-ajax-toggle-text')
               .removeClass('rp-text-visibility');
           } else {
-            window.location.href = rp_scripts.checkout_page
+            window.location.replace(rp_scripts.checkout_page)
+            return;
           }
         }
       })
@@ -1586,7 +1600,7 @@ jQuery(function ($) {
     var totalHeight = $('header:eq(0)').length > 0 ? $('header:eq(0)').height() + 30 : 120;
     if ($(".sticky-sidebar").length > 0) {
       $('.sticky-sidebar').rpressStickySidebar({
-          additionalMarginTop: totalHeight
+        additionalMarginTop: totalHeight
       });
     }
   } else {
@@ -1625,33 +1639,39 @@ jQuery(function ($) {
 });
 const totalHeight = 100; // Adjust for sticky header height
 
-// Smooth scroll for category dropdown and horizontal nav
-$('body').on('click', '.cd-dropdown-content a, .pn-ProductNav_Link', function (e) {
-  e.preventDefault();
+jQuery(function($){
 
-  const targetSelector = $(this).attr('href'); // e.g. "#menu-category-12"
-  const $target = $(targetSelector);
+  // Smooth scroll for category dropdown and horizontal nav
+  $('body').on('click', '.cd-dropdown-content a, .pn-ProductNav_Link', function (e) {
+    e.preventDefault();
 
-  if ($target.length) {
-    const offset = $target.offset().top;
+    const targetSelector = $(this).attr('href'); // #menu-category-12
+    const $target = $(targetSelector);
 
-    $('html, body').animate({
-      scrollTop: offset - totalHeight
-    }, 500);
-  }
+    if ($target.length) {
+      const offset = $target.offset().top;
+      const headerOffset = typeof totalHeight !== 'undefined' ? totalHeight : 80;
 
-  // Set aria-selected on horizontal nav
-  if ($(this).hasClass('pn-ProductNav_Link')) {
-    $('.pn-ProductNav_Link').removeAttr('aria-selected');
-    $(this).attr('aria-selected', 'true');
-  }
+      $('html, body').animate({
+        scrollTop: offset - headerOffset
+      }, 500);
+    }
 
-  // Add .mnuactive to dropdown item
-  if ($(this).closest('.cd-dropdown-content').length) {
-    $('.cd-dropdown-content li a').removeClass('mnuactive');
-    $(this).addClass('mnuactive');
-  }
+    // Set aria-selected on horizontal nav
+    if ($(this).hasClass('pn-ProductNav_Link')) {
+      $('.pn-ProductNav_Link').removeAttr('aria-selected');
+      $(this).attr('aria-selected', 'true');
+    }
+
+    // Highlight dropdown item
+    if ($(this).closest('.cd-dropdown-content').length) {
+      $('.cd-dropdown-content li a').removeClass('mnuactive');
+      $(this).addClass('mnuactive');
+    }
+  });
+
 });
+
 /* Cart Quantity Changer - Imported from cart-quantity-changer.js */
 jQuery(function ($) {
   //quantity Minus
@@ -1873,73 +1893,73 @@ jQuery(function ($) {
         $('.rpress-category-lists .rpress-category-link').parent().removeClass('current');
         $(`.rpress-category-lists .rpress-category-link[href="#${current_category}"]`).parent().addClass('current');
       });
-    }  
+    }
     window.onscroll = function () {
       RpScrollingCategories();
     }
   }
-  
+
   if (rp_category_links_grid.length > 0) {
     const header_height = $('header:eq(0)').height();
-    const $nav         = $('#pnProductNav');          // the actual scroller
+    const $nav = $('#pnProductNav');          // the actual scroller
     const $navContents = $('#pnProductNavContents');  // inner content
-    const $indicator   = $('#pnIndicator');
+    const $indicator = $('#pnIndicator');
     let current_category = rp_category_links_grid.eq(0).attr('href').substr(1);
-  
+
     // Make sure navContents is positioned so indicator can be positioned inside it
     if ($navContents.length && $navContents.css('position') === 'static') {
       $navContents.css('position', 'relative');
     }
-  
+
     // ---- helper: move indicator visually under the link ----
     function moveIndicatorTo($link) {
       if (!$link || !$link.length) return;
-  
+
       // Use bounding rects so calculation is robust even with transforms / scrolling
-      const linkRect     = $link[0].getBoundingClientRect();
+      const linkRect = $link[0].getBoundingClientRect();
       const contentsRect = $navContents[0].getBoundingClientRect();
-  
+
       // left relative to contents' left (visual coordinate)
       const left = Math.round(linkRect.left - contentsRect.left + ($navContents.scrollLeft() || 0));
       const width = Math.round(linkRect.width);
-  
+
       // Apply width and translateX in px (reliable)
       $indicator.css({
         width: width + 'px',
         transform: 'translateX(' + left + 'px)'
       });
-  
+
       // Ensure the active link is visible / centered inside the scroller
       scrollActiveIntoView($link);
     }
-  
+
     // ---- helper: scroll the scroller so the link is visible/centered ----
     function scrollActiveIntoView($link) {
       if (!$link || !$link.length) return;
-  
+
       // Choose real scroller (outer nav) - fallback to contents if outer missing
       const $scroller = $nav.length ? $nav : $navContents;
       if (!$scroller.length) return;
-  
+
       const scrollerEl = $scroller[0];
       const maxScroll = scrollerEl.scrollWidth - scrollerEl.clientWidth;
-  
+
       const linkRect = $link[0].getBoundingClientRect();
       const scrollerRect = scrollerEl.getBoundingClientRect();
-  
+
       // Current scrollLeft
       const currentScroll = $scroller.scrollLeft();
-  
+
       // left of link relative to scrollable content coordinates:
       // (element left on screen - scroller left on screen) + currentScroll
       let leftRelativeToScroller = linkRect.left - scrollerRect.left + currentScroll;
-  
+
       // center the link
       let desired = leftRelativeToScroller - (scrollerEl.clientWidth / 2) + ($link.outerWidth() / 2);
-  
+
       // clamp
       desired = Math.max(0, Math.min(desired, maxScroll));
-  
+
       // If the inner contents currently has a transform (arrow animation in progress),
       // animated scrollLeft may behave unexpectedly. In that case use scrollIntoView fallback:
       const contentsTransform = getComputedStyle($navContents[0]).transform;
@@ -1952,11 +1972,11 @@ jQuery(function ($) {
           // if not supported, continue to jQuery animate fallback
         }
       }
-  
+
       // animate scrollLeft (smooth)
       $scroller.stop().animate({ scrollLeft: desired }, 350);
     }
-  
+
     // ---- main scanning function (updates current_category + classes) ----
     function RpScrollingCategoriesgrid() {
       // determine current category based on section positions
@@ -1967,76 +1987,76 @@ jQuery(function ($) {
           current_category = section_id;
         }
       });
-  
+
       // Update active link classes/aria
       const $activeLink = rp_category_links_grid
         .removeAttr('aria-selected').removeClass('mnuactive')
         .filter(`[href="#${current_category}"]`)
         .attr('aria-selected', 'true').addClass('mnuactive');
-  
+
       // Move indicator + ensure visible
       if ($activeLink.length) {
         moveIndicatorTo($activeLink);
       }
-  
+
       // Sync the dropdown menu
       $(".cd-dropdown-content a")
         .removeClass("mnuactive")
         .filter(`[href="#${current_category}"]`)
         .addClass("mnuactive");
     }
-  
+
     // Run once on load
     RpScrollingCategoriesgrid();
-  
+
     // Update on page scroll / resize (throttle-friendly native listeners)
     window.addEventListener('scroll', RpScrollingCategoriesgrid, { passive: true });
     window.addEventListener('resize', RpScrollingCategoriesgrid);
-  
+
     // Utility to get current section in view (used elsewhere)
     function getCurrentCategoryInView() {
       let scrollTop = $(window).scrollTop();
       let current = null;
-  
+
       $(".rpress-category-lists .rpress-category-wrap").each(function () {
         if ($(this).offset().top <= scrollTop + 100) {
           current = $(this).attr("id");
         }
       });
-  
+
       return current;
     }
-  
+
     // On window scroll (content scroll, not nav scroll) — keep dropdown and indicator in sync
     $(window).on("scroll", function () {
       let current = getCurrentCategoryInView();
       if (!current) return;
-  
+
       const $active = rp_category_links_grid.filter(`[href="#${current}"]`);
       if ($active.length) {
         moveIndicatorTo($active);
-  
+
         // Sync dropdown
         const activeHref = $active.attr("href");
         $(".cd-dropdown-content a").removeClass("mnuactive");
         $(`.cd-dropdown-content a[href="${activeHref}"]`).addClass("mnuactive");
       }
     });
-  
+
     // Nav link click instant feedback
     $(document).on("click", ".pn-ProductNav_Link", function (e) {
       const $this = $(this);
       // Move indicator & scroll into view immediately
       moveIndicatorTo($this);
-  
+
       // Sync dropdown
       const activeHref = $this.attr("href");
       $(".cd-dropdown-content a").removeClass("mnuactive");
       $(`.cd-dropdown-content a[href="${activeHref}"]`).addClass("mnuactive");
     });
-  
-  }  
-  
+
+  }
+
   $(document)
     .ready(function () {
       // Infinate scroll for order history page 
@@ -2381,7 +2401,8 @@ jQuery(function ($) {
       if ($('.rpress-cat-overlay').length === 0) {
         // $('body').append('<div class="rpress-cat-overlay"></div>');
         var cdDropdown = $('.cd-dropdown-wrapper .cd-dropdown');
-        $('<div class="rpress-cat-overlay"></div>').insertAfter(cdDropdown);      }
+        $('<div class="rpress-cat-overlay"></div>').insertAfter(cdDropdown);
+      }
     } else {
       // Remove overlay if closing
       $('.rpress-cat-overlay').remove();
@@ -2436,69 +2457,54 @@ jQuery(function ($) {
     }
   });
 
-  $('.rpress_get_delivery_dates').on('click', function () {
-    this.showPicker && this.showPicker(); // Works in modern browsers
-    // fallback: focus the input
-    this.focus();
-  });
-  $('body').on('click', '.order-online-servicetabs .single-service-selected' ,function() {
+  $(document.body).on('click', '.order-online-servicetabs .single-service-selected', function () {
     setTimeout(function () {
       location.reload();
     }, 400);
   });
 
-  setTimeout(function(){
+  setTimeout(function () {
     // get the already selected value
     var selectedVal = $("#rpress-delivery-hours option:selected").val();
-    
+
     // re-select it (forces selection again)
     $("#rpress-delivery-hours").val(selectedVal).trigger("change");
   }, 1000); // 1 second delay
 
-  $(document).on('click', '.rp-variable-price-wrapper .radio-container', function(){
-      var $radio = $(this).find('input[type="radio"]');
+  $(document).on('click', '.rp-variable-price-wrapper .radio-container', function () {
+    var $radio = $(this).find('input[type="radio"]');
 
-      if ($radio.length) {
-          var name = $radio.attr('name');
+    if ($radio.length) {
+      var name = $radio.attr('name');
 
-          // Uncheck all radios in this group
-          $('input[name="'+name+'"]').prop('checked', false);
+      // Uncheck all radios in this group
+      $('input[name="' + name + '"]').prop('checked', false);
 
-          // Check the clicked one
-          $radio.prop('checked', true).trigger('change');
+      // Check the clicked one
+      $radio.prop('checked', true).trigger('change');
 
-          // Optional: manage "checked" class on container
-          $('.radio-container').removeClass('checked');
-          $(this).addClass('checked');
-      }
+      // Optional: manage "checked" class on container
+      $('.radio-container').removeClass('checked');
+      $(this).addClass('checked');
+    }
   });
 });
-jQuery(document).ready(function($) {
+jQuery(document).ready(function ($) {
   $('.menu-category-wrap').first().addClass('first-menu-category-wrap');
 
 
   var $nav = $('#pnProductNav');
 
   function checkOverflow() {
-      if ($nav.attr('data-overflowing') !== 'right') {
-          $nav.parent('.pn-ProductNav_Wrapper').addClass('background-hidden');
-      } else {
-          $nav.parent('.pn-ProductNav_Wrapper').removeClass('background-hidden');
-      }
+    if ($nav.attr('data-overflowing') !== 'right') {
+      $nav.parent('.pn-ProductNav_Wrapper').addClass('background-hidden');
+    } else {
+      $nav.parent('.pn-ProductNav_Wrapper').removeClass('background-hidden');
+    }
   }
 
   // Run once on page load
   checkOverflow();
-
-  // // Watch for changes in data-overflowing
-  // var observer = new MutationObserver(function () {
-  //     checkOverflow();
-  // });
-
-  // observer.observe($nav[0], {
-  //     attributes: true,
-  //     attributeFilter: ['data-overflowing']
-  // });
 
   function updateTooManyAdds($span) {
     var textOnly = $span.text().trim();
@@ -2506,39 +2512,39 @@ jQuery(document).ready(function($) {
 
     if ($parent.length) {
       if (textOnly.length > 3) {
-          $parent.addClass('too-many-adds');
+        $parent.addClass('too-many-adds');
       } else {
-          $parent.removeClass('too-many-adds');
+        $parent.removeClass('too-many-adds');
       }
     }
   }
 
   // Initial check on page load
   $('span.rpress-add-to-cart-label.rp-ajax-toggle-text').each(function () {
-      updateTooManyAdds($(this));
+    updateTooManyAdds($(this));
   });
 
   // Observe only the spans
   $('span.rpress-add-to-cart-label.rp-ajax-toggle-text').each(function () {
-      var targetNode = this;
+    var targetNode = this;
 
-      var observer = new MutationObserver(function () {
-          updateTooManyAdds($(targetNode));
-      });
+    var observer = new MutationObserver(function () {
+      updateTooManyAdds($(targetNode));
+    });
 
-      observer.observe(targetNode, {
-          characterData: true,
-          subtree: true,
-          childList: true
-      });
+    observer.observe(targetNode, {
+      characterData: true,
+      subtree: true,
+      childList: true
+    });
   });
 });
 
-jQuery(document).ready(function($) {
+jQuery(document).ready(function ($) {
 
   var serviceType = rp_getCookie('service_type');
   if (!serviceType) {
-    if(rp_scripts.service_options == 'delivery' || rp_scripts.service_options == 'pickup'){
+    if (rp_scripts.service_options == 'delivery' || rp_scripts.service_options == 'pickup') {
       serviceType = rp_scripts.default_service || 'delivery';
       rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
       location.reload();
@@ -2549,74 +2555,112 @@ jQuery(document).ready(function($) {
   var serviceTime = rp_getCookie('service_time');
 
   if ($select.length > 0) {
-      // Check if the select has an option matching the cookie value
-      if (!serviceTime || $select.find('option').filter(function() {
-          return $(this).text().trim() === serviceTime;
-      }).length === 0) {
-          // Cookie missing or not in options, fallback to first option
-          serviceTime = $select.find('option:first').text().trim();
-      }
+    // Check if the select has an option matching the cookie value
+    if (!serviceTime || $select.find('option').filter(function () {
+      return $(this).text().trim() === serviceTime;
+    }).length === 0) {
+      // Cookie missing or not in options, fallback to first option
+      serviceTime = $select.find('option:first').text().trim();
+    }
   }
 
   // Print the value in the span
   $('#deliveryTime').text(serviceTime);
-  
+
   function initStickyMenu() {
-      var $menu = $('.desktop-scroll-menu .make-me-sticky');
-      var $sidebar = $('.sticky-sidebar');
+    var $menu = $('.desktop-scroll-menu .make-me-sticky');
+    var $sidebar = $('.sticky-sidebar');
 
-      if ($(window).width() > 991 && $menu.length > 0) {
-          // Fixed offset from top
-          var stickyTop = 0;
+    if ($(window).width() > 991 && $menu.length > 0) {
+      // Fixed offset from top
+      var stickyTop = 0;
 
-          var menuOffset = $menu.offset().top;
+      var menuOffset = $menu.offset().top;
 
-          $(window).off('.stickyMenu'); // Remove previous events
+      $(window).off('.stickyMenu'); // Remove previous events
 
-          $(window).on('scroll.stickyMenu', function() {
-              var scrollTop = $(window).scrollTop();
+      $(window).on('scroll.stickyMenu', function () {
+        var scrollTop = $(window).scrollTop();
 
-              if (scrollTop + stickyTop >= menuOffset) {
-                  $menu.css({
-                      'position': 'fixed',
-                      'top': stickyTop + 'px',
-                      'left': $menu.offset().left + 'px',
-                      'width': $menu.outerWidth(),
-                      'z-index': 999
-                  });
-              } else {
-                  $menu.css({
-                      'position': 'static',
-                      'width': '',
-                      'top': '',
-                      'left': '',
-                      'z-index': ''
-                  });
-              }
-          });
-
-          // Recalculate left & width on resize
-          $(window).on('resize.stickyMenu', function() {
-              $menu.css({
-                  'position': 'static',
-                  'width': '',
-                  'top': '',
-                  'left': '',
-                  'height': $sidebar.length > 0 ? $sidebar.outerHeight() : 'auto'
-              });
-              menuOffset = $menu.offset().top;
-          });
-
-      } else {
-          // Reset sticky behavior on mobile
+        if (scrollTop + stickyTop >= menuOffset) {
           $menu.css({
-              'position': 'static',
-              'height': 'auto'
+            'position': 'fixed',
+            'top': stickyTop + 'px',
+            'left': $menu.offset().left + 'px',
+            'width': $menu.outerWidth(),
+            'z-index': 999
           });
-      }
+        } else {
+          $menu.css({
+            'position': 'static',
+            'width': '',
+            'top': '',
+            'left': '',
+            'z-index': ''
+          });
+        }
+      });
+
+      // Recalculate left & width on resize
+      $(window).on('resize.stickyMenu', function () {
+        $menu.css({
+          'position': 'static',
+          'width': '',
+          'top': '',
+          'left': '',
+          'height': $sidebar.length > 0 ? $sidebar.outerHeight() : 'auto'
+        });
+        menuOffset = $menu.offset().top;
+      });
+
+    } else {
+      // Reset sticky behavior on mobile
+      $menu.css({
+        'position': 'static',
+        'height': 'auto'
+      });
+    }
   }
 
   initStickyMenu();
   $(window).on('resize', initStickyMenu);
+  /**
+   * Action Menu Toggle for Mobile
+   */
+  var actionContainer = document.querySelector(".container-actionmenu");
+  var burger = document.getElementById("actionburger");
+  var menu = document.querySelector(".actionmenu");
 
+  if (actionContainer) {
+    actionContainer.addEventListener("click", (event) => {
+      //if (event.target.tagName.toLowerCase() === "button") {
+      event.preventDefault();
+      // event.stopPropagation();
+      // event.stopImmediatePropagation();
+
+      burger.classList.toggle("is-expanded");
+
+      // Get the icon and text elements
+      var icon = burger.querySelector('i');
+      var textNode = burger.querySelector('.menu-text');
+      var isExpanded = burger.classList.contains('is-expanded');
+
+      // Get texts and icons from data attributes
+      var menuText = burger.getAttribute('data-text-menu');
+      var closeText = burger.getAttribute('data-text-close');
+      var menuIcon = burger.getAttribute('data-icon-menu');
+      var closeIcon = burger.getAttribute('data-icon-close');
+
+      if (isExpanded) {
+        menu.classList.replace("slides-down", "slides-up");
+        icon.className = closeIcon;
+        textNode.textContent = closeText;
+      } else {
+        menu.classList.replace("slides-up", "slides-down");
+        icon.className = menuIcon;
+        textNode.textContent = menuText;
+      }
+      // }
+    });
+  }
 });

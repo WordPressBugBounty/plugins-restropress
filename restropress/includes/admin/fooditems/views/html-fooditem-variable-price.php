@@ -25,8 +25,8 @@ $amount = !empty( $price ) ? $price['amount'] : 0;
 		</div>
 		<div class="rp-col-6 price-value">
 			<?php esc_html_e( 'Price:', 'restropress' ); ?>
-			<?php echo rpress_currency_symbol(); ?>
-			<input type="number" step="any" min="0.00" value="<?php echo rpress_sanitize_amount( $amount ); ?>" name="rpress_variable_prices[<?php echo absint( $count ); ?>][amount]" class="rp-input" placeholder="0.00">
+			<?php echo esc_html( rpress_currency_symbol() ); ?>
+			<input type="number" step="any" min="0.00" value="<?php echo esc_attr( rpress_sanitize_amount( $amount ) ); ?>" name="rpress_variable_prices[<?php echo absint( $count ); ?>][amount]" class="rp-input" placeholder="0.00">
 		</div>
 	</div>
 </div>

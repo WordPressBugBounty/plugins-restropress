@@ -20,8 +20,20 @@ function rpress_export_import() {
 				<h3><span><?php esc_html_e( 'Export Settings', 'restropress' ); ?></span></h3>
 				<div class="inside">
 					<p><?php esc_html_e( 'Export the RestroPress settings for this site as a .json file. This allows you to easily import the configuration into another site.', 'restropress' ); ?></p>
-					<p><?php printf( esc_html__( 'To export shop data (purchases, customers, etc), visit the <a href="%s">Reports</a> page.', 'restropress' ), admin_url( 'admin.php?page=rpress-reports&tab=export' ) ); ?>
-					<form method="post" action="<?php echo admin_url( 'tools.php?page=rpress-settings-export-import' ); ?>">
+					<p>
+					<?php
+					$url = admin_url( 'admin.php?page=rpress-reports&tab=export' );
+					printf(
+						/* translators: %s: URL to the Reports page */
+						wp_kses(
+							__( 'To export shop data (purchases, customers, etc), visit the <a href="%s">Reports</a> page.', 'restropress' ),
+							array( 'a' => array( 'href' => true ) )
+						),
+						esc_url( $url )
+					);
+					?>
+					</p>
+					<form method="post" action="<?php echo esc_url( admin_url( 'tools.php?page=rpress-settings-export-import' ) ); ?>">
 						<p>
 							<input type="hidden" name="rpress_action" value="export_settings" />
 						</p>
@@ -36,7 +48,7 @@ function rpress_export_import() {
 				<h3><span><?php esc_html_e( 'Import Settings', 'restropress' ); ?></span></h3>
 				<div class="inside">
 					<p><?php esc_html_e( 'Import the RestroPress settings from a .json file. This file can be obtained by exporting the settings on another site using the form above.', 'restropress' ); ?></p>
-					<form method="post" enctype="multipart/form-data" action="<?php echo admin_url( 'tools.php?page=rpress-settings-export-import' ); ?>">
+					<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'tools.php?page=rpress-settings-export-import' ) ); ?>">
 						<p>
 							<input type="file" name="import_file"/>
 						</p>

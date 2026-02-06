@@ -39,7 +39,6 @@ class Server {
 	public function init() {
 		add_filter( 'rest_pre_serve_request', array( $this, 'add_cors_support' ), 10 );
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ), 10 );
-		add_action( 'rest_api_init', array( $this, 'register_user_meta_for_rest' ), 10 );
 	}
 
 	/**
@@ -52,42 +51,7 @@ class Server {
 		// print_r($headers);
 		header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
 	}
-	/**
-	 * Register User meta for getting token and key from rest api.
-	 */
-	function register_user_meta_for_rest() {
-		register_meta(
-			'user',
-			'_rp_api_user_private_key',
-			array(
-				'show_in_rest'      => true,
-				'type'              => 'string',
-				'single'            => true,
-				'sanitize_callback' => 'sanitize_text_field',
-
-			)
-		);
-		register_meta(
-			'user',
-			'_rp_api_user_public_key',
-			array(
-				'show_in_rest'      => true,
-				'type'              => 'string',
-				'single'            => true,
-				'sanitize_callback' => 'sanitize_text_field',
-			)
-		);
-		register_meta(
-			'user',
-			'_rp_api_user_token_key',
-			array(
-				'show_in_rest'      => true,
-				'type'              => 'string',
-				'single'            => true,
-				'sanitize_callback' => 'sanitize_text_field',
-			)
-		);
-	}
+	
 	/**
 	 * Register REST API routes.
 	 */

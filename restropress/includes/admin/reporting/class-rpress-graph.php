@@ -128,9 +128,9 @@ class RPRESS_Graph {
 						<?php foreach( $this->get_data() as $label => $data ) : ?>
 						{
 							label: "<?php echo esc_attr( $label ); ?>",
-							id: "<?php echo sanitize_text_field( $label ); ?>",
+							id: "<?php echo esc_Attr(sanitize_text_field( $label )); ?>",
 							
-							data: [<?php foreach( $data as $point ) { echo '[' . implode( ',', $point ) . '],'; } ?>],
+							data: [<?php foreach( $data as $point ) { echo '[' . esc_attr(implode( ',', $point )) . '],'; } ?>],
 							points: {
 								show: <?php echo $this->options['points'] ? 'true' : 'false'; ?>,
 							},
@@ -230,7 +230,18 @@ class RPRESS_Graph {
 	 */
 	public function display() {
 		do_action( 'rpress_before_graph', $this );
-		echo $this->build_graph();
+		$allowed_html = array(
+			'script' => array(
+				'type' => true,
+			),
+			'div' => array(
+				'id'    => true,
+				'class' => true,
+				'style' => true,
+			),
+		);
+		
+		echo wp_kses( $this->build_graph(), $allowed_html );		
 		do_action( 'rpress_after_graph', $this );
 	}
 }

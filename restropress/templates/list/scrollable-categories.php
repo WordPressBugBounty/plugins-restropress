@@ -5,6 +5,7 @@
 global $data;
 ob_start();
 
+
 // Fetch categories
 if ( is_array($data) && isset($data['category_menu']) && $data['category_menu'] ) {
     $get_all_items = rpress_get_child_cats($data['ids']);
@@ -20,10 +21,9 @@ $category_string = isset($data['excluded_category']) ? $data['excluded_category'
 $category_string  = rtrim($category_string, ',');
 $category_array   = explode(',', $category_string);
 $disable_category = rpress_get_option('disable_category_menu', false);
-
 if (!$disable_category && is_array($get_all_items) && !empty($get_all_items)) :
 ?>
-<div class="make-me-sticky">
+<div class="make-me-sticky Dibya">
     <div class="cd-dropdown-wrapper">
         <a class="cd-dropdown-trigger" href="#0"></a>
         <nav class="cd-dropdown">
@@ -37,7 +37,7 @@ if (!$disable_category && is_array($get_all_items) && !empty($get_all_items)) :
                     <li>
                         <a href="#menu-category-<?php echo esc_attr($cat->term_id); ?>">
                             <?php echo esc_html($cat->name); ?>
-                            <span><?php echo $count; ?></span>
+                            <span><?php echo esc_html($count); ?></span>
                         </a>
                     </li>
                 <?php endforeach; ?>
@@ -77,5 +77,56 @@ if (!$disable_category && is_array($get_all_items) && !empty($get_all_items)) :
 <?php
 endif;
 
-echo ob_get_clean();
+$allowed_html = array(
+    'div' => array(
+        'class' => array(),
+        'id' => array(),
+        'style' => array(),
+        'data-*' => true,
+    ),
+    'span' => array(
+        'class' => array(),
+        'id' => array(),
+        'aria-selected' => array(),
+    ),
+    'a' => array(
+        'href' => array(),
+        'class' => array(),
+        'id' => array(),
+        'title' => array(),
+        'aria-selected' => array(),
+        'data-*' => true,
+    ),
+    'ul' => array(
+        'class' => array(),
+        'id' => array(),
+    ),
+    'li' => array(
+        'class' => array(),
+        'id' => array(),
+    ),
+    'nav' => array(
+        'class' => array(),
+        'id' => array(),
+        'data-*' => true,
+    ),
+    'h2' => array(),
+    'button' => array(
+        'class' => array(),
+        'id' => array(),
+        'type' => array(),
+        'aria-label' => array(),
+    ),
+    'svg' => array(
+        'class' => array(),
+        'xmlns' => array(),
+        'viewBox' => array(),
+    ),
+    'path' => array(
+        'd' => array(),
+    ),
+);
+
+$output = ob_get_clean();
+echo wp_kses( $output, $allowed_html );
 ?>

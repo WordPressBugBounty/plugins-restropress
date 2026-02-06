@@ -762,7 +762,22 @@ function rpress_get_cart_item_discount_amount( $item = array(), $discount = fals
  * @return void
  */
 function rpress_cart_discounts_html() {
-	echo rpress_get_cart_discounts_html();
+	// Allow only safe tags and attributes in the discount HTML output.
+	$allowed_html = array(
+        'span' => array(
+            'class' => array(),
+        ),
+        'a' => array(
+            'href'      => array(),
+            'data-code' => array(),
+            'class'     => array(),
+        ),
+    );
+
+    echo wp_kses(
+        rpress_get_cart_discounts_html(),
+        $allowed_html
+    );
 }
 /**
  * Retrieves the HTML for all discounts applied to the cart

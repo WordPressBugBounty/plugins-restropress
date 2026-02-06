@@ -13,12 +13,12 @@
       <?php if ( has_excerpt() ) : ?>
         <div <?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_excerpt">
           <?php $description = get_post_field( 'post_excerpt', get_the_ID() ); ?>
-          <?php echo apply_filters( 'rpress_fooditems_excerpt', wp_trim_words( $description, $excerpt_length ), $description ); ?>
+          <?php echo wp_kses( apply_filters( 'rpress_fooditems_excerpt', wp_trim_words( $description, $excerpt_length ), $description ), array( 'p' => array(), ) ); ?>
         </div>
       <?php elseif ( get_the_content() ) : ?>
         <div <?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_excerpt">
           <?php $description = get_post_field( 'post_content', get_the_ID() ); ?>
-          <?php echo apply_filters( 'rpress_fooditems_content', wp_trim_words( $description, $excerpt_length ), $description ); ?>
+          <?php echo wp_kses( apply_filters( 'rpress_fooditems_content', wp_trim_words( $description, $excerpt_length ), $description ), array( 'p' => array(), ) ); ?>
         </div>
       <?php endif; ?>
       <?php
@@ -33,8 +33,8 @@
         $terms = get_the_terms( get_the_id(), 'fooditem_tag' );
         if( $terms ) {
           echo '<div class="rpress_fooditem_tags">';
-          foreach (array_slice($terms, 0, 3) as $key => $term) {
-            echo '<span class="fooditem_tag '.$term->slug.'">'.$term->name.'</span>';
+          foreach (array_slice($terms, 0, 2) as $key => $term) {
+            echo '<span class="fooditem_tag ' . esc_attr( $term->slug ) . '">' . esc_html( $term->name ) . '</span>';
           }
           echo '</div>';
         }
@@ -42,22 +42,17 @@
       <?php endif; ?>
     <?php endif; ?>
   </div>
-  <?php
-  //Grid view design issue fixed
-  if( $disable_category && $option_view_food_items == "list_view" || $disable_category == 0 ) :
-   ?>
   <?php $enable_tags = rpress_get_option( 'enable_tags_display', false ); ?>
   <?php if( $enable_tags ) : ?>
     <?php
     $terms = get_the_terms( get_the_id(), 'fooditem_tag' );
     if( $terms ) {
       echo '<div class="rpress_fooditem_tags">';
-      foreach (array_slice($terms, 0, 3) as $key => $term) {
-        echo '<span class="fooditem_tag '.$term->slug.'">'.$term->name.'</span>';
+      foreach (array_slice($terms, 0, 2) as $key => $term) {
+        echo '<span class="fooditem_tag ' . esc_attr( $term->slug ) . '">' . esc_html( $term->name ) . '</span>';
       }
       echo '</div>';
     }
     ?>
-    <?php endif; ?>
-  <?php endif ?>
+  <?php endif; ?>
 </div>

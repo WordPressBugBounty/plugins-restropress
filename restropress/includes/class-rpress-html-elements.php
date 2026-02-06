@@ -363,16 +363,27 @@ class RPRESS_HTML_Elements {
 		foreach ( $categories as $category ) {
 			$options[ absint( $category->term_id ) ] = esc_html( $category->name );
 		}
-		if( ! empty( $args['selected'] ) ) {
-			foreach ( $args['selected'] as $s_key => $s_value) {
-				if( ! array_key_exists( $s_value, $options ) ) {
-					$category = get_terms( $s_value );
-					if( $category ) {
-						$options[ absint($s_value ) ] = esc_html( $category->name );
-					}
-				}
-			}		
+		if ( ! empty( $args['selected'] ) ) {
+
+		    // Ensure selected is always an array
+		    $selected_items = is_array( $args['selected'] )
+		        ? $args['selected']
+		        : array( $args['selected'] );
+
+		    foreach ( $selected_items as $s_value ) {
+
+		        if ( ! array_key_exists( $s_value, $options ) ) {
+
+		            // Correct function: get a single term, not an array of terms
+		            $category = get_term( $s_value, 'food-category' );
+
+		            if ( $category && ! is_wp_error( $category ) ) {
+		                $options[ absint( $s_value ) ] = esc_html( $category->name );
+		            }
+		        }
+		    }
 		}
+
 		$output = $this->select( array(
 			'name'             => $args['name'],
 			'selected'         => $args['selected'],

@@ -327,7 +327,23 @@ function rpress_ajax_store_payment_note() {
 	if( empty( $note ) )
 		die( '-1' );
 	$note_id = rpress_insert_payment_note( $payment_id, $note );
-	die( rpress_get_payment_note_html( $note_id ) );
+	$allowed_html = array(
+		'div' => array(
+			'class' => true,
+			'id'    => true,
+		),
+		'p' => array(),
+		'strong' => array(),
+		'br' => array(),
+		'a' => array(
+			'href'        => true,
+			'class'       => true,
+			'data-note-id'=> true,
+			'data-payment-id' => true,
+		),
+	);
+	
+	die( wp_kses( rpress_get_payment_note_html( $note_id ), $allowed_html ) );
 }
 add_action( 'wp_ajax_rpress_insert_payment_note', 'rpress_ajax_store_payment_note' );
 /**

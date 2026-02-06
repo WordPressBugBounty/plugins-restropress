@@ -23,7 +23,50 @@ if (!defined('ABSPATH'))
 function rpress_append_purchase_link($fooditem_id)
 {
 	if (!get_post_meta($fooditem_id, '_rpress_hide_purchase_link', true)) {
-		echo rpress_get_purchase_link(array('fooditem_id' => $fooditem_id));
+		echo wp_kses(
+			rpress_get_purchase_link( array( 'fooditem_id' => $fooditem_id ) ),
+			array(
+			  'form' => array(
+				'id'    => true,
+				'class' => true,
+				'method'=> true,
+				'action'=> true,
+			  ),
+			  'div' => array(
+				'class' => true,
+			  ),
+			  'a' => array(
+				'href' => true,
+				'class' => true,
+				'data-title' => true,
+				'data-action' => true,
+				'data-fooditem-id' => true,
+				'data-variable-price' => true,
+				'data-price' => true,
+				'data-price-mode' => true,
+				'style' => true,
+			  ),
+			  'span' => array(
+				'class' => true,
+			  ),
+			  'svg' => array(
+				'xmlns' => true,
+				'width' => true,
+				'height' => true,
+				'viewbox' => true,
+			  ),
+			  'path' => array(
+				'd' => true,
+			  ),
+			  'input' => array(
+				'type' => true,
+				'name' => true,
+				'class' => true,
+				'value' => true,
+				'id' => true,
+			  ),
+			)
+		);
 	}
 }
 add_action('rpress_after_fooditem_content', 'rpress_append_purchase_link');
@@ -146,8 +189,8 @@ function rpress_get_purchase_link($args = array())
 						'rpress_add_to_cart_text',
 						__('Add', 'restropress')
 					);
-					echo '<a href="#" data-title="' . get_the_title($fooditem->ID) . '" class="rpress-add-to-cart ' . esc_attr($class) . '" data-action="rpress_add_to_cart" data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . $data_variable . ' ' . $type . ' ' . $data_price . ' ' . $button_display . '><span class="rpress-add-to-cart-label rp-ajax-toggle-text">' . $add_to_cart_label . '</span> <span class="add-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"></path></svg>
+					echo '<a href="#" data-title="' . esc_attr(get_the_title($fooditem->ID)) . '" class="rpress-add-to-cart ' . esc_attr($class) . '" data-action="rpress_add_to_cart" data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . esc_attr($data_variable) . ' ' . esc_attr($type) . ' ' . esc_attr($data_price) . ' ' . esc_attr($button_display) . '><span class="rpress-add-to-cart-label rp-ajax-toggle-text">' . esc_html($add_to_cart_label) . '</span> <span class="add-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24"><path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"></path></svg>
                       </span> </a>';
 				}
 				?>
@@ -158,7 +201,7 @@ function rpress_get_purchase_link($args = array())
 					__('Not Available', 'restropress'),
 					$fooditem->ID
 				);
-				echo '<a href="javascript:void(0)" data-title="' . get_the_title($fooditem->ID) . '" class="rpress-not-available ' . esc_attr($class) . '"  data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . ' ' . $button_display . '><span class="rpress-add-to-cart-label">' . $not_available_lable . '</span></a>';
+				echo '<a href="javascript:void(0)" data-title="' . esc_attr(get_the_title($fooditem->ID)) . '" class="rpress-not-available ' . esc_attr($class) . '"  data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . ' ' . esc_attr($button_display) . '><span class="rpress-add-to-cart-label">' . esc_html($not_available_lable) . '</span></a>';
 				?>
 			<?php endif; ?>
 		</div><!--end .rpress_purchase_submit_wrapper-->
@@ -287,11 +330,11 @@ function rpress_get_purchase_link_grid($args = array())
 						'rpress_add_to_cart_text',
 						__('Add', 'restropress')
 					);
-					echo '<a href="#" data-title="' . get_the_title($fooditem->ID) . '" class="rpress-add-to-cart ' . esc_attr($class) . '" data-action="rpress_add_to_cart" data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . $data_variable . ' ' . $type . ' ' . $data_price . ' ' . $button_display . '>
+					echo '<a href="#" data-title="' . esc_attr(get_the_title($fooditem->ID)) . '" class="rpress-add-to-cart ' . esc_attr($class) . '" data-action="rpress_add_to_cart" data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . esc_attr($data_variable) . ' ' . esc_attr($type) . ' ' . esc_attr($data_price) . ' ' . esc_attr($button_display) . '>
 					  <span class="add-icon">
-						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"></path></svg>
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24"><path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"></path></svg>
 					  </span>
-						<span class="rpress-add-to-cart-label rp-ajax-toggle-text">' . $add_to_cart_label . '</span> 					   
+						<span class="rpress-add-to-cart-label rp-ajax-toggle-text">' . esc_html($add_to_cart_label) . '</span> 					   
 					  </a>';
 				}
 				?>
@@ -302,7 +345,7 @@ function rpress_get_purchase_link_grid($args = array())
 					__('Not Available', 'restropress'),
 					$fooditem->ID
 				);
-				echo '<a href="javascript:void(0)" data-title="' . get_the_title($fooditem->ID) . '" class="rpress-not-available ' . esc_attr($class) . '"  data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . ' ' . $button_display . '><span class="rpress-add-to-cart-label">' . $not_available_lable . '</span></a>';
+				echo '<a href="javascript:void(0)" data-title="' . esc_attr(get_the_title($fooditem->ID)) . '" class="rpress-not-available ' . esc_attr($class) . '"  data-fooditem-id="' . esc_attr($fooditem->ID) . '" ' . ' ' . esc_attr($button_display) . '><span class="rpress-add-to-cart-label">' . esc_html($not_available_lable) . '</span></a>';
 				?>
 			<?php endif; ?>
 		</div><!--end .rpress_purchase_submit_wrapper-->
@@ -772,7 +815,7 @@ function rpress_checkout_meta_tags()
 	if (!rpress_is_checkout() && !is_page($pages)) {
 		return;
 	}
-	echo '<meta name="rpress-chosen-gateway" content="' . rpress_get_chosen_gateway() . '"/>' . "\n";
+	echo '<meta name="rpress-chosen-gateway" content="' . esc_attr(rpress_get_chosen_gateway()) . '"/>' . "\n";
 	echo '<meta name="robots" content="noindex,nofollow" />' . "\n";
 }
 add_action('wp_head', 'rpress_checkout_meta_tags');
@@ -784,7 +827,7 @@ add_action('wp_head', 'rpress_checkout_meta_tags');
  */
 function rpress_version_in_header()
 {
-	echo '<meta name="generator" content="RestroPress v' . RP_VERSION . '" />' . "\n";
+	echo '<meta name="generator" content="RestroPress v' . esc_attr(RP_VERSION) . '" />' . "\n";
 }
 add_action('wp_head', 'rpress_version_in_header');
 /**
@@ -891,7 +934,14 @@ function rpress_add_oembed_price()
 		echo '<style>.wp-embed-rpress-price { margin: 20px 0 0 0; }</style>';
 		echo '<div class="wp-embed-rpress-price">';
 		if (rpress_has_variable_prices(get_the_ID())) {
-			echo rpress_price_range(get_the_ID());
+			$allowed_html = array(
+				'span' => array(
+					'class' => true,
+					'id'    => true,
+				),
+			  );
+			  
+			echo wp_kses( rpress_price_range( get_the_ID() ), $allowed_html );
 		} else {
 			rpress_price(get_the_ID(), true);
 		}
@@ -1043,7 +1093,34 @@ function rpress_get_delivery_steps($fooditem_id)
 add_action('rpress_get_delivery_steps', 'rpress_add_delivery_steps');
 function rpress_add_delivery_steps()
 {
-	echo rpress_get_delivery_steps('');
+	$allowed_html = array(
+		'div' => array(
+			'class' => true,
+			'id'    => true,
+			'role'  => true,
+			'aria-controls' => true,
+			'aria-selected' => true,
+		),
+		'ul' => array( 'class' => true, 'id' => true ),
+		'li' => array( 'class' => true, 'id' => true ),
+		'a'  => array(
+			'class' => true,
+			'href'  => true,
+			'id'    => true,
+			'data-toggle' => true,
+			'data-service-type' => true,
+			'role'   => true,
+			'aria-controls' => true,
+			'aria-selected' => true,
+		),
+		'select' => array( 'class' => true, 'id' => true, 'name' => true ),
+		'option' => array( 'value' => true ),
+		'span'   => array( 'class' => true ),
+		'br'     => array(),
+	);
+	
+	echo wp_kses( rpress_get_delivery_steps( '' ), $allowed_html );
+	
 }
 
 function rpress_radio_image_callback( $args ) {
@@ -1062,7 +1139,7 @@ function rpress_radio_image_callback( $args ) {
 		$checked = checked( $option_value, $key, false );
 
 		echo '<label class="rpress-radio-image-label">';
-		echo '<input type="radio" name="' . esc_attr( $name_attr ) . '" value="' . esc_attr( $key ) . '" ' . $checked . ' />';
+		echo '<input type="radio" name="' . esc_attr( $name_attr ) . '" value="' . esc_attr( $key ) . '" ' . esc_attr($checked) . ' />';
 		echo '<img src="' . esc_url( $image_url ) . '" alt="' . esc_attr( $label ) . '" />';
 		echo '<div>' . esc_html( $label ) . '</div>';
 		echo '</label>';

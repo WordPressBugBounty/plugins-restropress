@@ -56,7 +56,7 @@ function rpress_upgrades_screen() {
         <div id="rpress-upgrade-status">
           <p><?php esc_html_e( 'The upgrade process has started, please be patient. This could take several minutes. You will be automatically redirected when the upgrade is finished.', 'restropress' ); ?></p>
           <?php if( ! empty( $total ) ) : ?>
-            <p><strong><?php printf( esc_html__( 'Step %d of approximately %d running', 'restropress' ), $step, $steps ); ?></strong></p>
+            <p><strong><?php printf( esc_html__( 'Step %d of approximately %d running', 'restropress' ), esc_html($step), esc_html($steps) ); ?></strong></p>
           <?php endif; ?>
         </div>
         <script type="text/javascript">
@@ -66,7 +66,7 @@ function rpress_upgrades_screen() {
         <div id="rpress-upgrade-status">
           <p>
             <?php esc_html_e( 'The upgrade process has started, please be patient. This could take several minutes. You will be automatically redirected when the upgrade is finished.', 'restropress' ); ?>
-            <img src="<?php echo RP_PLUGIN_URL . '/assets/images/loading.gif'; ?>" id="rpress-upgrade-loader"/>
+            <img src="<?php echo esc_url( RP_PLUGIN_URL . '/assets/images/loading.gif' ); ?>" id="rpress-upgrade-loader" />
           </p>
         </div>
         <script type="text/javascript">

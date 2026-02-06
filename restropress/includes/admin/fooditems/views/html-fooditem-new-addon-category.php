@@ -54,7 +54,7 @@ $row = isset( $_POST['i'] ) ?  absint( $_POST['i'] ) : 0;
                 <?php esc_html_e( 'Addon Items:', 'restropress' ); ?>
               </th>
               <th scope="row" class="addon-price-symbol">
-                <?php echo sprintf( __( 'Price (%s)', 'restropress' ), rpress_currency_symbol() ); ?>
+              <?php echo esc_html( sprintf( __( 'Price (%s)', 'restropress' ), esc_html( rpress_currency_symbol() ) ) ); ?>
               </th>
               <th scope="row">&nbsp</th>
             </tr>
@@ -62,10 +62,10 @@ $row = isset( $_POST['i'] ) ?  absint( $_POST['i'] ) : 0;
           <tbody>
             <tr class="addon-items-row">
               <td>
-                <input type="text" name="addon_category[<?php echo $row; ?>][addon_name][]" class="rp-input" placeholder="<?php esc_html_e( 'Addon Item Name', 'restropress' ); ?>">
+                <input type="text" name="addon_category[<?php echo esc_attr($row); ?>][addon_name][]" class="rp-input" placeholder="<?php esc_html_e( 'Addon Item Name', 'restropress' ); ?>">
               </td>
               <td>
-                <input type="number" name="addon_category[<?php echo $row; ?>][addon_price][]" class="rp-input rp-addon-price" step="any" min="0.00" placeholder="0.00">
+                <input type="number" name="addon_category[<?php echo esc_attr($row); ?>][addon_price][]" class="rp-input rp-addon-price" step="any" min="0.00" placeholder="0.00">
               </td>
               <td>
                 <span class="remove rp-addon-cat">

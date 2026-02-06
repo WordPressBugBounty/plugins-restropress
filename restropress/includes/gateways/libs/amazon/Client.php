@@ -75,7 +75,7 @@ class Client implements ClientInterface
 		if (is_array($configArray)) {
 				$this->checkConfigKeys($configArray);
 			} else {
-				throw new \Exception('$config is of the incorrect type ' . gettype($configArray) . ' and should be of the type array');
+				throw new \Exception('$config is of the incorrect type ' . esc_html(gettype($configArray)) . ' and should be of the type array');
 			}
 		} else {
 		throw new \Exception('$config cannot be null.');
@@ -91,11 +91,11 @@ class Client implements ClientInterface
 		$jsonError = json_last_error();
 		if ($jsonError != 0) {
 		$errorMsg = "Error with message - content is not in json format" . $this->getErrorMessageForJsonError($jsonError) . " " . $configArray;
-		throw new \Exception($errorMsg);
+		throw new \Exception(esc_html($errorMsg));
 		}
 	} else {
 		$errorMsg ='$config is not a Json File path or the Json File was not found in the path provided';
-		throw new \Exception($errorMsg);
+		throw new \Exception(esc_html($errorMsg));
 	}
 	return $configArray;
 	}
@@ -111,8 +111,11 @@ class Client implements ClientInterface
 			if (array_key_exists($key, $this->config)) {
 				$this->config[$key] = $value;
 			} else {
-				throw new \Exception('Key ' . $key . ' is either not part of the configuration or has incorrect Key name.
-				check the config array key names to match your key names of your config array', 1);
+                throw new \Exception( sprintf(
+					/* translators: %s is the configuration key that caused the error */
+					'Key %s is either not part of the configuration or has incorrect Key name. Check the config array key names to match your key names of your config array.',
+					esc_html( $key )
+				), 1 );				
 			}
 		}
 	}
@@ -150,7 +153,7 @@ class Client implements ClientInterface
 		if (is_bool($value)) {
 			$this->config['sandbox'] = $value;
 		} else {
-			throw new \Exception($value . ' is of type ' . gettype($value) . ' and should be a boolean value');
+			throw new \Exception(esc_html($value) . ' is of type ' . esc_html(gettype($value)) . ' and should be a boolean value');
 		}
 	}
 	/* Setter for config['client_id']
@@ -198,7 +201,7 @@ class Client implements ClientInterface
 		if (array_key_exists(strtolower($name), $this->config)) {
 			return $this->config[strtolower($name)];
 		} else {
-			throw new \Exception('Key ' . $name . ' is either not a part of the configuration array config or the' . $name . 'does not match the key name in the config array', 1);
+			throw new \Exception('Key ' . esc_html($name) . ' is either not a part of the configuration array config or the' . esc_html($name) . 'does not match the key name in the config array', 1);
 		}
 	}
 	/* Getter for parameters string
@@ -1245,7 +1248,7 @@ class Client implements ClientInterface
 			$delay = (int) (pow(4, $retries) * 100000);
 			usleep($delay);
 		} else {
-			throw new \Exception('Error Code: '. $status.PHP_EOL.'Maximum number of retry attempts - '. $retries .' reached');
+			throw new \Exception('Error Code: '. esc_html($status.PHP_EOL) . 'Maximum number of retry attempts - '. esc_html($retries) .' reached');
 		}
 	}
 	/* Create MWS service URL and the Endpoint path */
@@ -1259,7 +1262,7 @@ class Client implements ClientInterface
 				$this->mwsServiceUrl   = 'https://' . $this->mwsEndpointUrl . '/' . $this->modePath . '/' . self::SERVICE_VERSION;
 				$this->mwsEndpointPath = '/' . $this->modePath . '/' . self::SERVICE_VERSION;
 			} else {
-				throw new \Exception($region . ' is not a valid region');
+				throw new \Exception(esc_html($region) . ' is not a valid region');
 			}
 		} else {
 			throw new \Exception("config['region'] is a required parameter and is not set");
@@ -1275,7 +1278,7 @@ class Client implements ClientInterface
 		} elseif (array_key_exists($region, $this->liveProfileEndpoint)) {
 		$this->profileEndpoint = $this->liveProfileEndpoint[$region];
 		} else{
-		throw new \Exception($region . ' is not a valid region');
+		throw new \Exception(esc_html($region) . ' is not a valid region');
 		}
 	} else {
 			throw new \Exception("config['region'] is a required parameter and is not set");

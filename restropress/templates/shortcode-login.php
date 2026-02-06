@@ -55,7 +55,7 @@ if ( ! is_user_logged_in() ) :
 			</p>
 			<p class="rpress-login-submit">
 				<input type="hidden" name="rpress_redirect" value="<?php echo esc_url( $rpress_login_redirect ); ?>"/>
-				<input type="hidden" name="rpress_login_nonce" value="<?php echo wp_create_nonce( 'rpress-login-nonce' ); ?>"/>
+				<input type="hidden" name="rpress_login_nonce" value="<?php echo esc_attr(wp_create_nonce( 'rpress-login-nonce' )); ?>"/>
 				<input type="hidden" name="rpress_action" value="user_login"/>
 				<input type="submit" class="rpress-submit <?php echo wp_kses_post( $style ); ?>" id="rpress_login_submit"  value="<?php esc_html_e( 'Login', 'restropress' ); ?>"/>
 			</p>

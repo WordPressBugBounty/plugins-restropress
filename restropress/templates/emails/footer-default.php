@@ -43,8 +43,17 @@ $credit = "
                                                         <td colspan="2" valign="middle" id="credit" style="<?php echo wp_kses_post( $credit ); ?>">
                                                            <?php 
                                                             $page = rpress_get_option( 'order_history_page', '' );
-                                                           if( is_user_logged_in()) { 
-                                                           echo wpautop( wp_kses_post( wptexturize( apply_filters( 'rpress_email_footer_text', '<a href="' . esc_url( get_permalink(  $page ) ) . '">' . 'View Details' . '</a>' ) ) ) ); 
+                                                            if( is_user_logged_in()) { 
+                                                                echo wp_kses_post(
+                                                                    wpautop( 
+                                                                        wptexturize( 
+                                                                            apply_filters(
+                                                                                'rpress_email_footer_text',
+                                                                                '<a href="' . esc_url( get_permalink( $page ) ) . '">' . esc_html__( 'View Details', 'restropress' ) . '</a>'
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                );
                                                             }
                                                            ?>
                                                         </td>

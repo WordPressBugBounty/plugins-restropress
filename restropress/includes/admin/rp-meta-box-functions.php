@@ -31,7 +31,7 @@ function rpress_text_input( $field ) {
     case 'price':
       $field['class'] .= ' rpress_input_price" min="0.00" step="any';
       $field['value']  = rpress_sanitize_amount( $field['value'] );
-      $field['type']  = 'number';
+      $field['type']  = 'text';
       break;
     case 'decimal':
       $field['class'] .= ' rpress_input_decimal';
@@ -54,9 +54,16 @@ function rpress_text_input( $field ) {
   echo '<p class="form-field ' . esc_attr( $field['id'] ) . '_field ' . esc_attr( $field['wrapper_class'] ) . '">
     <label for="' . esc_attr( $field['id'] ) . '">' . wp_kses_post( $field['label'] ) . '</label>';
   if ( ! empty( $field['description'] ) && false !== $field['desc_tip'] ) {
-    echo rp_help_tip( $field['description'] );
+    $allowed_html = array(
+      'span' => array(
+          'class'    => true,
+          'data-tip' => true,
+      ),
+    );
+    
+    echo wp_kses( rp_help_tip( $field['description'] ), $allowed_html );
   }
-  echo '<input type="' . esc_attr( $field['type'] ) . '" class="' .  $field['class']  . '" style="' . esc_attr( $field['style'] ) . '" name="' . esc_attr( $field['name'] ) . '" id="' . esc_attr( $field['id'] ) . '" value="' . esc_attr( $field['value'] ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" ' . implode( ' ', $custom_attributes ) . ' /> ';
+  echo '<input type="' . esc_attr( $field['type'] ) . '" class="' .  esc_attr($field['class'])  . '" style="' . esc_attr( $field['style'] ) . '" name="' . esc_attr( $field['name'] ) . '" id="' . esc_attr( $field['id'] ) . '" value="' . esc_attr( $field['value'] ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" ' . esc_attr(implode( ' ', $custom_attributes )) . ' /> ';
   if ( ! empty( $field['description'] ) && false === $field['desc_tip'] ) {
     echo '<span class="description">' . wp_kses_post( $field['description'] ) . '</span>';
   }
@@ -101,9 +108,16 @@ function rpress_textarea_input( $field ) {
   echo '<p class="form-field ' . esc_attr( $field['id'] ) . '_field ' . esc_attr( $field['wrapper_class'] ) . '">
     <label for="' . esc_attr( $field['id'] ) . '">' . wp_kses_post( $field['label'] ) . '</label>';
   if ( ! empty( $field['description'] ) && false !== $field['desc_tip'] ) {
-    echo rp_help_tip( $field['description'] );
+    $allowed_html = array(
+      'span' => array(
+          'class'    => true,
+          'data-tip' => true,
+      ),
+    );
+    
+    echo wp_kses( rp_help_tip( $field['description'] ), $allowed_html );
   }
-  echo '<textarea class="' . esc_attr( $field['class'] ) . '" style="' . esc_attr( $field['style'] ) . '"  name="' . esc_attr( $field['name'] ) . '" id="' . esc_attr( $field['id'] ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" rows="' . esc_attr( $field['rows'] ) . '" cols="' . esc_attr( $field['cols'] ) . '" ' . implode( ' ', $custom_attributes ) . '>' . esc_textarea( $field['value'] ) . '</textarea> ';
+  echo '<textarea class="' . esc_attr( $field['class'] ) . '" style="' . esc_attr( $field['style'] ) . '"  name="' . esc_attr( $field['name'] ) . '" id="' . esc_attr( $field['id'] ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" rows="' . esc_attr( $field['rows'] ) . '" cols="' . esc_attr( $field['cols'] ) . '" ' . esc_attr(implode( ' ', $custom_attributes )) . '>' . esc_textarea( $field['value'] ) . '</textarea> ';
   if ( ! empty( $field['description'] ) && false === $field['desc_tip'] ) {
     echo '<span class="description">' . wp_kses_post( $field['description'] ) . '</span>';
   }
@@ -134,9 +148,16 @@ function rpress_checkbox( $field ) {
   echo '<p class="form-field ' . esc_attr( $field['id'] ) . '_field ' . esc_attr( $field['wrapper_class'] ) . '">
     <label for="' . esc_attr( $field['id'] ) . '">' . wp_kses_post( $field['label'] ) . '</label>';
   if ( ! empty( $field['description'] ) && false !== $field['desc_tip'] ) {
-    echo rp_help_tip( $field['description'] );
+    $allowed_html = array(
+      'span' => array(
+          'class'    => true,
+          'data-tip' => true,
+      ),
+    );
+    
+    echo wp_kses( rp_help_tip( $field['description'] ), $allowed_html );
   }
-  echo '<input type="checkbox" class="' . esc_attr( $field['class'] ) . '" style="' . esc_attr( $field['style'] ) . '" name="' . esc_attr( $field['name'] ) . '" id="' . esc_attr( $field['id'] ) . '" value="' . esc_attr( $field['cbvalue'] ) . '" ' . checked( $field['value'], $field['cbvalue'], false ) . '  ' . implode( ' ', $custom_attributes ) . '/> ';
+  echo '<input type="checkbox" class="' . esc_attr( $field['class'] ) . '" style="' . esc_attr( $field['style'] ) . '" name="' . esc_attr( $field['name'] ) . '" id="' . esc_attr( $field['id'] ) . '" value="' . esc_attr( $field['cbvalue'] ) . '" ' . checked( $field['value'], $field['cbvalue'], false ) . '  ' . esc_attr(implode( ' ', $custom_attributes )) . '/> ';
   if ( ! empty( $field['description'] ) && false === $field['desc_tip'] ) {
     echo '<span class="description">' . wp_kses_post( $field['description'] ) . '</span>';
   }
@@ -175,17 +196,26 @@ function rpress_select( $field ) {
   $tooltip     = ! empty( $field['description'] ) && false !== $field['desc_tip'] ? $field['description'] : '';
   $description = ! empty( $field['description'] ) && false === $field['desc_tip'] ? $field['description'] : '';
   ?>
-  <p <?php echo rpress_implode_html_attributes( $wrapper_attributes ); // WPCS: XSS ok. ?>>
-    <label <?php echo rpress_implode_html_attributes( $label_attributes ); // WPCS: XSS ok. ?>>
+  <p <?php echo esc_attr(rpress_implode_html_attributes( $wrapper_attributes )); // WPCS: XSS ok. ?>>
+    <label <?php echo esc_attr(rpress_implode_html_attributes( $label_attributes )); // WPCS: XSS ok. ?>>
       <?php echo wp_kses_post( $field['label'] ); ?>
     </label>
     <?php if ( $tooltip ) : ?>
-      <?php echo rp_help_tip( $tooltip ); // WPCS: XSS ok. ?>
+      <?php
+        $allowed_html = array(
+          'span' => array(
+              'class'    => true,
+              'data-tip' => true,
+          ),
+        );
+        
+        echo wp_kses( rp_help_tip( $tooltip ), $allowed_html );
+      ?>
     <?php endif; ?>
-    <select <?php echo rpress_implode_html_attributes( $field_attributes ); // WPCS: XSS ok. ?>>
+    <select <?php echo esc_attr(rpress_implode_html_attributes( $field_attributes )); // WPCS: XSS ok. ?>>
       <?php
       foreach ( $field['options'] as $key => $value ) {
-        echo '<option value="' . esc_attr( $key ) . '"' . rp_selected( $key, $field['value'] ) . '>' . esc_html( $value ) . '</option>';
+        echo '<option value="' . esc_attr( $key ) . '"' . esc_attr(rp_selected( $key, $field['value'] )) . '>' . esc_html( $value ) . '</option>';
       }
       ?>
     </select>
@@ -211,7 +241,14 @@ function rpress_radio( $field ) {
   $field['desc_tip']      = isset( $field['desc_tip'] ) ? $field['desc_tip'] : false;
   echo '<fieldset class="form-field ' . esc_attr( $field['id'] ) . '_field ' . esc_attr( $field['wrapper_class'] ) . '"><legend>' . wp_kses_post( $field['label'] ) . '</legend>';
   if ( ! empty( $field['description'] ) && false !== $field['desc_tip'] ) {
-    echo rp_help_tip( $field['description'] );
+    $allowed_html = array(
+      'span' => array(
+          'class'    => true,
+          'data-tip' => true,
+      ),
+    );
+    
+    echo wp_kses( rp_help_tip( $field['description'] ), $allowed_html );
   }
   echo '<ul class="wc-radios">';
   foreach ( $field['options'] as $key => $value ) {

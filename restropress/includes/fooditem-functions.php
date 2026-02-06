@@ -159,9 +159,17 @@ function rpress_price( $fooditem_id = 0, $echo = true, $price_id = false ) {
 	$formatted_price = '<span class="rpress_price" id="rpress_price_' . $fooditem_id . '">' . $price . '</span>';
 	$formatted_price = apply_filters( 'rpress_fooditem_price_after_html', $formatted_price, $fooditem_id, $price, $price_id );
 	if ( $echo ) {
-		echo wp_kses_post( $formatted_price );
+		echo wp_kses(
+			$formatted_price,
+			array(
+				'span' => array(
+					'class' => true,
+					'id'    => true,
+				),
+			)
+		);
 	} else {
-		return wp_kses_post( $formatted_price );
+		return $formatted_price;
 	}
 }
 add_filter( 'rpress_fooditem_price', 'rpress_format_amount', 10 );

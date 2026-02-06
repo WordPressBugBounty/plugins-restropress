@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @return void
  */
 function rpress_options_page() {
+	
 	$settings_tabs = rpress_get_settings_tabs();
 	$settings_tabs = empty($settings_tabs) ? array() : $settings_tabs;
 	$active_tab    = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'general';
@@ -63,7 +64,7 @@ function rpress_options_page() {
 	}
 	ob_start();
 	?>
-	<div class="wrap <?php echo 'wrap-' . $active_tab; ?>">
+	<div class="wrap <?php echo 'wrap-' . esc_attr($active_tab); ?>">
 		<h2><?php esc_html_e( 'RestroPress Settings', 'restropress' ); ?></h2>
 		<h2 class="nav-tab-wrapper">
 			<?php
@@ -75,7 +76,7 @@ function rpress_options_page() {
 				// Remove the section from the tabs so we always end up at the main section
 				$tab_url = remove_query_arg( 'section', $tab_url );
 				$active = $active_tab == $tab_id ? ' nav-tab-active' : '';
-				echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . $active . '">';
+				echo '<a href="' . esc_url( $tab_url ) . '" class="nav-tab' . esc_attr($active) . '">';
 					echo esc_html( $tab_name );
 				echo '</a>';
 			}
@@ -98,7 +99,7 @@ function rpress_options_page() {
 				if ( $section == $section_id ) {
 					$class = 'current';
 				}
-				echo '<a class="' . $class . '" href="' . esc_url( $tab_url ) . '">' . $section_name . '</a>';
+				echo '<a class="' . esc_attr($class) . '" href="' . esc_url( $tab_url ) . '">' . esc_html($section_name) . '</a>';
 				if ( $number != $number_of_sections ) {
 					echo ' | ';
 				}

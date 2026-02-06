@@ -82,10 +82,14 @@ function rpress_maybe_remove_menu_profile_links() {
 				/* translators: 1: text */
 				esc_html__( 'Your account is pending verification. Please click the link in your email to activate your account. No email? <a href="%s">Click here</a> to send a new activation code.', 'restropress' ), $url );
 			$title   = esc_html__( 'Account Pending Verification', 'restropress' );
-			$args    = array(
-				'response' => 403,
+			$args = array(
+				'response' => absint( 403 ), // sanitize the response code
 			);
-			wp_die( $message, $title, $args );
+			wp_die(
+				wp_kses( $message, array( 'a' => array( 'href' => array(), 'title' => array(), 'target' => array(), 'rel' => array() ) ) ),
+				esc_html( $title ),
+				array_map( 'esc_html', $args ) // ✅ escapes all string values in $args
+			);
 		}
 		remove_menu_page( 'profile.php' );
 		remove_submenu_page( 'users.php', 'profile.php' );

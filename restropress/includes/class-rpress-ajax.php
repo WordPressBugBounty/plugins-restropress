@@ -357,7 +357,44 @@ class RP_AJAX {
     
     $output .= '</tbody>';
     $output .= '</table>';
-    echo $output;
+    // Define allowed HTML tags and attributes
+    $allowed_html = array(
+      'table' => array(
+          'class' => array(),
+      ),
+      'thead' => array(),
+      'tbody' => array(),
+      'tr' => array(
+          'class' => array(),
+      ),
+      'th' => array(
+          'class' => array(),
+      ),
+      'td' => array(
+          'class' => array(),
+      ),
+      'input' => array(
+          'type' => array(),
+          'name' => array(),
+          'value' => array(),
+          'id' => array(),
+          'class' => array(),
+          'step' => array(),
+          'min' => array(),
+          'placeholder' => array(),
+      ),
+      'label' => array(
+          'for' => array(),
+      ),
+      'strong' => array(),
+      'span' => array(
+          'class' => array(),
+      ),
+      '&nbsp;' => array(),
+    );
+
+    // Echo sanitized output
+    echo wp_kses( $output, $allowed_html );
     wp_die();
   }
   /**
@@ -365,8 +402,15 @@ class RP_AJAX {
    */
   public static function show_products() {
     check_ajax_referer( 'show-products', 'security' );
-    if ( empty( $_POST['fooditem_id'] ) )
+    $service_type = filter_input( INPUT_POST, 'service_type' );
+    $selected_date = filter_input( INPUT_POST, 'selected_date' );
+    if ( empty( $_POST['fooditem_id'] ) || empty( $service_type ) )
       return;
+    if( ! rpress_is_store_open( $service_type, $selected_date ) ){
+      $response = array('status' => 'error', 'error_msg' => rpress_store_closed_message($service_type));
+      wp_send_json_error( $response );
+      die();
+    }
     $fooditem_id = sanitize_text_field ( wp_unslash( $_POST['fooditem_id'] ) );
     $price = '';
     if ( ! empty( $fooditem_id ) ) {
@@ -622,6 +666,7 @@ class RP_AJAX {
     if ( empty( $cart_key ) && empty( $fooditem_id ) ) {
       return;
     }
+    
     $special_instruction = isset( $_POST['special_instruction'] ) ? sanitize_text_field( $_POST['special_instruction'] ) : '';
     $addon_items = isset( $_POST['post_data'] ) ? (array) $_POST['post_data']  : array();
     $addon_items = rpress_sanitize_array( $addon_items );
@@ -639,20 +684,30 @@ class RP_AJAX {
     $options['price_id'] = $price_id;
     if ( is_array( $addon_items ) && ! empty( $addon_items ) ) {
       foreach( $addon_items as $key => $item ) {
-        $addon_data = explode( '|', sanitize_text_field( $item[ 'value' ] ) );
-        if ( is_array( $addon_data ) && ! empty( $addon_data ) ) {
-          $addon_id = ! empty( $addon_data[0] ) ? $addon_data[0] : '';
-          $addon_qty = ! empty( $addon_data[1] ) ? $addon_data[1] : '';
-          $addon_price = ! empty( $addon_data[2] ) ? $addon_data[2] : '';
-          $addon_details = get_term_by( 'id', $addon_id, 'addon_category' );
-          if (  $addon_details ) {
-            $addon_item_name = $addon_details->name;
-            $options['addon_items'][$key]['addon_item_name'] = $addon_item_name;
-            $options['addon_items'][$key]['addon_id'] = $addon_id;
-            $options['addon_items'][$key]['price'] = $addon_price;
-            $options['addon_items'][$key]['quantity'] = $addon_qty;
+        $value = sanitize_text_field( $item['value'] );
+
+          // Validate expected format: number|number|decimal|string (e.g. 26|1|5|checkbox)
+          if ( preg_match( '/^\d+\|\d+\|[\d.]+\|[a-zA-Z0-9_-]+$/', $value ) ) {
+              $addon_data = explode( '|', $value );
+
+              if ( count( $addon_data ) === 4 ) {
+                  list( $addon_id, $addon_qty, $addon_price, $addon_type ) = $addon_data;
+
+                  $addon_details = get_term_by( 'id', $addon_id, 'addon_category' );
+
+                  if ( $addon_details ) {
+                      $addon_item_name = $addon_details->name;
+
+                      $options['addon_items'][$key] = array(
+                          'addon_item_name' => $addon_item_name,
+                          'addon_id'        => absint( $addon_id ),
+                          'price'           => floatval( $addon_price ),
+                          'quantity'        => absint( $addon_qty ),
+                          'type'            => sanitize_key( $addon_type ),
+                      );
+                  }
+              }
           }
-        }
       }
     }
     RPRESS()->cart->set_item_quantity( $fooditem_id, $item_qty, $options );
@@ -788,7 +843,7 @@ class RP_AJAX {
                     <option 
                         value="<?php echo esc_attr( $key ); ?>" 
                         data-price="<?php echo esc_attr( rpress_sanitize_amount( $option_price ) ); ?>"
-                        <?php echo $selected; ?>>
+                        <?php echo esc_attr($selected); ?>>
                         <?php echo esc_html( $option_name . ' (' . $price . ')' ); ?>
                     </option>
                 <?php endforeach; ?>
@@ -799,14 +854,32 @@ class RP_AJAX {
         $normal_price = rpress_get_fooditem_price( $fooditem_id );
         $price = rpress_currency_filter( rpress_format_amount( $normal_price ) );
         ?>
-        <span class="rpress-price-name"><?php echo rpress_currency_symbol(); ?></span>
-        <input type="text" class="rpress_selected_price" name="rpress_selected_price" value="<?php echo rpress_sanitize_amount( $normal_price ); ?>">
+        <span class="rpress-price-name"><?php echo esc_html(rpress_currency_symbol()); ?></span>
+        <input type="text" class="rpress_selected_price" name="rpress_selected_price" value="<?php echo esc_attr(rpress_sanitize_amount( $normal_price )); ?>">
         <?php
     endif;
 
     $output = ob_get_contents();
     ob_end_clean();
-    echo $output;
+    // Define allowed HTML and attributes
+    $allowed_html = array(
+      'div'    => array( 'class' => true ),
+      'span'   => array( 'class' => true ),
+      'input'  => array(
+          'type'  => true,
+          'class' => true,
+          'name'  => true,
+          'value' => true,
+      ),
+      'select' => array( 'name' => true, 'class' => true ),
+      'option' => array(
+          'value'      => true,
+          'data-price' => true,
+          'selected'   => true,
+      ),
+    );
+
+    echo wp_kses( $output, $allowed_html );
     rpress_die();
 }
 
@@ -829,7 +902,7 @@ class RP_AJAX {
    * @return void
    */
   public static function get_subtotal() {
-    echo rpress_currency_filter( rpress_get_cart_subtotal() );
+    echo esc_html(rpress_currency_filter( rpress_get_cart_subtotal() ));
     rpress_die();
   }
   /**
@@ -955,24 +1028,36 @@ class RP_AJAX {
    * @return void
    */
   public static function get_states() {
-    if( empty( $_POST['country'] ) ) {
-      $_POST['country'] = rpress_get_shop_country();
+    if ( empty( $_POST['country'] ) ) {
+        $_POST['country'] = rpress_get_shop_country();
     }
-    $states = rpress_get_states( sanitize_text_field( $_POST['country'] ) );
-    if( ! empty( $states ) ) {
-      $args = array(
-        'name'    => sanitize_text_field( $_POST['field_name'] ),
-        'id'      => sanitize_text_field( $_POST['field_name'] ),
-        'class'   => sanitize_text_field( $_POST['field_name'] ) . '  rpress-select',
-        'options' => $states,
-        'show_option_all'  => false,
-        'show_option_none' => false
-      );
-      $response = RPRESS()->html->select( $args );
+
+    $country = sanitize_text_field( $_POST['country'] );
+    $states  = rpress_get_states( $country );
+
+    if ( ! empty( $states ) ) {
+        $field_name = sanitize_text_field( $_POST['field_name'] );
+
+        $args = array(
+            'name'             => $field_name,
+            'id'               => $field_name,
+            'class'            => $field_name . ' rpress-select',
+            'options'          => $states,
+            'show_option_all'  => false,
+            'show_option_none' => false,
+        );
+
+        $response = RPRESS()->html->select( $args );
+
+        // Escape HTML output
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo $response;
+
     } else {
-      $response = 'nostates';
+        // Escape the string too, just in case
+        echo esc_html__( 'nostates', 'restropress' );
     }
-    echo $response;
+
     rpress_die();
   }
   /**

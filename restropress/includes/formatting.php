@@ -73,25 +73,33 @@ function rpress_sanitize_amount( $amount ) {
 function rpress_format_amount( $amount, $decimals = true ) {
 	$thousands_sep = rpress_get_option( 'thousands_separator', ',' );
 	$decimal_sep   = rpress_get_option( 'decimal_separator', '.' );
-	// Format the amount
+
+	// Convert if comma decimal separator is used
 	if ( $decimal_sep == ',' && false !== ( $sep_found = strpos( $amount, $decimal_sep ) ) ) {
-		$whole = substr( $amount, 0, $sep_found );
-		$part = substr( $amount, $sep_found + 1, ( strlen( $amount ) - 1 ) );
+		$whole  = substr( $amount, 0, $sep_found );
+		$part   = substr( $amount, $sep_found + 1, ( strlen( $amount ) - 1 ) );
 		$amount = $whole . '.' . $part;
 	}
-	// Strip , from the amount (if set as the thousands separator)
-	if ( $thousands_sep == ',' && false !== ( $found = strpos( $amount, $thousands_sep ) ) ) {
+
+	// Strip thousand separators
+	if ( $thousands_sep == ',' ) {
 		$amount = str_replace( ',', '', $amount );
 	}
-	// Strip ' ' from the amount (if set as the thousands separator)
-	if ( $thousands_sep == ' ' && false !== ( $found = strpos( $amount, $thousands_sep ) ) ) {
+	if ( $thousands_sep == ' ' ) {
 		$amount = str_replace( ' ', '', $amount );
 	}
 	if ( empty( $amount ) ) {
 		$amount = 0;
 	}
 	$amount = rpress_sanitize_amount( $amount );
-	$decimals  = apply_filters( 'rpress_format_amount_decimals', $decimals ? 2 : 0, $amount );
+
+	// ✅ Dynamically decide decimals
+	if ( $decimals ) {
+		$decimals = ( floor( $amount ) == $amount ) ? 0 : 2;
+	} else {
+		$decimals = 0;
+	}
+
 	$formatted = number_format( $amount, $decimals, $decimal_sep, $thousands_sep );
 	return apply_filters( 'rpress_format_amount', $formatted, $amount, $decimals, $decimal_sep, $thousands_sep );
 }

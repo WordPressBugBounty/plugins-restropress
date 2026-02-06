@@ -221,7 +221,7 @@ class RPRESS_API {
 	 */
 	private function missing_auth() {
 		$error = array();
-		$error['error'] = __( 'You must specify both a token and API key!', 'rpress' );
+		$error['error'] = __( 'You must specify both a token and API key!', 'restropress' );
 		$this->data = $error;
 		$this->output( 401 );
 	}
@@ -236,7 +236,7 @@ class RPRESS_API {
 	 */
 	private function invalid_auth() {
 		$error = array();
-		$error['error'] = __( 'Your request could not be authenticated!', 'rpress' );
+		$error['error'] = __( 'Your request could not be authenticated!', 'restropress' );
 		$this->data = $error;
 		$this->output( 401 );
 	}
@@ -252,7 +252,7 @@ class RPRESS_API {
 	 */
 	private function invalid_key() {
 		$error = array();
-		$error['error'] = __( 'Invalid API key!', 'rpress' );
+		$error['error'] = __( 'Invalid API key!', 'restropress' );
 		$this->data = $error;
 		$this->output( 401 );
 	}
@@ -336,7 +336,7 @@ class RPRESS_API {
 		$error = array();
 		// Make sure our query is valid
 		if ( ! in_array( $query, $accepted ) ) {
-			$error['error'] = __( 'Invalid query!', 'rpress' );
+			$error['error'] = __( 'Invalid query!', 'restropress' );
 			$this->data = $error;
 			$this->output();
 		}
@@ -575,10 +575,10 @@ class RPRESS_API {
 				$customer_count++;
 			}
 		} elseif( $customer ) {
-			$error['error'] = sprintf( __( 'Customer %s not found!', 'rpress' ), $customer );
+			$error['error'] = sprintf( __( 'Customer %s not found!', 'restropress' ), $customer );
 			return $error;
 		} else {
-			$error['error'] = __( 'No customers found!', 'rpress' );
+			$error['error'] = __( 'No customers found!', 'restropress' );
 			return $error;
 		}
 		return $customers;
@@ -615,7 +615,7 @@ class RPRESS_API {
 				$product_info = get_post( $product );
 				$products['products'][0] = $this->get_product_data( $product_info );
 			} else {
-				$error['error'] = sprintf( __( 'Product %s not found!', 'rpress' ), $product );
+				$error['error'] = sprintf( __( 'Product %s not found!', 'restropress' ), $product );
 				return $error;
 			}
 		}
@@ -700,11 +700,11 @@ class RPRESS_API {
 					// Return sales for a date range
 					// Ensure the end date is later than the start date
 					if( $args['enddate'] < $args['startdate'] ) {
-						$error['error'] = __( 'The end date must be later than the start date!', 'rpress' );
+						$error['error'] = __( 'The end date must be later than the start date!', 'restropress' );
 					}
 					// Ensure both the start and end date are specified
 					if ( empty( $args['startdate'] ) || empty( $args['enddate'] ) ) {
-						$error['error'] = __( 'Invalid or no date range specified!', 'rpress' );
+						$error['error'] = __( 'Invalid or no date range specified!', 'restropress' );
 					}
 					$total = 0;
 					// Loop through the years
@@ -776,7 +776,7 @@ class RPRESS_API {
 					$product_info = get_post( $args['product'] );
 					$sales['sales'][0] = array( $product_info->post_name => rpress_get_fooditem_sales_stats( $args['product'] ) );
 				} else {
-					$error['error'] = sprintf( __( 'Product %s not found!', 'rpress' ), $args['product'] );
+					$error['error'] = sprintf( __( 'Product %s not found!', 'restropress' ), $args['product'] );
 				}
 			}
 			if ( ! empty( $error ) )
@@ -790,11 +790,11 @@ class RPRESS_API {
 					// Return sales for a date range
 					// Ensure the end date is later than the start date
 					if ( $args['enddate'] < $args['startdate'] ) {
-						$error['error'] = __( 'The end date must be later than the start date!', 'rpress' );
+						$error['error'] = __( 'The end date must be later than the start date!', 'restropress' );
 					}
 					// Ensure both the start and end date are specified
 					if ( empty( $args['startdate'] ) || empty( $args['enddate'] ) ) {
-						$error['error'] = __( 'Invalid or no date range specified!', 'rpress' );
+						$error['error'] = __( 'Invalid or no date range specified!', 'restropress' );
 					}
 					$total = (float) 0.00;
 					// Loop through the years
@@ -868,7 +868,7 @@ class RPRESS_API {
 					$product_info = get_post( $args['product'] );
 					$earnings['earnings'][0] = array( $product_info->post_name => rpress_get_fooditem_earnings_stats( $args['product'] ) );
 				} else {
-					$error['error'] = sprintf( __( 'Product %s not found!', 'rpress' ), $args['product'] );
+					$error['error'] = sprintf( __( 'Product %s not found!', 'restropress' ), $args['product'] );
 				}
 			}
 			if ( ! empty( $error ) )
@@ -979,7 +979,7 @@ class RPRESS_API {
 			$discounts = rpress_get_discounts( array( 'posts_per_page' => $per_page, 'paged' => $paged ) );
 			$count     = 0;
 			if ( empty( $discounts ) ) {
-				$error['error'] = __( 'No discounts found!', 'rpress' );
+				$error['error'] = __( 'No discounts found!', 'restropress' );
 				return $error;
 			}
 			foreach ( $discounts as $discount ) {
@@ -1020,7 +1020,7 @@ class RPRESS_API {
 				$discount_list['discounts'][0]['global_discount']            = rpress_is_discount_not_global( $discount );
 				$discount_list['discounts'][0]['single_use']                 = rpress_discount_is_single_use( $discount );
 			} else {
-				$error['error'] = sprintf( __( 'Discount %s not found!', 'rpress' ), $discount );
+				$error['error'] = sprintf( __( 'Discount %s not found!', 'restropress' ), $discount );
 				return $error;
 			}
 		}
@@ -1097,7 +1097,7 @@ class RPRESS_API {
 			case 'xml' :
 				require_once RP_PLUGIN_DIR . 'includes/libraries/array2xml.php';
 				$xml = Array2XML::createXML( 'rpress', $this->data );
-				echo $xml->saveXML();
+				echo esc_html($xml->saveXML());
 				break;
 			case 'json' :
 				header( 'Content-Type: application/json' );
@@ -1133,18 +1133,18 @@ class RPRESS_API {
 				<tbody>
 					<tr>
 						<th>
-							<label for="rpress_set_api_key"><?php esc_html_e( 'RestroPress API Keys', 'rpress' ); ?></label>
+							<label for="rpress_set_api_key"><?php esc_html_e( 'RestroPress API Keys', 'restropress' ); ?></label>
 						</th>
 						<td>
 							<?php if ( empty( $user->rpress_user_public_key ) ) { ?>
 								<input name="rpress_set_api_key" type="checkbox" id="rpress_set_api_key" value="0" />
-								<span class="description"><?php esc_html_e( 'Generate API Key', 'rpress' ); ?></span>
+								<span class="description"><?php esc_html_e( 'Generate API Key', 'restropress' ); ?></span>
 							<?php } else { ?>
-								<strong><?php esc_html_e( 'Public key:', 'rpress' ); ?>&nbsp;</strong><span id="publickey"><?php echo esc_html( $user->rpress_user_public_key ); ?></span><br/>
-								<strong><?php esc_html_e( 'Secret key:', 'rpress' ); ?>&nbsp;</strong><span id="privatekey"><?php echo esc_html( $user->rpress_user_secret_key ); ?></span><br/>
-								<strong><?php esc_html_e( 'Token:', 'rpress' ); ?>&nbsp;</strong><span id="token"><?php echo esc_html( $this->get_token( $user->ID ) ); ?></span><br/>
+								<strong><?php esc_html_e( 'Public key:', 'restropress' ); ?>&nbsp;</strong><span id="publickey"><?php echo esc_html( $user->rpress_user_public_key ); ?></span><br/>
+								<strong><?php esc_html_e( 'Secret key:', 'restropress' ); ?>&nbsp;</strong><span id="privatekey"><?php echo esc_html( $user->rpress_user_secret_key ); ?></span><br/>
+								<strong><?php esc_html_e( 'Token:', 'restropress' ); ?>&nbsp;</strong><span id="token"><?php echo esc_html( $this->get_token( $user->ID ) ); ?></span><br/>
 								<input name="rpress_set_api_key" type="checkbox" id="rpress_set_api_key" value="0" />
-								<span class="description"><?php esc_html_e( 'Revoke API Keys', 'rpress' ); ?></span>
+								<span class="description"><?php esc_html_e( 'Revoke API Keys', 'restropress' ); ?></span>
 							<?php } ?>
 						</td>
 					</tr>
@@ -1162,7 +1162,7 @@ class RPRESS_API {
 	 */
 	public function process_api_key( $args ) {
 		if( ! wp_verify_nonce( sanitize_text_field( $_REQUEST['_wpnonce'] ) , 'rpress-api-nonce' ) ) {
-			wp_die( esc_html__( 'Nonce verification failed', 'rpress' ), __( 'Error', 'rpress' ), array( 'response' => 403 ) );
+			wp_die( esc_html__( 'Nonce verification failed', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 		}
 		if( is_numeric( $args['user_id'] ) ) {
 			$user_id    = isset( $args['user_id'] ) ? absint( $args['user_id'] ) : get_current_user_id();
@@ -1172,9 +1172,9 @@ class RPRESS_API {
 		}
 		$process    = isset( $args['rpress_api_process'] ) ? strtolower( $args['rpress_api_process'] ) : false;
 		if( $user_id == get_current_user_id() && ! rpress_get_option( 'allow_user_api_keys' ) && ! current_user_can( 'manage_shop_settings' ) ) {
-			wp_die( sprintf( __( 'You do not have permission to %s API keys for this user', 'rpress' ), $process ), __( 'Error', 'rpress' ), array( 'response' => 403 ) );
+			wp_die( sprintf( esc_html__( 'You do not have permission to %s API keys for this user', 'restropress' ), esc_html($process) ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 		} elseif( ! current_user_can( 'manage_shop_settings' ) ) {
-			wp_die( sprintf( __( 'You do not have permission to %s API keys for this user', 'rpress' ), $process ), __( 'Error', 'rpress' ), array( 'response' => 403 ) );
+			wp_die( sprintf( esc_html__( 'You do not have permission to %s API keys for this user', 'restropress' ), esc_html($process) ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 		}
 		switch( $process ) {
 			case 'generate':

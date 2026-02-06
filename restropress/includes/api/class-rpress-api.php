@@ -1492,6 +1492,8 @@ class RPRESS_API {
 				require_once RP_PLUGIN_DIR . 'includes/libraries/class-ArrayToXML.php';
 				$arraytoxml = new ArrayToXML();
 				$xml        = $arraytoxml->buildXML( $this->data, 'rpress' );
+				// Output raw XML for API response.
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo $xml;
 				break;
 			case 'json' :
@@ -1559,10 +1561,10 @@ class RPRESS_API {
 	 */
 	public function process_api_key( $args ) {
 		if( ! wp_verify_nonce( sanitize_text_field( $_REQUEST['_wpnonce'] ) , 'rpress-api-nonce' ) ) {
-			wp_die( esc_html__( 'Nonce verification failed', 'restropress' ), __( 'Error', 'restropress' ), array( 'response' => 403 ) );
+			wp_die( esc_html__( 'Nonce verification failed', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 		}
 		if ( empty( $args['user_id'] ) ) {
-			wp_die( sprintf( __( 'User ID Required', 'restropress' ), $process ), __( 'Error', 'restropress' ), array( 'response' => 401 ) );
+			wp_die( sprintf( esc_html__( 'User ID Required', 'restropress' ), esc_html($process) ), esc_html__( 'Error', 'restropress' ), array( 'response' => 401 ) );
 		}
 		if( is_numeric( $args['user_id'] ) ) {
 			$user_id    = isset( $args['user_id'] ) ? absint( $args['user_id'] ) : get_current_user_id();
@@ -1572,9 +1574,25 @@ class RPRESS_API {
 		}
 		$process    = isset( $args['rpress_api_process'] ) ? strtolower( $args['rpress_api_process'] ) : false;
 		if( $user_id == get_current_user_id() && ! rpress_get_option( 'allow_user_api_keys' ) && ! current_user_can( 'manage_shop_settings' ) ) {
-			wp_die( sprintf( __( 'You do not have permission to %s API keys for this user', 'restropress' ), $process ), __( 'Error', 'restropress' ), array( 'response' => 403 ) );
+			wp_die(
+				sprintf(
+					/* translators: %s is the action/process */
+					esc_html__( 'You do not have permission to %s API keys for this user', 'restropress' ),
+					esc_html( $process )
+				),
+				esc_html__( 'Error', 'restropress' ),
+				array( 'response' => 403 )
+			);
 		} elseif( ! current_user_can( 'manage_shop_settings' ) ) {
-			wp_die( sprintf( __( 'You do not have permission to %s API keys for this user', 'restropress' ), $process ), __( 'Error', 'restropress' ), array( 'response' => 403 ) );
+			wp_die(
+				sprintf(
+					/* translators: %s is the action/process */
+					esc_html__( 'You do not have permission to %s API keys for this user', 'restropress' ),
+					esc_html( $process )
+				),
+				esc_html__( 'Error', 'restropress' ),
+				array( 'response' => 403 )
+			);
 		}
 		switch( $process ) {
 			case 'generate':

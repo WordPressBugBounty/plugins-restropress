@@ -47,6 +47,7 @@ $button_style = rpress_get_option('button_style', 'button');
 		</div>
 	</div>
 	<div class="rpress-sidebar-main-wrap">
+		<i class="fa fa-times close-cart-ic" aria-hidden="true"></i>
 		<div class="rpress-sidebar-cart-wrap <?php echo empty($cart_items) ? 'empty-cart' : ''; ?>">
 			<?php if ($cart_items): ?>
 				<div class="rpress item-order">

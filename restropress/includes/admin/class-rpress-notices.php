@@ -53,7 +53,18 @@ class RPRESS_Notices {
 				<p><a href="<?php echo esc_url( esc_url( add_query_arg( array( 'rpress_action' => 'dismiss_notices', 'rpress_notice' => 'set_menupage' ) ) ) ); ?>"><?php esc_html_e( 'Dismiss Notice', 'restropress' ); ?></a></p>
 			</div>
 			<?php
-			echo  ob_get_clean() ;
+			$allowed_html = array(
+				'div' => array(
+					'class' => array(),
+				),
+				'p'   => array(),
+				'a'   => array(
+					'href'  => array(),
+					'class' => array(),
+				),
+			);
+		
+			echo wp_kses( ob_get_clean(), $allowed_html );
 		}
 		if ( ( rpress_get_option( 'purchase_page', '' ) == '' || 'trash' == get_post_status( rpress_get_option( 'purchase_page', '' ) ) ) && current_user_can( 'edit_pages' ) && ! get_user_meta( get_current_user_id(), '_rpress_set_checkout_dismissed' ) ) {
 			ob_start();
@@ -72,7 +83,18 @@ class RPRESS_Notices {
 				<p><a href="<?php echo esc_url( add_query_arg( array( 'rpress_action' => 'dismiss_notices', 'rpress_notice' => 'set_checkout' ) ) ); ?>"><?php esc_html_e( 'Dismiss Notice', 'restropress' ); ?></a></p>
 			</div>
 			<?php
-			echo  ob_get_clean() ;
+			$allowed_html = array(
+				'div' => array(
+					'class' => array(),
+				),
+				'p'   => array(),
+				'a'   => array(
+					'href'  => array(),
+					'class' => array(),
+				),
+			);
+		
+			echo wp_kses( ob_get_clean(), $allowed_html );
 		}
 		if ( isset( $_GET['page'] ) && 'rpress-payment-history' == $_GET['page'] && current_user_can( 'view_shop_reports' ) && rpress_is_test_mode() ) {
 			/* translators: 1: text, 2: admin url */
@@ -101,7 +123,17 @@ class RPRESS_Notices {
 		    ); ?></p>
 			</div>
 			<?php
-			echo  ob_get_clean() ;
+			$allowed_html = array(
+				'div' => array(
+					'class' => array(),
+				),
+				'p'   => array(),
+				'a'   => array(
+					'href' => array(),
+				),
+			);
+		
+			echo wp_kses( ob_get_clean(), $allowed_html );
 		}
 		if ( isset( $_GET['rpress-message'] ) ) {
 			$message = sanitize_text_field( $_GET['rpress-message'] );

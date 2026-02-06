@@ -50,7 +50,7 @@ if ( ! is_user_logged_in() ) :
 				<input type="hidden" name="rpress_redirect" value="<?php echo esc_url( $rpress_register_redirect ); ?>"/>
 				<input type="submit" class="rpress-submit <?php echo wp_kses_post( $style ); ?>" id="rpress-purchase-button" name="rpress_register_submit" value="<?php esc_attr_e( 'Register', 'restropress' ); ?>"/>
 			</p>
-			<p class="register-link-wrap">Already have an account? <a href="<?php echo site_url('/login'); ?>" class="reglink">Sign In
+			<p class="register-link-wrap">Already have an account? <a href="<?php echo esc_url( site_url('/login') ); ?>" class="reglink">Sign In
 				<svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<path d="M1.04342 1.01938L1.05784 2.04356L4.92859 2.05799L8.79934 2.0676L4.39967 6.46727L0 10.8669L0.735682 11.5978L1.46656 12.3335L5.86622 7.93383L10.2659 3.53416L10.2755 7.40491L10.2899 11.2757L11.3141 11.2901L12.3335 11.2997V5.64985V-9.53674e-07H6.68365H1.0338L1.04342 1.01938Z" fill="#ED5575"/>
 				</svg>

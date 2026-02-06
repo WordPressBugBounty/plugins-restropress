@@ -76,7 +76,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 				</th>
 				<td>
 					<input type="text" class="rpress-price-field" required="required" id="rpress-amount" name="amount" value="<?php echo esc_attr( rpress_get_discount_amount( $discount_id ) ); ?>" />
-					<p class="description rpress-amount-description flat"<?php echo esc_attr( $flat_display ); ?>><?php printf( __( 'Enter the discount amount in %s', 'restropress' ), rpress_get_currency() ); ?></p>
+					<p class="description rpress-amount-description flat"<?php echo esc_attr( $flat_display ); ?>><?php printf( esc_html__( 'Enter the discount amount in %s', 'restropress' ), esc_html(rpress_get_currency()) ); ?></p>
 					<p class="description rpress-amount-description percent"<?php echo esc_attr( $percent_display ); ?>><?php esc_html_e( 'Enter the discount percentage. 10 = 10%', 'restropress' ); ?></p>
 				</td>
 			</tr>
@@ -85,30 +85,54 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 				<th scope="row" valign="top">
 				<label for="rpress-products"><?php printf(
 					/* translators: %s is a placeholder for the product name */ 
-					 __( '%s Requirements', 'restropress' ), rpress_get_label_singular() ); ?></label>
+					esc_html__( '%s Requirements', 'restropress' ), esc_html(rpress_get_label_singular()) ); ?></label>
 				</th>
 				<td>
 					<p>
-						<?php echo RPRESS()->html->product_dropdown( array(
+						<?php 
+						$args = array(
 							'name'        => 'products[]',
 							'id'          => 'products',
 							'selected'    => $product_reqs,
 							'multiple'    => true,
 							'chosen'      => true,
-							'placeholder' => sprintf( 
+							'placeholder' => sprintf(
 								/* translators: Placeholder for selecting one or more items, %s is a placeholder for the item type */
-								esc_html__( 'Select one or more %s', 'restropress' ), rpress_get_label_plural() ) 
-							) ); ?><br/>
+								esc_html__( 'Select one or more %s', 'restropress' ),
+								esc_html( rpress_get_label_plural() )
+							),
+						);
+						
+						$allowed_html = array(
+							'select' => array(
+								'name'                  => true,
+								'id'                    => true,
+								'class'                 => true,
+								'multiple'              => true,
+								'data-placeholder'      => true,
+								'data-search-type'      => true,
+								'data-search-placeholder' => true,
+								'disabled'              => true,
+								'readonly'              => true,
+							),
+							'option' => array(
+								'value'    => true,
+								'selected' => true,
+							),
+						);
+						
+						echo wp_kses( RPRESS()->html->product_dropdown( $args ), $allowed_html );						
+						?><br/>
 					</p>
 					<div id="rpress-discount-product-conditions"<?php echo esc_attr( $condition_display ); ?>>
 						<p>
 							<select id="rpress-product-condition" name="product_condition">
 							<option value="all"<?php selected( 'all', $condition ); ?>><?php printf( 
 								/* translators: Option label for selecting that the cart must contain all selected items, %s is a placeholder for the item type */
-								__( 'Cart must contain all selected %s', 'restropress' ), rpress_get_label_plural() );  ?></option>
+								esc_html__( 'Cart must contain all selected %s', 'restropress' ), esc_html(rpress_get_label_plural()) );  ?></option>
 							<option value="any"<?php selected( 'any', $condition ); ?>><?php printf( 
 								/* translators: Option label for selecting that the cart needs one or more of the selected items, %s is a placeholder for the item type */
-								__( 'Cart needs one or more of the selected %s', 'restropress' ), rpress_get_label_plural() ); ?></option>
+								esc_html__( 'Cart needs one or more of the selected %s', 'restropress' ), esc_html(rpress_get_label_plural()) ); ?></option>
 							</select>
 						</p>
 						<p>
@@ -120,60 +144,129 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 							</label><br/>
 							<label>
 								<input type="radio" class="tog" name="not_global" value="1"<?php checked( true, rpress_is_discount_not_global( $discount_id ) ); ?>/>
-								<?php printf( __( 'Apply discount only to selected %s.', 'restropress' ), rpress_get_label_plural() ); ?>
+								<?php printf( esc_html__( 'Apply discount only to selected %s.', 'restropress' ), esc_html(rpress_get_label_plural()) ); ?>
 							</label>
 						</p>
 					</div>
-					<p class="description"><?php printf( __( 'Select %s relevant to this discount. If left blank, this discount can be used on any product.', 'restropress' ), rpress_get_label_plural() ); ?></p>
+					<p class="description"><?php printf( esc_html__( 'Select %s relevant to this discount. If left blank, this discount can be used on any product.', 'restropress' ), esc_html(rpress_get_label_plural()) ); ?></p>
 				</td>
 			</tr>
 			<?php do_action( 'rpress_edit_discount_form_before_excluded_products', $discount_id, $discount ); ?>
 			<tr>
 				<th scope="row" valign="top">
-					<label for="rpress-excluded-products"><?php printf( __( 'Excluded %s', 'restropress' ), rpress_get_label_plural() ); ?></label>
+					<label for="rpress-excluded-products"><?php printf( esc_html__( 'Excluded %s', 'restropress' ), esc_html(rpress_get_label_plural()) ); ?></label>
 				</th>
 				<td>
-					<?php echo RPRESS()->html->product_dropdown( array(
+					<?php 
+					$args = array(
 						'name'        => 'excluded-products[]',
 						'id'          => 'excluded-products',
 						'selected'    => $excluded_products,
 						'multiple'    => true,
 						'chosen'      => true,
-						'placeholder' => sprintf( esc_html__( 'Select one or more %s', 'restropress' ), rpress_get_label_plural() )
-					) ); ?><br/>
-					<p class="description"><?php printf( __( '%s that this discount code cannot be applied to.', 'restropress' ), rpress_get_label_plural() ); ?></p>
+						'placeholder' => sprintf( esc_html__( 'Select one or more %s', 'restropress' ), esc_html( rpress_get_label_plural() ) ),
+					);
+					
+					// Allowed tags and attributes for dropdowns
+					$allowed_html = array(
+						'select' => array(
+							'name'        => true,
+							'id'          => true,
+							'class'       => true,
+							'multiple'    => true,
+							'data-placeholder' => true,
+							'data-search-type'  => true,
+							'data-search-placeholder' => true,
+							'disabled'    => true,
+							'readonly'    => true,
+						),
+						'option' => array(
+							'value'    => true,
+							'selected' => true,
+						),
+					);
+					
+					echo wp_kses( RPRESS()->html->product_dropdown( $args ), $allowed_html );					
+					?><br/>
+					<p class="description"><?php printf( esc_html__( '%s that this discount code cannot be applied to.', 'restropress' ), esc_html(rpress_get_label_plural()) ); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row" valign="top">
-					<label for="rpress-included-categories"><?php printf( __( 'Included categories', 'restropress' ), rpress_get_label_plural() ); ?></label>
+					<label for="rpress-included-categories"><?php printf( esc_html__( 'Included categories', 'restropress' ), esc_html(rpress_get_label_plural()) ); ?></label>
 				</th>
 				<td>
-					<?php echo RPRESS()->html->food_categories_dropdown( array(
+					<?php 
+					$args = array(
 						'name'        => 'categories[]',
 						'id'          => 'categories',
-						'selected'    =>$category_reqs,
+						'selected'    => $category_reqs,
 						'multiple'    => true,
 						'chosen'      => true,
-						'placeholder' => sprintf( esc_html__( 'Select one or more categories', 'restropress' ), rpress_get_label_plural() ),
-					) ); ?><br/>
-					<p class="description"><?php printf( __( 'Categories that this discount code to be applied to.', 'restropress' ), rpress_get_label_plural() ); ?></p>
+						'placeholder' => sprintf( esc_html__( 'Select one or more categories', 'restropress' ), esc_html( rpress_get_label_plural() ) ),
+					);
+					
+					// Allowed tags and attributes for dropdowns
+					$allowed_html = array(
+						'select' => array(
+							'name'        => true,
+							'id'          => true,
+							'class'       => true,
+							'multiple'    => true,
+							'data-placeholder' => true,
+							'data-search-type'  => true,
+							'data-search-placeholder' => true,
+							'disabled'    => true,
+							'readonly'    => true,
+						),
+						'option' => array(
+							'value'    => true,
+							'selected' => true,
+						),
+					);
+					
+					echo wp_kses( RPRESS()->html->food_categories_dropdown( $args ), $allowed_html );					
+					?><br/>
+					<p class="description"><?php printf( esc_html__( 'Categories that this discount code to be applied to.', 'restropress' ), esc_html(rpress_get_label_plural()) ); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row" valign="top">
-					<label for="rpress-excluded-categories"><?php printf( __( 'Excluded categories', 'restropress' ), rpress_get_label_plural() ); ?></label>
+					<label for="rpress-excluded-categories"><?php printf( esc_html__( 'Excluded categories', 'restropress' ), esc_html(rpress_get_label_plural()) ); ?></label>
 				</th>
 				<td>
-					<?php echo RPRESS()->html->food_categories_dropdown( array(
+					<?php 
+					$args = array(
 						'name'        => 'excluded-categories[]',
 						'id'          => 'excluded-categories',
 						'selected'    => $excluded_category,
 						'multiple'    => true,
 						'chosen'      => true,
-						'placeholder' => sprintf( esc_html__( 'Select one or more categories', 'restropress' ), rpress_get_label_plural() ),
-					) ); ?><br/>
-					<p class="description"><?php printf( __( 'Categories that this discount code cannot to be applied to.', 'restropress' ), rpress_get_label_plural() ); ?></p>
+						'placeholder' => sprintf( esc_html__( 'Select one or more categories', 'restropress' ), esc_html( rpress_get_label_plural() ) ),
+					);
+					
+					// Allowed tags and attributes for wp_kses
+					$allowed_html = array(
+						'select' => array(
+							'name'        => true,
+							'id'          => true,
+							'class'       => true,
+							'multiple'    => true,
+							'data-placeholder' => true,
+							'data-search-type'  => true,
+							'data-search-placeholder' => true,
+							'disabled'    => true,
+							'readonly'    => true,
+						),
+						'option' => array(
+							'value'    => true,
+							'selected' => true,
+						),
+					);
+					
+					echo wp_kses( RPRESS()->html->food_categories_dropdown( $args ), $allowed_html );					
+					?><br/>
+					<p class="description"><?php printf( esc_html__( 'Categories that this discount code cannot to be applied to.', 'restropress' ), esc_html(rpress_get_label_plural()) ); ?></p>
 				</td>
 			</tr>
 			<?php do_action( 'rpress_edit_discount_form_before_start', $discount_id, $discount ); ?>
@@ -246,7 +339,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 		<input type="hidden" name="rpress-action" value="edit_discount"/>
 		<input type="hidden" name="discount-id" value="<?php echo absint( $_GET['discount'] ); ?>"/>
 		<input type="hidden" name="rpress-redirect" value="<?php echo esc_url( admin_url( 'admin.php?page=rpress-discounts&rpress-action=edit_discount&discount=' . $discount_id ) ); ?>"/>
-		<input type="hidden" name="rpress-discount-nonce" value="<?php echo wp_create_nonce( 'rpress_discount_nonce' ); ?>"/>
+		<input type="hidden" name="rpress-discount-nonce" value="<?php echo esc_attr(wp_create_nonce( 'rpress_discount_nonce' )); ?>"/>
 		<input type="submit" value="<?php esc_html_e( 'Update Discount Code', 'restropress' ); ?>" class="button-primary"/>
 	</p>
 </form>

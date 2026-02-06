@@ -28,10 +28,10 @@ function rpress_print_errors() {
 			'rpress_errors', 'rpress-alert', 'rpress-alert-error'
 		) );
 		if ( ! empty( $errors ) ) {
-			echo '<div class="' . implode( ' ', $classes ) . '">';
+			echo '<div class="' . esc_attr( implode( ' ', $classes ) ) . '">';
 				// Loop error codes and display errors
 				foreach ( $errors as $error_id => $error ) {
-					echo '<p class="rpress_error" id="rpress_error_' . $error_id . '"><strong>' . esc_html__( 'Error', 'restropress' ) . '</strong>: ' . $error . '</p>';
+					echo '<p class="rpress_error" id="rpress_error_' . esc_attr( $error_id ) . '"><strong>' . esc_html__( 'Error', 'restropress' ) . '</strong>: ' . esc_html( $error ) . '</p>';
 				}
 			echo '</div>';
 		}
@@ -125,5 +125,11 @@ function _rpress_die_handler() {
 function rpress_die( $message = '', $title = '', $status = 400 ) {
 	add_filter( 'wp_die_ajax_handler', '_rpress_die_handler', 10, 3 );
 	add_filter( 'wp_die_handler', '_rpress_die_handler', 10, 3 );
-	wp_die( $message, $title, array( 'response' => $status ));
+	wp_die(
+		wp_kses_post( $message ), // allows only safe HTML in the message
+		esc_html( $title ),       // escapes the title safely
+		array(
+			'response' => absint( $status ), // ensures status is a safe integer
+		)
+	);
 }

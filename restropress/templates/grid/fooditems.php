@@ -89,31 +89,42 @@ $template = rpress_get_option('template', 'list');
 				$fooditems = new WP_Query($query);
 				do_action('rpress_fooditems_list_before', $atts);
 				if ($fooditems->have_posts()):
-					?><div class="rpress-grid-main-wrap"><?php
+					?>
+					<div class="rpress-grid-main-wrap"><?php
 					$i = 1;
 					do_action('rpress_fooditems_list_top', $atts, $fooditems);
 					$curr_cat_var = '';
 					$id = get_the_ID();
 					do_action('rpress_fooditems_category_title', $term_slug, $id, $curr_cat_var);
 					?>
-					<div class="food-group-wrap"><?php
-					while ($fooditems->have_posts()):
-						$fooditems->the_post();
-						do_action('rpress_fooditem_shortcode_item', $atts, $i);
-						++$i;
-					endwhile;
-					?></div><?php
-					wp_reset_postdata();
-					do_action('rpress_fooditems_list_bottom', $atts);
-					wp_reset_query();
-					?></div><?php
+						<div class="food-group-wrap"><?php
+						while ($fooditems->have_posts()):
+							$fooditems->the_post();
+							do_action('rpress_fooditem_shortcode_item', $atts, $i);
+							++$i;
+						endwhile;
+						?></div><?php
+						wp_reset_postdata();
+						do_action('rpress_fooditems_list_bottom', $atts);
+						wp_reset_query();
+						?>
+					</div><?php
 				endif;
 			endforeach;
+			$is_menu_enabled = rpress_get_option('mobile_menu_display_enable', '');
+			if( "1" === $is_menu_enabled ){
+				rpress_get_template_part("rpress", "mobile-menu-category");
+			}
+			?>
+			
+
+			<?php
 		else:
 			/* translators: %s: post singular name */
-			printf(_x('No %s found', 'rpress post type name', 'restropress'), rp_get_label_plural());
+			printf(esc_html_x('No %s found', 'rpress post type name', 'restropress'), esc_html(rp_get_label_plural()));
 		endif;
 		?>
+
 	</div>
 
 	<?php if (!empty($atts) && !empty($fooditems)): ?>
@@ -121,3 +132,6 @@ $template = rpress_get_option('template', 'list');
 	<?php endif; ?>
 	<?php do_action('rpress_get_cart'); ?>
 </div>
+<script>
+	
+</script>

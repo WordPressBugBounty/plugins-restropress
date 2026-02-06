@@ -18,6 +18,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @since 1.0.0
  */
 class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import {
+
+	//php 8.2 compatible
+	public $done = false;
+
 	/**
 	 * Set up our import config.
 	 *

@@ -54,16 +54,31 @@ function rpress_render_fooditem_columns( $column_name, $post_id ) {
 				break;
 			case 'price':
 				if ( rpress_has_variable_prices( $post_id ) ) {
-					echo rpress_price_range( $post_id );
+					$allowed_html = array(
+						'span' => array(
+							'class' => true,
+							'id'    => true,
+						),
+					);
+					  
+					echo wp_kses( rpress_price_range( $post_id ), $allowed_html );
 				} else {
-					echo rpress_price( $post_id, false );
-					echo '<input type="hidden" class="fooditemprice-' . $post_id . '" value="' . rpress_get_fooditem_price( $post_id ) . '" />';
+					echo wp_kses(
+						rpress_price( $post_id, false ),
+						array(
+							'span' => array(
+								'class' => true,
+								'id'    => true,
+							),
+						)
+					);
+					echo '<input type="hidden" class="fooditemprice-' . esc_attr($post_id) . '" value="' . esc_attr(rpress_get_fooditem_price( $post_id )) . '" />';
 				}
 				break;
 			case 'sales':
 				if ( current_user_can( 'view_product_stats', $post_id ) ) {
 					echo '<a href="' . esc_url( admin_url( 'admin.php?page=rpress-reports&tab=logs&view=sales&fooditem=' . $post_id ) ) . '">';
-						echo rpress_get_fooditem_sales_stats( $post_id );
+						echo esc_html(rpress_get_fooditem_sales_stats( $post_id ));
 					echo '</a>';
 				} else {
 					echo '-';
@@ -72,7 +87,7 @@ function rpress_render_fooditem_columns( $column_name, $post_id ) {
 			case 'earnings':
 				if ( current_user_can( 'view_product_stats', $post_id ) ) {
 					echo '<a href="' . esc_url( admin_url( 'admin.php?page=rpress-reports&view=fooditems&fooditem-id=' . $post_id ) ) . '">';
-						echo rpress_currency_filter( rpress_format_amount( rpress_get_fooditem_earnings_stats( $post_id ) ) );
+						echo esc_html(rpress_currency_filter( rpress_format_amount( rpress_get_fooditem_earnings_stats( $post_id ) ) ));
 					echo '</a>';
 				} else {
 					echo '-';
@@ -195,10 +210,10 @@ function rpress_add_fooditem_filters() {
 		if(count($terms) > 0) {
 			echo "<select name='food-category' id='food-category' class='postform'>";
 			$category_labels = rpress_get_taxonomy_labels( 'food-category' );
-			echo "<option value=''>" . sprintf( esc_html__( 'Show all %s', 'restropress' ), strtolower( $category_labels['name'] ) ) . "</option>";
+			echo "<option value=''>" . sprintf( esc_html__( 'Show all %s', 'restropress' ), esc_html(strtolower( $category_labels['name'] )) ) . "</option>";
 			foreach ($terms as $term) {
 				$selected = isset( $_GET['food-category'] ) && $_GET['food-category'] == $term->slug ? ' selected="selected"' : '';
-				echo '<option value="' . esc_attr( $term->slug ) . '"' . $selected . '>' . esc_html( $term->name ) .' (' . $term->count .')</option>';
+				echo '<option value="' . esc_attr( $term->slug ) . '"' . esc_attr($selected) . '>' . esc_html( $term->name ) .' (' . esc_html($term->count) .')</option>';
 			}
 			echo "</select>";
 		}
@@ -207,10 +222,10 @@ function rpress_add_fooditem_filters() {
 		if ( count( $terms ) > 0 ) {
 			echo "<select name='addon_category' id='addon_category' class='postform'>";
 			$category_labels = rpress_get_taxonomy_labels( 'addon_category' );
-			echo "<option value=''>" . sprintf( esc_html__( 'Show all %s', 'restropress' ), strtolower( $category_labels['name'] ) ) . "</option>";
+			echo "<option value=''>" . sprintf( esc_html__( 'Show all %s', 'restropress' ), esc_html(strtolower( $category_labels['name'] )) ) . "</option>";
 			foreach ( $terms as $term ) {
 				$selected = isset( $_GET['addon_category'] ) && $_GET['addon_category'] == $term->slug ? ' selected="selected"' : '';
-				echo '<option value="' . esc_attr( $term->slug ) . '"' . $selected . '>' . esc_html( $term->name ) .' (' . $term->count .')</option>';
+				echo '<option value="' . esc_attr( $term->slug ) . '"' . esc_attr($selected) . '>' . esc_html( $term->name ) .' (' . esc_html($term->count) .')</option>';
 			}
 			echo "</select>";
 		}
@@ -219,10 +234,10 @@ function rpress_add_fooditem_filters() {
 		if ( count( $terms ) > 0) {
 			echo "<select name='fooditem_tag' id='fooditem_tag' class='postform'>";
 			$tag_labels = rpress_get_taxonomy_labels( 'fooditem_tag' );
-			echo "<option value=''>" . sprintf( esc_html__( 'Show all %s', 'restropress' ), strtolower( $tag_labels['name'] ) ) . "</option>";
+			echo "<option value=''>" . sprintf( esc_html__( 'Show all %s', 'restropress' ), esc_html(strtolower( $tag_labels['name'] )) ) . "</option>";
 			foreach ( $terms as $term ) {
 				$selected = isset( $_GET['fooditem_tag'] ) && $_GET['fooditem_tag'] == $term->slug ? ' selected="selected"' : '';
-				echo '<option value="' . esc_attr( $term->slug ) . '"' . $selected . '>' . esc_html( $term->name ) .' (' . $term->count .')</option>';
+				echo '<option value="' . esc_attr( $term->slug ) . '"' . esc_attr($selected) . '>' . esc_html( $term->name ) .' (' . esc_html($term->count) .')</option>';
 			}
 			echo "</select>";
 		}
@@ -267,7 +282,7 @@ function rpress_price_field_quick_edit( $column_name, $post_type ) {
 	?>
 	<fieldset class="inline-edit-rp-col-left">
 		<div id="rpress-fooditem-data" class="inline-edit-col">
-			<h4><?php echo sprintf( esc_html__( '%s Configuration', 'restropress' ), rpress_get_label_singular() ); ?></h4>
+			<h4><?php echo sprintf( esc_html__( '%s Configuration', 'restropress' ), esc_html(rpress_get_label_singular()) ); ?></h4>
 			<label>
 				<span class="title"><?php esc_html_e( 'Price', 'restropress' ); ?></span>
 				<span class="input-text-wrap">

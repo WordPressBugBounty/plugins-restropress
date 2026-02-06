@@ -349,12 +349,12 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     jQuery(document).ready(function($) {
         const importBtn = $('<a>')
             .addClass('page-title-action')
-            .attr('href', '<?php echo admin_url('admin.php?page=rpress-tools&tab=import_export'); ?>')
+            .attr('href', '<?php echo esc_url( admin_url('admin.php?page=rpress-tools&tab=import_export') ); ?>')
             .text('<?php esc_html_e( 'Import', 'restropress' ); ?>')
 
         const exportBtn = $('<a>')
             .addClass('page-title-action')
-            .attr('href', '<?php echo admin_url('admin.php?page=rpress-reports&tab=export'); ?>')
+            .attr('href', '<?php echo esc_url( admin_url('admin.php?page=rpress-reports&tab=export') ); ?>')
             .text('<?php esc_html_e( 'Export', 'restropress' ); ?>');
 
         // Append buttons after "Add New"

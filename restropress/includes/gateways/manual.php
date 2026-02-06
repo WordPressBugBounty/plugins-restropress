@@ -27,7 +27,7 @@ add_action( 'rpress_manual_cc_form', '__return_false' );
 */
 function rpress_manual_payment( $purchase_data ) {
 	if( ! wp_verify_nonce( $purchase_data['gateway_nonce'], 'rpress-gateway' ) ) {
-		wp_die( __( 'Nonce verification has failed', 'restropress' ), __( 'Error', 'restropress' ), array( 'response' => 403 ) );
+		wp_die( esc_html__( 'Nonce verification has failed', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
 	/*
 	* Purchase data comes in like this

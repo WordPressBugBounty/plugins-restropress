@@ -4,8 +4,8 @@ Tags: Online ordering, Restaurant Ordering, Food Delivery, Takeaway, Restaurant 
 Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
-Tested up to: 6.8
-Stable tag: 3.2.1
+Tested up to: 6.9
+Stable tag: 3.2.4.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -121,8 +121,87 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Changelog ==
 
+
+= Version 3.2.4.2(2025-11-29) =
+
+* Fixed: Css and js loading version 
+* Fixed: Removed unrequired service type label
+* Fixed: Category scrolling issue
+
+= Version 3.2.4(2025-11-28) =
+
+* Fixed: gmdate() issue conflict issue
+* Fixed: Category menu button issue
+* Fixed: Builder and theme compatibility issue
+* Fixed: PHP version 8.2 compatibility issue
+* Fixed: Discount coupon, setting option save issue 
+* Code optimized and cleanup
+
+= Version 3.2.3.7(2025-11-20) =
+* Fixed: REST API authorization issue
+* Fixed: Category menu text issue
+* Fixed: Store timing time slot issue 
+* Added: Mobile menu enable/disable option
+* Fixed: Sticky bar, item count issue for mobile view
+* Fixed: Date Time format issue
+
+= Version 3.2.3.6(2025-11-17) =
+* Fixed: Store timing pre-order issue
+* Fixed: Textdomain issue
+* Fixed: Dinein service type issue
+* Fixed: XSS security issue 
+
+= Version 3.2.3.5(2025-11-12) =
+
+* Fixed: Category menu button issue
+* Fixed: Builder compatibility issue
+* Code cleanup
+
+= Version 3.2.3.4(2025-11-10) =
+* Updated: Category menu button for mobile view
+* Fixed: double close message issue
+* Fixed: Delivery fee extension compatibility issue
+* Fixed: Default time order time setup issue
+* Fixed: XSS security issue
+* Code cleanup
+
+= Version 3.2.3.3(2025-11-09) =
+* Fixed: Float price value issue
+* Code Cleanup
+
+= Version 3.2.3.2(2025-11-07) =
+* Fixed: License key activation issue
+* Fixed: Store close message issue
+* Fixed: Addon quantity Compatibility issue
+* Code Cleanup
+
+
+= Version 3.2.3.1(2025-10-27) =
+* Added: Dinein table info added in order details
+* Fixed: Item popup extra space issue
+* Fixed: Escape html issue 
+* Fixed: Default gateway save issue 
+
+= Version 3.2.3(2025-10-22) =
+* Fixed: Store time extension compatibility issues
+* Added: Disable category option
+* Code cleanup
+
+= Version 3.2.2.2(2025-10-16) =
+* Fixed: Report section design issue
+* Fixed: Dashboard section design issue
+* Code Cleanup
+
+= Version 3.2.2.1(2025-10-15) =
+* Fixed: Add button design issue
+* Code Cleanup
+
+= Version 3.2.2(2025-09-25) =
+* Fixed: Security issues fixed
+* Code Cleanup
+
 = Version 3.2.1(2025-09-25) =
-* Fixed: Dfault servuce type validation
+* Fixed: Default service type validation
 * Fixed: Validate the empty address or zip code for delivery fee extension or multilocation extension.
 * Updated: Set a default color value for the required setting option
 * Fixed: Service type background color issue
@@ -279,7 +358,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Updated: Required columns for food items CSV
 * Updated: Show selected item variable name in receipt
 * Added: "Enable always order option" setting to make open the store for 24/7 hour
-* Added: Shortcode format to make exclude categories
+* Added: Short code format to make exclude categories
 
 = Version 2.9.6 (2023-04-05) =
 * Fixed: Deprecated issue with PHP version 8.1.9
@@ -454,7 +533,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Fixed - Live price calculation was wrong while editing an cart item.
 * Fixed - Translatable text for Service Settings text with data sanitization.
 * Update - RestroPress documentation link updated for Help Tab.
-* Update - Other mulitple code optimizations.
+* Update - Other multiple code optimizations.
 
 = Version 2.6.2 =
 * New - Live price change on Variable Price or Addon Selection.
@@ -475,7 +554,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 * Fixed order count issue.
 * Fixed food item display issue on the order details page.
 * Added selected variation name in the emails and order details.
-* Added fooditem description in the popup.
+* Added food item description in the popup.
 * Added option for minimum order amount for pickup.
 
 = Version 2.6 =
@@ -740,7 +819,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.2.1 =
+= 3.2.4.2 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

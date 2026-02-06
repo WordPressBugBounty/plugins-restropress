@@ -202,7 +202,17 @@ add_action( 'wp_ajax_rpress_load_dashboard_widget', 'rpress_load_dashboard_sales
 function rpress_dashboard_at_a_glance_widget( $items ) {
 	$num_posts = wp_count_posts( 'fooditem' );
 	if ( $num_posts && $num_posts->publish ) {
-		$text = _n( '%s' . rpress_get_label_singular(), '%s' . rpress_get_label_plural(), number_format_i18n($num_posts->publish), 'restropress' );
+		$text = sprintf(
+			/* translators: 1: number of items, 2: item label (singular or plural). */
+			_n(
+				'%1$s %2$s', // singular
+				'%1$s %2$s', // plural
+				$num_posts->publish,
+				'restropress'
+			),
+			number_format_i18n( $num_posts->publish ),
+			( $num_posts->publish == 1 ? rpress_get_label_singular() : rpress_get_label_plural() )
+		);
 		$text = sprintf( $text, number_format_i18n( $num_posts->publish ) );
 		if ( current_user_can( 'edit_products' ) ) {
 			$text = sprintf( '<a class="fooditem-count" href="edit.php?post_type=fooditem">%1$s</a>', $text );

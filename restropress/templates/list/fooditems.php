@@ -9,26 +9,26 @@
  */
 defined('ABSPATH') || exit;
 // Get selected template from settings (default to 'list')
-$template = rpress_get_option( 'template', 'list' );
+$template = rpress_get_option('template', 'list');
 ?>
 
 <div class="rpress-section rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
 	<div class="rp-col-lg-8 rp-col-md-8">
-		<div class="rpress-mobile-menu-wrap">    
-			<?php rpress_get_template_part( $template . '/scrollable-categories' ); ?>
-		</div>  
+		<div class="rpress-mobile-menu-wrap">
+			<?php rpress_get_template_part($template . '/scrollable-categories'); ?>
+		</div>
 		<div class="rpress-options-row">
-				<div class="rpress-option-col">
-					<?php rpress_get_template_part( $template . '/delivery-option' ); ?>
-				</div>
-				<div class="rpress-option-col rpress-edit-address-wrap">
-					<span class="left-brdr"></span>
-					<?php rpress_get_template_part( $template . '/time-option' ); ?>
-				</div>
-				<div class="rpress-option-col rpress-search-wrap">
-					<?php do_action('before_fooditems_list'); ?>
-				</div>
+			<div class="rpress-option-col">
+				<?php rpress_get_template_part($template . '/delivery-option'); ?>
 			</div>
+			<div class="rpress-option-col rpress-edit-address-wrap">
+				<span class="left-brdr"></span>
+				<?php rpress_get_template_part($template . '/time-option'); ?>
+			</div>
+			<div class="rpress-option-col rpress-search-wrap">
+				<?php do_action('before_fooditems_list'); ?>
+			</div>
+		</div>
 		<?php
 
 		$shortcode_atts = RP_Shortcode_Fooditems::$atts;
@@ -61,58 +61,69 @@ $template = rpress_get_option( 'template', 'list' );
 			'category_menu' => !empty($shortcode_atts['category_menu']) ? true : false,
 			'excluded_category' => !empty($shortcode_atts['category_exclude']) ? $shortcode_atts['category_exclude'] : '',
 		);
-		?>		
-		<div class="rpress_fooditems_list">		
+		?>
+
+		<div class="rpress_fooditems_list">
 			<?php do_action('rpress_get_food_categories');
-			do_action('rp_get_categories', $category_params);?>
-		<div class="rp-col-lg-8 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">		
-			<?php
-			$get_categories = rpress_get_categories($category_params);
-			if (!empty($shortcode_atts['category_menu'])) {
-				$get_categories = rpress_get_child_cats($category_ids);
-			}
-			$all_terms = array();
-			if (is_array($get_categories) && !empty($get_categories)) {
-				$all_terms = wp_list_pluck($get_categories, 'slug');
-			}
+			do_action('rp_get_categories', $category_params); ?>
+			<div class="rp-col-lg-8 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
+				<?php
+				$get_categories = rpress_get_categories($category_params);
+				if (!empty($shortcode_atts['category_menu'])) {
+					$get_categories = rpress_get_child_cats($category_ids);
+				}
+				$all_terms = array();
+				if (is_array($get_categories) && !empty($get_categories)) {
+					$all_terms = wp_list_pluck($get_categories, 'slug');
+				}
 
-			// Apply custom filter to $all_terms
-			$all_terms = apply_filters('time_based_menu_rpress_foods', $all_terms);
+				// Apply custom filter to $all_terms
+				$all_terms = apply_filters('time_based_menu_rpress_foods', $all_terms);
 
-			if (is_array($all_terms) && !empty($all_terms)):
-				foreach ($all_terms as $term_slug):
-					$prepared_query = RP_Shortcode_Fooditems::query($term_slug);
-					$atts = RP_Shortcode_Fooditems::$atts;
-					// Allow the query to be manipulated by other plugins
-					$query = apply_filters('rpress_fooditems_query', $prepared_query, $atts);
-					$fooditems = new WP_Query($query);
-					do_action('rpress_fooditems_list_before', $atts);
-					if ($fooditems->have_posts()):
-						$i = 1;
-						do_action('rpress_fooditems_list_top', $atts, $fooditems);
-						$curr_cat_var = '';
-						while ($fooditems->have_posts()):
-							$fooditems->the_post();
-							$id = get_the_ID();
-							do_action('rpress_fooditems_category_title', $term_slug, $id, $curr_cat_var);
-							do_action('rpress_fooditem_shortcode_item', $atts, $i);
-							++$i;
-						endwhile;
-						wp_reset_postdata();
-						do_action('rpress_fooditems_list_bottom', $atts);
-						wp_reset_query();
-					endif;
-				endforeach;
-			else:
-				/* translators: %s: post singular name */
-				printf(_x('No %s found', 'rpress post type name', 'restropress'), rp_get_label_plural());
-			endif;
-			?>
-		</div>		
+				if (is_array($all_terms) && !empty($all_terms)):
+					foreach ($all_terms as $term_slug):
+						$prepared_query = RP_Shortcode_Fooditems::query($term_slug);
+						$atts = RP_Shortcode_Fooditems::$atts;
+						// Allow the query to be manipulated by other plugins
+						$query = apply_filters('rpress_fooditems_query', $prepared_query, $atts);
+						$fooditems = new WP_Query($query);
+						do_action('rpress_fooditems_list_before', $atts);
+						if ($fooditems->have_posts()):
+							$i = 1;
+							do_action('rpress_fooditems_list_top', $atts, $fooditems);
+							$curr_cat_var = '';
+							while ($fooditems->have_posts()):
+								$fooditems->the_post();
+								$id = get_the_ID();
+								do_action('rpress_fooditems_category_title', $term_slug, $id, $curr_cat_var);
+								do_action('rpress_fooditem_shortcode_item', $atts, $i);
+								++$i;
+							endwhile;
+							wp_reset_postdata();
+							do_action('rpress_fooditems_list_bottom', $atts);
+							wp_reset_query();
+						endif;
+					endforeach;
+					$is_menu_enabled = rpress_get_option('mobile_menu_display_enable', '');
+					if ("1" === $is_menu_enabled) {
+						rpress_get_template_part("rpress", "mobile-menu-category");
+					}
+					?>
+
+					<?php
+				else:
+					/* translators: %s: post singular name */
+					printf(esc_html_x('No %s found', 'rpress post type name', 'restropress'), esc_html(rp_get_label_plural()));
+				endif;
+				?>
+			</div>
+
 		</div>
-	</div>	
+
+	</div>
 	<?php if (!empty($atts) && !empty($fooditems)): ?>
 		<?php do_action('rpress_fooditems_list_after', $atts, $fooditems); ?>
 	<?php endif; ?>
 	<?php do_action('rpress_get_cart'); ?>
+
 </div>

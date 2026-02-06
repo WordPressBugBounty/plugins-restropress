@@ -878,8 +878,8 @@ if ( '1' === rpress_get_option( 'activate_api' ) ) {
 	 *
 	 * @since 3.0.0
 	 * * */
-	add_action( 'show_user_profile', 'rpress_user_api_keys_display' );
-	add_action( 'edit_user_profile', 'rpress_user_api_keys_display' );
+	//add_action( 'show_user_profile', 'rpress_user_api_keys_display' );
+	//add_action( 'edit_user_profile', 'rpress_user_api_keys_display' );
 }
 if ( ! function_exists( 'rpress_user_api_keys_display' ) ) {
 	/**
@@ -891,7 +891,7 @@ if ( ! function_exists( 'rpress_user_api_keys_display' ) ) {
 		$keys_not_genereated = rpress_user_api_key_not_generated( $profile );
 		$all_keys            = rpress_get_user_all_api_keys( $profile );
 		$table_data          = $keys_not_genereated ?? $all_keys;
-		echo $table_data;
+		echo esc_html( $table_data );
 	}
 }
 if ( ! function_exists( 'rpress_user_api_key_not_generated' ) ) {

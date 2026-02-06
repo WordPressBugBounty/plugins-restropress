@@ -32,7 +32,7 @@ function rpress_payment_history_page() {
 	<div class="wrap">
 		<h1><?php echo esc_html( $rpress_payment->labels->menu_name ); ?></h1>
 		<?php do_action( 'rpress_payments_page_top' ); ?>
-		<form id="rpress-payments-filter" method="get" action="<?php echo admin_url( 'admin.php?page=rpress-payment-history' ); ?>">
+		<form id="rpress-payments-filter" method="get" action="<?php echo esc_url( admin_url( 'admin.php?page=rpress-payment-history' ) ); ?>">
 			<input type="hidden" name="page" value="rpress-payment-history" />
 			
 			<?php $payments_table->views() ?>

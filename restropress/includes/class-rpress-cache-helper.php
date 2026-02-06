@@ -89,7 +89,24 @@ class RPRESS_Cache_Helper {
 			if ( $enabled && ! in_array( '_wp_session_', $settings ) ) {
 				?>
 				<div class="error">
-					<p><?php printf( __( 'In order for <strong>database caching</strong> to work with RestroPress you must add <code>_wp_session_</code> to the "Ignored query stems" option in W3 Total Cache settings <a href="%s">here</a>.', 'restropress' ), admin_url( 'admin.php?page=w3tc_dbcache' ) ); ?></p>
+					<p>
+					<?php
+					$url = admin_url( 'admin.php?page=w3tc_dbcache' );
+
+					/* translators: %s: URL to W3 Total Cache settings */
+					printf(
+						wp_kses(
+							__( 'In order for <strong>database caching</strong> to work with RestroPress you must add <code>_wp_session_</code> to the "Ignored query stems" option in W3 Total Cache settings <a href="%s">here</a>.', 'restropress' ),
+							array(
+								'strong' => array(),
+								'code'   => array(),
+								'a'      => array( 'href' => true ),
+							)
+						),
+						esc_url( $url )
+					);
+					?>
+					</p>
 				</div>
 				<?php
 			}

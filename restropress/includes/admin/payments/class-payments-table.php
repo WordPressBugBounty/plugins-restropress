@@ -155,7 +155,7 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 			$gateways['all'] = esc_html__( 'All Gateways', 'restropress' );
 			foreach( $all_gateways as $slug => $admin_label ) {
 				
-				$gateways[ $slug ] = $admin_label['admin_label'];
+				$gateways[ esc_attr($slug) ] = esc_html($admin_label['admin_label']);
 				
 			}
 		}
@@ -167,7 +167,7 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 			$order_statuses['all'] = esc_html__( 'Order Status', 'restropress' );
 			foreach( $all_order_statuses as $slug => $admin_label ) {
 				
-				$order_statuses[ $slug ] = $admin_label;
+				$order_statuses[ esc_attr($slug) ] = esc_html($admin_label);
 			}
 		}
 		
@@ -192,28 +192,65 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 			<span id="rpress-payment-gateway-filter">
 				<?php
 				if ( ! empty( $gateways ) ) {
-					echo RPRESS()->html->select( array(
-						'options'          => $gateways,
-						'name'             => 'gateway',
-						'id'               => 'gateway',
-						'selected'         => $selected_gateway,
-						'show_option_all'  => false,
-						'show_option_none' => false
-					) );
+					$allowed_tags = array(
+						'strong' => array(),
+						'em'     => array(),
+						'a'      => array(
+							'href'   => array(),
+							'title'  => array(),
+							'target' => array(),
+							'rel'    => array(),
+						),
+					);
+
+					echo wp_kses(
+						RPRESS()->html->select( array(
+							'options'          => $gateways,
+							'name'             => 'gateway',
+							'id'               => 'gateway',
+							'selected'         => esc_attr( $selected_gateway ),
+							'show_option_all'  => false,
+							'show_option_none' => false
+						) ),
+						array(
+							'select' => array(
+								'name'    => array(),
+								'id'      => array(),
+								'class'   => array(),
+							),
+							'option' => array(
+								'value'    => array(),
+								'selected' => array(),
+							),
+						)
+					);
 				}
 				?>
 			</span>
 			<span id="rpress-order-status-filter">
 			<?php
 			if ( ! empty( $order_statuses ) ) {
-				echo RPRESS()->html->select( array(
-					'options'          => $order_statuses,
-					'name'             => 'order_status',
-					'id'               => 'order_status',
-					'selected'         => $selected_orders,
-					'show_option_all'  => false,
-					'show_option_none' => false
-				) );
+				echo wp_kses(
+					RPRESS()->html->select( array(
+						'options'          => $order_statuses,
+						'name'             => 'order_status',
+						'id'               => 'order_status',
+						'selected'         => esc_attr($selected_orders),
+						'show_option_all'  => false,
+						'show_option_none' => false
+					) ),
+					array(
+						'select' => array(
+							'name'     => array(),
+							'id'       => array(),
+							'class'    => array(),
+						),
+						'option' => array(
+							'value'    => array(),
+							'selected' => array(),
+						),
+					)
+				);
 			}
 			?>
 			</span>
@@ -230,7 +267,7 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 				<input type="hidden" name="status" value="<?php echo esc_attr( $status ); ?>"/>
 			<?php endif; ?>
 			<?php if( ! empty( $service_date ) || ! empty( $start_date ) || ! empty( $end_date ) || 'all' !== $selected_gateway || 'all' !== $selected_orders ) : ?>
-				<a href="<?php echo admin_url( 'admin.php?page=rpress-payment-history' ); ?>" class="button-secondary"><?php esc_html_e( 'Clear Filter', 'restropress' ); ?></a>
+				<a href="<?php echo esc_url(admin_url( 'admin.php?page=rpress-payment-history' )); ?>" class="button-secondary"><?php esc_html_e( 'Clear Filter', 'restropress' ); ?></a>
 			<?php endif; ?>
 			<?php do_action( 'rpress_payment_advanced_filters_row' ); ?>
 			<?php $this->search_box( esc_html__( 'Search', 'restropress' ), 'rpress-payments' ); ?>
@@ -947,24 +984,24 @@ if (strpos($service_time_str, 'ASAP') !== false) {
             			$price      = isset( $fooditems['price'] ) ? $fooditems['price'] : false; ?>
             		<tr class="rp-order-preview-table">
 						<td class="rp-order-preview-table__column--product">
-							<?php echo rpress_get_cart_item_name( $fooditems ); ?>
+							<?php echo esc_html(rpress_get_cart_item_name( $fooditems )); ?>
               			</td>
 	              		<td class="rp-order-preview-table__column--quantity">
-	                		<?php echo rpress_currency_filter( rpress_format_amount( $fooditems['item_price'] ) ) . ' X ' . $fooditems['quantity']; ?>
+	                		<?php echo esc_html(rpress_currency_filter( rpress_format_amount( $fooditems['item_price'] ) ) ) . ' X ' . esc_html($fooditems['quantity']); ?>
 						</td>
 	              		<?php if ( rpress_use_taxes() ) : ?>
 	                	<td class="rp-order-preview-table__column--tax">
-	                  		<?php echo rpress_currency_filter( rpress_format_amount( $item_tax ) ); ?>
+	                  		<?php echo esc_html(rpress_currency_filter( rpress_format_amount( $item_tax ) )); ?>
 	                	</td>
 	              		<?php endif; ?>
 	              		<td class="rp-order-preview-table__column--price">
-	                		<?php echo rpress_currency_filter( rpress_format_amount( $price ) ); ?>
+	                		<?php echo esc_html(rpress_currency_filter( rpress_format_amount( $price ) )); ?>
 	              		</td>
             		</tr>
             		<?php if ( !empty( $special_instruction ) ) : ?>
               		<tr class="rp-order-preview-table special-instruction">
                 		<td colspan="3">
-                  			<?php printf( esc_html__( 'Special Instruction : %s', 'rp_quick_view'), $special_instruction ); ?>
+                  			<?php printf( esc_html__( 'Special Instruction : %s', 'restropress'), esc_html($special_instruction) ); ?>
                 		</td>
               		</tr>
             		<?php endif; ?>
@@ -981,15 +1018,15 @@ if (strpos($service_time_str, 'ASAP') !== false) {
                         	<?php echo esc_html( $addon_name ); ?>
                       	</td>
                       	<td>
-                        	<?php echo rpress_currency_filter( rpress_format_amount( $addon_price ), rpress_get_payment_currency_code( $payment->ID ) ) . ' X ' . $addon_quantity; ?>
+                        	<?php echo esc_html(rpress_currency_filter( rpress_format_amount( $addon_price ), rpress_get_payment_currency_code( $payment->ID ) ) ) . ' X ' . esc_html($addon_quantity); ?>
                       	</td>
                       	<?php if ( rpress_use_taxes() ) : ?>
                         <td>
-                         	<?php echo rpress_currency_filter( rpress_format_amount( '0' ) ); ?>
+                         	<?php echo esc_html(rpress_currency_filter( rpress_format_amount( '0' ) )); ?>
                         </td>
                       	<?php endif; ?>
                       	<td>
-                        	<?php echo rpress_currency_filter( rpress_format_amount( $addon_price ) ); ?>
+                        	<?php echo esc_html(rpress_currency_filter( rpress_format_amount( $addon_price ) )); ?>
                       	</td>
                     </tr>
                     		<?php endif;

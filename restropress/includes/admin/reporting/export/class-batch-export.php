@@ -88,6 +88,13 @@ class RPRESS_Batch_Export extends RPRESS_Export {
 	 * @param $_step int The step to process
 	 * @since 2.4
 	 */
+	public $done = false;
+	/**
+	 * Get things started
+	 *
+	 * @param $_step int The step to process
+	 * @since 2.4
+	 */
 	public function __construct( $_step = 1 ) {
 		$upload_dir       = wp_upload_dir();
 		$this->filetype   = '.csv';

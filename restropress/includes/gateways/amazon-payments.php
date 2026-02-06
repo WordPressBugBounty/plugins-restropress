@@ -451,7 +451,11 @@ final class RPRESS_Amazon_Payments {
 			RPRESS()->session->set( 'amazon_access_token', sanitize_text_field( $_GET['access_token'] ) );
 			RPRESS()->session->set( 'amazon_profile', $profile );
 		} catch( Exception $e ) {
-			wp_die( print_r( $e, true ) );
+			wp_die(
+				esc_html( $e->getMessage() ), // escape the error message
+				esc_html__( 'Amazon OAuth Error', 'restropress' ),
+				array( 'response' => 500 )
+			);
 		}
 	}
 	/**
@@ -547,7 +551,25 @@ final class RPRESS_Amazon_Payments {
 				</script>
 			</fieldset>
 		<?php
-		echo ob_get_clean();
+		$output = ob_get_clean();
+
+        // Allowed HTML for the fieldset + div container
+        $allowed_html = array(
+            'fieldset' => array(
+                'id'    => true,
+                'class' => true,
+            ),
+            'div' => array(
+                'id'    => true,
+                'class' => true,
+            ),
+            'script' => array(
+                'type' => true,
+            ),
+        );
+
+        echo wp_kses( $output, $allowed_html );
+
 		endif;
 	}
 	/**
@@ -867,7 +889,7 @@ final class RPRESS_Amazon_Payments {
 			$data      = $ipn->toArray();
 			$seller_id = $data['SellerId'];
 			if( $seller_id != rpress_get_option( 'amazon_seller_id', '' ) ) {
-				wp_die( __( 'Invalid Amazon seller ID', 'restropress' ), __( 'IPN Error', 'restropress' ), array( 'response' => 401 ) );
+				wp_die( esc_html__( 'Invalid Amazon seller ID', 'restropress' ), esc_html__( 'IPN Error', 'restropress' ), array( 'response' => 401 ) );
 			}
 			switch( $data['NotificationType'] ) {
 				case 'OrderReferenceNotification' :
@@ -894,7 +916,7 @@ final class RPRESS_Amazon_Payments {
 					break;
 			}
 		} catch( Exception $e ) {
-			wp_die( $e->getErrorMessage(), __( 'IPN Error', 'restropress' ), array( 'response' => 401 ) );
+			wp_die( esc_html($e->getMessage()), esc_html__( 'IPN Error', 'restropress' ), array( 'response' => 401 ) );
 		}
 	}
 	/**

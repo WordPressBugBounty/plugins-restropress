@@ -120,8 +120,10 @@ class RPRESS_Print_Receipts {
    */
   public function add_meta_box( $payment_id ) {
     if ( $this->check_print_action_available( $payment_id ) ) :
-      echo '<div style="display: none;" class="print-display-area" id="print-display-area-'.$payment_id.'"></div><button type="button" data-payment-id="'.$payment_id.'" class="button rp_print_now">'.apply_filters( 'rpress_edit_print_text', __( 'Print', 'restropress' ) ).'</button>';
-      
+      echo '<div style="display: none;" class="print-display-area" id="print-display-area-' . esc_attr( $payment_id ) . '"></div>';
+      echo '<button type="button" data-payment-id="' . esc_attr( $payment_id ) . '" class="button rp_print_now">'
+              . esc_html( apply_filters( 'rpress_edit_print_text', __( 'Print', 'restropress' ) ) )
+              . '</button>';            
     endif;
   }
   /**
@@ -247,7 +249,19 @@ class RPRESS_Print_Receipts {
     $content = str_replace( $search, $replace, $receipt );
     // Output the content
     ob_start();
-    echo $content;
+    // Output the escaped content
+    echo wp_kses(
+      $content,
+      [
+          'p'      => ['class' => true],
+          'b'      => [],
+          'br'     => [],
+          'strong' => [],
+          'em'     => [],
+          'img'    => ['src' => true, 'style' => true, 'alt' => true],
+          'div'    => ['class' => true, 'style' => true],
+      ]
+    );
     wp_die();
   }
   /**

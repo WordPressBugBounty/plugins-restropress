@@ -550,7 +550,8 @@ class RPRESS_Payment {
 				}
 			}
 			if (rpress_get_option( 'enable_sequential' ) ) {
-				echo $number       = rpress_get_next_payment_number();
+				$number = rpress_get_next_payment_number();
+				echo esc_html( $number );
 				$this->number = rpress_format_payment_number( $number );
 				$this->update_meta( '_rpress_payment_number', $this->number );
 				update_option( 'rpress_last_payment_number', $number );

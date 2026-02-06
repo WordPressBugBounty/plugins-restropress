@@ -2,6 +2,9 @@
 global $rpress_options;
 $service_type = rpress_get_option('enable_service', 'delivery_and_pickup');
 $services = $service_type == 'delivery_and_pickup' ? ['delivery', 'pickup'] : [$service_type];
+$services = apply_filters('rpress_enable_services', $services);
+$service_date = isset($_COOKIE['service_date']) ? sanitize_text_field($_COOKIE['service_date']) : '';
+
 // Check for cookie first
 $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field($_COOKIE['service_type']) : '';
 
@@ -11,30 +14,47 @@ if ($cookie_service && in_array($cookie_service, $services, true)) {
 } else {
     $default = !empty(rpress_get_option('default_service')) ? rpress_get_option('default_service') : 'delivery';
 }
+
 $store_time = rp_get_store_timings(true, '');
 $store_times = apply_filters('rpress_store_delivery_timings', $store_time);
-$current_time = current_time('timestamp');
-if (empty(rpress_get_option('enable_always_open'))) {
-    $open_time = !empty(rpress_get_option('open_time')) ? rpress_get_option('open_time') : '9:00am';
-    $close_time = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
-} else {
-    $open_time = '12:00am';
-    $close_time = '11:59pm';
-}
-$open_time = strtotime(date_i18n('Y-m-d') . ' ' . $open_time);
-$close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
-//If empty check if pickup hours are available
+
+// If empty check if pickup hours are available
 if (empty($store_times)) {
     $store_times = apply_filters('rpress_store_pickup_timings', $store_time);
 }
-$closed_message = rpress_get_option('store_closed_msg', __('Sorry, we are closed for ordering now.', 'restropress'));
+$service_date_raw = apply_filters( "rpress_service_date_raw", $service_date, $cookie_service );
+// Format date if it exists, else use today's date
+if (!empty($service_date_raw)) {
+    // Convert from Y-m-d (cookie) to F j (e.g., July 9)
+    $date_object = DateTime::createFromFormat('Y-m-d', $service_date_raw);
+    $service_date = $date_object ? $date_object->format('F j') : date_i18n('F j');
+} else {
+    $service_date = date_i18n('F j');
+}
+
+// Determine if we should show the service tabs
+$show_service_tabs = false;
+$closed_message_display = '';
+
+if ($service_type === 'delivery_and_pickup') {
+    // Always show switch for delivery_and_pickup
+    $show_service_tabs = true;
+} else {
+    // For individual services, check if store is open
+    $current_service = $services[0];
+    if ( rpress_is_store_open($current_service, $service_date)) {
+        $show_service_tabs = true;
+    } else {
+        $closed_message_display = rpress_store_closed_message($current_service);
+    }
+}
 ?>
 <div class="rpress-delivery-wrap">
-    <?php if (empty($store_times) || ($current_time < $open_time)): ?>
+    <?php if (!$show_service_tabs && !empty($closed_message_display)): ?>
         <div class="alert alert-warning">
-            <?php echo wp_kses_post($closed_message); ?>
+            <?php echo wp_kses_post($closed_message_display); ?>
         </div>
-    <?php else: ?>
+    <?php elseif ($show_service_tabs): ?>
         <div class="rpress-row">
             <!-- Error Message Starts Here -->
             <div class="alert alert-warning rpress-errors-wrap disabled"></div>
@@ -49,7 +69,7 @@ $closed_message = rpress_get_option('store_closed_msg', __('Sorry, we are closed
                                 data-service-type="<?php echo esc_attr($service); ?>" data-toggle="tab"
                                 href="#nav-<?php echo esc_attr($service); ?>" role="tab"
                                 aria-controls="nav-<?php echo esc_attr($service); ?>" aria-selected="false">
-                                <?php echo apply_filters('rpress_modify_service_label', rpress_service_label($service)); ?>
+                                <?php echo esc_html( apply_filters( 'rpress_modify_service_label', rpress_service_label( $service ) ) ); ?>
                             </a>
                         </li>
                     <?php endforeach; ?>

@@ -79,7 +79,7 @@ function addon_category_taxonomy_custom_fields($tag)
       </th>
       <td>
         <input type="number" min="0" step=".01" name="addon_meta[price]" id="addon_meta[price]" size="25" style="width:15%;"
-          value="<?php echo $addon_price; ?>"><br />
+          value="<?php echo esc_html($addon_price); ?>"><br />
         <span class="description"><?php esc_html_e('Price for this addon item', 'restropress'); ?></span>
       </td>
     </tr>
@@ -139,7 +139,12 @@ function rpress_get_item_qty_by_key($cart_key)
 {
   if ((!empty($cart_key)) || $cart_key == '0') {
     $cart_items = rpress_get_cart_contents();
-    $cart_items = $cart_items[$cart_key];
+    if( isset($cart_items[$cart_key]) ){
+      $cart_items = $cart_items[$cart_key];
+    }
+    if (!isset($cart_items['quantity'])) {
+      return 0;
+    }
     return $cart_items['quantity'];
   }
 }
@@ -197,57 +202,58 @@ function rpress_rpress_cart_callback()
 }
 add_shortcode('custom_forgot_password', 'myplugin_custom_forgot_password_form');
 
-function myplugin_custom_forgot_password_form() {
-    ob_start();
+function myplugin_custom_forgot_password_form()
+{
+  ob_start();
 
-    if (!is_user_logged_in()) {
-        ?>
-        <div class="custom-reset-password">
-            <h2>Forgot your password?</h2>
-            <p>A code will be sent to your email to help reset password</p>
+  if (!is_user_logged_in()) {
+    ?>
+    <div class="custom-reset-password">
+      <h2>Forgot your password?</h2>
+      <p>A code will be sent to your email to help reset password</p>
 
-            <form method="post">
-                <label for="user_login">Username or Email Address</label>
-                <input type="text" name="user_login" id="user_login" required placeholder="Enter your email address" />
+      <form method="post">
+        <label for="user_login">Username or Email Address</label>
+        <input type="text" name="user_login" id="user_login" required placeholder="Enter your email address" />
 
-                <?php wp_nonce_field('custom_forgot_password_action', 'custom_forgot_password_nonce'); ?>
+        <?php wp_nonce_field('custom_forgot_password_action', 'custom_forgot_password_nonce'); ?>
 
-                <input type="submit" name="custom_forgot_password_submit" class="reset-button" value="Get New Password" />
+        <input type="submit" name="custom_forgot_password_submit" class="reset-button" value="Get New Password" />
 
-                <div class="login-link">
-                    <a href="<?php echo esc_url( site_url('/login') ); ?>">← Back to Login</a>
-                </div>
-            </form>
-
-            <?php
-            if (isset($_POST['custom_forgot_password_submit'])) {
-                if (isset($_POST['custom_forgot_password_nonce']) && wp_verify_nonce($_POST['custom_forgot_password_nonce'], 'custom_forgot_password_action')) {
-                    $user_login = sanitize_text_field($_POST['user_login']);
-                    $user = get_user_by('login', $user_login);
-                    if (!$user && is_email($user_login)) {
-                        $user = get_user_by('email', $user_login);
-                    }
-
-                    if ($user) {
-                        $reset = retrieve_password($user->user_login);
-                        if ($reset) {
-                            echo '<p class="success">Check your email for the confirmation link.</p>';
-                        } else {
-                            echo '<p class="error">Could not reset password. Try again later.</p>';
-                        }
-                    } else {
-                        echo '<p class="error">No user found with that email or username.</p>';
-                    }
-                }
-            }
-            ?>
+        <div class="login-link">
+          <a href="<?php echo esc_url(site_url('/login')); ?>">← Back to Login</a>
         </div>
-        <?php
-    } else {
-        echo '<p>You are already logged in.</p>';
-    }
+      </form>
 
-    return ob_get_clean();
+      <?php
+      if (isset($_POST['custom_forgot_password_submit'])) {
+        if (isset($_POST['custom_forgot_password_nonce']) && wp_verify_nonce($_POST['custom_forgot_password_nonce'], 'custom_forgot_password_action')) {
+          $user_login = sanitize_text_field($_POST['user_login']);
+          $user = get_user_by('login', $user_login);
+          if (!$user && is_email($user_login)) {
+            $user = get_user_by('email', $user_login);
+          }
+
+          if ($user) {
+            $reset = retrieve_password($user->user_login);
+            if ($reset) {
+              echo '<p class="success">Check your email for the confirmation link.</p>';
+            } else {
+              echo '<p class="error">Could not reset password. Try again later.</p>';
+            }
+          } else {
+            echo '<p class="error">No user found with that email or username.</p>';
+          }
+        }
+      }
+      ?>
+    </div>
+    <?php
+  } else {
+    echo '<p>You are already logged in.</p>';
+  }
+
+  return ob_get_clean();
 }
 if (!function_exists('rpress_product_menu_tab')) {
   /**
@@ -336,8 +342,11 @@ function get_delivery_options($changeble)
     <div class="delivery-opts">
       <?php if (!empty($_COOKIE['service_type'])): ?>
         <span
-          class="delMethod"><?php echo rpress_service_label(sanitize_text_field($_COOKIE['service_type'])) . ', ' . $service_date; ?></span><?php if (!empty($_COOKIE['service_time'])): ?><span
-            class="delTime"><?php printf(__(', %s', 'restropress'), sanitize_text_field($service_time_str)); ?></span><?php endif; ?>
+          class="delMethod"><?php echo esc_html(rpress_service_label(sanitize_text_field($_COOKIE['service_type']))) . ', ' . esc_html($service_date); ?></span>
+        <?php if (!empty($_COOKIE['service_time'])): ?>
+          <span
+            class="delTime"><?php printf(esc_html__(', %s', 'restropress'), esc_html(sanitize_text_field($service_time_str))); ?></span>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
     <?php if ($changeble && !empty($_COOKIE['service_type'])): ?>
@@ -384,9 +393,10 @@ function get_date_time_options($changeble)
   <div class="delivery-wrap">
     <div class="delivery-opts">
       <?php if (!empty($_COOKIE['service_type'])): ?>
-        <span class="delMethod"><?php echo $service_date; ?></span>
+        <span class="delMethod"><?php echo esc_html($service_date); ?></span>
         <?php if (!empty($_COOKIE['service_time'])): ?>
-          <span class="delTime"><?php printf(__(', %s', 'restropress'), sanitize_text_field($service_time_str)); ?></span>
+          <span
+            class="delTime"><?php printf(esc_html__(', %s', 'restropress'), esc_html(sanitize_text_field($service_time_str))); ?></span>
         <?php endif; ?>
       <?php endif; ?>
     </div>
@@ -498,6 +508,16 @@ function rp_get_store_timings($hide_past_time = true, $service_type = null)
   $close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
   $time_today = apply_filters('rpress_timing_for_today', true);
   $store_times = range($open_time, $close_time, $time_interval);
+  $store_time_format = rpress_get_option( 'store_time_format' );
+  $date_format = get_option( 'time_format' );
+  if("24hrs" === $store_time_format ){
+    $date_format = "H:i";
+  }
+
+  if("12hrs" === $store_time_format ){
+    $date_format = "h:i A";
+  }
+ 
   //If not today then return normal time
   if (!$time_today)
     return $store_times;
@@ -510,12 +530,12 @@ function rp_get_store_timings($hide_past_time = true, $service_type = null)
   foreach ($store_times as $store_time) {
     if ($hide_past_time) {
       if ($store_time > $current_time) {
-        $store_timings[] = $store_time;
+        $store_timings[] = date_i18n($date_format,  $store_time) ;
       } else if (!empty(rpress_get_option('enable_always_open')) && $current_time > $close_time) {
-        $store_timings[] = $store_time;
+        $store_timings[] = date_i18n($date_format,  $store_time) ;
       }
     } else {
-      $store_timings[] = $store_time;
+      $store_timings[] =date_i18n($date_format,  $store_time) ;
     }
   }
   return $store_timings;
@@ -617,32 +637,48 @@ function rp_get_store_service_hours($service_type, $current_time_aware = true, $
     $store_timings = apply_filters('rpress_store_pickup_timings', $store_times);
   }
   $store_timings_for_today = apply_filters('rpress_timing_for_today', true);
-  if (is_array($store_timings)) {
-    foreach ($store_timings as $key => $time) {
-      // Bring both curent time and Selected time to Admin Time Format
-      $store_time = gmdate($time_format, $time);
-      $selected_time = gmdate($time_format, strtotime($selected_time));
-      $asap_option = rpress_get_option('enable_asap_option', '');
-      if ($store_timings_for_today) {
-        // Remove any extra space in Current Time and Selected Time
-        $timing_slug = str_replace(' ', '', $store_time);
-        $selected_time = str_replace(' ', '', $selected_time);
-        if ($current_time_aware) {
-          if (strtotime($store_time) > strtotime($current_time)) { ?>
-            <option <?php selected($selected_time, $timing_slug, $asap_option); ?>
-              value='<?php echo ($asap_option && $key == 0) ? 'ASAP' : $store_time; ?>'>
-              <?php echo ($asap_option && $key == 0) ? __('ASAP', 'restropress') : $store_time; ?>
-            </option>
-          <?php }
-        } else { ?>
-          <option <?php selected($selected_time, $timing_slug, $asap_option); ?>
-            value='<?php echo ($asap_option && $key == 0) ? 'ASAP' : $store_time; ?>'>
-            <?php echo ($asap_option && $key == 0) ? __('ASAP', 'restropress') : $store_time; ?>
-          </option>
-        <?php }
-      }
+if ( is_array( $store_timings ) ) {
+    foreach ( $store_timings as $key => $time ) {
+
+        // Convert each timing into a valid timestamp
+        $time_int = is_numeric( $time ) ? (int) $time : strtotime( $time );
+        if ( ! $time_int ) { $time_int = 0; }
+
+        // Convert selected time safely
+        $selected_timestamp = strtotime( $selected_time );
+        if ( ! $selected_timestamp ) { $selected_timestamp = 0; }
+
+        // Bring both times to admin time format
+        $store_time    = gmdate( $time_format, $time_int );  
+        $selected_time = gmdate( $time_format, $selected_timestamp );
+
+        $asap_option = rpress_get_option( 'enable_asap_option', '' );
+
+        if ( $store_timings_for_today ) {
+
+            // Remove any extra whitespace
+            $timing_slug   = str_replace( ' ', '', $store_time );
+            $selected_time = str_replace( ' ', '', $selected_time );
+
+            if ( $current_time_aware ) {
+
+                if ( strtotime( $store_time ) > strtotime( $current_time ) ) { ?>
+                    <option <?php selected( $selected_time, $timing_slug, $asap_option ); ?>
+                        value="<?php echo esc_attr( ( $asap_option && $key == 0 ) ? 'ASAP' : $store_time ); ?>">
+                        <?php echo esc_html( ( $asap_option && $key == 0 ) ? __( 'ASAP', 'restropress' ) : $store_time ); ?>
+                    </option>
+                <?php }
+
+            } else { ?>
+                <option <?php selected( $selected_time, $timing_slug, $asap_option ); ?>
+                    value="<?php echo esc_attr( ( $asap_option && $key == 0 ) ? 'ASAP' : $store_time ); ?>">
+                    <?php echo esc_html( ( $asap_option && $key == 0 ) ? __( 'ASAP', 'restropress' ) : $store_time ); ?>
+                </option>
+            <?php }
+        }
     }
-  }
+}
+
 }
 /**
  * Get list of categories/subcategories
@@ -788,7 +824,7 @@ function rpress_pre_validate_order()
       $minimum_price_error = rpress_get_option('minimum_order_error');
       $minimum_order_formatted = rpress_currency_filter(rpress_format_amount($minimum_order_price_delivery));
       $minimum_price_error = str_replace('{min_order_price}', $minimum_order_formatted, $minimum_price_error);
-      $response = array('status' => 'error', 'minimum_price' => $minimum_order_price, 'error_msg' => $minimum_price_error);
+      $response = array('status' => 'error', 'minimum_price' => $minimum_order_price_delivery, 'error_msg' => $minimum_price_error);
     } else if ($enable_minimum_order && $service_type == 'pickup' && rpress_get_cart_subtotal() < $minimum_order_price_pickup) {
       $minimum_price_error_pickup = rpress_get_option('minimum_order_error_pickup');
       $minimum_order_formatted = rpress_currency_filter(rpress_format_amount($minimum_order_price_pickup));
@@ -1372,13 +1408,24 @@ function _rpress_deprecated_function($function, $version, $replacement = null, $
   // Allow plugin to filter the output error trigger
   if (WP_DEBUG && apply_filters('rpress_deprecated_function_trigger_error', $show_errors)) {
     if (!is_null($replacement)) {
-      trigger_error(sprintf(__('%1$s is <strong>deprecated</strong> since RestroPress version %2$s! Use %3$s instead.', 'restropress'), $function, $version, $replacement));
-      trigger_error(print_r($backtrace, 1)); // Limited to previous 1028 characters, but since we only need to move back 1 in stack that should be fine.
-      // Alternatively we could dump this to a file.
+      trigger_error(sprintf(
+        /* translators: 1: function name, 2: version, 3: replacement function */
+        '%1$s is deprecated since RestroPress version %2$s! Use %3$s instead.',
+        esc_html($function),
+        esc_html($version),
+        esc_html($replacement)
+      ));
+
+      trigger_error(esc_html(print_r($backtrace, true))); // Safe for logs
     } else {
-      trigger_error(sprintf(__('%1$s is <strong>deprecated</strong> since RestroPress version %2$s with no alternative available.', 'restropress'), $function, $version));
-      trigger_error(print_r($backtrace, 1));// Limited to previous 1028 characters, but since we only need to move back 1 in stack that should be fine.
-      // Alternatively we could dump this to a file.
+      trigger_error(sprintf(
+        /* translators: 1: function name, 2: version */
+        '%1$s is deprecated since RestroPress version %2$s with no alternative available.',
+        esc_html($function),
+        esc_html($version)
+      ));
+
+      trigger_error(esc_html(print_r($backtrace, true))); // Safe for logs
     }
   }
 }
@@ -1411,13 +1458,26 @@ function _rpress_deprected_argument($argument, $function, $version, $replacement
   // Allow plugin to filter the output error trigger
   if (WP_DEBUG && apply_filters('rpress_deprecated_argument_trigger_error', $show_errors)) {
     if (!is_null($replacement)) {
-      trigger_error(sprintf(__('The %1$s argument of %2$s is <strong>deprecated</strong> since RestroPress version %3$s! Please use %4$s instead.', 'restropress'), $argument, $function, $version, $replacement));
-      trigger_error(print_r($backtrace, 1)); // Limited to previous 1028 characters, but since we only need to move back 1 in stack that should be fine.
-      // Alternatively we could dump this to a file.
+      trigger_error(sprintf(
+        /* translators: 1: argument, 2: function, 3: version, 4: replacement */
+        'The %1$s argument of %2$s is deprecated since RestroPress version %3$s! Please use %4$s instead.',
+        esc_html($argument),
+        esc_html($function),
+        esc_html($version),
+        esc_html($replacement)
+      ));
+
+      trigger_error(esc_html(print_r($backtrace, true))); // Safe for logs
     } else {
-      trigger_error(sprintf(__('The %1$s argument of %2$s is <strong>deprecated</strong> since RestroPress version %3$s with no alternative available.', 'restropress'), $argument, $function, $version));
-      trigger_error(print_r($backtrace, 1));// Limited to previous 1028 characters, but since we only need to move back 1 in stack that should be fine.
-      // Alternatively we could dump this to a file.
+      trigger_error(sprintf(
+        /* translators: 1: argument, 2: function, 3: version */
+        'The %1$s argument of %2$s is deprecated since RestroPress version %3$s with no alternative available.',
+        esc_html($argument),
+        esc_html($function),
+        esc_html($version)
+      ));
+
+      trigger_error(esc_html(print_r($backtrace, true))); // Safe for logs
     }
   }
 }
@@ -1952,32 +2012,77 @@ function rp_get_order_count($status = 'pending')
   return apply_filters('rpress_order_count', $order_count, $status);
 }
 
-add_action( 'admin_init', 'my_plugin_handle_setup_form' );
-function my_plugin_handle_setup_form() {
-	if (
-		isset($_GET['page']) && $_GET['page'] === 'rpress-setup' &&
-		isset($_POST['my_plugin_setup_nonce']) &&
-		wp_verify_nonce($_POST['my_plugin_setup_nonce'], 'my_plugin_save_setup')
-	) {
-		// Get existing settings
-		$options = get_option('rpress_settings', array());
+add_action('admin_init', 'my_plugin_handle_setup_form');
+function my_plugin_handle_setup_form()
+{
+  if (
+    isset($_GET['page']) && $_GET['page'] === 'rpress-setup' &&
+    isset($_POST['my_plugin_setup_nonce']) &&
+    wp_verify_nonce($_POST['my_plugin_setup_nonce'], 'my_plugin_save_setup')
+  ) {
+    // Get existing settings
+    $options = get_option('rpress_settings', array());
 
-		// Update with new values
-		$options['enable_service']  = sanitize_text_field($_POST['enable_service']);
-		$options['default_service'] = sanitize_text_field($_POST['default_service']);
-		$options['default_time']    = sanitize_text_field($_POST['default_time']);
+    // Update with new values
+    $options['enable_service'] = sanitize_text_field($_POST['enable_service']);
+    $options['default_service'] = sanitize_text_field($_POST['default_service']);
+    // $options['default_time'] = sanitize_text_field($_POST['default_time']);
 
-		// Save back
-		update_option('rpress_settings', $options);
+    // Save back
+    update_option('rpress_settings', $options);
 
-		wp_safe_redirect(admin_url());
-		exit;
-	}
+    wp_safe_redirect(admin_url());
+    exit;
+  }
 }
-add_filter( 'body_class', function( $classes ) {
-  // Add your custom class
-  if ( ! in_array( 'order-online', $classes, true ) ) {
+add_filter('body_class', function ($classes) {
+  // Get current post object
+  global $post;
+
+  // Add custom class only if page slug is NOT "checkout"
+  if (isset($post->post_name) && $post->post_name !== 'checkout') {
+    if (!in_array('order-online', $classes, true)) {
       $classes[] = 'order-online';
+    }
   }
   return $classes;
 });
+
+/**
+ * Check if store is open based on current time and settings
+ * @since 3.2.2.1
+ */
+function rpress_is_store_open( $service_type, $selected_date = '' )
+{
+  $current_time = current_time('timestamp');
+
+  if (empty(rpress_get_option('enable_always_open'))) {
+    $open_time = !empty(rpress_get_option('open_time')) ? rpress_get_option('open_time') : '9:00am';
+    $close_time = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
+  } else {
+    $open_time = '12:00am';
+    $close_time = '11:59pm';
+  }
+
+  $open_time = strtotime(date_i18n('Y-m-d') . ' ' . $open_time);
+  $close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
+
+  // Check if store is open
+  $is_open = ($current_time >= $open_time && $current_time <= $close_time);
+  if( empty($selected_date) ){
+    $selected_date = date_i18n('Y-m-d', $current_time);
+  }
+  // Apply filter to allow other plugins to modify the status
+  $is_open = apply_filters('rpress_is_store_open', $is_open, $service_type,  $selected_date,  $current_time, $open_time, $close_time);
+
+  return $is_open;
+}
+/**
+ * Store closed message
+ * @since 3.2.2.1
+ */
+function rpress_store_closed_message($service_type){
+  $close_message = rpress_get_option('store_closed_msg', __('Sorry, we are closed for ordering now.', 'restropress'));
+  $close_message = apply_filters('rpress_store_closed_message', $close_message ,$service_type);
+  return $close_message;
+}

@@ -611,18 +611,42 @@
                                         </td>
                                         <td class="text-align-right">
                                             <?php 
-                                        echo sanitize_text_field( $all_product_names[0] ); 
-                                        if (count($all_product_names) > 1) {
-                                            echo '<br><span class="rp-product-quantity-no">+' . (count($all_product_names) - 1) . ' more</span>';
-                                        }
-                                        ?>
+                                            echo esc_html( $all_product_names[0] );
+                                            if ( count( $all_product_names ) > 1 ) {
+                                                $additional_count = count( $all_product_names ) - 1;
+                                                $html = '<br><span class="rp-product-quantity-no">+' . esc_html( $additional_count ) . ' more</span>';
+                                            
+                                                echo wp_kses( $html, array(
+                                                    'br'   => array(),
+                                                    'span' => array(
+                                                        'class' => array(),
+                                                    ),
+                                                ) );
+                                            }                                        
+                                            ?>
                                         </td>
                                         <td class="text-align-right">
-                                            <?php  echo $category_names ; ?>
+                                            <?php 
+                                            echo wp_kses( $category_names, array(
+                                                'span' => array(
+                                                    'class' => array(),
+                                                ),
+                                                'br' => array(),
+                                            ) ); 
+                                            ?>
                                         </td>
                                         <td class="rp-product-amount text-align-right">
                                             <?php echo esc_html( $order_amount ); ?><br>
-                                            <?php echo ( $payment_status ) ; ?>
+                                            <?php
+                                            echo wp_kses(
+                                                $payment_status,
+                                                array(
+                                                    'span' => array(
+                                                        'class' => true,
+                                                    ),
+                                                )
+                                            );
+                                            ?>
                                         </td>
                                         <td class="text-align-right">
                                             <div class="d-flex viewbg">
@@ -784,7 +808,7 @@
                             ?>
                             <div class="item-not-found-wrap">     
                                 <img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/item-not-found.png' ); ?>" />   
-                                <p><?php echo esc_html__( "Sorry, No product found", "repropress" ); ?></p>                                   
+                                <p><?php echo esc_html__( "Sorry, No product found", "restropress" ); ?></p>                                   
                             </div>
                             <?php
                             endif;

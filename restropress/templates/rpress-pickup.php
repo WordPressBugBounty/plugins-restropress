@@ -5,7 +5,10 @@
     <?php
     if ( rpress_is_service_enabled( 'pickup' ) ) :
       $store_times        = rp_get_store_timings( true, 'pickup' );
-      $store_timings      = apply_filters( 'rpress_store_pickup_timings', $store_times );
+      $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field($_COOKIE['service_type']) : '';
+    $service_date = isset($_COOKIE['service_date']) ? sanitize_text_field($_COOKIE['service_date']) : '';
+
+    $store_timings      = apply_filters( 'rpress_store_timings', $store_times, $cookie_service, $service_date );
       $store_time_format  = rpress_get_option( 'store_time_format' );
       $time_format        = ! empty( $store_time_format ) && $store_time_format == '24hrs' ? 'H:i' : 'h:ia';
       $time_format        = apply_filters( 'rpress_store_time_format', $time_format, $store_time_format );
@@ -16,7 +19,7 @@
       
       ?>
       <div class="pickup-time-text">
-        <?php echo apply_filters( 'rpress_pickup_time_string', esc_html_e( 'Select a pickup time', 'restropress' ) ); ?>
+      <?php echo esc_html( apply_filters( 'rpress_pickup_time_string', esc_html__( 'Select a pickup time', 'restropress' ) ) ); ?>
       </div>
       <?php
       if ( $asap_option_only == 1 ) {
@@ -26,24 +29,31 @@
       <select class="rpress-pickup rpress-allowed-pickup-hrs rpress-hrs rp-form-control" id="rpress-pickup-hours" name="rpress_allowed_hours">
        <?php if( is_array( $store_timings ) ) :
          foreach( $store_timings as $key => $time ) :
-          $loop_time = gmdate( $time_format, $time );
+         // $loop_time = gmdate( $time_format, $time );
 
           // Apply your custom hook to potentially remove certain times
-          $filtered_time = apply_filters( 'rpress_store_delivery_timings_slot_remaining', $loop_time );
+          $filtered_time = apply_filters( 'rpress_store_delivery_timings_slot_remaining', $time );
 
           // Skip this iteration if the filtered time is empty (indicating it's been "removed")
           if ( empty( $filtered_time ) ) {
             continue;
           }
 
-          if(class_exists('RPRESS_SlotLimit')){
+          if ( class_exists( 'RPRESS_SlotLimit' ) ) {
             ?>
-            <option value='<?php echo $loop_time; ?>' <?php selected( $selected_time,$filtered_time,$asap_option, true ); ?>>
-              <?php echo $filtered_time; ?>
-            </option><?php
+            <option value="<?php echo esc_attr( $loop_time ); ?>" <?php selected( $selected_time, $filtered_time, $asap_option, true ); ?>>
+                <?php echo esc_html( $filtered_time ); ?>
+            </option>
+            <?php
           } else {
-            ?><option value='<?php echo ( $asap_option && $key == 0 ) ?  'ASAP' . esc_html( $pickup_asap_text ) : $filtered_time; ?>'<?php selected( $selected_time, $filtered_time, $asap_option, true ); ?>><?php echo ( $asap_option && $key == 0 ) ? __( 'ASAP' , 'restropress' ) . ' ' . esc_html( $pickup_asap_text ) : $filtered_time; ?></option><?php
-          }
+              $option_value = ( $asap_option && $key == 0 ) ? 'ASAP' . $pickup_asap_text : $filtered_time;
+              $option_text  = ( $asap_option && $key == 0 ) ? esc_html__( 'ASAP', 'restropress' ) . ' ' . $pickup_asap_text : $filtered_time;
+              ?>
+              <option value="<?php echo esc_attr( $option_value ); ?>" <?php selected( $selected_time, $filtered_time, $asap_option, true ); ?>>
+                  <?php echo esc_html( $option_text ); ?>
+              </option>
+              <?php
+          }        
         endforeach; ?>
        <?php endif; ?>
       </select>

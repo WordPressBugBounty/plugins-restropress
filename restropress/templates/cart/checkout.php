@@ -18,12 +18,12 @@ $display       = $cart_quantity > 0 ? '' : ' style="display:none;"';
 $button_style = rpress_get_option('button_style', 'button');
 ?>
 <div class="rpress-cart-total-wrap">
-	<li class="cart_item rpress-cart-meta rpress_subtotal"><?php esc_html_e( 'Subtotal', 'restropress' ); ?> <span class='cart-subtotal'><?php echo ( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ) ); ?></span></li>
+	<li class="cart_item rpress-cart-meta rpress_subtotal"><?php esc_html_e( 'Subtotal', 'restropress' ); ?> <span class='cart-subtotal'><?php echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ) ); ?></span></li>
 	<?php if ( rpress_use_taxes() && !empty( ceil( rpress_get_cart_tax() ) ) ) : ?>
-	<li class="cart_item rpress-cart-meta rpress_cart_tax"><?php echo ( rpress_get_tax_name() ); ?> <span class="cart-tax"><?php echo ( rpress_currency_filter( rpress_format_amount( rpress_get_cart_tax() ) ) ); ?></span></li>
+	<li class="cart_item rpress-cart-meta rpress_cart_tax"><?php echo esc_html( rpress_get_tax_name() ); ?> <span class="cart-tax"><?php echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_cart_tax() ) ) ); ?></span></li>
 	<?php endif; ?>
 	<?php do_action( 'rpress_cart_line_item' ); ?>
-	<li class="cart_item rpress-cart-meta rpress_total"><?php esc_html_e( 'Total (', 'restropress' ); ?><span class="rpress-cart-quantity" <?php echo wp_kses_post( $display ); ?> ><?php echo ( $cart_quantity ); ?></span><?php esc_html_e( ' Items)', 'restropress' ); ?><span class="cart-total"><?php echo ( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ) ); ?></span></li>
+	<li class="cart_item rpress-cart-meta rpress_total"><?php esc_html_e( 'Total (', 'restropress' ); ?><span class="rpress-cart-quantity" <?php echo wp_kses_post( $display ); ?> ><?php echo esc_html( $cart_quantity ); ?></span><?php esc_html_e( ' Items)', 'restropress' ); ?><span class="cart-total"><?php echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ) ); ?></span></li>
 </div>
 <!-- Service Type and Service Time -->
 <?php if ( ( isset( $_COOKIE['service_type'] ) && !empty( $_COOKIE['service_type'] ) ) || ( isset( $_COOKIE['service_time'] ) && !empty( $_COOKIE['service_time'] ) ) ) : ?>

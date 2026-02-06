@@ -212,7 +212,7 @@ function rpress_get_registered_settings() {
 						'desc' => '',
 						'type' => 'header',
 						'tooltip_title' => esc_html__( 'Minimum Order Settings', 'restropress' ),
-						'tooltip_desc'  => esc_html__( 'This would be the minimum order to be placed on the site to get checkout page' ),
+						'tooltip_desc'  => esc_html__( 'This would be the minimum order to be placed on the site to get checkout page', 'restropress' ),
 					),
 					'allow_minimum_order' => array(
 						'id'   => 'allow_minimum_order',
@@ -494,11 +494,11 @@ function rpress_get_registered_settings() {
 						'id' => 'enable_service',
 						'name'    => esc_html__( 'Choose Services', 'restropress' ),
 						'type' => 'radio',
-						'options' => array(
+						'options' => apply_filters("rpress_available_services", array( 
 							'delivery_and_pickup' => esc_html__( 'Both Delivery and Pickup', 'restropress' ),
 							'delivery'  => esc_html__( 'Delivery Only', 'restropress' ),
 							'pickup'  => esc_html__( 'Pickup Only', 'restropress' ),
-						),
+						) ),
 						'std' => 'delivery_and_pickup',
 					),
 					'default_service' => array(
@@ -511,15 +511,15 @@ function rpress_get_registered_settings() {
 						),
 						'std' => 'delivery',
 					),
-					'default_time' => array(
-						'id'            => 'default_time',
-						'name'          => esc_html__( 'Default Time', 'restropress' ),
-						'desc'          => esc_html__( 'Select restaurant default time', 'restropress' ),
-						'type'          => 'text',
-						'std'       	=> '9:00am',
-						'field_class' 	=> 'rpress_timings',
-						'allow_blank'	=> false,
-					),
+					// 'default_time' => array(
+					// 	'id'            => 'default_time',
+					// 	'name'          => esc_html__( 'Default Time', 'restropress' ),
+					// 	'desc'          => esc_html__( 'Select restaurant default time', 'restropress' ),
+					// 	'type'          => 'text',
+					// 	'std'       	=> '9:00am',
+					// 	'field_class' 	=> 'rpress_timings',
+					// 	'allow_blank'	=> false,
+					// ),
 					'store_time_format' => array(
 						'id'            => 'store_time_format',
 						'name'          => esc_html__( 'Store Time Format', 'restropress' ),
@@ -534,12 +534,21 @@ function rpress_get_registered_settings() {
 					'wordpress_time' => array(
 						'id'   			=> 'wordpress_time',
 						'name' 			=> esc_html__( 'Wordpress Time Zone', 'restropress' ),
-						'desc' 			=> sprintf( 
-							wp_kses_post(
-								/* translators: %s for Wordpress time zone URL */
-								__( 'Set Coordinated Universal Time <a href="%s" target="_blank">Time Zone</a> <br><br><i><b>Important Notice: You need to setup  Wordpress time zone as per your required counrtry first.</b></i>','restropress' ) 
+						'desc' => wp_kses(
+							sprintf(
+								/* translators: %s for WordPress time zone URL */
+								__( 'Set Coordinated Universal Time <a href="%s" target="_blank">Time Zone</a> <br><br><i><b>Important Notice: You need to setup WordPress time zone as per your required country first.</b></i>', 'restropress' ),
+								esc_url( admin_url( 'options-general.php#timezone_string' ) )
 							),
-							admin_url( 'options-general.php#timezone_string' ) 
+							array(
+								'a' => array(
+									'href'   => true,
+									'target' => true,
+								),
+								'br' => array(),
+								'i'  => array(),
+								'b'  => array(),
+							)
 						),
 						'type' 			=> 'descriptive_text',
 					),
@@ -846,12 +855,12 @@ function rpress_get_registered_settings() {
 						'desc'          => esc_html__( 'Enable showing the items tags in menu page.', 'restropress' ),
 						'type'          => 'checkbox',
 					),
-					// 'disable_category_menu' => array(
-					// 	'id'            => 'disable_category_menu',
-					// 	'name'          => esc_html__( 'Disable Category Menu', 'restropress' ),
-					// 	'desc'          => esc_html__( 'Disable Category Menu In Food Item Page', 'restropress' ),
-					// 	'type'          => 'checkbox',
-					// ),
+					'disable_category_menu' => array(
+						'id'            => 'disable_category_menu',
+						'name'          => esc_html__( 'Disable Category Menu', 'restropress' ),
+						'desc'          => esc_html__( 'Disable Category Menu In Food Item Page', 'restropress' ),
+						'type'          => 'checkbox',
+					),
 					// 'option_view_food_items' => array(
 					// 	'id'            => 'option_view_food_items',
 					// 	'type'          => 'radio',
@@ -868,6 +877,12 @@ function rpress_get_registered_settings() {
 						'desc' => esc_html__( 'Options for add to cart and purchase buttons', 'restropress' ),
 						'type' => 'header',
 					),
+					"mobile_menu_display_enable" => [
+						'id' => "mobile_menu_display_enable",
+						'name'          => esc_html__( 'Mobile menu button', 'restropress' ),
+						'desc'          => esc_html__( 'Enable this option to show the mobile menu; disable it to hide the menu.', 'restropress' ),
+						'type'          => 'checkbox',
+					],
 					'button_style' => array(
 						'id'      => 'button_style',
 						'name'    => esc_html__( 'Default Button Style', 'restropress' ),
@@ -1502,18 +1517,47 @@ function rpress_header_callback( $args ) {
  * @return void
  */
 function rpress_checkbox_callback( $args ) {
-	$rpress_option = rpress_get_option( $args['id'] );
-	if ( isset( $args['faux'] ) && true === $args['faux'] ) {
-		$name = '';
-	} else {
-		$name = 'name="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"';
-	}
-	$class = rpress_sanitize_html_class( $args['field_class'] );
-	$checked  = ! empty( $rpress_option ) ? checked( 1, $rpress_option, false ) : '';
-	$html     = '<input type="hidden"' . $name . ' value="-1" />';
-	$html    .= '<input type="checkbox" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"' . $name . ' value="1" ' . $checked . ' class="' . $class . '"/>';
-	$html    .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> '  . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+    $rpress_option = rpress_get_option( $args['id'] );
+
+    if ( isset( $args['faux'] ) && true === $args['faux'] ) {
+        $name = '';
+    } else {
+        $name = 'name="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"';
+    }
+
+    $class   = rpress_sanitize_html_class( $args['field_class'] );
+    $checked = ! empty( $rpress_option ) ? checked( 1, $rpress_option, false ) : '';
+
+    $html  = '<input type="hidden" ' . $name . ' value="-1" />';
+    $html .= '<input type="checkbox" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" ' . $name . ' value="1" ' . $checked . ' class="' . esc_attr( $class ) . '"/>';
+    $html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> ' . wp_kses_post( $args['desc'] ) . '</label>';
+
+    // Let all filters modify first
+    $html = apply_filters( 'rpress_after_setting_output', $html, $args );
+
+    // ✅ Now sanitize final HTML
+    $allowed_html = array(
+        'input' => array(
+            'type'    => true,
+            'name'    => true,
+            'id'      => true,
+            'value'   => true,
+            'class'   => true,
+            'checked' => true,
+        ),
+        'label' => array(
+            'for' => true,
+        ),
+        'span' => array(
+            'alt'   => true,
+            'class' => true,
+            'title' => true,
+        ),
+        'br' => array(),
+        'strong' => array(),
+    );
+
+    echo wp_kses( $html, $allowed_html );
 }
 /**
  * Multicheck Callback
@@ -1538,7 +1582,28 @@ function rpress_multicheck_callback( $args ) {
 		endforeach;
 		$html .= '<p class="description">' . $args['desc'] . '</p>';
 	}
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+        'input' => array(
+            'type'    => true,
+            'name'    => true,
+            'id'      => true,
+            'class'   => true,
+            'value'   => true,
+            'checked' => true,
+        ),
+        'label' => array(
+            'for' => true,
+        ),
+        'br' => array(),
+        'p'  => array(
+            'class' => true,
+        ),
+    );
+
+    echo wp_kses(
+        apply_filters( 'rpress_after_setting_output', $html, $args ),
+        $allowed_html
+    );
 }
 /**
  * Payment method icons callback
@@ -1583,7 +1648,35 @@ function rpress_payment_icons_callback( $args ) {
 		}
 		$html .= '<p class="description" style="margin-top:16px;">' . wp_kses_post( $args['desc'] ) . '</p>';
 	}
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+        'input' => array(
+            'type'    => true,
+            'name'    => true,
+            'id'      => true,
+            'class'   => true,
+            'value'   => true,
+            'checked' => true,
+        ),
+        'label' => array(
+            'for'   => true,
+            'class' => true,
+        ),
+        'img' => array(
+            'src'   => true,
+            'class' => true,
+            'style' => true,
+        ),
+        'br' => array(),
+        'p'  => array(
+            'class' => true,
+            'style' => true,
+        ),
+    );
+
+    echo wp_kses(
+        apply_filters( 'rpress_after_setting_output', $html, $args ),
+        $allowed_html
+    );
 }
 /**
  * Radio Callback
@@ -1609,7 +1702,28 @@ function rpress_radio_callback( $args ) {
 		$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . '][' . rpress_sanitize_key( $key ) . ']">' . esc_html( $option ) . '</label><br/>';
 	endforeach;
 	$html .= '<p class="description">' .  wp_kses_post( $args['desc'] ) . '</p>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+        'input' => array(
+            'type' => true,
+            'name' => true,
+            'id' => true,
+            'class' => true,
+            'value' => true,
+            'checked' => true,
+        ),
+        'label' => array(
+            'for' => true,
+        ),
+        'br' => array(),
+        'p' => array(
+            'class' => true,
+        ),
+    );
+
+    echo wp_kses(
+        apply_filters( 'rpress_after_setting_output', $html, $args ),
+        $allowed_html
+    );
 }
 /**
  * Gateways Callback
@@ -1638,7 +1752,25 @@ function rpress_gateways_callback( $args ) {
 			'utm_medium'   => 'gateways',
 			'utm_campaign' => 'admin',
 	);
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+        'input' => array(
+            'type'  => true,
+            'name'  => true,
+            'id'    => true,
+            'class' => true,
+            'value' => true,
+            'checked' => true,
+        ),
+        'label' => array(
+            'for' => true,
+        ),
+        'br' => array(),
+    );
+
+    echo wp_kses(
+        apply_filters( 'rpress_after_setting_output', $html, $args ),
+        $allowed_html
+    );
 }
 /**
  * Gateways Callback (drop down)
@@ -1652,16 +1784,35 @@ function rpress_gateways_callback( $args ) {
  */
 function rpress_gateway_select_callback( $args ) {
 	$rpress_option = rpress_get_option( $args['id'] );
+	//echo rpress_sanitize_key( $args['id'] );
+	
 	$class = rpress_sanitize_html_class( $args['field_class'] );
 	$html = '';
-	$html .= '<select name="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" class="' . $class . '">';
+	$html .= '<select name="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" class="' . $class . '">';
 	foreach ( $args['options'] as $key => $option ) :
 		$selected = isset( $rpress_option ) ? selected( $key, $rpress_option, false ) : '';
 		$html .= '<option value="' . rpress_sanitize_key( $key ) . '"' . $selected . '>' . esc_html( $option['admin_label'] ) . '</option>';
 	endforeach;
 	$html .= '</select>';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> '  . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+        'select' => array(
+            'name'  => true,
+            'id'    => true,
+            'class' => true,
+        ),
+        'option' => array(
+            'value'    => true,
+            'selected' => true,
+        ),
+        'label' => array(
+            'for' => true,
+        ),
+    );
+    echo wp_kses(
+        apply_filters( 'rpress_after_setting_output', $html, $args ),
+        $allowed_html
+    );
 }
 /**
  * Text Callback
@@ -1695,7 +1846,26 @@ function rpress_text_callback( $args ) {
 	$size     = ( isset( $args['size'] ) && ! is_null( $args['size'] ) ) ? $args['size'] : 'regular';
 	$html     = '<input type="text" class="' . $class . ' ' . sanitize_html_class( $size ) . '-text" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" ' . $name . ' value="' . esc_attr( stripslashes( $value ) ) . '"' . $readonly . $disabled . ' placeholder="' . esc_attr( $args['placeholder'] ) . '"/>';
 	$html    .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> '  . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+        'input' => array(
+            'type'        => true,
+            'class'       => true,
+            'id'          => true,
+            'name'        => true,
+            'value'       => true,
+            'readonly'    => true,
+            'disabled'    => true,
+            'placeholder' => true,
+        ),
+        'label' => array(
+            'for' => true,
+        ),
+    );
+
+    echo wp_kses(
+        apply_filters( 'rpress_after_setting_output', $html, $args ),
+        $allowed_html
+    );
 }
 /**
  * Email Callback
@@ -1729,7 +1899,26 @@ function rpress_email_callback( $args ) {
 	$size     = ( isset( $args['size'] ) && ! is_null( $args['size'] ) ) ? $args['size'] : 'regular';
 	$html     = '<input type="email" class="' . $class . ' ' . sanitize_html_class( $size ) . '-text" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" ' . $name . ' value="' . esc_attr( stripslashes( $value ) ) . '"' . $readonly . $disabled . ' placeholder="' . esc_attr( $args['placeholder'] ) . '"/>';
 	$html    .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> '  . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+        'input' => array(
+            'type'        => true,
+            'class'       => true,
+            'id'          => true,
+            'name'        => true,
+            'value'       => true,
+            'readonly'    => true,
+            'disabled'    => true,
+            'placeholder' => true,
+        ),
+        'label' => array(
+            'for' => true,
+        ),
+    );
+
+    echo wp_kses(
+        apply_filters( 'rpress_after_setting_output', $html, $args ),
+        $allowed_html
+    );
 }
 /**
  * Number Callback
@@ -1762,7 +1951,26 @@ function rpress_number_callback( $args ) {
 	$size = ( isset( $args['size'] ) && ! is_null( $args['size'] ) ) ? $args['size'] : 'regular';
 	$html = '<input type="number" step="' . esc_attr( $step ) . '" max="' . esc_attr( $max ) . '" min="' . esc_attr( $min ) . '" class="' . $class . ' ' . sanitize_html_class( $size ) . '-text" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" ' . $name . ' value="' . esc_attr( stripslashes( $value ) ) . '"/>';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> '  . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+		'input' => array(
+			'type'  => true,
+			'class' => true,
+			'id'    => true,
+			'name'  => true,
+			'value' => true,
+			'step'  => true,
+			'min'   => true,
+			'max'   => true,
+		),
+		'label' => array(
+			'for' => true,
+		),
+	);
+
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		$allowed_html
+	);
 }
 /**
  * Textarea Callback
@@ -1784,7 +1992,23 @@ function rpress_textarea_callback( $args ) {
 	$class = rpress_sanitize_html_class( $args['field_class'] );
 	$html = '<textarea class="' . $class . ' large-text" cols="50" rows="5" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" name="rpress_settings[' . esc_attr( $args['id'] ) . ']">' . esc_textarea( stripslashes( $value ) ) . '</textarea>';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> '  . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+		'textarea' => array(
+			'class' => true,
+			'id'    => true,
+			'name'  => true,
+			'cols'  => true,
+			'rows'  => true,
+		),
+		'label' => array(
+			'for' => true,
+		),
+	);
+
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		$allowed_html
+	);
 }
 /**
  * Password Callback
@@ -1807,7 +2031,23 @@ function rpress_password_callback( $args ) {
 	$size = ( isset( $args['size'] ) && ! is_null( $args['size'] ) ) ? $args['size'] : 'regular';
 	$html = '<input type="password" class="' . $class . ' ' . sanitize_html_class( $size ) . '-text" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" name="rpress_settings[' . esc_attr( $args['id'] ) . ']" value="' . esc_attr( $value ) . '"/>';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> ' . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+		'input' => array(
+			'type'  => true,
+			'class' => true,
+			'id'    => true,
+			'name'  => true,
+			'value' => true,
+		),
+		'label' => array(
+			'for' => true,
+		),
+	);
+
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		$allowed_html
+	);
 }
 /**
  * Missing Callback
@@ -1871,7 +2111,27 @@ function rpress_select_callback($args) {
 	}
 	$html .= '</select>';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> ' . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	$allowed_html = array(
+		'select' => array(
+			'id'              => true,
+			'class'           => true,
+			'name'            => true,
+			'data-placeholder'=> true,
+			'multiple'        => true,
+		),
+		'option' => array(
+			'value'    => true,
+			'selected' => true,
+		),
+		'label' => array(
+			'for' => true,
+		),
+	);
+
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		$allowed_html
+	);
 }
 /**
  * Color select Callback
@@ -1898,7 +2158,26 @@ function rpress_color_select_callback( $args ) {
 	}
 	$html .= '</select>';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> '  . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	// Define allowed HTML for safe output
+	$allowed_html = array(
+		'select' => array(
+			'id'    => true,
+			'class' => true,
+			'name'  => true,
+		),
+		'option' => array(
+			'value'    => true,
+			'selected' => true,
+		),
+		'label' => array(
+			'for' => true,
+		),
+	);
+
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		$allowed_html
+	);
 }
 /**
  * Rich Editor Callback
@@ -1925,7 +2204,31 @@ function rpress_rich_editor_callback( $args ) {
 	wp_editor( stripslashes( $value ), 'rpress_settings_' . esc_attr( $args['id'] ), array( 'textarea_name' => 'rpress_settings[' . esc_attr( $args['id'] ) . ']', 'textarea_rows' => absint( $rows ), 'editor_class' => $class ) );
 	$html = ob_get_clean();
 	$html .= '<br/><label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> ' . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		array(
+			'div'   => array(
+				'id'    => array(),
+				'class' => array(),
+			),
+			'textarea' => array(
+				'name'  => array(),
+				'class' => array(),
+				'rows'  => array(),
+				'id'    => array(),
+			),
+			'label' => array(
+				'for' => array(),
+			),
+			'br' => array(),
+			'p'  => array(),
+			'strong' => array(),
+			'em' => array(),
+			'span' => array(
+				'class' => array(),
+			),
+		)
+	);
 }
 /**
  * Upload Callback
@@ -1949,7 +2252,22 @@ function rpress_upload_callback( $args ) {
 	$html = '<input type="text" class="' . sanitize_html_class( $size ) . '-text" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" class="' . $class . '" name="rpress_settings[' . esc_attr( $args['id'] ) . ']" value="' . esc_attr( stripslashes( $value ) ) . '"/>';
 	$html .= '<span>&nbsp;<input type="button" class="rpress_settings_upload_button button-secondary" value="' . esc_html__( 'Upload File', 'restropress' ) . '"/></span>';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> ' . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		array(
+			'input' => array(
+				'type'  => array(),
+				'class' => array(),
+				'id'    => array(),
+				'name'  => array(),
+				'value' => array(),
+			),
+			'span'  => array(),
+			'label' => array(
+				'for' => array(),
+			),
+		)
+	);
 }
 /**
  * Color picker Callback
@@ -1972,7 +2290,22 @@ function rpress_color_callback( $args ) {
 	$class = rpress_sanitize_html_class( $args['field_class'] );
 	$html = '<input type="text" class="' . $class . ' rpress-color-picker" id="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']" name="rpress_settings[' . esc_attr( $args['id'] ) . ']" value="' . esc_attr( $value ) . '" data-default-color="' . esc_attr( $default ) . '" />';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> '  . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		array(
+			'input' => array(
+				'type'              => array(),
+				'class'             => array(),
+				'id'                => array(),
+				'name'              => array(),
+				'value'             => array(),
+				'data-default-color'=> array(),
+			),
+			'label' => array(
+				'for' => array(),
+			),
+		)
+	);
 }
 /**
  * Shop States Callback
@@ -2006,7 +2339,24 @@ function rpress_shop_states_callback($args) {
 	}
 	$html .= '</select>';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key( $args['id'] ) . ']"> '  . wp_kses_post( $args['desc'] ) . '</label>';
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		array(
+			'select' => array(
+				'id'               => array(),
+				'name'             => array(),
+				'class'            => array(),
+				'data-placeholder' => array(),
+			),
+			'option' => array(
+				'value'    => array(),
+				'selected' => array(),
+			),
+			'label' => array(
+				'for' => array(),
+			),
+		)
+	);
 }
 function rpress_order_notification_settings_callback( $args ) {
     ob_start(); ?>
@@ -2248,7 +2598,35 @@ function rpress_order_notification_settings_callback( $args ) {
     </div>
    <?php
  }
-    echo ob_get_clean();
+ echo wp_kses(
+    ob_get_clean(),
+    array(
+        'div'      => array( 'class' => array(), 'id' => array() ),
+        'p'        => array( 'class' => array() ),
+        'table'    => array( 'class' => array(), 'cellspacing' => array() ),
+        'thead'    => array(),
+        'tbody'    => array(),
+        'tr'       => array(),
+        'th'       => array( 'class' => array() ),
+        'td'       => array( 'class' => array(), 'colspan' => array(), 'rowspan' => array() ),
+        'span'     => array( 'class' => array(), 'data-tip' => array() ),
+        'a'        => array( 'href' => array(), 'class' => array(), 'title' => array(), 'target' => array(), 'rel' => array() ),
+        'h2'       => array(),
+        'small'    => array( 'class' => array() ),
+        'label'    => array( 'for' => array(), 'class' => array() ),
+        'input'    => array( 'id' => array(), 'type' => array(), 'name' => array(), 'value' => array(), 'checked' => array(), 'class' => array() ),
+        'textarea' => array( 'id' => array(), 'name' => array(), 'rows' => array(), 'cols' => array(), 'class' => array() ),
+        'select'   => array( 'name' => array(), 'id' => array(), 'class' => array() ),
+        'option'   => array( 'value' => array(), 'selected' => array() ),
+        'strong'   => array(),
+        'em'       => array(),
+        'br'       => array(),
+        'ul'       => array(),
+        'ol'       => array(),
+        'li'       => array(),
+        'h3'       => array(),
+    )
+);
 }
 /**
  * Descriptive text callback.
@@ -2261,7 +2639,19 @@ function rpress_order_notification_settings_callback( $args ) {
  */
 function rpress_descriptive_text_callback( $args ) {
 	$html = wp_kses_post( $args['desc'] );
-	echo apply_filters( 'rpress_after_setting_output', $html, $args );
+	echo wp_kses(
+		apply_filters( 'rpress_after_setting_output', $html, $args ),
+		array(
+			'span' => array(
+				'alt'   => true,
+				'class' => true,
+				'title' => true,
+			),
+			'i' => array(
+				'class' => true,
+			),
+		)
+	);
 }
 /**
  * Registers the license field callback for Software Licensing
@@ -2439,7 +2829,18 @@ function rpress_set_settings_cap() {
 add_filter( 'option_page_capability_rpress_settings', 'rpress_set_settings_cap' );
 function rpress_add_setting_tooltip( $html, $args ) {
 	if ( ! empty( $args['tooltip_title'] ) && ! empty( $args['tooltip_desc'] ) ) {
-		$tooltip = '<span alt="f223" class="rpress-help-tip dashicons dashicons-editor-help" title="<strong>' . $args['tooltip_title'] . '</strong><br />' . $args['tooltip_desc'] . '"></span>';
+		// Combine tooltip title + description safely for the title attribute
+		$title_text = sprintf(
+			'%s — %s',
+			wp_strip_all_tags( $args['tooltip_title'] ),
+			wp_strip_all_tags( $args['tooltip_desc'] )
+		);
+
+		$tooltip = sprintf(
+			'<span alt="f223" class="rpress-help-tip dashicons dashicons-editor-help" title="%s"></span>',
+			esc_attr( $title_text )
+		);
+
 		$html .= $tooltip;
 	}
 	return $html;

@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
   <div class="header-info">
       {rpp_store_logo}
       <div class="customer-info">
-          <p style="margin-top: 0; margin-bottom: 0; text-align: center; font-size: 12pt;"><?php echo __('Order', 'restropress'); ?>: #<b>{rpp_order_id}</b></p>
+          <p style="margin-top: 0; margin-bottom: 0; text-align: center; font-size: 12pt;"><?php echo esc_html__('Order', 'restropress'); ?>: #<b>{rpp_order_id}</b></p>
           <p style="margin-top: 0; margin-bottom: 0; text-align: center; font-size: 12pt;">{rpp_customer_name} {rpp_customer_phone}</p>
           <p style="margin-top: 0; margin-bottom: 0; text-align: center; font-size: 12pt;">{rpp_customer_email}</p>
       </div>

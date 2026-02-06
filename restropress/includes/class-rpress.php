@@ -5,26 +5,27 @@
  * @package RestroPress
  * @since   2.2
  */
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 /**
  * Main RestroPress Class.
  *
  * @class RestroPress
  */
-final class RestroPress {
-  /**
-   * RestroPress version.
-   *
-   * @var string
-   */
-  public $version = '3.2.1';
+final class RestroPress
+{
 	/**
-   * The single instance of the class.
-   *
-   * @var RestroPress
-   * @since  1.0
-   */
-  private static $instance;
+	 * RestroPress version.
+	 *
+	 * @var string
+	 */
+	public $version = '3.2.4.2';
+	/**
+	 * The single instance of the class.
+	 *
+	 * @var RestroPress
+	 * @since  1.0
+	 */
+	private static $instance;
 	/**
 	 * RPRESS Roles Object.
 	 *
@@ -112,54 +113,60 @@ final class RestroPress {
 	 * @see RPRESS()
 	 * @return object|RestroPress The one true RestroPress
 	 */
-	public static function instance() {
-    if ( ! isset( self::$instance ) && ! ( self::$instance instanceof RestroPress ) ) {
-      self::$instance = new RestroPress;
-      self::$instance->includes();
-      self::$instance->init_hooks();
-      self::$instance->roles         = new RPRESS_Roles();
-      self::$instance->fees          = new RPRESS_Fees();
-      self::$instance->session       = new RPRESS_Session();
-      self::$instance->html          = new RPRESS_HTML_Elements();
-      self::$instance->emails        = new RPRESS_Emails();
-      self::$instance->email_tags    = new RPRESS_Email_Template_Tags();
-      self::$instance->customers     = new RPRESS_DB_Customers();
-      self::$instance->customer_meta = new RPRESS_DB_Customer_Meta();
-      self::$instance->payment_stats = new RPRESS_Payment_Stats();
-      self::$instance->cart          = new RPRESS_Cart();
-    }
-    return self::$instance;
-  }
+	public static function instance()
+	{
+		if (!isset(self::$instance) && !(self::$instance instanceof RestroPress)) {
+			self::$instance = new RestroPress;
+			self::$instance->includes();
+			self::$instance->init_hooks();
+			self::$instance->roles = new RPRESS_Roles();
+			self::$instance->fees = new RPRESS_Fees();
+			self::$instance->session = new RPRESS_Session();
+			self::$instance->html = new RPRESS_HTML_Elements();
+			self::$instance->emails = new RPRESS_Emails();
+			self::$instance->email_tags = new RPRESS_Email_Template_Tags();
+			self::$instance->customers = new RPRESS_DB_Customers();
+			self::$instance->customer_meta = new RPRESS_DB_Customer_Meta();
+			self::$instance->payment_stats = new RPRESS_Payment_Stats();
+			self::$instance->cart = new RPRESS_Cart();
+		}
+		return self::$instance;
+	}
 	/**
 	 * Cloning is forbidden.
 	 *
 	 * @since 2.1
 	 */
-	public function __clone() {
-		_doing_it_wrong( __FUNCTION__, __( 'Cloning is forbidden.', 'restropress' ), '2.6.1' );
+	public function __clone()
+	{
+		_doing_it_wrong(__FUNCTION__, esc_html__('Cloning is forbidden.', 'restropress'), '2.6.1');
 	}
 	/**
 	 * Unserializing instances of this class is forbidden.
 	 *
 	 * @since 2.1
 	 */
-	public function __wakeup() {
-		_doing_it_wrong( __FUNCTION__, __( 'Unserializing instances of this class is forbidden.', 'restropress' ), '2.6.1' );
+	public function __wakeup()
+	{
+		_doing_it_wrong(__FUNCTION__, esc_html__('Unserializing instances of this class is forbidden.', 'restropress'), '2.6.1');
 	}
 	/**
 	 * RestroPress Constructor.
 	 */
-	public function __construct() {
+	public function __construct()
+	{
+		
 		$this->define_constants();
 	}
 	/**
 	 * Define RPRESS Constants.
 	 */
-	private function define_constants() {
-		$this->define( 'RP_VERSION', $this->version );
-		$this->define( 'RP_PLUGIN_DIR', plugin_dir_path( RP_PLUGIN_FILE ) );
-		$this->define( 'RP_PLUGIN_URL', plugin_dir_url( RP_PLUGIN_FILE ) );
-		$this->define( 'CAL_GREGORIAN', 1 );
+	private function define_constants()
+	{
+		$this->define('RP_VERSION', $this->version);
+		$this->define('RP_PLUGIN_DIR', plugin_dir_path(RP_PLUGIN_FILE));
+		$this->define('RP_PLUGIN_URL', plugin_dir_url(RP_PLUGIN_FILE));
+		$this->define('CAL_GREGORIAN', 1);
 	}
 	/**
 	 * Define constant if not already set.
@@ -167,38 +174,41 @@ final class RestroPress {
 	 * @param string      $name  Constant name.
 	 * @param string|bool $value Constant value.
 	 */
-	private function define( $name, $value ) {
-		if ( ! defined( $name ) ) {
-			define( $name, $value );
+	private function define($name, $value)
+	{
+		if (!defined($name)) {
+			define($name, $value);
 		}
 	}
 	/**
-	* What type of request is this?
-	*
-	* @param  string $type admin, ajax, cron or frontend.
-	* @return bool
-	*/
-	private function is_request( $type ) {
-		switch ( $type ) {
+	 * What type of request is this?
+	 *
+	 * @param  string $type admin, ajax, cron or frontend.
+	 * @return bool
+	 */
+	private function is_request($type)
+	{
+		switch ($type) {
 			case 'admin':
-		    	return is_admin();
-		  	case 'ajax':
-		    	return defined( 'DOING_AJAX' );
-		  	case 'cron':
-		    	return defined( 'DOING_CRON' );
-		  	case 'frontend':
-		    	return ( ! is_admin() || defined( 'DOING_AJAX' ) ) && ! defined( 'DOING_CRON' );
+				return is_admin();
+			case 'ajax':
+				return defined('DOING_AJAX');
+			case 'cron':
+				return defined('DOING_CRON');
+			case 'frontend':
+				return (!is_admin() || defined('DOING_AJAX')) && !defined('DOING_CRON');
 		}
 	}
 	/**
 	 * Include required core files used in admin and on the frontend.
 	 */
-	public function includes() {
+	public function includes()
+	{
 		global $rpress_options;
 		require_once RP_PLUGIN_DIR . 'includes/admin/settings/register-settings.php';
 		$rpress_options = rpress_get_settings();
 		require_once RP_PLUGIN_DIR . 'includes/rp-actions.php';
-		if( file_exists( RP_PLUGIN_DIR . 'includes/deprecated-functions.php' ) ) {
+		if (file_exists(RP_PLUGIN_DIR . 'includes/deprecated-functions.php')) {
 			require_once RP_PLUGIN_DIR . 'includes/deprecated-functions.php';
 		}
 		include_once RP_PLUGIN_DIR . 'includes/class-rpress-category-sorting.php';
@@ -234,7 +244,7 @@ final class RestroPress {
 		require_once RP_PLUGIN_DIR . 'includes/rp-core-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/functions.php';
-		if ( version_compare( phpversion(), 5.3, '>' ) ) {
+		if (version_compare(phpversion(), 5.3, '>')) {
 			require_once RP_PLUGIN_DIR . 'includes/gateways/amazon-payments.php';
 		}
 		require_once RP_PLUGIN_DIR . 'includes/gateways/paypal-standard.php';
@@ -252,7 +262,7 @@ final class RestroPress {
 		require_once RP_PLUGIN_DIR . 'includes/plugin-compatibility.php';
 		require_once RP_PLUGIN_DIR . 'includes/emails/class-rpress-emails.php';
 		require_once RP_PLUGIN_DIR . 'includes/emails/class-rpress-email-tags.php';
-    	require_once RP_PLUGIN_DIR . 'includes/emails/email-tags.php';
+		require_once RP_PLUGIN_DIR . 'includes/emails/email-tags.php';
 		require_once RP_PLUGIN_DIR . 'includes/emails/functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/emails/template.php';
 		require_once RP_PLUGIN_DIR . 'includes/emails/actions.php';
@@ -266,7 +276,7 @@ final class RestroPress {
 		require_once RP_PLUGIN_DIR . 'includes/admin/tracking.php';
 		require_once RP_PLUGIN_DIR . 'includes/privacy-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/shortcodes.php';
-        require_once RP_PLUGIN_DIR . 'includes/vendor/autoload.php';
+		require_once RP_PLUGIN_DIR . 'includes/vendor/autoload.php';
 		require_once RP_PLUGIN_DIR . "includes/firebase/class-rpress-firebase-fcm-impl.php";
 		/**
 		 * Migrating 3.0 Features to 2.x
@@ -275,12 +285,12 @@ final class RestroPress {
 		 */
 		include_once RP_PLUGIN_DIR . 'includes/class-rpress-shortcodes.php';
 		include_once RP_PLUGIN_DIR . 'includes/shortcodes/class-shortcode-fooditems.php';
-		if ( $this->is_request( 'admin' ) || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+		if ($this->is_request('admin') || (defined('WP_CLI') && WP_CLI)) {
 			/**
-			* Migrating 3.0 Features to 2.x
-			*
-			* @since 2.4.2
-			*/
+			 * Migrating 3.0 Features to 2.x
+			 *
+			 * @since 2.4.2
+			 */
 			include_once RP_PLUGIN_DIR . 'includes/admin/includes-rp-admin.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/add-ons.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/admin-actions.php';
@@ -317,37 +327,69 @@ final class RestroPress {
 			require_once RP_PLUGIN_DIR . 'includes/admin/class-rpress-heartbeat.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/tools/tools-actions.php';
 		}
-		if ( $this->is_request( 'frontend' ) ) {
+		if ($this->is_request('frontend')) {
 			$this->frontend_includes();
 		}
 		require_once RP_PLUGIN_DIR . 'includes/class-rpress-register-meta.php';
 		require_once RP_PLUGIN_DIR . 'includes/install.php';
 	}
 	/**
-	* Include required frontend files.
-	*/
-	public function frontend_includes() {
+	 * Include required frontend files.
+	 */
+	public function frontend_includes()
+	{
 		include_once RP_PLUGIN_DIR . 'includes/class-rpress-frontend-scripts.php';
 	}
-	
-	private function init_hooks() {
-        add_action( 'init', array( $this, 'load_rest_api' ) );
-		add_action( 'init', array( $this, 'load_textdomain' ) );
-    }
+
+	private function init_hooks()
+	{
+		add_action('init', array($this, 'load_rest_api'));
+		add_action('init', array($this, 'load_textdomain'));
+		add_action("init", [$this, 'rpress_handle_service_cookie']);
+	}
+
+	/**
+	 * Handle service cookie for delivery and pickup
+	 */
+	public function rpress_handle_service_cookie()
+	{
+		$service_type = rpress_get_option('enable_service', 'delivery_and_pickup');
+		$cookie_service = isset($_COOKIE['service_type'])
+			? sanitize_text_field($_COOKIE['service_type'])
+			: '';
+		// Determine valid services
+		$services = $service_type === 'delivery_and_pickup'
+			? ['delivery', 'pickup']
+			: [$service_type];
+		$services =  apply_filters( 'rpress_handle_service_cookie', $services );
+		// If cookie missing or invalid
+		if (empty($cookie_service) || !in_array($cookie_service, $services, true)) {
+			if ($service_type === 'delivery_and_pickup') {
+				$cookie_service = rpress_get_option('default_service') ?: 'delivery';
+			} else {
+				$cookie_service = $service_type;
+			}
+			// Set cookie safely before any HTML output
+			setcookie('service_type', $cookie_service, time() + (86400 * 30), "/");
+			$_COOKIE['service_type'] = $cookie_service;
+		}
+	}
 	/**
 	 * Load Localisation files.
 	 *
 	 * Note: the first-loaded translation file overrides any following ones if the same translation is present.
 	 */
-	public function load_textdomain() {
-		load_plugin_textdomain( 'restropress', false, dirname( plugin_basename( RP_PLUGIN_FILE ) ). '/languages/' );
+	public function load_textdomain()
+	{
+		load_plugin_textdomain('restropress', false, dirname(plugin_basename(RP_PLUGIN_FILE)) . '/languages/');
 	}
-    
-      /**
-     * Load REST API.
-     */
-    public function load_rest_api() {
-        include RP_PLUGIN_DIR . 'includes/rest-api/Server.php';
-        \Restropress\RestApi\Server::instance()->init();
-    }
+
+	/**
+	 * Load REST API.
+	 */
+	public function load_rest_api()
+	{
+		include RP_PLUGIN_DIR . 'includes/rest-api/Server.php';
+		\Restropress\RestApi\Server::instance()->init();
+	}
 }

@@ -43,9 +43,9 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 	    <h4 class="rp-center rp-order-no-text">
         <?php esc_html_e( 'Order: ', 'restropress'); ?> 
         <span>#<?php if( rpress_get_option( 'enable_sequential' ) ) { 
-          echo $payment_id; 
+          echo esc_html($payment_id); 
         } else { 
-          echo "$prefix$payment_id$postfix";
+          echo esc_html( "$prefix$payment_id$postfix" );
         }
         ?>      
         </span>
@@ -62,23 +62,23 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
       <div class="rp-order-section">
         <h3><?php
         /* translators: %s: Service type name */
-        echo sprintf( __( '%s details', 'restropress' ), ucfirst( $service_label ) );?></h3>
+        echo esc_html( sprintf( __( '%s details', 'restropress' ), ucfirst( $service_label ) ) );?></h3>
         <div class="rp-detils-content">
           <p><?php esc_html_e( 'Name', 'restropress' ); ?> : <span><?php echo esc_html( $firstname . ' ' . $lastname ); ?></span></p>
             <p><?php esc_html_e( 'Phone Number', 'restropress' ); ?> : <span><?php echo esc_html( $phone ) ; ?></span></p>
             <p><?php
             /* translators: %s : Service type name */
-            echo sprintf( __( '%s Date', 'restropress' ), ucfirst( $service_label ) );?> : <span><?php echo rpress_local_date( $service_date ); ?></span></p>
+            echo esc_html( sprintf( __( '%s Date', 'restropress' ), esc_html(ucfirst( $service_label )) ));?> : <span><?php echo esc_html(rpress_local_date( $service_date )); ?></span></p>
             <p><?php
             /* translators: %s : Service time */
-            echo sprintf( __( '%s Time', 'restropress' ), ucfirst( $service_label ) );?> : <span><?php echo esc_html( __( $service_time, 'restropress' ) ); ?></span>
+            echo esc_html( sprintf( __( '%s Time', 'restropress' ), esc_html(ucfirst( $service_label )) ));?> : <span><?php echo esc_html( __( $service_time, 'restropress' ) ); ?></span>
           </p>
         </div>
       </div>
       <?php if( $service_type == 'delivery' ) : ?>
       <div class="rp-order-section rp-delivery-address">
         <h3><?php esc_html_e( 'Address', 'restropress' ); ?></h3>
-        <div class="rp-detils-content"><?php echo apply_filters( 'rpress_receipt_delivery_address', $address, $address_info ); ?></div>
+        <div class="rp-detils-content"><?php echo esc_html(apply_filters( 'rpress_receipt_delivery_address', $address, $address_info )); ?></div>
       </div>
       <?php endif; ?>
     </div>
@@ -88,14 +88,14 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
           <h3><?php esc_html_e( 'Order details', 'restropress' ); ?></h3>
           <div class="rp-detils-content">
             <p><?php esc_html_e( 'Order Status', 'restropress' ); ?> : <span><?php echo esc_html( rpress_get_order_status_label( $order_status ) ) ; ?></span></p>
-            <p><?php esc_html_e( 'Order Date', 'restropress' ); ?> : <span><?php echo date_i18n( get_option( 'date_format' ), strtotime( $meta['date'] ) ); ?></span></p>
+            <p><?php esc_html_e( 'Order Date', 'restropress' ); ?> : <span><?php echo esc_html(date_i18n( get_option( 'date_format' ), strtotime( $meta['date'] ) )); ?></span></p>
           </div>
         <?php endif; ?>
       </div>
       <div class="rp-order-section">
         <h3><?php esc_html_e( 'Payment Details', 'restropress' ); ?></h3>
         <div class="rp-detils-content">
-          <p><?php esc_html_e( 'Payment Method', 'restropress' ); ?> : <span><?php echo rpress_get_gateway_checkout_label( rpress_get_payment_gateway( $payment->ID ) ); ?></span></p>
+          <p><?php esc_html_e( 'Payment Method', 'restropress' ); ?> : <span><?php echo esc_html(rpress_get_gateway_checkout_label( rpress_get_payment_gateway( $payment->ID ) )); ?></span></p>
           <p><?php esc_html_e( 'Payment Status', 'restropress' ); ?> : <span><?php echo esc_html( $payment_status ); ?></span></p>
         </div>
       </div>
@@ -105,7 +105,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
           ?>
             <div class="rp-order-section">
               <h3><?php esc_html_e( 'Store Address', 'restropress' ); ?></h3>
-              <?php echo rpress_get_option( 'store_address' ); ?>
+              <?php echo esc_html( rpress_get_option( 'store_address' ) ); ?>
             </div>
           <?php 
         endif; 
@@ -186,7 +186,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
           </td>
           <td class="rp-tb-right">
             <?php if( empty( $item['in_bundle'] ) ) :  ?>
-              <?php echo rpress_currency_filter( rpress_format_amount( $item[ 'item_price' ] ) ); ?><br>
+              <?php echo esc_html( rpress_currency_filter( rpress_format_amount( $item[ 'item_price' ] ) ) ); ?><br>
               <?php foreach( $item['item_number']['options'] as $k => $v ) { 
                   if ( empty( $v['quantity'] ) ) {
                     continue;
@@ -197,7 +197,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
                   $addon_item_price = isset( $v['price'] ) ? $v['price'] : 0;
                   $addon_price = $cart->get_addon_price( $addon_id, $item, $addon_item_price );
                   ?>
-              <?php echo rpress_currency_filter(rpress_format_amount( $addon_price )); ?><br>
+              <?php echo esc_html( rpress_currency_filter(rpress_format_amount( $addon_price ))); ?><br>
             <?php }endif; ?>
           </td>
         </tr>
@@ -209,7 +209,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
         <tr class="rpress_cart_footer_row rpress_cart_subtotal_row">
           <td colspan="2" class="rp-tb-right"><?php esc_html_e( 'Subtotal', 'restropress' ); ?>:</td>
           <td class="rp-tb-right rp-amount-right">
-            <?php echo rpress_payment_subtotal( $payment->ID ); ?>
+            <?php echo esc_html(rpress_payment_subtotal( $payment->ID )); ?>
           </td>
         </tr>
         <?php
@@ -217,7 +217,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
           foreach( $fees as $fee ) : ?>
             <tr class="rpress_cart_footer_row rpress_cart_delivery_row">
               <td colspan="2" class="rp-tb-right"><?php echo esc_html( $fee['label'] ); ?>:</td>
-              <td class="rp-tb-right rp-amount-right"><?php echo rpress_currency_filter( rpress_format_amount( $fee['amount'] ) ); ?></td>
+              <td class="rp-tb-right rp-amount-right"><?php echo esc_html(rpress_currency_filter( rpress_format_amount( $fee['amount'] ) )); ?></td>
             </tr>
           <?php endforeach; ?>
         <?php endif; ?>
@@ -230,10 +230,10 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
         <?php if( rpress_use_taxes() ) : ?>
         <tr class="rpress_cart_footer_row kk rpress_cart_tax_row">
           <td colspan="2" class="rp-tb-right">
-            <?php echo rpress_get_tax_name(); ?>:
+            <?php echo esc_html(rpress_get_tax_name()); ?>:
           </td>
           <td class="rp-tb-right rp-amount-right">
-            <?php echo rpress_payment_tax( $payment->ID ); ?>
+            <?php echo esc_html(rpress_payment_tax( $payment->ID )); ?>
           </td>
         </tr>
         <?php do_action( 'rpress_payment_receipt_after_tax_table', $payment, $rpress_receipt_args ); ?>
@@ -242,7 +242,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
         <?php if ( filter_var( $rpress_receipt_args['price'], FILTER_VALIDATE_BOOLEAN ) ) : ?>
           <tr class="rpress_cart_footer_row rpress_cart_total_row">
             <td colspan="2" class="rp-tb-right rp-bold"><?php esc_html_e( 'Total', 'restropress' ); ?>:</td>
-            <td class="rp-tb-right rp-amount-right rp-bold"><?php echo rpress_payment_amount( $payment->ID ); ?></td>
+            <td class="rp-tb-right rp-amount-right rp-bold"><?php echo esc_html(rpress_payment_amount( $payment->ID )); ?></td>
           </tr>
         <?php endif; ?>
         </tfoot>

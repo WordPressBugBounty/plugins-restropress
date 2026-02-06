@@ -189,7 +189,7 @@ function rpress_build_straight_to_gateway_data( $fooditem_id = 0, $options = arr
 		$prices = rpress_get_variable_prices( $fooditem_id );
 		// Make sure a valid price ID was supplied
 		if( ! isset( $prices[ $price_id ] ) ) {
-			wp_die( __( 'The requested price ID does not exist.', 'restropress' ), __( 'Error', 'restropress' ), array( 'response' => 404 ) );
+			wp_die( esc_html__( 'The requested price ID does not exist.', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 404 ) );
 		}
 		$price_options = array(
 			'price_id' => $price_id,
@@ -472,7 +472,7 @@ function rpress_get_total_tax_by_gateway_with_date_range( $gateway_id = 'paypal'
 */
 function rpress_cash_on_delivery_payment( $purchase_data ) {
 	if( ! wp_verify_nonce( $purchase_data['gateway_nonce'], 'rpress-gateway' ) ) {
-		wp_die( __( 'Nonce verification has failed', 'restropress' ), __( 'Error', 'restropress' ), array( 'response' => 403 ) );
+		wp_die( esc_html__( 'Nonce verification has failed', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
 	$payment_data = array(
 		'price' 		=> $purchase_data['price'],

@@ -220,7 +220,7 @@ class RPRESS_Discount_Codes_Table extends WP_List_Table {
 	 * @since 1.0.6
 	 */
 	function no_items() {
-		_e( 'No discounts found.', 'restropress' );
+		esc_html_e( 'No discounts found.', 'restropress' );
 	}
 	/**
 	 * Retrieve the bulk actions

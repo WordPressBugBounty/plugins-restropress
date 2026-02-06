@@ -141,7 +141,7 @@ function rpress_admin_home_page()
         <div class="graybg rpress-welcome-wrap card">
             <div class="card-header">
                 <h4 class="card-title"><?php esc_html_e('Getting started', 'restropress'); ?></h4>
-                <a href="<?php echo admin_url('admin.php?page=rpress-settings'); ?>">
+                <a href="<?php echo esc_url(admin_url('admin.php?page=rpress-settings')); ?>">
                     <span class="blue-text"
                         id="skiptext"><?php esc_html_e('Skip this, I\'ll set it later', 'restropress'); ?></span>
                 </a>
@@ -168,7 +168,7 @@ function rpress_admin_home_page()
                             <h4><?php esc_html_e('Which services do you offer?', 'restropress'); ?></h4>
                             <div class="service-offer-wrap">
                                 <div class="col-lg-6">
-                                    <div class="card <?php echo $service_pickup_checked; ?>">
+                                    <div class="card <?php echo esc_attr($service_pickup_checked); ?>">
                                         <div class="card-body">
                                             <div class="text-align-center">
                                                 <div class="service-offer-icon">
@@ -628,7 +628,7 @@ function rpress_admin_home_page()
                                                 </div>
                                                 <div>
                                                     <label class="switch">
-                                                        <input type="checkbox" name="service-pickup" value="pickup" <?php echo $service_pickup_checked; ?>>
+                                                        <input type="checkbox" name="service-pickup" value="pickup" <?php echo esc_attr($service_pickup_checked); ?>>
                                                         <span class="slider round"></span>
                                                     </label>
                                                     <h3><?php esc_html_e('Pickup', 'restropress'); ?></h3>
@@ -642,7 +642,7 @@ function rpress_admin_home_page()
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
-                                    <div class="card <?php echo $service_delivery_checked; ?>">
+                                    <div class="card <?php echo esc_attr($service_delivery_checked); ?>">
                                         <div class="card-body">
                                             <div class="text-align-center">
                                                 <div class="service-offer-icon">
@@ -1630,7 +1630,7 @@ function rpress_admin_home_page()
                                                 <div>
                                                     <label class="switch">
                                                         <input type="checkbox" name="service-delivery" value="delivery"
-                                                            <?php echo $service_delivery_checked; ?>>
+                                                            <?php echo esc_attr($service_delivery_checked); ?>>
                                                         <span class="slider round"></span>
                                                     </label>
                                                     <h3><?php esc_html_e('Delivery', 'restropress'); ?></h3>
@@ -1778,7 +1778,7 @@ function rpress_admin_home_page()
                                                             <?php
                                                             $counties = rpress_get_country_list();
                                                             foreach ($counties as $code => $country) {
-                                                                echo '<option value="' . $code . '" ' . ($base_country == $code ? "selected" : "") . '>' . $country . '</option>';
+                                                                echo '<option value="' . esc_attr($code) . '" ' . ($base_country == $code ? "selected" : "") . '>' . esc_html($country) . '</option>';
                                                             }
                                                             ?>
                                                         </select>
@@ -1834,7 +1834,7 @@ function rpress_admin_home_page()
                                                             <?php
                                                             $states = rpress_get_states_list();
                                                             foreach ($states as $code => $state) {
-                                                                echo '<option value="' . $code . '" ' . ($base_state == $code ? "selected" : "") . '>' . $state . '</option>';
+                                                                echo '<option value="' . esc_attr($code) . '" ' . ($base_state == $code ? "selected" : "") . '>' . esc_html($state) . '</option>';
                                                             }
                                                             ?>
                                                         </select>
@@ -1868,7 +1868,7 @@ function rpress_admin_home_page()
                                                     </label>
                                                     <textarea class="form-control"
                                                         placeholder="Enter your complete Store Address" rows="3"
-                                                        name="address"><?php echo $store_address; ?></textarea>
+                                                        name="address"><?php echo esc_html($store_address); ?></textarea>
                                                 </div>
                                                 <div class="col-lg-6">
                                                     <label class="col-form-label"
@@ -1990,7 +1990,7 @@ function rpress_admin_home_page()
                                                                 if ( $site_icon_url ) {
                                                                     echo '<img class="file-upload-image" src="' . esc_url($site_icon_url) . '" alt="Site Icon" />';
                                                                 } else {
-                                                                    echo '<img class="file-upload-image" src="' . RP_PLUGIN_URL . 'assets/images/group.png' . '" alt="Default Icon" />';
+                                                                    echo '<img class="file-upload-image" src="' . esc_url(RP_PLUGIN_URL . 'assets/images/group.png') . '" alt="Default Icon" />';
                                                                 }
                                                                 ?>
                                                             </div>
@@ -2069,7 +2069,7 @@ function rpress_admin_home_page()
     <?php
     if (!empty($redirect_after_submit)): ?>
         <script type="text/javascript">
-            window.location.href = "<?php echo admin_url('admin.php?page=rpress-settings'); ?>";
+            window.location.href = "<?php echo esc_url(admin_url('admin.php?page=rpress-settings')); ?>";
         </script>
     <?php endif;
 }

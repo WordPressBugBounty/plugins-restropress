@@ -24,7 +24,7 @@ function rpress_add_discount( $data ) {
 		return;
 	}
 	if( ! current_user_can( 'manage_shop_discounts' ) ) {
-		wp_die( esc_html__( 'You do not have permission to create discount codes', 'restr-press' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
+		wp_die( esc_html__( 'You do not have permission to create discount codes', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
 	// Setup the discount code details
 	$posted = array();

@@ -474,16 +474,23 @@ function rpress_customer_notes_view( $customer ) {
 		<span class="customer-terms-agreement-date info-item">
 			<?php esc_html_e( 'Last Agreed to Terms', 'restropress' ); ?>:
 			<?php if ( ! empty( $agreement_timestamp ) ) : ?>
-				<?php echo date_i18n( get_option( 'date_format' ) . ' H:i:s', $agreement_timestamp ); ?>
+				<?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' H:i:s', $agreement_timestamp ) ); ?>
 				<?php if ( ! empty( $agreement_timestamps ) ) : ?>
-					<span alt="f223" class="rpress-help-tip dashicons dashicons-editor-help" title="<strong><?php esc_html_e( 'Previous Agreement Dates', 'restropress' ); ?></strong><br /><?php foreach ( $agreement_timestamps as $timestamp ) { echo date_i18n( get_option( 'date_format' ) . ' H:i:s', $timestamp ); } ?>"></span>
+					<?php
+					$tooltip_text = esc_html__( 'Previous Agreement Dates', 'restropress' ) . "\n";
+
+					foreach ( $agreement_timestamps as $timestamp ) {
+						$tooltip_text .= esc_html( date_i18n( get_option( 'date_format' ) . ' H:i:s', $timestamp ) ) . "\n";
+					}
+					?>
+					<span class="rpress-help-tip dashicons dashicons-editor-help" title="<?php echo esc_attr( $tooltip_text ); ?>"></span>
 				<?php endif; ?>
 			<?php else: ?>
 				<?php
 				if ( empty( $last_payment_date ) ) {
-					_e( 'No date found.', 'restropress' );
+					esc_html_e( 'No date found.', 'restropress' );
 				} else {
-					echo date_i18n( get_option( 'date_format' ) . ' H:i:s', $last_payment_date );
+					echo esc_html( date_i18n( get_option( 'date_format' ) . ' H:i:s', $last_payment_date ) );
 					?>
 					<span alt="f223" class="rpress-help-tip dashicons dashicons-editor-help" title="<strong><?php esc_html_e( 'Estimated Privacy Policy Date', 'restropress' ); ?></strong><br /><?php esc_html_e( 'This customer made a purchase prior to agreement dates being logged, this is the date of their last purchase. If your site was displaying the agreement checkbox at that time, this is our best estimate as to when they last agreed to your terms.', 'restropress' ); ?>"></span>
 					<?php
@@ -494,16 +501,23 @@ function rpress_customer_notes_view( $customer ) {
 		<span class="customer-privacy-policy-date info-item">
 			<?php esc_html_e( 'Last Agreed to Privacy Policy', 'restropress' ); ?>:
 			<?php if ( ! empty( $privacy_timestamp ) ) : ?>
-				<?php echo date_i18n( get_option( 'date_format' ) . ' H:i:s', $privacy_timestamp ); ?>
+				<?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' H:i:s', $privacy_timestamp ) ); ?>
 				<?php if ( ! empty( $privacy_timestamps ) ) : ?>
-					<span alt="f223" class="rpress-help-tip dashicons dashicons-editor-help" title="<strong><?php esc_html_e( 'Previous Agreement Dates', 'restropress' ); ?></strong><br /><?php foreach ( $privacy_timestamps as $timestamp ) { echo date_i18n( get_option( 'date_format' ) . ' H:i:s', $timestamp ); } ?>"></span>
+					<?php
+					$tooltip_text = esc_html__( 'Previous Agreement Dates', 'restropress' ) . "\n";
+
+					foreach ( $privacy_timestamps as $timestamp ) {
+						$tooltip_text .= esc_html( date_i18n( get_option( 'date_format' ) . ' H:i:s', $timestamp ) ) . "\n";
+					}
+					?>
+					<span class="rpress-help-tip dashicons dashicons-editor-help" title="<?php echo esc_attr( $tooltip_text ); ?>"></span>
 				<?php endif; ?>
 			<?php else: ?>
 				<?php
 				if ( empty( $last_payment_date ) ) {
-					_e( 'No date found.', 'restropress' );
+					esc_html_e( 'No date found.', 'restropress' );
 				} else {
-					echo date_i18n( get_option( 'date_format' ) . ' H:i:s', $last_payment_date );
+					echo esc_html( date_i18n( get_option( 'date_format' ) . ' H:i:s', $last_payment_date ) );
 					?>
 					<span alt="f223" class="rpress-help-tip dashicons dashicons-editor-help" title="<strong><?php esc_html_e( 'Estimated Privacy Policy Date', 'restropress' ); ?></strong><br /><?php esc_html_e( 'This customer made a purchase prior to privacy policy dates being logged, this is the date of their last purchase. If your site was displaying the privacy policy checkbox at that time, this is our best estimate as to when they last agreed to your privacy policy.', 'restropress' ); ?>"></span>
 					<?php
@@ -539,7 +553,7 @@ function rpress_customer_notes_view( $customer ) {
 			<?php foreach( $customer_notes as $key => $note ) : ?>
 				<div class="customer-note-wrapper dashboard-comment-wrap comment-item">
 					<span class="note-content-wrap">
-						<?php echo stripslashes( $note ); ?>
+						<?php echo esc_html( stripslashes( $note ) ); ?>
 					</span>
 				</div>
 			<?php endforeach; ?>
@@ -565,11 +579,11 @@ function rpress_customers_delete_view( $customer ) {
 			<div class="customer-info delete-customer">
 				<span class="delete-customer-options">
 					<p>
-						<?php echo RPRESS()->html->checkbox( array( 'name' => 'rpress-customer-delete-confirm' ) ); ?>
+						<?php echo wp_kses_post( RPRESS()->html->checkbox( array( 'name' => 'rpress-customer-delete-confirm' ) ) ); ?>
 						<label for="rpress-customer-delete-confirm"><?php esc_html_e( 'Are you sure you want to delete this customer?', 'restropress' ); ?></label>
 					</p>
 					<p>
-						<?php echo RPRESS()->html->checkbox( array( 'name' => 'rpress-customer-delete-records', 'options' => array( 'disabled' => true ) ) ); ?>
+						<?php echo wp_kses_post( RPRESS()->html->checkbox( array( 'name' => 'rpress-customer-delete-records', 'options' => array( 'disabled' => true ) ) ) ); ?>
 						<label for="rpress-customer-delete-records"><?php esc_html_e( 'Delete all associated payments and records?', 'restropress' ); ?></label>
 					</p>
 					<?php do_action( 'rpress_customer_delete_inputs', $customer ); ?>

@@ -53,7 +53,10 @@ if ( is_user_logged_in() ):
 							<div class="rpress-history-card">
 								<div class="rp-col-md-9 rpress-his-col">
 									<div class="rpress-order-id rpress-lable-txt"><span class="rp-bold-hs"><?php esc_html_e('Order :','restropress' ); ?></span>#<?php echo esc_html( $payment->number ); ?></div>
-									<div class="rpress-od-date rpress-lable-txt"><span class="rp-bold-hs"><?php esc_html_e('Placed on :','restropress' ); ?></span><?php echo date_i18n( get_option('date_format'), strtotime( $payment->date ) ); ?></div>
+									<div class="rpress-od-date rpress-lable-txt">
+										<span class="rp-bold-hs"><?php esc_html_e( 'Placed on :', 'restropress' ); ?></span>
+										<?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $payment->date ) ) ); ?>
+									</div>
 									<!-- Address  -->
 									<?php if( $address ) : ?>
 										<div class="rpress-adds rpress-lable-txt">
@@ -94,7 +97,7 @@ if ( is_user_logged_in() ):
 										<span><?php echo wp_kses_post( $items_purchased ); ?></span>
 									</div>
 									<div class="rpress-total-am">
-										<span><?php esc_html_e( 'Total Paid:', 'restropress' ); ?> </span><?php echo rpress_currency_filter( rpress_format_amount( $payment->total ) ); ?>
+										<span><?php esc_html_e( 'Total Paid:', 'restropress' ); ?> </span><?php echo esc_html( rpress_currency_filter( rpress_format_amount( $payment->total ) ) ); ?>
 									</div>
 								</div>
 							</div>

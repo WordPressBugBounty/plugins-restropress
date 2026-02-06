@@ -26,10 +26,10 @@ $food_categories = $fooditem_object->get_food_categories();
 							<td class="rp-select-category">
 								<select name="food_categories[]" class="rp-category-select rp-select2" multiple="multiple">
 									<?php foreach ( $categories as $category ) {
-										echo '<option ' . rp_selected( $category->term_id, $food_categories ) . ' value="' . $category->term_id .'">' .$category->name .'</option>';
+										echo '<option ' . esc_attr( rp_selected( $category->term_id, $food_categories ) ) . ' value="' . esc_attr( $category->term_id ) .'">' .esc_html( $category->name ) .'</option>';
 									}
 									?>
-								</select> <?php echo rp_help_tip( esc_html__( 'Select the food categories you would like to assign to this food item. This will be used for the filtering on the food items list page.', 'restropress' ) ); ?>
+								</select> <?php echo esc_html( rp_help_tip( __( 'Select the food categories you would like to assign to this food item. This will be used for the filtering on the food items list page.', 'restropress' ) ) ); ?>
 							</td>
 						</tr>
 						<tr class="rp-add-category hidden">
@@ -41,7 +41,7 @@ $food_categories = $fooditem_object->get_food_categories();
 										<?php esc_html_e( 'Parent Category', 'restropress' ); ?>
 									</option>
 									<?php foreach ( $categories as $category ) {
-										echo '<option value="' . $category->term_id .'">' .$category->name .'</option>';
+										echo '<option value="' . esc_attr( $category->term_id ) .'">' .esc_html( $category->name ) .'</option>';
 									}
 									?>
 								</select>

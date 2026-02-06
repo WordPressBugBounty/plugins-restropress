@@ -157,7 +157,7 @@ add_filter('rpress_settings_gateways', 'rpress_register_paypal_gateway_settings'
 function rpress_process_paypal_purchase($purchase_data)
 {
     if (! wp_verify_nonce($purchase_data['gateway_nonce'], 'rpress-gateway')) {
-        wp_die(__('Nonce verification has failed', 'restropress'), __('Error', 'restropress'), array('response' => 403));
+        wp_die(esc_html__('Nonce verification has failed', 'restropress'), esc_html__('Error', 'restropress'), array('response' => 403));
     }
     // Collect payment data
     $payment_data = array(
@@ -530,14 +530,14 @@ function rpress_process_paypal_web_accept_and_cart($data, $payment_id)
         if (number_format((float) $paypal_amount, 2) < number_format((float) $payment_amount, 2)) {
             // The prices don't match
             rpress_record_gateway_error(__('IPN Error', 'restropress'), sprintf(__('Invalid payment amount in IPN response. IPN data: %s', 'restropress'), json_encode($data)), $payment_id);
-            rpress_debug_log('Invalid payment amount in IPN response. IPN data: ' . printf($data, true));
+            rpress_debug_log('Invalid payment amount in IPN response. IPN data: ' . print_r($data, true));
             rpress_update_payment_status($payment_id, 'failed');
             rpress_insert_payment_note($payment_id, __('Payment failed due to invalid amount in PayPal IPN.', 'restropress'));
             return;
         }
         if ($purchase_key != rpress_get_payment_key($payment_id)) {
             // Purchase keys don't match
-            rpress_debug_log('Invalid purchase key in IPN response. IPN data: ' . printf($data, true));
+            rpress_debug_log('Invalid purchase key in IPN response. IPN data: ' . print_r($data, true));
             rpress_record_gateway_error(__('IPN Error', 'restropress'), sprintf(__('Invalid purchase key in IPN response. IPN data: %s', 'restropress'), json_encode($data)), $payment_id);
             rpress_update_payment_status($payment_id, 'failed');
             rpress_insert_payment_note($payment_id, __('Payment failed due to invalid purchase key in PayPal IPN.', 'restropress'));

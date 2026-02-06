@@ -73,7 +73,7 @@ class RP_Admin_Menus
 			include_once($file_path);
 		} else {
 			// Display an error message if the file doesn't exist
-			echo "Error: File not found - $file_relative_path";
+			echo esc_html("Error: File not found - $file_relative_path");
 		}
 	}
 	/**
@@ -116,7 +116,7 @@ class RP_Admin_Menus
 	{
 		$enable_service = get_option('enable_service', 'delivery_and_pickup');
 		$default_service = get_option('default_service', 'delivery');
-		$default_time = get_option('default_time', '9:00am');
+		// $default_time = get_option('default_time', '9:00am');
 		?>
 		<div class="wrap">
 			<h1>RestroPress Setup Wizard</h1>
@@ -140,10 +140,6 @@ class RP_Admin_Menus
 					<p>
 						<label><input type="radio" name="default_service" value="delivery" <?php checked($default_service, 'delivery'); ?>> Delivery</label><br>
 						<label><input type="radio" name="default_service" value="pickup" <?php checked($default_service, 'pickup'); ?>> Pickup</label>
-					</p>
-					<p>
-						<label>Default Time:</label><br>
-						<input class="rpress_timings" type="text" name="default_time" value="<?php echo esc_attr($default_time); ?>" />
 					</p>
 					<button type="button" class="button back-step">Back</button>
 					<button type="button" class="button button-primary next-step">Next</button>

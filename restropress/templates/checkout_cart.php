@@ -8,7 +8,7 @@ global $post;
   <thead>
     <th colspan="3">
       <div class="rpress item-order">
-        <h6><?php echo apply_filters( 'rpress_cart_title', __('Your Order', 'restropress' ) ); ?></h6>
+        <h6><?php echo esc_html(apply_filters( 'rpress_cart_title', __('Your Order', 'restropress' ) )); ?></h6>
       </div>
     </th>
   </thead>
@@ -97,7 +97,7 @@ global $post;
     <?php do_action( 'rpress_cart_items_middle' ); ?>
     <tr>
       <th colspan="3" class="rpress_get_subtotal">
-        <?php esc_html_e( 'Subtotal', 'restropress' ); ?>:&nbsp;<span class="rpress_cart_subtotal_amount pull-right"><?php echo rpress_cart_subtotal(); ?></span>
+        <?php esc_html_e( 'Subtotal', 'restropress' ); ?>:&nbsp;<span class="rpress_cart_subtotal_amount pull-right"><?php echo esc_html(rpress_cart_subtotal()); ?></span>
       </th>
     </tr>
     <?php do_action( 'rpress_cart_items_after' ); ?>
@@ -106,14 +106,14 @@ global $post;
     <?php if( rpress_use_taxes() && ! rpress_prices_include_tax() ) : ?>
       <tr class="rpress_cart_footer_row rpress_cart_subtotal_row"<?php if ( ! rpress_is_cart_taxed() ) echo wp_kses_post( ' style="display:none;"' ); ?>>
         <?php do_action( 'rpress_checkout_table_subtotal_first' ); ?>
-        <th colspan="<?php echo rpress_checkout_cart_columns(); ?>" class="rpress_cart_subtotal">
+        <th colspan="<?php echo esc_attr(rpress_checkout_cart_columns()); ?>" class="rpress_cart_subtotal">
         </th>
         <?php do_action( 'rpress_checkout_table_subtotal_last' ); ?>
       </tr>
     <?php endif; ?>
     <tr class="rpress_cart_footer_row rpress_cart_discount_row" <?php if( ! rpress_cart_has_discounts() )  echo wp_kses_post( ' style="display:none;"' ); ?>>
       <?php do_action( 'rpress_checkout_table_discount_first' ); ?>
-      <th colspan="<?php echo rpress_checkout_cart_columns(); ?>" class="rpress_cart_discount">
+      <th colspan="<?php echo esc_attr(rpress_checkout_cart_columns()); ?>" class="rpress_cart_discount">
         <?php rpress_cart_discounts_html(); ?>
       </th>
       <?php do_action( 'rpress_checkout_table_discount_last' ); ?>
@@ -121,9 +121,9 @@ global $post;
     <?php if( rpress_use_taxes() ) : ?>
       <?php do_action( 'rpress_checkout_table_tax_first' ); ?>
       <tr class="rpress_cart_footer_row test rpress_cart_tax_row"<?php if( ! rpress_is_cart_taxed() ) echo wp_kses_post( ' style="display:none;"' ); ?>>
-        <th colspan="<?php echo rpress_checkout_cart_columns(); ?>" class="rpress_cart_tax">
-          <span class="rpress-tax pull-left"><?php echo rpress_get_tax_name(); ?>:&nbsp;</span>
-          <span class="rpress_cart_tax_amount pull-right" data-tax="<?php echo rpress_get_cart_tax( false ); ?>"><?php echo esc_html( rpress_cart_tax() ); ?></span>
+        <th colspan="<?php echo esc_attr(rpress_checkout_cart_columns()); ?>" class="rpress_cart_tax">
+          <span class="rpress-tax pull-left"><?php echo esc_html(rpress_get_tax_name()); ?>:&nbsp;</span>
+          <span class="rpress_cart_tax_amount pull-right" data-tax="<?php echo esc_attr(rpress_get_cart_tax( false )); ?>"><?php echo esc_html( rpress_cart_tax() ); ?></span>
         </th>
       </tr>
       <?php do_action( 'rpress_checkout_table_tax_last' ); ?>
@@ -148,13 +148,13 @@ global $post;
     <?php endif; ?>
     <tr class="rpress_cart_footer_row">
       <?php do_action( 'rpress_checkout_table_footer_first' ); ?>
-      <th colspan="<?php echo rpress_checkout_cart_columns(); ?>" class="rpress_cart_total"><?php esc_html_e( 'Total', 'restropress' ); ?>: <span class="rpress_cart_amount pull-right" data-subtotal="<?php echo rpress_get_cart_subtotal(); ?>" data-total="<?php echo rpress_get_cart_total(); ?>"><?php rpress_cart_total(); ?></span>
+      <th colspan="<?php echo esc_attr(rpress_checkout_cart_columns()); ?>" class="rpress_cart_total"><?php esc_html_e( 'Total', 'restropress' ); ?>: <span class="rpress_cart_amount pull-right" data-subtotal="<?php echo esc_attr(rpress_get_cart_subtotal()); ?>" data-total="<?php echo esc_attr(rpress_get_cart_total()); ?>"><?php rpress_cart_total(); ?></span>
       </th>
       <?php do_action( 'rpress_checkout_table_footer_last' ); ?>
     </tr>
     <?php if( has_action( 'rpress_cart_footer_buttons' ) ) : ?>
       <tr class="rpress_cart_footer_row<?php if ( rpress_is_cart_saving_disabled() ) { echo ' rpress-no-js'; } ?>">
-        <th colspan="<?php echo rpress_checkout_cart_columns(); ?>">
+        <th colspan="<?php echo esc_attr(rpress_checkout_cart_columns()); ?>">
           <?php do_action( 'rpress_cart_footer_buttons' ); ?>
         </th>
       </tr>

@@ -455,7 +455,7 @@ function rpress_recovery_force_login_fields() {
 			<div class="rpress-alert rpress-alert-info">
 				<p><?php esc_html_e( 'To complete this payment, please login to your account.', 'restropress' ); ?></p>
 				<p>
-					<a href="<?php echo wp_lostpassword_url(); ?>" title="<?php esc_html_e( 'Lost Password', 'restropress' ); ?>">
+					<a href="<?php echo esc_url( wp_lostpassword_url() ); ?>" title="<?php echo esc_attr__( 'Lost Password', 'restropress' ); ?>">
 						<?php esc_html_e( 'Lost Password?', 'restropress' ); ?>
 					</a>
 				</p>

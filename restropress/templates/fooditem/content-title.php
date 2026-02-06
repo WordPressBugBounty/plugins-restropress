@@ -1,7 +1,7 @@
 <div class="rpress-title-holder">
   <?php $item_prop = rpress_add_schema_microdata() ? ' itemprop="name"' : ''; ?>
   <?php $image_placeholder = rpress_get_option( 'enable_image_placeholder', false ); ?>
-  <h3<?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_title">
+  <h3 <?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_title">
     <span class="food-title" itemprop="url">
       <?php the_title();?>
     </span>
@@ -12,12 +12,12 @@
       <?php if ( has_excerpt() ) : ?>
         <div <?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_excerpt">
           <?php $description = get_post_field( 'post_excerpt', get_the_ID() ); ?>
-          <?php echo apply_filters( 'rpress_fooditems_excerpt', wp_trim_words( $description, $excerpt_length ), $description ); ?>
+          <?php echo wp_kses( apply_filters( 'rpress_fooditems_excerpt', wp_trim_words( $description, $excerpt_length ), $description ), array( 'p' => array(), ) ); ?>
         </div>
       <?php elseif ( get_the_content() ) : ?>
         <div <?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_excerpt">
           <?php $description = get_post_field( 'post_content', get_the_ID() ); ?>
-          <?php echo apply_filters( 'rpress_fooditems_content', wp_trim_words( $description, $excerpt_length ), $description ); ?>
+          <?php echo wp_kses( apply_filters( 'rpress_fooditems_content', wp_trim_words( $description, $excerpt_length ), $description ), array( 'p' => array(), ) ); ?>
         </div>
       <?php endif; ?>
       <?php
@@ -33,7 +33,7 @@
         if( $terms ) {
           echo '<div class="rpress_fooditem_tags">';
           foreach ($terms as $key => $term) {
-            echo '<span class="fooditem_tag '.$term->slug.'">'.$term->name.'</span>';
+            echo '<span class="fooditem_tag '.esc_attr($term->slug).'">'.esc_html($term->name).'</span>';
           }
           echo '</div>';
         }
@@ -60,7 +60,15 @@
     */
   
     if ( $variable_pricing ) {
-       echo  rpress_price_range( $post->ID );
+      $allowed_html = array(
+        'span' => array(
+            'class' => true,
+            'id'    => true,
+        ),
+    );
+    
+    echo wp_kses( rpress_price_range( $post->ID ), $allowed_html );
+    
     } else {
         if( $include_tax == 'yes' && $tax_inc_exc_item_option == 'inc_tax' ) {
             $price = get_post_meta( $post->ID,'rpress_price', true );
@@ -74,12 +82,57 @@
             $price = get_post_meta( $post->ID,'rpress_price', true ) ;
           }
       
-        echo rpress_currency_filter( rpress_format_amount( $price ) );
+        echo esc_html( rpress_currency_filter( rpress_format_amount( $price ) ) );
     }
     ?>
   </span>
     <div class="rpress_fooditem_buy_button">
-      <?php echo rpress_get_purchase_link( array( 'fooditem_id' => get_the_ID() ) ); ?>
+      <?php 
+      echo wp_kses(
+        rpress_get_purchase_link( array( 'fooditem_id' => get_the_ID() ) ),
+        array(
+          'form' => array(
+            'id'    => true,
+            'class' => true,
+            'method'=> true,
+            'action'=> true,
+          ),
+          'div' => array(
+            'class' => true,
+          ),
+          'a' => array(
+            'href' => true,
+            'class' => true,
+            'data-title' => true,
+            'data-action' => true,
+            'data-fooditem-id' => true,
+            'data-variable-price' => true,
+            'data-price' => true,
+            'data-price-mode' => true,
+            'style' => true,
+          ),
+          'span' => array(
+            'class' => true,
+          ),
+          'svg' => array(
+            'xmlns' => true,
+            'width' => true,
+            'height' => true,
+            'viewBox' => true,
+          ),
+          'path' => array(
+            'd' => true,
+          ),
+          'input' => array(
+            'type' => true,
+            'name' => true,
+            'class' => true,
+            'value' => true,
+            'id' => true,
+          ),
+        )
+      );
+      ?>
     </div>
   </div>
   <?php
@@ -93,7 +146,7 @@
     if( $terms ) {
       echo '<div class="rpress_fooditem_tags">';
       foreach ($terms as $key => $term) {
-        echo '<span class="fooditem_tag '.$term->slug.'">'.$term->name.'</span>';
+        echo '<span class="fooditem_tag '.esc_attr($term->slug).'">'.esc_html($term->name).'</span>';
       }
       echo '</div>';
     }

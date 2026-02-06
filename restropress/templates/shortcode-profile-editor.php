@@ -13,7 +13,22 @@ if ( is_user_logged_in() ):
 	$state 		  = $address['state'];
 	if ( rpress_is_cart_saved() ): ?>
 		<?php $restore_url = add_query_arg( array( 'rpress_action' => 'restore_cart', 'rpress_cart_token' => rpress_get_cart_token() ), rpress_get_checkout_uri() ); ?>
-		<div class="rpress_success rpress-alert rpress-alert-success"><strong><?php esc_html_e( 'Saved cart','restropress' ); ?>:</strong> <?php printf( __( 'You have a saved cart, <a href="%s">click here</a> to restore it.', 'restropress' ), esc_url( $restore_url ) ); ?></div>
+		<div class="rpress_success rpress-alert rpress-alert-success"><strong><?php esc_html_e( 'Saved cart','restropress' ); ?>:</strong>
+			<?php
+			echo wp_kses(
+				sprintf(
+					/* translators: %s: restore cart URL */
+					__( 'You have a saved cart, <a href="%s">click here</a> to restore it.', 'restropress' ),
+					esc_url( $restore_url )
+				),
+				array(
+					'a' => array(
+						'href'  => array(),
+					),
+				)
+			);
+			?>
+		</div>
 	<?php endif; ?>
 	<?php if ( isset( $_GET['updated'] ) && $_GET['updated'] == true && ! rpress_get_errors() ): ?>
 		<div class="rpress_success rpress-alert rpress-alert-success"><strong><?php esc_html_e( 'Success','restropress' ); ?>:</strong> <?php esc_html_e( 'Your profile has been edited successfully.', 'restropress' ); ?></div>
@@ -63,6 +78,7 @@ if ( is_user_logged_in() ):
 							foreach ( $customer->emails as $email ) {
 								$emails[ $email ] = $email;
 							}
+							
 							$email_select_args = array(
 								'options'          => $emails,
 								'name'             => 'rpress_email',
@@ -71,7 +87,20 @@ if ( is_user_logged_in() ):
 								'show_option_none' => false,
 								'show_option_all'  => false,
 							);
-							echo RPRESS()->html->select( $email_select_args );
+							
+							$allowed_html = array(
+								'select' => array(
+									'name'  => true,
+									'id'    => true,
+									'class' => true,
+								),
+								'option' => array(
+									'value'    => true,
+									'selected' => true,
+								),
+							);
+							
+							echo wp_kses( RPRESS()->html->select( $email_select_args ), $allowed_html );							
 						?>
 					<?php endif; ?>
 				<?php else: ?>
@@ -142,7 +171,7 @@ if ( is_user_logged_in() ):
 					<select name="rpress_address_state" id="rpress_address_state" class="select rpress-select rp-form-control">
 						<?php
 							foreach( $states as $state_code => $state_name ) {
-								echo '<option value="' . $state_code . '"' . selected( $state_code, $state, false ) . '>' . $state_name . '</option>';
+								echo '<option value="' . esc_attr($state_code) . '"' . selected( $state_code, $state, false ) . '>' . esc_html($state_name) . '</option>';
 							}
 						?>
 					</select>
@@ -170,7 +199,7 @@ if ( is_user_logged_in() ):
 		<?php do_action( 'rpress_profile_editor_after_password_fields' ); ?>
 		<fieldset id="rpress_profile_submit_fieldset">
 			<p id="rpress_profile_submit_wrap">
-				<input type="hidden" name="rpress_profile_editor_nonce" value="<?php echo wp_create_nonce( 'rpress-profile-editor-nonce' ); ?>"/>
+				<input type="hidden" name="rpress_profile_editor_nonce" value="<?php echo esc_attr(wp_create_nonce( 'rpress-profile-editor-nonce' )); ?>"/>
 				<input type="hidden" name="rpress_action" value="edit_user_profile" />
 				<input type="hidden" name="rpress_redirect" value="<?php echo esc_url( rpress_get_current_page_url() ); ?>" />
 				<input name="rpress_profile_editor_submit" id="rpress_profile_editor_submit" type="submit" class="rpress_submit rpress-submit" value="<?php esc_html_e( 'Save Changes', 'restropress' ); ?>"/>

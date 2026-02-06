@@ -285,7 +285,7 @@ class RPRESS_Product_Details_Widget extends WP_Widget {
 		}
 		do_action( 'rpress_product_details_widget_before_categories_and_tags', $instance, $fooditem_id );
 		// translators: %1$s is placeholder for $text, %2$s is placeholder for $category_label, %3$s is placeholder for $category_list, %4$s is placeholder for $tag_label, %5$s is placeholder for $tag_list
-		printf( esc_html__( '%1$s %2$s %3$s %4$s %5$s', 'text_domain' ), esc_html( $text ), esc_html( $category_label ), esc_html( $category_list ), esc_html( $tag_label ), esc_html( $tag_list ) );
+		printf( esc_html__( '%1$s %2$s %3$s %4$s %5$s', 'restropress' ), esc_html( $text ), esc_html( $category_label ), esc_html( $category_list ), esc_html( $tag_label ), esc_html( $tag_list ) );
 		
 		do_action( 'rpress_product_details_widget_before_end', $instance, $fooditem_id );
 		// Used by themes. Closes the widget.

@@ -30,8 +30,8 @@ function rpress_discounts_page() {
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Discount Codes', 'restropress' ); ?><a href="<?php echo esc_url( add_query_arg( array( 'rpress-action' => 'add_discount' ) ) ); ?>" class="add-new-h2"><?php esc_html_e( 'Add New', 'restropress' ); ?></a></h1>
 		<?php do_action( 'rpress_discounts_page_top' ); ?>
-		<form id="rpress-discounts-filter" method="get" action="<?php echo admin_url( 'admin.php?page=rpress-discounts' ); ?>">
-			<?php $discount_codes_table->search_box( esc_html__( 'Search', 'restr-press' ), 'rpress-discounts' ); ?>
+		<form id="rpress-discounts-filter" method="get" action="<?php echo esc_url( admin_url( 'admin.php?page=rpress-discounts' ) ); ?>">
+			<?php $discount_codes_table->search_box( esc_html__( 'Search', 'restropress' ), 'rpress-discounts' ); ?>
 			<input type="hidden" name="page" value="rpress-discounts" />
 			<?php $discount_codes_table->views() ?>
 			<?php $discount_codes_table->display() ?>

@@ -154,7 +154,7 @@ class RP_Shortcodes {
       global $rpress_login_redirect;
       $rpress_login_redirect = rpress_get_current_page_url();
       ob_start();
-      echo '<p class="rpress-alert rpress-alert-warn">' . __( 'You must be logged in to view this payment receipt.', 'restropress' ) . '</p>';
+      echo '<p class="rpress-alert rpress-alert-warn">' . esc_html__( 'You must be logged in to view this payment receipt.', 'restropress' ) . '</p>';
       rpress_get_template_part( 'shortcode', 'login' );
       $login_form = ob_get_clean();
       return $login_form;

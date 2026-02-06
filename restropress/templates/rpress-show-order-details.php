@@ -40,8 +40,14 @@
                     <?php if( !empty( $address ) ): ?>
                       <p><?php esc_html_e( "Delivery To", 'restropress' ); ?><span><?php echo esc_html( $address ) ?></span></p>
                     <?php endif ;?>
-                    <p><?php echo ucfirst( $service_label ) ?> <?php esc_html_e( "Date", 'restropress' ) ?><span><?php echo esc_html( $service_date ) ?></span></p>
-                    <p><?php echo ucfirst( $service_label ) ?> <?php esc_html_e( "Time", 'restropress' ) ?><span><?php echo esc_html( $service_time ) ?></span></p>
+                    <p>
+                      <?php echo esc_html( ucfirst( $service_label ) ); ?> <?php esc_html_e( 'Date', 'restropress' ); ?>
+                      <span><?php echo esc_html( $service_date ); ?></span>
+                    </p>
+                    <p>
+                      <?php echo esc_html( ucfirst( $service_label ) ); ?> <?php esc_html_e( 'Time', 'restropress' ); ?>
+                      <span><?php echo esc_html( $service_time ); ?></span>
+                    </p>
                     <p><?php esc_html_e( "Payment Type", 'restropress' ) ?><span><?php echo esc_html( rpress_get_gateway_checkout_label( rpress_get_payment_gateway( $payment->ID ) ) ); ?></span></p>
                     <p><?php esc_html_e( "Payment Status", 'restropress' ) ?><span><?php echo esc_html( $payment_status ) ?></span></p>  
                 </div>
@@ -60,7 +66,7 @@
                       <span class="cart-item-quantity-wrap">
                         <span class="rpress-cart-item-price qty-class">
                           <?php if( empty( $item['in_bundle'] ) ) :  ?>
-                            <?php echo rpress_currency_filter( rpress_format_amount( $item[ 'subtotal' ] ) ); ?>
+                            <?php echo esc_html( rpress_currency_filter( rpress_format_amount( $item[ 'subtotal' ] ) ) ); ?>
                           <?php endif; ?>
                         </span>
                       </span>
@@ -72,7 +78,10 @@
                           <?php
                            endif;
                         }?>
-                        <?php echo implode(",", array_filter($addon_name)); ?>
+                        <?php
+                        $escaped_addons = array_map( 'esc_html', array_filter( $addon_name ) );
+                        echo esc_html( implode( ', ', $escaped_addons ) );
+                        ?>
                        </div>
                        <?php if ( !empty( $special_instruction ) ) : ?>
                         <span class="rpress-special-instruction"><?php echo esc_html( $special_instruction ) ; ?></span>
@@ -81,15 +90,15 @@
                   <?php endforeach;?>
                 <?php endif ;?>
                 <!-- Subtotal -->
-                <li class="cart_item rpress-cart-meta rpress_subtotal"><?php esc_html_e( 'Subtotal', 'restropress' ); ?><span class="cart-subtotal"><?php echo rpress_payment_subtotal( $payment->ID ); ?></span></li>
+                <li class="cart_item rpress-cart-meta rpress_subtotal"><?php esc_html_e( 'Subtotal', 'restropress' ); ?><span class="cart-subtotal"><?php echo esc_html( rpress_payment_subtotal( $payment->ID ) ); ?></span></li>
                 <!-- Tax -->
                 <?php if( rpress_use_taxes() ) : ?>
-                  <li class="cart_item rpress-cart-meta rpress_cart_tax"><?php echo rpress_get_tax_name(); ?><span class="cart-tax"><?php echo rpress_payment_tax( $payment->ID ); ?></span></li>
+                  <li class="cart_item rpress-cart-meta rpress_cart_tax"><?php echo esc_html( rpress_get_tax_name() ); ?><span class="cart-tax"><?php echo esc_html( rpress_payment_tax( $payment->ID ) ); ?></span></li>
                 <?php endif; ?>
                 <!-- Fees -->
                 <?php if ( ( $fees = rpress_get_payment_fees( $payment->ID, 'fee' ) ) ) :
                   foreach( $fees as $fee ) : ?>
-                    <li class="cart_item rpress-cart-meta rpress_fess"><?php echo esc_html( $fee['label'] ); ?><span class="cart-discount"><?php echo rpress_currency_filter( rpress_format_amount( $fee['amount'] ) ); ?></span></li>
+                    <li class="cart_item rpress-cart-meta rpress_fess"><?php echo esc_html( $fee['label'] ); ?><span class="cart-discount"><?php echo esc_html( rpress_currency_filter( rpress_format_amount( $fee['amount'] ) ) ); ?></span></li>
                   <?php endforeach; ?>
                 <?php endif; ?>
                 <!-- Discount -->
@@ -102,7 +111,7 @@
       </main>
       <footer class="modal__footer modal-footer">
         <?php esc_html_e( 'Total', 'restropress' ); ?>
-        <span><?php echo rpress_payment_amount( $payment->ID ); ?></span>
+        <span><?php echo esc_html( rpress_payment_amount( $payment->ID ) ); ?></span>
       </footer>
     </div>
   
