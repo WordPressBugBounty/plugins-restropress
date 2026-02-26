@@ -36,7 +36,7 @@ function rpress_process_purchase_form() {
 
 		if ( empty( $service_type ) ) {
 			$valid_data = false;
-			set_error( 'missing_service_type', __( 'Please select a service type.', 'restropress' ) );
+			rpress_set_error( 'missing_service_type', __( 'Please select a service type.', 'restropress' ) );
 		}
 
 		if ( empty( $service_time ) ) {

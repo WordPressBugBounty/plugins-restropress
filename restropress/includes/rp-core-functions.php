@@ -139,7 +139,7 @@ function rpress_get_item_qty_by_key($cart_key)
 {
   if ((!empty($cart_key)) || $cart_key == '0') {
     $cart_items = rpress_get_cart_contents();
-    if( isset($cart_items[$cart_key]) ){
+    if (isset($cart_items[$cart_key])) {
       $cart_items = $cart_items[$cart_key];
     }
     if (!isset($cart_items['quantity'])) {
@@ -508,16 +508,16 @@ function rp_get_store_timings($hide_past_time = true, $service_type = null)
   $close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
   $time_today = apply_filters('rpress_timing_for_today', true);
   $store_times = range($open_time, $close_time, $time_interval);
-  $store_time_format = rpress_get_option( 'store_time_format' );
-  $date_format = get_option( 'time_format' );
-  if("24hrs" === $store_time_format ){
+  $store_time_format = rpress_get_option('store_time_format');
+  $date_format = get_option('time_format');
+  if ("24hrs" === $store_time_format) {
     $date_format = "H:i";
   }
 
-  if("12hrs" === $store_time_format ){
+  if ("12hrs" === $store_time_format) {
     $date_format = "h:i A";
   }
- 
+
   //If not today then return normal time
   if (!$time_today)
     return $store_times;
@@ -527,15 +527,17 @@ function rp_get_store_timings($hide_past_time = true, $service_type = null)
   }
   //Store timings for today.
   $store_timings = [];
+
+
   foreach ($store_times as $store_time) {
     if ($hide_past_time) {
       if ($store_time > $current_time) {
-        $store_timings[] = date_i18n($date_format,  $store_time) ;
-      } else if (!empty(rpress_get_option('enable_always_open')) && $current_time > $close_time) {
-        $store_timings[] = date_i18n($date_format,  $store_time) ;
+        $store_timings[] = date_i18n($date_format, $store_time);
+      } else if (!empty(rpress_get_option(key: 'enable_always_open')) && $current_time > $close_time) {
+        $store_timings[] = date_i18n($date_format, $store_time);
       }
     } else {
-      $store_timings[] =date_i18n($date_format,  $store_time) ;
+      $store_timings[] = date_i18n($date_format, $store_time);
     }
   }
   return $store_timings;
@@ -621,65 +623,112 @@ function rpress_get_service_types()
  * @param bool $current_time_aware if current_time_aware is set true then it would show the next time from now otherwise it would show the default store timings
  * @return store time
  */
-function rp_get_store_service_hours($service_type, $current_time_aware = true, $selected_time = null, $asap_option = null)
-{
+function rp_get_store_service_hours(
+  $service_type,
+  $current_time_aware = true,
+  $selected_time = null,
+  $asap_option = null,
+  $service_date = null
+) {
+
   if (empty($service_type)) {
     return;
   }
-  $time_format = get_option('time_format', true);
-  $time_format = apply_filters('rp_store_time_format', $time_format);
-  $current_time = !empty(rp_get_current_time()) ? rp_get_current_time() : gmdate($time_format);
-  $store_times = rp_get_store_timings(false, $service_type);
-  $asap_option = rpress_get_option('enable_asap_option', '');
-  if ($service_type == 'delivery') {
-    $store_timings = apply_filters('rpress_store_delivery_timings', $store_times);
+
+  // -----------------------------
+  // Get Store Time Format
+  // -----------------------------
+  $store_time_format = rpress_get_option('store_time_format');
+
+  if ("24hrs" === $store_time_format) {
+    $date_format = "H:i";
   } else {
-    $store_timings = apply_filters('rpress_store_pickup_timings', $store_times);
+    $date_format = "h:i A";
   }
+
+  // -----------------------------
+  // Current timestamp (WP timezone aware)
+  // -----------------------------
+  $current_timestamp = current_time('timestamp');
+
+  // -----------------------------
+  // Get Store Timings
+  // -----------------------------
+  $store_times = rp_get_store_timings(false, $service_type);
+
+  $store_timings = apply_filters(
+    'rpress_store_timings',
+    $store_times,
+    $service_type,
+    $service_date
+  );
+
   $store_timings_for_today = apply_filters('rpress_timing_for_today', true);
-if ( is_array( $store_timings ) ) {
-    foreach ( $store_timings as $key => $time ) {
 
-        // Convert each timing into a valid timestamp
-        $time_int = is_numeric( $time ) ? (int) $time : strtotime( $time );
-        if ( ! $time_int ) { $time_int = 0; }
+  // ASAP option
+  $asap_option = rpress_get_option('enable_asap_option', '');
 
-        // Convert selected time safely
-        $selected_timestamp = strtotime( $selected_time );
-        if ( ! $selected_timestamp ) { $selected_timestamp = 0; }
+  // Selected timestamp
+  $selected_timestamp = 0;
+  if (!empty($selected_time) && $selected_time !== 'ASAP') {
 
-        // Bring both times to admin time format
-        $store_time    = gmdate( $time_format, $time_int );  
-        $selected_time = gmdate( $time_format, $selected_timestamp );
+    // Fix dot format like 7.00 AM → 7:00 AM
+    $selected_time = str_replace('.', ':', $selected_time);
 
-        $asap_option = rpress_get_option( 'enable_asap_option', '' );
+    $selected_timestamp = strtotime($selected_time);
+  }
 
-        if ( $store_timings_for_today ) {
+  if (empty($store_timings) || !is_array($store_timings)) {
+    return;
+  }
 
-            // Remove any extra whitespace
-            $timing_slug   = str_replace( ' ', '', $store_time );
-            $selected_time = str_replace( ' ', '', $selected_time );
+  foreach ($store_timings as $key => $time) {
 
-            if ( $current_time_aware ) {
-
-                if ( strtotime( $store_time ) > strtotime( $current_time ) ) { ?>
-                    <option <?php selected( $selected_time, $timing_slug, $asap_option ); ?>
-                        value="<?php echo esc_attr( ( $asap_option && $key == 0 ) ? 'ASAP' : $store_time ); ?>">
-                        <?php echo esc_html( ( $asap_option && $key == 0 ) ? __( 'ASAP', 'restropress' ) : $store_time ); ?>
-                    </option>
-                <?php }
-
-            } else { ?>
-                <option <?php selected( $selected_time, $timing_slug, $asap_option ); ?>
-                    value="<?php echo esc_attr( ( $asap_option && $key == 0 ) ? 'ASAP' : $store_time ); ?>">
-                    <?php echo esc_html( ( $asap_option && $key == 0 ) ? __( 'ASAP', 'restropress' ) : $store_time ); ?>
-                </option>
-            <?php }
-        }
+    if (empty($time)) {
+      continue;
     }
+
+    // Fix dot format if exists
+    //$time = str_replace('.', ':', $time);
+
+    // Convert to timestamp
+    $time_int = is_numeric($time) ? (int) $time : strtotime($time);
+
+    if (!$time_int) {
+      continue;
+    }
+
+    // Format for display (WP timezone aware)
+    $formatted_time = date_i18n($date_format, $time_int);
+
+    // Skip past times if current_time_aware enabled
+    if ($store_timings_for_today && $current_time_aware) {
+
+      if ($time_int <= $current_timestamp) {
+        continue;
+      }
+    }
+
+    // Check selected
+    $is_selected = false;
+
+    if ($asap_option && $key === 0 && $selected_time === 'ASAP') {
+      $is_selected = true;
+    } elseif ($selected_timestamp && $selected_timestamp === $time_int) {
+      $is_selected = true;
+    }
+
+    ?>
+
+    <option <?php selected($is_selected, true); ?>
+      value="<?php echo esc_attr(($asap_option && $key === 0) ? 'ASAP' : $formatted_time); ?>">
+      <?php echo esc_html(($asap_option && $key === 0) ? __('ASAP', 'restropress') : $formatted_time); ?>
+    </option>
+
+    <?php
+  }
 }
 
-}
 /**
  * Get list of categories/subcategories
  *
@@ -799,53 +848,108 @@ function rpress_checkout_delivery_type($service_type, $service_time)
  * @param       void
  * @return      array | Respose as success/error
  */
-function rpress_pre_validate_order()
-{
-  $service_type = !empty($_COOKIE['service_type']) ? sanitize_text_field($_COOKIE['service_type']) : '';
-  $service_time = !empty($_COOKIE['service_time']) ? sanitize_text_field($_COOKIE['service_time']) : '';
-  $service_date = !empty($_COOKIE['service_date']) ? sanitize_text_field($_COOKIE['service_date']) : current_time('Y-m-d');
-  $prep_time = rpress_get_option('prep_time', 0);
-  $prep_time = $prep_time * 60;
-  $current_time = current_time('timestamp');
-  if ($prep_time > 0) {
-    $current_time = $current_time + $prep_time;
-  }
-  // Ensure $_COOKIE['service_time'] is set before accessing it
-  if (isset($_COOKIE['service_time'])) {
-    $service_time = strtotime($service_date . ' ' . $service_time);
-    // Check minimum order
-    $enable_minimum_order = rpress_get_option('allow_minimum_order');
-    $minimum_order_price_delivery = rpress_get_option('minimum_order_price');
-    $minimum_order_price_delivery = floatval($minimum_order_price_delivery);
-    $minimum_order_price_pickup = rpress_get_option('minimum_order_price_pickup');
-    $minimum_order_price_pickup = floatval($minimum_order_price_pickup);
-    $allow_asap_delivery = rpress_get_option('enable_asap_option', '');
-    if ($enable_minimum_order && $service_type == 'delivery' && rpress_get_cart_subtotal() < $minimum_order_price_delivery) {
-      $minimum_price_error = rpress_get_option('minimum_order_error');
-      $minimum_order_formatted = rpress_currency_filter(rpress_format_amount($minimum_order_price_delivery));
-      $minimum_price_error = str_replace('{min_order_price}', $minimum_order_formatted, $minimum_price_error);
-      $response = array('status' => 'error', 'minimum_price' => $minimum_order_price_delivery, 'error_msg' => $minimum_price_error);
-    } else if ($enable_minimum_order && $service_type == 'pickup' && rpress_get_cart_subtotal() < $minimum_order_price_pickup) {
-      $minimum_price_error_pickup = rpress_get_option('minimum_order_error_pickup');
-      $minimum_order_formatted = rpress_currency_filter(rpress_format_amount($minimum_order_price_pickup));
-      $minimum_price_error_pickup = str_replace('{min_order_price}', $minimum_order_formatted, $minimum_price_error_pickup);
-      $response = array('status' => 'error', 'minimum_price' => $minimum_order_price_pickup, 'error_msg' => $minimum_price_error_pickup);
-    } else if ($current_time > $service_time && $current_time == $allow_asap_delivery) {
-      $time_error = __('Please select a different time slot.', 'restropress');
-      $response = array(
-        'status' => 'error',
-        'error_msg' => $time_error
-      );
-    } else {
-      $response = array('status' => 'success');
+function rpress_pre_validate_order() {
+
+    $service_type = !empty($_COOKIE['service_type']) 
+        ? sanitize_text_field($_COOKIE['service_type']) 
+        : '';
+
+    $service_time_raw = !empty($_COOKIE['service_time']) 
+        ? sanitize_text_field($_COOKIE['service_time']) 
+        : '';
+
+    $service_date = !empty($_COOKIE['service_date']) 
+        ? sanitize_text_field($_COOKIE['service_date']) 
+        : '';
+
+    // ✅ Fix invalid or past date
+    $row_date = rp_row_date("", $service_type);
+
+    if ( empty($service_date) || strtotime($service_date) < strtotime($row_date) ) {
+        $service_date = $row_date;
+        setcookie("service_date", $service_date, time() + (86400 * 30), "/");
+        $_COOKIE['service_date'] = $service_date;
     }
-  } else {
-    // Handle the case where $_COOKIE['service_time'] is not set
-    // For example, set a default response or display an error message
-    $response = array('status' => 'error', 'error_msg' => 'Service time is not set.');
-  }
-  return $response;
+
+    // ✅ Preparation Time
+    $prep_time = (int) rpress_get_option('prep_time', 0) * 60;
+
+    $current_time = current_time('timestamp') + $prep_time;
+
+    // ❌ If service time not selected
+    if ( empty($service_time_raw) ) {
+        return array(
+            'status' => 'error',
+            'error_type' => 'service_time_not_set',
+            'error_msg' => __('Please select a service time.', 'restropress')
+        );
+    }
+
+    $service_time = strtotime($service_date . ' ' . $service_time_raw);
+
+    /* ==============================
+       Minimum Order Validation
+    ============================== */
+
+    $enable_minimum_order = rpress_get_option('allow_minimum_order');
+
+    $minimum_delivery = (float) rpress_get_option('minimum_order_price');
+    $minimum_pickup   = (float) rpress_get_option('minimum_order_price_pickup');
+
+    $cart_total = rpress_get_cart_subtotal();
+
+    if ( $enable_minimum_order ) {
+
+        if ( $service_type === 'delivery' && $cart_total < $minimum_delivery ) {
+
+            $error = rpress_get_option('minimum_order_error');
+            $formatted = rpress_currency_filter(rpress_format_amount($minimum_delivery));
+            $error = str_replace('{min_order_price}', $formatted, $error);
+
+            return array(
+                'status' => 'error',
+                'minimum_price' => $minimum_delivery,
+                'error_msg' => $error
+            );
+        }
+
+        if ( $service_type === 'pickup' && $cart_total < $minimum_pickup ) {
+
+            $error = rpress_get_option('minimum_order_error_pickup');
+            $formatted = rpress_currency_filter(rpress_format_amount($minimum_pickup));
+            $error = str_replace('{min_order_price}', $formatted, $error);
+
+            return array(
+                'status' => 'error',
+                'minimum_price' => $minimum_pickup,
+                'error_msg' => $error
+            );
+        }
+    }
+
+    /* ==============================
+       Time Slot Validation
+    ============================== */
+
+    $allow_asap = rpress_get_option('enable_asap_option');
+
+    if ( $service_time < $current_time && !$allow_asap ) {
+
+        return array(
+            'status' => 'error',
+            'error_msg' => __('Selected time slot is no longer available. Please choose another time.', 'restropress')
+        );
+    }
+
+    /* ==============================
+       Success
+    ============================== */
+
+    return array(
+        'status' => 'success'
+    );
 }
+
 /**
  * Is Test Mode
  *
@@ -2052,7 +2156,7 @@ add_filter('body_class', function ($classes) {
  * Check if store is open based on current time and settings
  * @since 3.2.2.1
  */
-function rpress_is_store_open( $service_type, $selected_date = '' )
+function rpress_is_store_open($service_type, $selected_date = '')
 {
   $current_time = current_time('timestamp');
 
@@ -2069,11 +2173,11 @@ function rpress_is_store_open( $service_type, $selected_date = '' )
 
   // Check if store is open
   $is_open = ($current_time >= $open_time && $current_time <= $close_time);
-  if( empty($selected_date) ){
+  if (empty($selected_date)) {
     $selected_date = date_i18n('Y-m-d', $current_time);
   }
   // Apply filter to allow other plugins to modify the status
-  $is_open = apply_filters('rpress_is_store_open', $is_open, $service_type,  $selected_date,  $current_time, $open_time, $close_time);
+  $is_open = apply_filters('rpress_is_store_open', $is_open, $service_type, $selected_date, $current_time, $open_time, $close_time);
 
   return $is_open;
 }
@@ -2081,8 +2185,125 @@ function rpress_is_store_open( $service_type, $selected_date = '' )
  * Store closed message
  * @since 3.2.2.1
  */
-function rpress_store_closed_message($service_type){
+function rpress_store_closed_message($service_type)
+{
   $close_message = rpress_get_option('store_closed_msg', __('Sorry, we are closed for ordering now.', 'restropress'));
-  $close_message = apply_filters('rpress_store_closed_message', $close_message ,$service_type);
+  $close_message = apply_filters('rpress_store_closed_message', $close_message, $service_type);
   return $close_message;
+}
+
+/**
+ * Nessery cookies and   time slot for RPRESS
+ * @since 3.2.3
+ */
+function rpress_get_service_context(): array
+{
+
+  $context = [
+    'service_type' => '',
+    'service_date_raw' => '',
+    'service_date' => '',
+    'service_time' => '',
+    'delivery_address' => '',
+    'selected_time' => '',
+    'store_timings' => [],
+    'is_store_open' => true,
+  ];
+
+  /* ---------------- Cookies / Request ---------------- */
+
+  $context['service_type'] = isset($_GET['service_type'])
+    ? sanitize_text_field(wp_unslash($_GET['service_type']))
+    : ($_COOKIE['service_type'] ?? '');
+
+  $context['service_type'] = sanitize_text_field(wp_unslash($context['service_type']));
+
+  $context['service_time'] = isset($_COOKIE['service_time'])
+    ? sanitize_text_field(wp_unslash($_COOKIE['service_time']))
+    : '';
+
+  $context['service_date_raw'] = isset($_COOKIE['service_date'])
+    ? sanitize_text_field(wp_unslash($_COOKIE['service_date']))
+    : '';
+
+  $context['delivery_address'] = isset($_COOKIE['branch_name'])
+    ? sanitize_text_field(wp_unslash($_COOKIE['branch_name']))
+    : ($_COOKIE['delivery_address'] ?? '');
+
+  /* ---------------- Service Type ---------------- */
+
+  $enabled = rpress_get_option('enable_service', 'delivery_and_pickup');
+  $context["service_enabled"] = $enabled;
+  $context['services'] = apply_filters(
+    'rpress_enable_services',
+    $enabled === 'delivery_and_pickup'
+    ? ['delivery', 'pickup']
+    : [$enabled]
+  );
+
+  if (!in_array($context['service_type'], $context['services'], true)) {
+    $context['service_type'] = rpress_get_option('default_service', 'delivery');
+  }
+
+  $context['service_type'] = apply_filters(
+    'rpress_current_service_type',
+    $context['service_type']
+  );
+
+  /* ---------------- Date Formatting ---------------- */
+  $raw = rp_row_date($context['service_date_raw'], $context['service_type']);
+
+  if (!empty($raw)) {
+    $date = DateTime::createFromFormat('Y-m-d', $raw);
+    $context['service_date'] = $date
+      ? $date->format('F j')
+      : date_i18n('F j');
+  } else {
+    $context['service_date'] = date_i18n('F j');
+  }
+
+  /* ---------------- Time Handling ---------------- */
+
+  if (stripos($context['service_time'], 'ASAP') !== false) {
+    $context['service_time'] = str_ireplace(
+      'ASAP',
+      'ASAP ',
+      $context['service_time']
+    );
+  }
+
+  $context['selected_time'] = $context['service_time']
+    ?: rpress_get_option('default_time');
+
+  /* ---------------- Store Timings ---------------- */
+
+  $store_times = rp_get_store_timings(true, $context['service_type']);
+
+  $context['store_timings'] = apply_filters(
+    'rpress_store_timings',
+    $store_times,
+    $context['service_type'],
+    $context['service_date']
+  );
+
+  /* ---------------- Store Open Check ---------------- */
+
+  if (!rpress_is_store_open($context['service_type'], $context['service_date'])) {
+    $context['is_store_open'] = false;
+  }
+
+  return $context;
+}
+
+function rp_row_date($raw_date, $service_type): string
+{
+  $raw = apply_filters(
+    'rpress_service_date_raw',
+    $raw_date,
+    $service_type
+  );
+  if (empty($raw)) {
+    return date_i18n('Y-m-d');
+  }
+  return $raw;
 }

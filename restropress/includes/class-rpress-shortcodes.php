@@ -120,7 +120,7 @@ class RP_Shortcodes {
   public static function rpress_receipt( $atts = array(), $content = null ) {
     global $rpress_receipt_args;
     $rpress_receipt_args = shortcode_atts( array(
-      'error'           => __( 'Sorry, trouble retrieving payment receipt.', 'restropress' ),
+      'error'           => esc_html__( 'Sorry, trouble retrieving payment receipt.', 'restropress' ),
       'price'           => true,
       'discount'        => true,
       'products'        => true,

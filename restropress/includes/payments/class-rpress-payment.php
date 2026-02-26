@@ -337,6 +337,7 @@ class RPRESS_Payment {
 	 * @param int $payment_id A given payment
 	 * @return mixed void|false
 	 */
+	private  $payment_number ;
 	public function __construct( $payment_or_txn_id = false, $by_txn = false ) {
 		global $wpdb;
 		if( empty( $payment_or_txn_id ) ) {
@@ -377,7 +378,7 @@ class RPRESS_Payment {
 	 * @param string $key   The property name
 	 * @param mixed $value  The value of the property
 	 */
-	public function __set( $key, $value ) {
+public function __set( $key, $value ) {
 		$ignore = array( 'fooditems', 'cart_details', 'fees', '_ID' );
 		if ( $key === 'status' ) {
 			$this->old_status = $this->status;
@@ -794,7 +795,7 @@ class RPRESS_Payment {
 						$this->update_meta( '_rpress_delivery_time', $delivery_time );
 						break;
   					case 'delivery_date':
-    					$service_date = isset( $_COOKIE['service_date'] ) ? sanitize_text_field( $_COOKIE['service_date'] ): '';
+    					$service_date = isset( $_COOKIE['service_date'] ) ? sanitize_text_field( $_COOKIE['service_date'] ): rpress_local_date( current_time( "Y-m-d" ) );
       					$this->update_meta( '_rpress_delivery_date', $service_date );
       					break;
 					case 'discounts':

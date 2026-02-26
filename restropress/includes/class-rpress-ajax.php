@@ -100,7 +100,8 @@ class RP_AJAX {
       'fooditem_search',
       'checkout_update_service_option',
       'remove_fees_after_empty_cart',
-      'reorder'
+      'reorder',
+      "update_modal_on_service_switch"
     );
     foreach ( $ajax_events_nopriv as $ajax_event ) {
       add_action( 'wp_ajax_rpress_' . $ajax_event, array( __CLASS__, $ajax_event ) );
@@ -1543,6 +1544,20 @@ class RP_AJAX {
     
     // Make sure to exit to prevent any additional output
     exit;
+  }
+
+  public static function update_modal_on_service_switch() {
+     $service_type = $_GET['service_type'];
+   
+    ob_start();
+    rpress_get_template_part('rpress','datetime-popup');
+    $modal_html = ob_get_clean();
+    ob_start();
+    $template = rpress_get_option('template', 'list');
+    rpress_get_template_part($template . '/time-option');
+    $time_option_html = ob_get_clean();
+    wp_send_json_success(['modal_html' => $modal_html, 'time_option_html' => $time_option_html]);
+    wp_die( );
   }
 }
 RP_AJAX::init();

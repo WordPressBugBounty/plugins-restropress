@@ -751,7 +751,7 @@ function rpress_get_addons( $parent = 0 ) {
       'hide_empty'  => false
     )
   );
-  $addons = get_terms( $addons_args );
+  $addons = get_terms(  $addons_args );
   return apply_filters( 'rpress_get_addons', $addons );
 }
 /**

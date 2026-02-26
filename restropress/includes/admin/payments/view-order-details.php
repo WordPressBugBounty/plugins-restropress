@@ -571,7 +571,7 @@ $customer_email = is_array(isset($payment_meta['user_info'])) ? $payment_meta['u
 												<p class="rp-service-time">
 													<strong><?php esc_html_e('Service time: ', 'restropress'); ?></strong>
 													<select name="rp_service_time" class="medium-text">
-														<?php echo esc_html(rp_get_store_service_hours($service_type, false, $service_time, $asap_option)); ?>
+														<?php echo esc_html(rp_get_store_service_hours($service_type, false, $service_time, $asap_option , $service_date)); ?>
 													</select>
 												</p>
 											</div>
@@ -586,7 +586,7 @@ $customer_email = is_array(isset($payment_meta['user_info'])) ? $payment_meta['u
 													esc_html__('%s address:', 'restropress'),
 													esc_html(rpress_service_label($service_type))
 												); ?></h3>
-												<p><?php echo esc_html(apply_filters('rpress_admin_receipt_delivery_address', $user_address, $address_info)); ?>
+												<p><?php echo (apply_filters('rpress_admin_receipt_delivery_address', $user_address, $address_info)); ?>
 												</p>
 											</div>
 										</div>

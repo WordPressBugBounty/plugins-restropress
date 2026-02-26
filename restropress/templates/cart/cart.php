@@ -24,7 +24,8 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 			</span> -->
 			<div class='rpress-cart-badge rpress-cart-quantity'>
 				<div class="rpress-total-price-wrap">
-					<span>Total</span><span class="rp-mb-price"><?php echo esc_html(rpress_currency_filter(rpress_format_amount(rpress_get_cart_total()))); ?></span>
+					<span>Total</span><span
+						class="rp-mb-price"><?php echo esc_html(rpress_currency_filter(rpress_format_amount(rpress_get_cart_total()))); ?></span>
 				</div>
 				<div class='rpress-cart-total-item-list'>
 					<span class="rp-mb-quantity"><?php echo esc_html(rpress_get_cart_quantity()); ?></span>
@@ -33,9 +34,9 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 			</div>
 			<!-- <span class="rp-separation">&nbsp;|&nbsp;</span> -->
 		</div>
-<?php
-$button_style = rpress_get_option('button_style', 'button');
-?>
+		<?php
+		$button_style = rpress_get_option('button_style', 'button');
+		?>
 		<div class="rp-cart-right-wrap <?php echo esc_attr($button_style); ?>">
 			<span class="rp-cart-mb-txt"><?php esc_html_e('Checkout', 'restropress'); ?></span>
 			<!-- <span class="rp-cart-mb-icon"><i class="fa fa-caret-right" aria-hidden="true"></i></span> -->
@@ -54,7 +55,9 @@ $button_style = rpress_get_option('button_style', 'button');
 					<h4><?php echo esc_html(apply_filters('rpress_cart_title', __('Your Order', 'restropress'))); ?>
 					</h4>
 					<span>
-						<?php echo esc_html(rpress_get_cart_quantity()); ?>
+						<span class="rpress-cart-quantity">
+							<?php echo esc_html(rpress_get_cart_quantity()); ?>
+						</span>
 						<?php esc_html_e('items', 'restropress'); ?>
 					</span>
 				</div>

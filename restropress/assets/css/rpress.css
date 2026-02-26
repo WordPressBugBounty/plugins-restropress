@@ -168,9 +168,7 @@ li.cart_item.rpress_checkout .rp-loading:after {
 	padding: 7px;
 	line-height: 29px;
 }
-.rp-checkout-service-option .rpress-delivery-options.service-option-pickup ul#rpressdeliveryTab.nav>li>a{
-	width: 100%;
-}
+
 #rpress_checkout_wrap .nav#rpressdeliveryTab > li.active > a, 
 #rpress_checkout_wrap .nav#rpressdeliveryTab > li.active > a:hover, 
 #rpress_checkout_wrap .nav#rpressdeliveryTab > li.active > a:focus{
@@ -3327,6 +3325,21 @@ width: 32px;
 }
 }
 /*----responsive----*/
+
+.rpress_fooditems_list .rpress_fooditem_buy_button {
+    width: auto;
+    right: 0;
+}
+@media only screen and (min-width: 320px) and (max-width: 768px) {
+    .container-actionmenu.cart-has-items {
+        bottom: 150px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+ 	body .rpress-section a {
+        text-decoration: none !important;
+    }
+} /*category menu button*/
+
 @media only screen and (max-width:1920px){
 	.addon-popup-wrap input[type="radio"]:checked:after,
 	.addon-popup-wrap input[type="radio"]:after

@@ -132,6 +132,3 @@ $template = rpress_get_option('template', 'list');
 	<?php endif; ?>
 	<?php do_action('rpress_get_cart'); ?>
 </div>
-<script>
-	
-</script>

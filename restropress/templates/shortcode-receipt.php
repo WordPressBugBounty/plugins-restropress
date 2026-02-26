@@ -10,6 +10,7 @@ if( empty( $payment ) ) : ?>
 	</div> <?php
     return;
 endif;
+
 $meta           = rpress_get_payment_meta( $payment->ID );
 $service_time 	= rpress_get_payment_meta( $payment->ID, '_rpress_delivery_time' );
 $service_date   = rpress_get_payment_meta( $payment->ID, '_rpress_delivery_date', true );
@@ -33,6 +34,7 @@ $address        = !empty( $address_info['address'] ) ? $address_info['address'] 
 $address	     .= !empty( $address_info['flat'] ) ? $address_info['flat'] . ', ' : '';
 $address	     .= !empty( $address_info['city'] ) ? $address_info['city'] . ', ' : '';
 $address	     .= !empty( $address_info['postcode'] ) ? $address_info['postcode']  : '';
+
 do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 ?>
 <div class="container-fluid rp-header">

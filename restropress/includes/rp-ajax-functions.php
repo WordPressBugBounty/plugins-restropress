@@ -271,6 +271,21 @@ function get_fooditem_lists($fooditem_id, $cart_key = '')
                         $child_addons = wp_list_pluck($child_addons, 'term_id');
                     }
                     if (is_array($child_addons) && !empty($child_addons)) {
+                        $positions = [];
+                        foreach ($child_addons as $child_addon) {
+                            $pos = get_term_meta($child_addon, 'addon_position', true);
+                            if (!empty($pos)) {
+                                $positions[$child_addon] = $pos;
+                            } else {
+                                $positions[$child_addon] = 0;
+                            }
+                        }
+                        usort($child_addons, function ($a, $b) use ($positions) {
+                            $posA = isset($positions[$a]) ? $positions[$a] : PHP_INT_MAX;
+                            $posB = isset($positions[$b]) ? $positions[$b] : PHP_INT_MAX;
+
+                            return $posA - $posB;
+                        });
                         foreach ($child_addons as $child_addon) {
 
                             $classes = [];

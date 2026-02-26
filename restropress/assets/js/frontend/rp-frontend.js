@@ -669,6 +669,8 @@ jQuery(function ($) {
         post_data: FormData,
         security: rp_scripts.add_to_cart_nonce
       };
+      const float_menu = $(".container-actionmenu");
+
       if (itemId !== '') {
         $.ajax({
           type: "POST",
@@ -682,6 +684,9 @@ jQuery(function ($) {
             self.addClass('rp-loading');
             self.find('.rp-ajax-toggle-text')
               .addClass('rp-text-visibility')
+            if (float_menu.length > 0) {
+              float_menu.removeClass("cart-has-items");
+            }
           },
           complete: (jqXHR, object) => {
             self.removeClass('rp-loading');
@@ -726,6 +731,9 @@ jQuery(function ($) {
               } else {
                 $(response.cart_item).insertBefore('ul.rpress-cart li.cart_item.rpress_total');
               }
+              if (float_menu.length > 0) {
+                float_menu.addClass("cart-has-items");
+              }
 
               if ($('.rpress-cart')
                 .find('.rpress-cart-meta.rpress_subtotal')
@@ -737,8 +745,11 @@ jQuery(function ($) {
                 .show();
               $('.rp-mb-price')
                 .text(response.total);
-              $('.rp-mb-quantity')
+              $('.rp-mb-quantity, .rpress-cart-quantity')
                 .text(response.cart_quantity);
+              if( response.cart_quantity > 0 ){
+                $(".rpress.item-order").show();
+              }
               $('.cart_item.rpress-cart-meta.rpress_total')
                 .find('.cart-total')
                 .text(response.total);
@@ -1197,6 +1208,11 @@ jQuery(function ($) {
     });
 
   });
+  // Get today's date in YYYY-MM-DD (WP-compatible)
+  function getTodayDate() {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }
 
   $('body').on('click', '.rpress-editaddress-submit-btn', function (e) {
     e.preventDefault();
@@ -1214,10 +1230,18 @@ jQuery(function ($) {
     // Update cookies
     rp_setCookie('service_time', deliveryTime, rp_scripts.expire_cookie_time);
     rp_setCookie('service_time_text', deliveryTimeText, rp_scripts.expire_cookie_time);
-    if (deliveryDate) {
-      rp_setCookie('service_date', deliveryDate, rp_scripts.expire_cookie_time);
-      rp_setCookie('delivery_date', deliveryDate, rp_scripts.expire_cookie_time);
+    // if (deliveryDate) {
+    //   rp_setCookie('service_date', deliveryDate, rp_scripts.expire_cookie_time);
+    //   rp_setCookie('delivery_date', deliveryDate, rp_scripts.expire_cookie_time);
+    // }
+
+    // If deliveryDate exists → use it, else use today
+    if (!deliveryDate) {
+      deliveryDate = getTodayDate();
     }
+
+    rp_setCookie('service_date', deliveryDate, rp_scripts.expire_cookie_time);
+    rp_setCookie('delivery_date', deliveryDate, rp_scripts.expire_cookie_time);
 
     // Get the selected date and time
     var selectedDate = $('.rpress_get_delivery_dates').val();
@@ -1345,7 +1369,7 @@ jQuery(function ($) {
               }
             }
             $('span.rpress-cart-quantity')
-              .html(`${response.cart_quantity}<span>${rpress_scripts.items}</span>`);
+              .html(`${response.cart_quantity}`);
             $('.rp-mb-price')
               .text(response.total);
             $('.rp-mb-quantity')
@@ -1517,6 +1541,10 @@ jQuery(function ($) {
             _self.removeClass('rp-loading');
             _self.children('.rp-ajax-toggle-text')
               .removeClass('rp-text-visibility');
+            if (response && response.error_type === "service_time_not_set") {
+              $("#editDateTime").trigger('click');
+              return;
+            }
           } else {
             window.location.replace(rp_scripts.checkout_page)
             return;
@@ -1639,7 +1667,7 @@ jQuery(function ($) {
 });
 const totalHeight = 100; // Adjust for sticky header height
 
-jQuery(function($){
+jQuery(function ($) {
 
   // Smooth scroll for category dropdown and horizontal nav
   $('body').on('click', '.cd-dropdown-content a, .pn-ProductNav_Link', function (e) {
@@ -1702,12 +1730,14 @@ jQuery(function ($) {
           .css('cursor', 'not-allowed');
         liveQtyVal = 1;
       }
+      console.log(liveQtyVal);
+
       jQuery(this)
         .parents('footer.modal-footer')
         .find('a.submit-fooditem-button')
         .attr('data-item-qty', liveQtyVal);
       jQuery(this)
-        .parents('footer.modal-footer')
+        .parents('footer.modal__footer')
         .find('a.submit-fooditem-button')
         .attr('data-item-qty', liveQtyVal);
       // Updating live price as per quantity
@@ -2177,6 +2207,10 @@ jQuery(document).ready(function ($) {
 });
 
 jQuery(document).ready(function ($) {
+  const float_menu = $(".container-actionmenu");
+  if ($('.rpress-mobile-cart-icons').is(':visible')) {
+    float_menu.addClass("cart-has-items");
+  }
   // Handle tab switching and cookie update on service tab click
   $('.rpress-tabs-wrapper').on('click', '.nav-link', function (e) {
     e.preventDefault();
@@ -2202,10 +2236,10 @@ jQuery(document).ready(function ($) {
     // Update cookies for service type and label
     var serviceType = $this.data('service-type');
     var serviceLabel = $this.text().trim();
-
     if (typeof Cookies !== 'undefined') {
       Cookies.set('service_type', serviceType, { expires: 1 });
       Cookies.set('service_label', serviceLabel, { expires: 1 });
+      updataModalOnServiceTypeChange(serviceType);
     }
 
     // Optionally update UI somewhere else if needed
@@ -2219,6 +2253,38 @@ jQuery(document).ready(function ($) {
   //     $defaultActive.trigger('click');
   //   }
   // }, 100); // slight delay ensures it works after render
+  /**
+ * Fire a ajax call to update the modal 
+ * on change of service type
+ * @author RestroPress
+ * @param {string} service_type
+ */
+  const updataModalOnServiceTypeChange = function (service_type) {
+    $.get(`${rp_scripts.ajaxurl}?action=rpress_update_modal_on_service_switch&service_type=${service_type}`, function (res) {
+      if (res && res.success && res.data.modal_html && res.data.time_option_html) {
+        $("#rpressDateTime").replaceWith(res.data.modal_html);
+        $(".rpress-edit-address-wrap").html(
+          `<span class="left-brdr"></span>${res.data.time_option_html}`
+        );
+        const $select = $(res.data.modal_html).find("#rpress-delivery-hours");
+        const serviceTime = Cookies.get('service_time');
+        let defaultTime = "";
+        if ($select.length) {
+          defaultTime = $select.find('option:first').val();
+        }
+        if (!serviceTime && defaultTime) {
+          $("#deliveryTime").text(defaultTime);
+        }
+        // const selectedHtml = $(res.data.modal_html).find("#rpress_get_delivery_dates");
+        // if (selectedHtml.length && selectedHtml.find('option').length) {
+        //   selectedHtml.prop('selectedIndex', 0).trigger('change');
+        // }
+        //Cookies.set('service_time', res.data.default_time_option, { expires: 1 });
+        //Cookies.set('service_date', res.data.default_time_option, { expires: 1 });
+
+      }
+    })
+  }
 });
 
 
@@ -2457,11 +2523,11 @@ jQuery(function ($) {
     }
   });
 
-  $(document.body).on('click', '.order-online-servicetabs .single-service-selected', function () {
-    setTimeout(function () {
-      location.reload();
-    }, 400);
-  });
+  // $(document.body).on('click', '.order-online-servicetabs .single-service-selected', function () {
+  //   setTimeout(function () {
+  //     location.reload();
+  //   }, 400);
+  // });
 
   setTimeout(function () {
     // get the already selected value

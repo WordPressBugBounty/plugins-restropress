@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.2.4.2';
+	public $version = '3.2.5';
 	/**
 	 * The single instance of the class.
 	 *
@@ -326,6 +326,8 @@ final class RestroPress
 			require_once RP_PLUGIN_DIR . 'includes/admin/upgrades/upgrades.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/class-rpress-heartbeat.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/tools/tools-actions.php';
+			require_once RP_PLUGIN_DIR . 'includes/admin/class-rp-addon-sorting.php';
+
 		}
 		if ($this->is_request('frontend')) {
 			$this->frontend_includes();
@@ -371,7 +373,6 @@ final class RestroPress
 			}
 			// Set cookie safely before any HTML output
 			setcookie('service_type', $cookie_service, time() + (86400 * 30), "/");
-			$_COOKIE['service_type'] = $cookie_service;
 		}
 	}
 	/**

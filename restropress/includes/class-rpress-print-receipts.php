@@ -260,6 +260,13 @@ class RPRESS_Print_Receipts {
           'em'     => [],
           'img'    => ['src' => true, 'style' => true, 'alt' => true],
           'div'    => ['class' => true, 'style' => true],
+          'table'  => ['style' => true],
+          'thead'  => [], 
+          'tbody'  => [],
+          'tr'     => [], 
+          'td'     => ['style' => true, 'colspan' => true],
+          'th'     => ['style' => true],  
+          'hr'     => ['style' => true],
       ]
     );
     wp_die();

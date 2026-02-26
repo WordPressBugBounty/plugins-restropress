@@ -1,80 +1,97 @@
 <?php
-global $rpress_options;
-$service_type = rpress_get_option('enable_service', 'delivery_and_pickup');
-$services = $service_type == 'delivery_and_pickup' ? ['delivery', 'pickup'] : [$service_type];
-$services = apply_filters('rpress_enable_services', $services);
-$service_date = isset($_COOKIE['service_date']) ? sanitize_text_field($_COOKIE['service_date']) : '';
+/**
+ * Service Tabs Wrapper (Delivery / Pickup)
+ * Context-driven, no cookie or logic duplication
+ */
 
-// Check for cookie first
-$cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field($_COOKIE['service_type']) : '';
+$context = rpress_get_service_context();
 
-// If the cookie value is a valid service, use it; otherwise fallback to default
-if ($cookie_service && in_array($cookie_service, $services, true)) {
-    $default = $cookie_service;
-} else {
-    $default = !empty(rpress_get_option('default_service')) ? rpress_get_option('default_service') : 'delivery';
-}
+[
+    'service_type' => $current_service,
+    'services' => $services,
+    'service_date' => $service_date,
+    'store_timings' => $store_timings,
+    'is_store_open' => $is_store_open,
+    'service_enabled' => $service_enabled
+] = $context;
 
-$store_time = rp_get_store_timings(true, '');
-$store_times = apply_filters('rpress_store_delivery_timings', $store_time);
-
-// If empty check if pickup hours are available
-if (empty($store_times)) {
-    $store_times = apply_filters('rpress_store_pickup_timings', $store_time);
-}
-$service_date_raw = apply_filters( "rpress_service_date_raw", $service_date, $cookie_service );
-// Format date if it exists, else use today's date
-if (!empty($service_date_raw)) {
-    // Convert from Y-m-d (cookie) to F j (e.g., July 9)
-    $date_object = DateTime::createFromFormat('Y-m-d', $service_date_raw);
-    $service_date = $date_object ? $date_object->format('F j') : date_i18n('F j');
-} else {
-    $service_date = date_i18n('F j');
-}
-
-// Determine if we should show the service tabs
+/**
+ * Determine visibility
+ */
 $show_service_tabs = false;
-$closed_message_display = '';
+$closed_message = '';
 
-if ($service_type === 'delivery_and_pickup') {
-    // Always show switch for delivery_and_pickup
+if ($service_enabled === 'delivery_and_pickup') {
     $show_service_tabs = true;
 } else {
-    // For individual services, check if store is open
-    $current_service = $services[0];
-    if ( rpress_is_store_open($current_service, $service_date)) {
+    if (!empty($store_timings) && $is_store_open) {
         $show_service_tabs = true;
     } else {
-        $closed_message_display = rpress_store_closed_message($current_service);
+        $closed_message = rpress_store_closed_message($current_service);
     }
 }
 ?>
+
 <div class="rpress-delivery-wrap">
-    <?php if (!$show_service_tabs && !empty($closed_message_display)): ?>
+
+    <?php if (!$show_service_tabs && !empty($closed_message)): ?>
         <div class="alert alert-warning">
-            <?php echo wp_kses_post($closed_message_display); ?>
+            <?php echo wp_kses_post($closed_message); ?>
         </div>
+
     <?php elseif ($show_service_tabs): ?>
+
         <div class="rpress-row">
-            <!-- Error Message Starts Here -->
+
+            <!-- Error Message -->
             <div class="alert alert-warning rpress-errors-wrap disabled"></div>
-            <!-- Error Message Ends Here -->
-            <?php do_action('rpress_delivery_location_field'); ?>
-            <div class="rpress-tabs-wrapper rpress-delivery-options text-center service-option-<?php echo esc_attr($service_type); ?>">
-                <ul class="nav nav-pills order-online-servicetabs" id="rpressdeliveryTab">
-                    <?php foreach ($services as $service):             
-                        $is_active = $service === $default; ?>
-                        <li class="nav-item <?php echo $is_active ? 'active' : ''; ?>">
-                            <a class="nav-link single-service-selected" id="nav-<?php echo esc_attr($service); ?>-tab"
+
+            <?php
+            /**
+             * Location / branch selector
+             */
+            do_action('rpress_delivery_location_field');
+            ?>
+
+            <div class="rpress-tabs-wrapper rpress-delivery-options text-center
+                service-option-<?php echo esc_attr($current_service); ?>">
+
+                <ul class="nav nav-pills order-online-servicetabs" id="rpressdeliveryTab" role="tablist">
+
+                    <?php foreach ($services as $service): ?>
+                        <?php $is_active = ($service === $current_service); ?>
+
+                        <li class="nav-item <?php echo $is_active ? 'active' : ''; ?>" role="presentation">
+                            <a class="nav-link single-service-selected <?php echo $is_active ? 'active' : ''; ?>"
+                                id="nav-<?php echo esc_attr($service); ?>-tab"
                                 data-service-type="<?php echo esc_attr($service); ?>" data-toggle="tab"
                                 href="#nav-<?php echo esc_attr($service); ?>" role="tab"
-                                aria-controls="nav-<?php echo esc_attr($service); ?>" aria-selected="false">
-                                <?php echo esc_html( apply_filters( 'rpress_modify_service_label', rpress_service_label( $service ) ) ); ?>
-                            </a>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
+                                aria-controls="nav-<?php echo esc_attr($service); ?>"
+                                aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>">
+                                <?php
+                                $filtered_label = apply_filters(
+                                    'rpress_modify_service_label',
+                                    rpress_service_label($service)
+                                );
+                                echo wp_kses(
+                                    $filtered_label,
+                                    array(
+                                        'i' => array('class' => true, 'style' => true),
+                                        "br" => array(),
+                                         "span" => array('class' => true, 'style' => true),
+                                        )
+                                );
+                                ?>
+                                    </a>
+                                </li>
+
+                        <?php endforeach; ?>
+
+                    </ul>
+
+                </div>
             </div>
-        </div>
+
     <?php endif; ?>
+
 </div>

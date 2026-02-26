@@ -208,9 +208,9 @@ function rpress_run_install() {
 	RPRESS()->session->use_php_sessions();
 	// Update lisence string
 	$items = get_transient( 'restropress_add_ons_feed' );
-	if( ! $items ) {
-		$items = rpress_fetch_items();
-	}
+	// if( ! $items ) {
+	// 	$items = rpress_fetch_items();
+	// }
 	if( is_array( $items ) && !empty( $items ) ) {
 		foreach( $items as $key => $item ) {
 		  $license_key        = get_option( $item->license_string );

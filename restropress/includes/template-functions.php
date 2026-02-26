@@ -24,47 +24,47 @@ function rpress_append_purchase_link($fooditem_id)
 {
 	if (!get_post_meta($fooditem_id, '_rpress_hide_purchase_link', true)) {
 		echo wp_kses(
-			rpress_get_purchase_link( array( 'fooditem_id' => $fooditem_id ) ),
+			rpress_get_purchase_link(array('fooditem_id' => $fooditem_id)),
 			array(
-			  'form' => array(
-				'id'    => true,
-				'class' => true,
-				'method'=> true,
-				'action'=> true,
-			  ),
-			  'div' => array(
-				'class' => true,
-			  ),
-			  'a' => array(
-				'href' => true,
-				'class' => true,
-				'data-title' => true,
-				'data-action' => true,
-				'data-fooditem-id' => true,
-				'data-variable-price' => true,
-				'data-price' => true,
-				'data-price-mode' => true,
-				'style' => true,
-			  ),
-			  'span' => array(
-				'class' => true,
-			  ),
-			  'svg' => array(
-				'xmlns' => true,
-				'width' => true,
-				'height' => true,
-				'viewbox' => true,
-			  ),
-			  'path' => array(
-				'd' => true,
-			  ),
-			  'input' => array(
-				'type' => true,
-				'name' => true,
-				'class' => true,
-				'value' => true,
-				'id' => true,
-			  ),
+				'form' => array(
+					'id' => true,
+					'class' => true,
+					'method' => true,
+					'action' => true,
+				),
+				'div' => array(
+					'class' => true,
+				),
+				'a' => array(
+					'href' => true,
+					'class' => true,
+					'data-title' => true,
+					'data-action' => true,
+					'data-fooditem-id' => true,
+					'data-variable-price' => true,
+					'data-price' => true,
+					'data-price-mode' => true,
+					'style' => true,
+				),
+				'span' => array(
+					'class' => true,
+				),
+				'svg' => array(
+					'xmlns' => true,
+					'width' => true,
+					'height' => true,
+					'viewbox' => true,
+				),
+				'path' => array(
+					'd' => true,
+				),
+				'input' => array(
+					'type' => true,
+					'name' => true,
+					'class' => true,
+					'value' => true,
+					'id' => true,
+				),
 			)
 		);
 	}
@@ -210,8 +210,7 @@ function rpress_get_purchase_link($args = array())
 		<?php if ($variable_pricing && isset($price_id) && isset($prices[$price_id])): ?>
 			<input type="hidden" name="rpress_options[price_id][]"
 				id="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>_1"
-				class="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>"
-				value="<?php echo esc_attr($price_id); ?>">
+				class="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>" value="<?php echo esc_attr($price_id); ?>">
 		<?php endif; ?>
 		<?php if (!empty($args['direct']) && !$fooditem->is_free($args['price_id'])) { ?>
 			<input type="hidden" name="rpress_action" class="rpress_action_input" value="straight_to_gateway">
@@ -354,8 +353,7 @@ function rpress_get_purchase_link_grid($args = array())
 		<?php if ($variable_pricing && isset($price_id) && isset($prices[$price_id])): ?>
 			<input type="hidden" name="rpress_options[price_id][]"
 				id="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>_1"
-				class="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>"
-				value="<?php echo esc_attr($price_id); ?>">
+				class="rpress_price_option_<?php echo esc_attr($fooditem->ID); ?>" value="<?php echo esc_attr($price_id); ?>">
 		<?php endif; ?>
 		<?php if (!empty($args['direct']) && !$fooditem->is_free($args['price_id'])) { ?>
 			<input type="hidden" name="rpress_action" class="rpress_action_input" value="straight_to_gateway">
@@ -522,7 +520,7 @@ function rpress_get_add_button_styles()
 		'circle' => __('Circle', 'restropress'),
 		'rounded' => __('Rounded', 'restropress'),
 		'rectangle' => __('Rectangle', 'restropress'),
-		
+
 	);
 	return apply_filters('rpress_add_button_styles', $styles);
 }
@@ -937,11 +935,11 @@ function rpress_add_oembed_price()
 			$allowed_html = array(
 				'span' => array(
 					'class' => true,
-					'id'    => true,
+					'id' => true,
 				),
-			  );
-			  
-			echo wp_kses( rpress_price_range( get_the_ID() ), $allowed_html );
+			);
+
+			echo wp_kses(rpress_price_range(get_the_ID()), $allowed_html);
 		} else {
 			rpress_price(get_the_ID(), true);
 		}
@@ -1025,18 +1023,19 @@ function rpress_get_bundle_item_price_id($bundle_item)
  * @param array $atts The [fooditems] shortcode attributes.
  * @param int   $i The current item count.
  */
-function rpress_fooditem_shortcode_item( $atts, $i ) {
+function rpress_fooditem_shortcode_item($atts, $i)
+{
 	global $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i;
 	$rpress_fooditem_shortcode_item_atts = $atts;
-	$rpress_fooditem_shortcode_item_i    = $i;
+	$rpress_fooditem_shortcode_item_i = $i;
 
 	// Get selected template from settings (default to 'list')
-	$template = rpress_get_option( 'template', 'list' );
+	$template = rpress_get_option('template', 'list');
 
 	// Load the appropriate template part from the selected folder
-	rpress_get_template_part( $template . '/single' );
+	rpress_get_template_part($template . '/single');
 }
-add_action( 'rpress_fooditem_shortcode_item', 'rpress_fooditem_shortcode_item', 10, 2 );
+add_action('rpress_fooditem_shortcode_item', 'rpress_fooditem_shortcode_item', 10, 2);
 /**
  * Get category title
  *
@@ -1096,58 +1095,67 @@ function rpress_add_delivery_steps()
 	$allowed_html = array(
 		'div' => array(
 			'class' => true,
-			'id'    => true,
-			'role'  => true,
+			'id' => true,
+			'role' => true,
 			'aria-controls' => true,
 			'aria-selected' => true,
 		),
-		'ul' => array( 'class' => true, 'id' => true ),
-		'li' => array( 'class' => true, 'id' => true ),
-		'a'  => array(
+		'ul' => array('class' => true, 'id' => true),
+		'li' => array('class' => true, 'id' => true),
+		'a' => array(
 			'class' => true,
-			'href'  => true,
-			'id'    => true,
+			'href' => true,
+			'id' => true,
 			'data-toggle' => true,
 			'data-service-type' => true,
-			'role'   => true,
+			'role' => true,
 			'aria-controls' => true,
 			'aria-selected' => true,
 		),
-		'select' => array( 'class' => true, 'id' => true, 'name' => true ),
-		'option' => array( 'value' => true ),
-		'span'   => array( 'class' => true ),
-		'br'     => array(),
+		'select' => array(
+			'class' => true,
+			'id' => true,
+			'name' => true,
+		),
+		'option' => array(
+			'value' => true,
+			'selected' => true, 
+		),
+		'span' => array('class' => true),
+		'br' => array(),
 	);
-	
-	echo wp_kses( rpress_get_delivery_steps( '' ), $allowed_html );
-	
+
+
+	echo wp_kses(rpress_get_delivery_steps(''), $allowed_html);
+
 }
 
-function rpress_radio_image_callback( $args ) {
-	$option_value = rpress_get_option( $args['id'], $args['std'] );
-	$name_attr    = 'rpress_settings[' . esc_attr( $args['id'] ) . ']';
+function rpress_radio_image_callback($args)
+{
+	$option_value = rpress_get_option($args['id'], $args['std']);
+	$name_attr = 'rpress_settings[' . esc_attr($args['id']) . ']';
 
 	echo '<div class="rpress-radio-image-options">';
 
-	foreach ( $args['options'] as $key => $data ) {
+	foreach ($args['options'] as $key => $data) {
 		// Fallback image logic
-		$image_url = ! empty( $data['img'] )
+		$image_url = !empty($data['img'])
 			? $data['img']
-			: plugin_dir_url( dirname( __FILE__ ) ) . 'assets/images/' . $key . '.png';
+			: plugin_dir_url(dirname(__FILE__)) . 'assets/images/' . $key . '.png';
 
-		$label   = isset( $data['label'] ) ? $data['label'] : ucfirst( $key );
-		$checked = checked( $option_value, $key, false );
+		$label = isset($data['label']) ? $data['label'] : ucfirst($key);
+		$checked = checked($option_value, $key, false);
 
 		echo '<label class="rpress-radio-image-label">';
-		echo '<input type="radio" name="' . esc_attr( $name_attr ) . '" value="' . esc_attr( $key ) . '" ' . esc_attr($checked) . ' />';
-		echo '<img src="' . esc_url( $image_url ) . '" alt="' . esc_attr( $label ) . '" />';
-		echo '<div>' . esc_html( $label ) . '</div>';
+		echo '<input type="radio" name="' . esc_attr($name_attr) . '" value="' . esc_attr($key) . '" ' . esc_attr($checked) . ' />';
+		echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($label) . '" />';
+		echo '<div>' . esc_html($label) . '</div>';
 		echo '</label>';
 	}
 
 	echo '</div>';
 
-	if ( ! empty( $args['desc'] ) ) {
-		echo '<p class="description">' . wp_kses_post( $args['desc'] ) . '</p>';
+	if (!empty($args['desc'])) {
+		echo '<p class="description">' . wp_kses_post($args['desc']) . '</p>';
 	}
 }

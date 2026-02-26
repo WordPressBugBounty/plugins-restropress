@@ -1,0 +1,31 @@
+#rp-addon-item-list tr:hover {
+    cursor: -webkit-grab;
+    cursor: -moz-grab;
+}
+
+#rp-addon-item-list tr.ui-sortable-helper:hover {
+    display: table;
+    cursor: -webkit-grabbing;
+    cursor: -moz-grabbing;
+}
+
+#rp-addon-item-list tr.no-items:hover {
+    cursor: default;
+}
+
+.rp-addon-drag-drop-placeholder {
+    min-height: 57px;
+    height: 100%;
+    background: #f7f7f7;
+    border: 1px dashed #ccc;
+}
+
+.rp-addon-drag-drop-preloader {
+    margin: 0 0 0 8px;
+}
+
+/* Visual feedback during drag */
+#rp-addon-item-list tr.ui-sortable-helper, tbody.rp-addon-variation-group.ui-sortable-helper {
+    background: #f0f6fc;
+    border: 1px solid #c5d9f1;
+}
