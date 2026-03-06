@@ -59,7 +59,6 @@ class RestroPress_Addon_Updater {
 	public function init() {
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_update' ) );
 		add_filter( 'plugins_api', array( $this, 'plugins_api_filter' ), 10, 3 );
-		// remove_action( 'after_plugin_row_' . $this->name, 'wp_plugin_update_row', 10 );
 		add_action( 'after_plugin_row', array( $this, 'show_update_notification' ), 10, 2 );
 		add_action( 'admin_init', array( $this, 'show_changelog' ) );
 	}
@@ -122,10 +121,6 @@ class RestroPress_Addon_Updater {
 	 * @param array   $plugin
 	 */
 	public function show_update_notification( $file, $plugin ) {
-		// Return early if in the network admin, or if this is not a multisite install.
-		// if ( is_network_admin() || ! is_multisite() ) {
-		// 	return;
-		// }
 		// Allow single site admins to see that an update is available.
 		if ( ! current_user_can( 'activate_plugins' ) ) {
 			return;
@@ -456,7 +451,6 @@ class RestroPress_Addon_Updater {
 				$item_id = $item->id;
 			}
 		}
-		// $version_info = false;
 		if ( false === $version_info || empty( $version_info->new_version ) ) {
 			$version_info = $this->api_request(
 				'plugin_latest_version',

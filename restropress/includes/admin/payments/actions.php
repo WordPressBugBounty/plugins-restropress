@@ -415,7 +415,6 @@ function rpress_orders_list_table_process_bulk_actions() {
 		if ( empty( $action ) ) {
 			return;
 		}
-		// check_admin_referer( 'bulk-orders' );
 		$ids = wp_parse_id_list( $ids );
 		foreach ( $ids as $id ) {
 			switch ( $action ) {
@@ -473,10 +472,5 @@ function rpress_orders_list_table_process_bulk_actions() {
 		}
 		wp_safe_redirect( wp_get_referer() );
 	}
-	// if ( 'load-download_page_rpress-payment-history' !== current_action() ) {
-	// 	_doing_it_wrong( __FUNCTION__, 'This method is not meant to be called directly.', 'RestroPress 3.1.2.1' );
-	// }
-	
 }
-// add_action( 'admin_page_rpress-payment-history', 'rpress_orders_list_table_process_bulk_actions' );
 add_action( 'admin_init', 'rpress_orders_list_table_process_bulk_actions' );

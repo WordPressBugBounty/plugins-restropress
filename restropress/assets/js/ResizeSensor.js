@@ -19,11 +19,11 @@
     }
     // https://github.com/Semantic-Org/Semantic-UI/issues/3855
     // https://github.com/marcj/css-element-queries/issues/257
-    var globalWindow = typeof window != 'undefined' && window.Math == Math
+    var globalWindow = typeof window !== 'undefined' && window.Math === Math
         ? window
-        : typeof self != 'undefined' && self.Math == Math
+        : typeof self !== 'undefined' && self.Math === Math
             ? self
-            : Function('return this')();
+            : (typeof globalThis !== 'undefined' ? globalThis : {});
     // Only used for the dirty checking, so the event callback count is limited to max 1 call per fps per sensor.
     // In combination with the event based resize sensor this saves cpu time, because the sensor is too fast and
     // would generate too many unnecessary events.

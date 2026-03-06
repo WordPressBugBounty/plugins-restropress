@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
 Tested up to: 6.9
-Stable tag: 3.2.5
+Stable tag: 3.2.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -120,6 +120,36 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 👉 [Explore Pro Features & Extensions](https://restropress.com/extension/)
 
 == Changelog ==
+
+= Version 3.2.6(2026-03-04) =
+* Fixed: Checkout service time restore now targets the active service tab and no longer overwrites both delivery and pickup selects with a single cookie value
+* Fixed: Core slot-expiry validation now runs only when Order Time Intervals and Limits runtime is loaded, preventing false "Selected time slot is no longer available" errors when the addon is inactive
+* Fixed: Store open/close validation now supports both 12-hour and 24-hour time formats and handles overnight windows reliably
+* Fixed: "Enable Always Order Option" is now the only path that keeps the store open all day, and equal open/close values no longer behave like always-open
+* Fixed: Frontend store status checks now match core validation to prevent false midnight "store open" behavior
+* Fixed: Early translation loading notice issues
+* Fixed: Gateway initialization flow for translation compatibility
+* Fixed: PHP warning/deprecated compatibility issues
+* Fixed: PayPal Connect OAuth redirect/auth flow for one-click account connection
+* Fixed: PayPal account details sync and merchant account display in gateway settings
+* Fixed: PayPal Standard checkout payload/merchant validation stability in sandbox mode
+* Fixed: Sandbox PayPal checkout errors by adding safe test-mode currency fallback for unsupported INR flows
+* Fixed: Add-to-cart button alignment at thumbnail bottom-center for all button shapes
+* Fixed: Grid view card layout issues for food items without thumbnail images
+* Fixed: Grid view spacing/alignment issues for food items without thumbnail and description
+* Added: Modern ecommerce-style order confirmation page layout (without functional regressions)
+* Added: Realtime order status updates on confirmation page (websocket-first with fallback support)
+* Added: Status-specific animated GIF support for confirmation status block
+* Added: Browser push notifications for order status changes (including cross-page watcher support)
+* Added: Auto-clear order tracking for completed/cancelled/failed statuses with final notification
+* Added: Guided Realtime Updates settings section under Misc for easier websocket setup
+* Improved: Realtime configuration now supports admin settings with backward-compatible constant fallback
+* Fixed: Service time is now hidden across frontend views when disabled from Order Time, Interval & Limits settings
+* Fixed: Empty service-time rows are removed from receipt and order details templates when no service time is available
+* Fixed: Order Online header now shows selected service time correctly when slots are enabled, while still respecting disabled-time settings
+* Fixed: List view Order Online header now keeps service-time visible using selected-time fallback when cookie time is empty
+* Improved: Service context now safely clears disabled service-time values before template rendering
+* Code Cleanup
 
 = Version 3.2.5(2026-02-26) =
 * Added: Taxonomy sorting feature
@@ -828,7 +858,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.2.5 =
+= 3.2.6 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

@@ -343,20 +343,20 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 		if (is_array($variable_prices) && count($variable_prices) == 1) {
 			$variable_prices = $variable_prices[0];
 		}
+		$variable_prices = is_array($variable_prices) ? $variable_prices : array();
 		$food_addons = get_post_meta($fooditem_id, '_addon_items', true);
-
-		$data_addons = array();
+		$food_addons = is_array($food_addons) ? $food_addons : array();
 
 		foreach ($food_addons as $addon_id => $food_addon) {
 			$price = array();
 			if (isset($food_addon['items']) && is_array($food_addon['items'])) {
 				foreach ($food_addon['items'] as $key => $addonId) {
 					if (!empty($variable_prices) && isset($prices[$key])) {
-						$var_prices = (array) explode(' : ', string: $prices[$key]);
+						$var_prices = array_map('trim', (array) explode(' : ', $prices[$key]));
 						$priceVarData = array();
 						$i = 0;
 						foreach ($variable_prices as $foodVarKey => $food_variable) {
-							if(isset($var_prices[$i])){
+							if (isset($var_prices[$i], $food_variable['name'])) {
 								$priceVarData[str_replace(' ', '', $food_variable['name'])] = '' . $var_prices[$i];
 							}
 
@@ -395,9 +395,11 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 				foreach ($prices as $price) {
 					// See if this matches the RPRESS RestroPress export for variable prices
 					if (false !== strpos($price, ':')) {
-						$price = array_map('trim', explode(':', $price));
-						$variable_prices[$price_id] = array('name' => $price[0], 'amount' => $price[1]);
-						$price_id++;
+						$price = array_map('trim', explode(':', $price, 2));
+						if (2 === count($price)) {
+							$variable_prices[$price_id] = array('name' => $price[0], 'amount' => $price[1]);
+							$price_id++;
+						}
 					}
 				}
 				update_post_meta($fooditem_id, '_variable_pricing', 1);

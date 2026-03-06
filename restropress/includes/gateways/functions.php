@@ -17,20 +17,27 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @return array $gateways All the available gateways
  */
 function rpress_get_payment_gateways() {
+	$can_translate = did_action( 'init' );
+
+	$paypal_standard = $can_translate ? __( 'PayPal Standard', 'restropress' ) : 'PayPal Standard';
+	$paypal_label    = $can_translate ? __( 'PayPal', 'restropress' ) : 'PayPal';
+	$test_payment    = $can_translate ? __( 'Test Payment', 'restropress' ) : 'Test Payment';
+	$cash_label      = $can_translate ? __( 'Pay by cash', 'restropress' ) : 'Pay by cash';
+
 	// Default, built-in gateways
 	$gateways = array(
 		'paypal' => array(
-			'admin_label'    => __( 'PayPal Standard', 'restropress' ),
-			'checkout_label' => __( 'PayPal', 'restropress' ),
+			'admin_label'    => $paypal_standard,
+			'checkout_label' => $paypal_label,
 			'supports'       => array( 'buy_now' )
 		),
 		'manual' => array(
-			'admin_label'    => __( 'Test Payment', 'restropress' ),
-			'checkout_label' => __( 'Test Payment', 'restropress' )
+			'admin_label'    => $test_payment,
+			'checkout_label' => $test_payment
 		),
 		'cash_on_delivery' => array(
-			'admin_label'    => __( 'Pay by cash', 'restropress' ),
-			'checkout_label' => __( 'Pay by cash', 'restropress' )
+			'admin_label'    => $cash_label,
+			'checkout_label' => $cash_label
 		),
 	);
 	return apply_filters( 'rpress_payment_gateways', $gateways );

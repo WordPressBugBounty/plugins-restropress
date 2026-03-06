@@ -26,7 +26,6 @@ class RP_Admin_Menus
 		// Add menus.
 		add_action('admin_menu', array($this, 'admin_menu'));
 		add_action('admin_menu', array($this, 'menu_order_count'));
-		// add_action('admin_menu', array($this, 'rpress_add_setup_wizard_menu'));
 
 
 		//Custom menu ordering
@@ -116,7 +115,6 @@ class RP_Admin_Menus
 	{
 		$enable_service = get_option('enable_service', 'delivery_and_pickup');
 		$default_service = get_option('default_service', 'delivery');
-		// $default_time = get_option('default_time', '9:00am');
 		?>
 		<div class="wrap">
 			<h1>RestroPress Setup Wizard</h1>

@@ -1,3 +1,35 @@
+<?php
+$dashboard_today      = gmdate( 'Y-m-d' );
+$dashboard_yesterday  = gmdate( 'Y-m-d', strtotime( '-1 day' ) );
+$dashboard_totals     = array(
+    'order_count'         => 0,
+    'customer_count'      => 0,
+    'total_refund'        => 0,
+    'total_sales'         => 0,
+    'order_percentage'    => 0,
+    'customer_percentage' => 0,
+    'refund_percentage'   => 0,
+    'sales_percentage'    => 0,
+);
+
+if ( function_exists( 'rpress_admin_assets' ) ) {
+    $dashboard_totals = rpress_admin_assets()->get_dashboard_summary_by_range(
+        $dashboard_today,
+        $dashboard_today,
+        $dashboard_yesterday,
+        $dashboard_yesterday
+    );
+}
+
+$dashboard_order_count      = (int) $dashboard_totals['order_count'];
+$dashboard_customer_count   = (int) $dashboard_totals['customer_count'];
+$dashboard_total_refund     = (float) $dashboard_totals['total_refund'];
+$dashboard_total_sales      = (float) $dashboard_totals['total_sales'];
+$dashboard_order_percentage = (float) $dashboard_totals['order_percentage'];
+$dashboard_customer_change  = (float) $dashboard_totals['customer_percentage'];
+$dashboard_refund_change    = (float) $dashboard_totals['refund_percentage'];
+$dashboard_sales_change     = (float) $dashboard_totals['sales_percentage'];
+?>
 <div class="rp-col-sm-12">
     <div class="sales-page-wrap">
         <div class="row">
@@ -47,27 +79,10 @@
                                     d="M27.6691 22.8549C27.5621 22.8931 26.8895 23.5199 26.1634 24.2383L24.8487 25.5529L24.3213 25.0485C23.7099 24.4523 23.3659 24.3147 22.8768 24.4447C22.2271 24.6205 21.8297 25.3084 22.0131 25.9427C22.0819 26.1797 22.3418 26.4854 23.1825 27.3338C24.0844 28.2357 24.3137 28.4268 24.5583 28.465C25.2232 28.5873 25.2615 28.5644 27.3022 26.5313C28.6245 25.2166 29.2206 24.567 29.2818 24.3912C29.4499 23.8714 29.2665 23.3211 28.8003 22.9772C28.5633 22.8014 27.9519 22.7326 27.6691 22.8549Z"
                                     fill="#030043" />
                             </svg>
-                            <?php   $date           = gmdate( 'Y-m-d' );
-                                        $yesterday_date = gmdate( "Y-m-d", strtotime( "-1 day" ) );
-                                        
-                                        $order_count                = get_today_order_count( $date );
-                                        $orders_received_yesterday  = get_today_order_count( $yesterday_date );  
-                                        $percentage_change = 0;
-                                        if ( $orders_received_yesterday != 0) {
-                                            $percentage_change = ( ( $order_count - $orders_received_yesterday )  / $orders_received_yesterday ) * 100;
-                                  
-                                        }
-                                        function get_today_order_count( $date ) {
-                                            global $wpdb;
-                                            $query = $wpdb->prepare( "SELECT count(*) as count
-                                                FROM {$wpdb->postmeta}
-                                                WHERE `meta_key` = '_rpress_delivery_date'
-                                                AND `meta_value` = %s
-                                                GROUP BY meta_value", $date );
-                                        
-                                            $total_order_count = $wpdb->get_var( $query );
-                                            return $total_order_count ? $total_order_count : 0;
-                                        } ?>
+                            <?php
+                            $order_count       = $dashboard_order_count;
+                            $percentage_change = $dashboard_order_percentage;
+                            ?>
                             <div class="rp-sale-no mt-1" id="total-order"> <?php echo esc_html( $order_count ); ?> </div>
                             <div class="flex items-center rp-sales-growth">
                                 <p><?php echo esc_html__( 'Total Orders','restropress' ); ?></p>
@@ -96,7 +111,7 @@
                                         } else {
                                             echo "";
                                         } ?>
-                                    <?php echo esc_html( number_format( !empty( $percentage_change ) , 2 )) . "%"; ?>
+                                    <?php echo esc_html( number_format( $percentage_change, 2 ) ) . "%"; ?>
                                 </div>
                             </div>
                         </div>
@@ -118,35 +133,11 @@
                                     d="M7.17255 19.1289C6.4928 19.2818 5.36271 19.8171 4.67446 20.31C3.61234 21.0662 2.68618 22.2048 2.14237 23.4113C1.99792 23.7172 1.46262 25.5951 0.944306 27.5833C0.10311 30.7867 0.00114687 31.2795 0.00114687 31.9168C-0.00735005 32.554 0.0266377 32.707 0.264552 33.2083C0.587435 33.8881 1.19072 34.5253 1.81099 34.8397C2.77964 35.3325 2.31231 35.3155 13.5198 35.3155C20.8271 35.3155 23.9455 35.2901 24.2684 35.2221C24.8292 35.1031 25.5854 34.7208 26.0017 34.3639C26.6645 33.7776 27.1403 32.7495 27.1403 31.8828C27.1403 31.152 25.3135 24.1591 24.8886 23.2584C23.8775 21.1427 21.6683 19.4008 19.5526 19.0694C18.8388 18.959 18.7369 18.9844 17.4878 19.5452C14.9133 20.6923 11.5995 20.5989 9.02488 19.2903C8.48958 19.0184 7.88629 18.9675 7.17255 19.1289ZM8.76148 22.1453C11.8459 23.3774 15.2446 23.3774 18.3715 22.1283L19.2637 21.7714L19.697 21.9244C20.7761 22.3067 21.8892 23.2839 22.3736 24.2865C22.535 24.6264 22.9513 26.0964 23.5376 28.3736L24.4468 31.9253L24.2769 32.1547C24.1834 32.2821 24.0135 32.4351 23.903 32.4861C23.7416 32.571 21.4814 32.588 13.4433 32.571L3.18749 32.554L2.93259 32.3076C2.78814 32.1632 2.66918 32.0017 2.66918 31.9423C2.66918 31.8743 3.06854 30.2429 3.56136 28.3226C4.13915 26.0709 4.5555 24.6349 4.71694 24.2865C5.00584 23.7002 5.72807 22.8675 6.29737 22.4682C6.70522 22.1963 7.55491 21.8139 7.77583 21.8054C7.85231 21.8054 8.29415 21.9584 8.76148 22.1453Z"
                                     fill="#030043" />
                             </svg>
-                            <?php 
-                                        global $wpdb;
-                                        $today_date         = gmdate( 'Y-m-d' );
-                                        $yesterday_date     = gmdate( "Y-m-d", strtotime( "-1 day" ) );
-                                        $table_name         = $wpdb->prefix . 'rpress_customers';
-                                        
-                                        $query_today = $wpdb->prepare("
-                                            SELECT COUNT(*) 
-                                            FROM $table_name 
-                                            WHERE DATE(date_created) LIKE %s", 
-                                            array( "$today_date%" )
-                                        );
-                                    
-                                        $customer_count = $wpdb->get_var( $query_today );
-                                
-                                        $query_yesterday = $wpdb->prepare("
-                                            SELECT COUNT(*) 
-                                            FROM $table_name 
-                                            WHERE DATE(date_created) LIKE %s", 
-                                            array( "$yesterday_date%" )
-                                        );
-                                    
-                                        $customer_count_yesterday = $wpdb->get_var( $query_yesterday );
-                                
-                                        $percentage_change_customer = 0;
-                                        if ( $customer_count_yesterday != 0 ) {
-                                        $percentage_change_customer = (  ( $customer_count - $customer_count_yesterday )  / $customer_count_yesterday ) * 100;
-                                        }  ?>
-                            <div class="rp-sale-no mt-1" id="total-customer"><?php echo esc_html(sanitize_text_field( $customer_count)); ?> </div>
+                            <?php
+                            $customer_count              = $dashboard_customer_count;
+                            $percentage_change_customer  = $dashboard_customer_change;
+                            ?>
+                            <div class="rp-sale-no mt-1" id="total-customer"><?php echo esc_html( $customer_count ); ?> </div>
                             <div class="flex items-center rp-sales-growth">
                                 <p><?php echo esc_html__( 'Customer','restropress' ); ?></p>
                                 <div class="rp-sales-growth-rate <?php echo esc_html( $percentage_change_customer < 0 ) ? 'rp-red' : 'rp-green'; ?>  ml-3"
@@ -194,69 +185,9 @@
                                     fill="#4E4BF5" />
                             </svg>
                             <?php
-                                    $today_date         = gmdate( 'Y-m-d' );
-                                    $yesterday_date     = gmdate( "Y-m-d", strtotime( "-1 day" ) );
-                                    $args_today = array(
-                                        'post_type'      => 'rpress_payment',
-                                        'post_status'    => 'refunded',
-                                        'posts_per_page' => -1,
-                                        'meta_query'     => array(
-                                            array(
-                                                'key'     => '_rpress_delivery_date',
-                                                'value'   => $today_date,
-                                                'compare' => '=' // Exact match for today's date
-                                            )
-                                        )
-                                    );
-                            
-                                
-                                    $args_yesterday = array(
-                                        'post_type'      => 'rpress_payment',
-                                        'post_status'    => 'refunded',
-                                        'posts_per_page' => -1,
-                                        'meta_query'     => array(
-                                            array(
-                                                'key'     => '_rpress_delivery_date',
-                                                'value'   => $yesterday_date,
-                                                'compare' => '=' // Exact match for yesterday's date
-                                            )
-                                        )
-                                    );
-                            
-                                    $query_today      = new WP_Query( $args_today );
-                                    $query_yesterday  = new WP_Query( $args_yesterday );
-                            
-                                    $total_refund_today = 0;
-                                    $total_refund_yesterday = 0;
-                            
-                                    if ( $query_today->have_posts() ) {
-                                        while ( $query_today->have_posts() ) {
-                                            $query_today->the_post();
-                                            $post_id        = get_the_ID();
-                                            $payment        = new RPRESS_Payment($post_id);
-                                            $amount         = $payment->total;
-                                            $total_refund_today  += $amount;
-                                        }
-                                        wp_reset_postdata();
-                                    }
-                            
-                                    
-                                    if ( $query_yesterday->have_posts() ) {
-                                        while ( $query_yesterday->have_posts() ) {
-                                            $query_yesterday->the_post();
-                                            $post_id          = get_the_ID();
-                                            $payment          = new RPRESS_Payment( $post_id );
-                                            $amount           = $payment->total;
-                                            $total_refund_yesterday += $amount;
-                                        }
-                                        wp_reset_postdata();
-                                    }
-                                    
-                                    $total_refund_percentage = 0;
-                                    if ( $total_refund_yesterday != 0 ) {
-                                        $total_refund_percentage = ( ( $total_refund_today - $total_refund_yesterday ) / $total_refund_yesterday ) * 100;
-                                    }
-                                ?>
+                            $total_refund_today      = $dashboard_total_refund;
+                            $total_refund_percentage = $dashboard_refund_change;
+                            ?>
                             <div class="rp-sale-no mt-1" id="total-refund">
                                 <?php echo  esc_html(rpress_currency_filter( $total_refund_today )); ?> </div>
                             <div class="flex items-center rp-sales-growth">
@@ -306,68 +237,9 @@
                                     fill="#030043" />
                             </svg>
                             <?php
-                                $today_date         = gmdate( 'Y-m-d' );
-                                $yesterday_date     = gmdate( "Y-m-d", strtotime( "-1 day" ) );
-                                $args_today = array(
-                                    'post_type'      => 'rpress_payment',
-                                    'post_status'    => 'publish',
-                                    'posts_per_page' => -1,
-                                    'meta_query'     => array(
-                                        array(
-                                            'key'     => '_rpress_delivery_date',
-                                            'value'   => $today_date,
-                                            'compare' => '='  
-                                        )
-                                    )
-                                  );
-                            
-                                  $args_yesterday = array(
-                                      'post_type'      => 'rpress_payment',
-                                      'post_status'    => 'publish',
-                                      'posts_per_page' => -1,
-                                      'meta_query'     => array(
-                                          array(
-                                              'key'     => '_rpress_delivery_date',
-                                              'value'   => $yesterday_date,
-                                              'compare' => '=' // Exact match for yesterday's date
-                                          )
-                                      )
-                                  );
-                            
-                                  $query_today      = new WP_Query( $args_today );
-                                  $query_yesterday  = new WP_Query( $args_yesterday );
-                            
-                                  $total_today_sales = 0;
-                                  $total_sales_yesterday = 0;
-                            
-                                  if ( $query_today->have_posts() ) {
-                                      while ( $query_today->have_posts() ) {
-                                          $query_today->the_post();
-                                          $post_id          = get_the_ID();
-                                          $payment          = new RPRESS_Payment( $post_id );
-                                          $amount           = $payment->total;
-                                          $total_today_sales += $amount;
-                                      }
-                                      wp_reset_postdata();
-                                  }
-                            
-                                  
-                                  if ( $query_yesterday->have_posts() ) {
-                                      while ( $query_yesterday->have_posts() ) {
-                                          $query_yesterday->the_post();
-                                          $post_id          = get_the_ID();
-                                          $payment          = new RPRESS_Payment( $post_id );
-                                          $amount           = $payment->total;
-                                          $total_sales_yesterday += $amount;
-                                      }
-                                      wp_reset_postdata();
-                                  }
-                                  
-                                  $total_sales_percentage = 0;
-                                  if ( $total_sales_yesterday != 0 ) {
-                                      $total_sales_percentage = ( ( $total_today_sales - $total_sales_yesterday ) / $total_sales_yesterday ) * 100;
-                                  }
-                                ?>
+                            $total_today_sales    = $dashboard_total_sales;
+                            $total_sales_percentage = $dashboard_sales_change;
+                            ?>
                             <div class="rp-sale-no mt-1" id="total-sales">
                                 <?php echo esc_html(rpress_currency_filter($total_today_sales)); ?>
                             </div>
@@ -450,37 +322,9 @@
                             <p><?php echo esc_html__( 'Order received','restropress' ); ?></p>
                             <div class="flex items-center rp-sales-growth mt-1">
                                 <?php
-                                    
-                                        $today_date = gmdate( "Y-m-d" );
-                                        $yesterday_date = gmdate( "Y-m-d", strtotime( "-1 day" ) );
-                                        function get_order_count( $date ) {
-                                            $args = array(
-                                                'post_type' => 'rpress_payment',
-                                                'posts_per_page' => -1,
-                                                'date_query' => array(
-                                                    array(
-                                                        'year' => gmdate( 'Y', strtotime( $date ) ),
-                                                        'month' => gmdate( 'm', strtotime( $date ) ),
-                                                        'day' => gmdate( 'd', strtotime( $date ) ),
-                                                    ),
-                                                ),
-                                            );
-                                            $query = new WP_Query( $args );
-                                            $order_count = 0;
-                                            if ( $query->have_posts() ) {
-                                                $order_count = $query->post_count;
-                                            }
-                                            wp_reset_postdata();
-                                            return $order_count;
-                                        }
-                                        
-                                        $orders_received_today = get_order_count( $today_date );
-                                        $orders_received_yesterday = get_order_count( $yesterday_date );
-                                        $percentage_change = 0;
-                                        if ( $orders_received_yesterday != 0 ) {
-                                            $percentage_change = ( ($orders_received_today - $orders_received_yesterday  ) / $orders_received_yesterday ) * 100;
-                                        }
-                                    ?>
+                                $orders_received_today = $dashboard_order_count;
+                                $percentage_change     = $dashboard_order_percentage;
+                                ?>
                                 <div class="rp-sale-no"><?php echo esc_html( $orders_received_today );  ?> </div>
                                 <div
                                     class="rp-sales-growth-rate <?php echo esc_html( $percentage_change < 0 ) ? 'rp-red' : 'rp-green'; ?> ml-auto">
@@ -537,17 +381,18 @@
                                        $args = array(
                                           'post_type'      => 'rpress_payment',
                                           'posts_per_page' => 10,
+                                          'no_found_rows'  => true,
+                                          'orderby'        => 'date',
+                                          'order'          => 'DESC',
                                         );
                                         $orders_query = new WP_Query( $args );
-                                        $count = 0; 
+                                        $sequential_prefix = sanitize_text_field( rpress_get_option( 'sequential_prefix' ) );
+                                        $sequential_postfix = sanitize_text_field( rpress_get_option( 'sequential_postfix' ) );
                                         if ( $orders_query->have_posts() ) :
-                                        while ($orders_query->have_posts() && $count < 10) :
+                                        while ( $orders_query->have_posts() ) :
                                         $orders_query->the_post();
                                         $order_id           = get_the_ID();
-                                        $order = get_post($order_id);
-                                        $sequential_prefix = sanitize_text_field( rpress_get_option( 'sequential_prefix' ));
-                                        
-                                        $sequential_postfix = sanitize_text_field( rpress_get_option( 'sequential_postfix' ));
+                                        $order = get_post( $order_id );
                                         if ($order) { 
                                             $post_created_time  = strtotime($order->post_date);
                                             $current_time       = current_time('timestamp');
@@ -579,7 +424,6 @@
                                         $order_amount   = rpress_currency_filter( rpress_get_payment_amount( $order_id ) );
                                         $payment_status = get_post_status ($order_id);
                                         $payment_status = ($payment_status === 'publish') ? '<span class="paid">Paid</span>' : '<span class="unpaid">Unpaid</span>';
-                                        // $payment_status = wp_kses_post($payment_status);
                                     ?>
                                     <tr>
                                         <td class="d-flex text-align-left">
@@ -783,51 +627,45 @@
                         <h2 class="page-title"><?php echo esc_html__( 'Best Selling Product','restropress' ); ?></h2>
                     </div>
                         <?php
-                            $data =[];
-                            $post_id = get_the_ID();
-                            $args = array(
-                            'post_type' => 'fooditem', 
-                            'posts_per_page' => -1, 
+                        $best_selling_product_ids = get_posts(
+                            array(
+                                'post_type'      => 'fooditem',
+                                'post_status'    => 'publish',
+                                'posts_per_page' => 5,
+                                'fields'         => 'ids',
+                                'no_found_rows'  => true,
+                                'meta_key'       => '_rpress_fooditem_sales',
+                                'orderby'        => 'meta_value_num',
+                                'order'          => 'DESC',
+                            )
+                        );
+
+                        if ( empty( $best_selling_product_ids ) ) {
+                            $best_selling_product_ids = get_posts(
+                                array(
+                                    'post_type'      => 'fooditem',
+                                    'post_status'    => 'publish',
+                                    'posts_per_page' => 5,
+                                    'fields'         => 'ids',
+                                    'no_found_rows'  => true,
+                                    'orderby'        => 'date',
+                                    'order'          => 'DESC',
+                                )
                             );
-                    
-                            $custom_query = new WP_Query($args);
-                    
-                            if ($custom_query->have_posts()) :
-                            while ($custom_query->have_posts()) : $custom_query->the_post();
-                            $post_id = get_the_ID();
-                            $earning = rpress_get_fooditem_earnings_stats($post_id);
-                            $food_data =array(
-                            'post_id' => $post_id,
-                            'earning' => $earning,
-                            
-                            );
-                            array_push($data, $food_data);
-                            endwhile;
-                            wp_reset_postdata();
-                            else :
-                            ?>
-                            <div class="item-not-found-wrap">     
-                                <img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/item-not-found.png' ); ?>" />   
-                                <p><?php echo esc_html__( "Sorry, No product found", "restropress" ); ?></p>                                   
-                            </div>
-                            <?php
-                            endif;
-                            function sortByEarningDesc($a, $b) {
-                            return $b['earning'] - $a['earning'];
-                            }
-                            usort($data, 'sortByEarningDesc');
-                            $data = array_slice($data, 0, 5);
-                    
+                        }
                         ?>
-                    <?php foreach ( $data as $product ) : ?>
-                    <?php 
-                        $post_title = esc_html( get_the_title( $product[ 'post_id' ] ) );
-                        $post_content = esc_html( get_the_excerpt( $product[ 'post_id' ] ) ); 
-                        $terms = get_the_terms( $product[ 'post_id' ], "food-category" ); 
-                        $terms_name = isset($terms[0]->name);
-                    
-                        $image_url = esc_url( get_the_post_thumbnail_url($product['post_id']) );
-                        $sales_count  = get_post_meta($product['post_id'], '_rpress_fooditem_sales', true);
+                    <?php if ( empty( $best_selling_product_ids ) ) : ?>
+                        <div class="item-not-found-wrap">
+                            <img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/item-not-found.png' ); ?>" />
+                            <p><?php echo esc_html__( 'Sorry, No product found', 'restropress' ); ?></p>
+                        </div>
+                    <?php else : ?>
+                    <?php foreach ( $best_selling_product_ids as $product_id ) : ?>
+                    <?php
+                        $post_title   = esc_html( get_the_title( $product_id ) );
+                        $post_content = esc_html( get_the_excerpt( $product_id ) );
+                        $image_url    = esc_url( get_the_post_thumbnail_url( $product_id ) );
+                        $sales_count  = (int) get_post_meta( $product_id, '_rpress_fooditem_sales', true );
                     ?>
                     <div class="rp-bestselling-product-wrap mt-6">
                         <div class="flex items-center">
@@ -843,8 +681,8 @@
                             </div>
                             <div class="rp-sale-stock-no"><?php echo esc_html( $sales_count ); ?></div>
                                 <?php 
-                                $stock = get_post_meta($product['post_id'],'rp_item_stock', true) ;
-                                $stock_class = ($stock > 0) ? "rp-sale-stock" : "rp-sale-out-of-stock";
+                                $stock = get_post_meta( $product_id, 'rp_item_stock', true );
+                                $stock_class = ( $stock > 0 ) ? 'rp-sale-stock' : 'rp-sale-out-of-stock';
                                 if(class_exists('RP_Inventory')){
                                 ?>                                                                
                                 <div class="flex items-center <?php echo esc_html($stock_class); ?>">
@@ -856,6 +694,7 @@
                             </div>
                         </div>
                         <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                     
                  
@@ -874,34 +713,9 @@
                             </select>
                         </div>
                     </div>
-                    <?php 
-                        global $wpdb;
-                        $today_date         = gmdate( 'Y-m-d' );
-                        $yesterday_date     = gmdate( "Y-m-d", strtotime( "-1 day" ) );
-                        $table_name         = $wpdb->prefix . 'rpress_customers';
-                        
-                        $query_today = $wpdb->prepare("
-                            SELECT COUNT(*) 
-                            FROM $table_name 
-                            WHERE DATE(date_created) LIKE %s", 
-                            array( "$today_date%" )
-                        );
-                    
-                        $customer_count = $wpdb->get_var( $query_today );
-                
-                        $query_yesterday = $wpdb->prepare("
-                            SELECT COUNT(*) 
-                            FROM $table_name 
-                            WHERE DATE(date_created) LIKE %s", 
-                            array( "$yesterday_date%" )
-                        );
-                    
-                        $customer_count_yesterday = $wpdb->get_var( $query_yesterday );
-                
-                        $percentage_change_customer = 0;
-                        if ( $customer_count_yesterday != 0 ) {
-                        $percentage_change_customer = (  ( $customer_count - $customer_count_yesterday )  / $customer_count_yesterday ) * 100;
-                        }  
+                    <?php
+                    $customer_count             = $dashboard_customer_count;
+                    $percentage_change_customer = $dashboard_customer_change;
                     ?>
                     <div class="rp-customer-information-list mt-5 flex items-center">
                         <div>
@@ -913,7 +727,7 @@
                             <div class="mt-5">
                                 <p class="rp-customer-type"><?php echo esc_html__( 'New Customer','restropress' ); ?></p>
                                 <span class="rp-customer-rate"
-                                    id="new-customer"><?php echo esc_html( $percentage_change_customer ) ?>%</span>
+                                    id="new-customer"><?php echo esc_html( $customer_count ); ?></span>
                             </div>
                         </div>
                         <div id="rp-customer-information-graph">

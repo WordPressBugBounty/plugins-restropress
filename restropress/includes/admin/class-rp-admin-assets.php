@@ -168,6 +168,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         'order_nonce'                 => wp_create_nonce( 'rpress-order' ),
         'activate_license'            => wp_create_nonce( 'activate-license' ),
         'deactivate_license'          => wp_create_nonce( 'deactivate-license' ),
+        'selected_filter_nonce'       => wp_create_nonce( 'selected-filter' ),
       );
       wp_localize_script( 'rp-admin', 'rpress_vars',
         $admin_params
@@ -405,135 +406,211 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         }
       </style>
     <?php }
-    public function selected_filter() {
-      global $wpdb;
-    
-      $pdate = $_POST['date'];
-      $order_count      = 0;
-      $customer_count   = 0;
-      $total_refund     = 0;
-      $total_sales      = 0;
-      $percentage_change = 0;
-      if ( $pdate == 'this_year' ) {
-        $start_of_this_year = gmdate( 'Y-01-01' );
-        $end_of_this_year   = gmdate( 'Y-12-31' );
-        $last_year_start    = gmdate( 'Y-01-01', strtotime( '-1 year' ) );
-        $last_year_end      = gmdate( 'Y-12-t', strtotime( '-1 year' ) );
-        $order_count        = $this->get_this_year_order_count( $start_of_this_year, $end_of_this_year );
-        $orders_received_last_year = $this->get_this_year_order_count( $last_year_start, $last_year_end );
-        if ( $orders_received_last_year != 0 ) {
-          $percentage_change = ( ( $order_count - $orders_received_last_year )  / $orders_received_last_year ) * 100;
-        }
-        $table_end      = $wpdb->prefix . 'rpress_customers';
-        $result         = $this->get_this_year_customer_counts( $table_end, $start_of_this_year, $end_of_this_year, $last_year_start, $last_year_end );
-        $total_refund   = $this->calculate_this_year_refunds( $start_of_this_year, $end_of_this_year, $last_year_start, $last_year_end );
-        $total_sales    = $this->calculate_this_year_sales( $start_of_this_year, $end_of_this_year, $last_year_start, $last_year_end );
-        
-      }
-    
-      if  ( $pdate == 'today' ) {
-        $date           = gmdate( 'Y-m-d' );
-        $yesterday_date = gmdate( "Y-m-d", strtotime( "-1 day" ) );
-        
-        $order_count                = $this->get_today_order_count( $date );
-        $orders_received_yesterday  = $this->get_today_order_count( $yesterday_date );
-        if ( $orders_received_yesterday != 0) {
-          $percentage_change = ( ( $order_count - $orders_received_yesterday )  / $orders_received_yesterday ) * 100;
-        }
-        $table_end  = $wpdb->prefix . 'rpress_customers';
-        $result     = $this->get_today_customer_counts( $table_end, $date, $yesterday_date );
-    
-        $total_refund = $this->calculate_today_refund( $date, $yesterday_date );
-        $total_sales  = $this->calculate_today_sales( $date, $yesterday_date );
-          
-      }
-      if  ( $pdate == 'yesterday' ) {
-        $date           = gmdate( 'Y-m-d', strtotime( '-1 day' ) );
-        $previous_date  = gmdate( "Y-m-d", strtotime( "-2 day" ) );
-        $order_count              = $this->get_yesterday_order_count( $date );
-        $orders_received_previous = $this->get_yesterday_order_count( $previous_date );
-        
-        if ( $orders_received_previous != 0 ) {
-          $percentage_change  = ( ( $order_count - $orders_received_previous )  / $orders_received_previous ) * 100;
-        }
-      
-        $table_end  = $wpdb->prefix . 'rpress_customers';
-        $result     = $this->get_yesterday_customer_counts( $table_end, $date, $previous_date );
-        $total_refund = $this->calculate_yesterday_refund( $date, $previous_date );
-        $total_sales = $this->calculate_yesterday_sales( $date, $previous_date );
-      }
-      if( $pdate == 'last_week' ) {
-        $start_of_last_week     = gmdate( 'Y-m-d', strtotime( 'last week monday' ) );
-        $end_of_last_week       = gmdate( 'Y-m-d', strtotime( 'last week sunday' ) );
-        $previous_week_start    = gmdate( 'Y-m-d', strtotime( 'monday 1 weeks ago' ) );
-        $previous_week_end      = gmdate( 'Y-m-d', strtotime( 'sunday 1 week ago' ) );
-      
-        $order_count        = $this->get_last_week_order_count( $start_of_last_week, $end_of_last_week );
-        $orders_received_previous_week = $this->get_last_week_order_count( $previous_week_start, $previous_week_end );
-      
-        if ( $orders_received_previous_week != 0 ) {
-          $percentage_change = ( ( $order_count - $orders_received_previous_week ) / $orders_received_previous_week ) * 100;
-        } 
-        $table_end    = $wpdb->prefix . 'rpress_customers';
-        $result       = $this->get_last_week_customer_counts( $table_end, $start_of_last_week, $end_of_last_week, $previous_week_start, $previous_week_end );
-        $total_refund = $this->calculate_last_weekly_refunds( $start_of_last_week, $end_of_last_week, $previous_week_start, $previous_week_end );
-        $total_sales  = $this->calculate_last_weekly_sales( $start_of_last_week, $end_of_last_week, $previous_week_start, $previous_week_end );
-         
-      }
-      if  ( $pdate == 'last_month' ) {
-        $start_of_last_month    = gmdate( 'Y-m-01', strtotime( 'last month' ) );
-        $end_of_last_month      = gmdate( 'Y-m-t', strtotime( 'last month' ) );
-        $previous_month_start   = gmdate( 'Y-m-01', strtotime( '-2 months' ) );
-        $previous_month_end     = gmdate( 'Y-m-t', strtotime( '-2 month' ) );
-        $order_count                    = $this->get_last_month_order_count( $start_of_last_month, $end_of_last_month );
-        $orders_received_previous_month = $this->get_last_month_order_count( $previous_month_start, $previous_month_end );
-        
-        if ( $orders_received_previous_month != 0 ) {
-          $percentage_change = ( ( $order_count - $orders_received_previous_month ) / $orders_received_previous_month ) * 100;
-        }
-        $table_end    = $wpdb->prefix . 'rpress_customers';
-        $result       = $this->get_last_month_customer_counts( $table_end, $start_of_last_month, $end_of_last_month, $previous_month_start, $previous_month_end );
-        $total_refund = $this->calculate_last_month_refunds( $start_of_last_month, $end_of_last_month, $previous_month_start, $previous_month_end );
-        $total_sales  = $this->calculate_last_month_sales( $start_of_last_month, $end_of_last_month, $previous_month_start, $previous_month_end );
-      }
-      if ( $pdate == 'last_year' ) {
-        $start_of_last_year     = gmdate( 'Y-01-01', strtotime( '-1 year') );
-        $end_of_last_year       = gmdate( 'Y-12-31', strtotime( '-1 year') );
-        $two_years_ago_start    = gmdate('Y-01-01', strtotime( '-2 years' ) );
-        $two_years_ago_end      = gmdate( 'Y-12-31', strtotime( '-2 years') );
-        $order_count            = $this->get_last_year_order_count( $start_of_last_year, $end_of_last_year );
-        $orders_received_two_years_ago = $this->get_last_year_order_count( $two_years_ago_start, $two_years_ago_end );
-        if ( $orders_received_two_years_ago != 0 ) {
-          $percentage_change = ( ( abs( $order_count - $orders_received_two_years_ago ) ) / $orders_received_two_years_ago) * 100;
-        }
-        $table_end      = $wpdb->prefix . 'rpress_customers';
-        $result         = $this->get_last_month_customer_counts( $table_end, $start_of_last_year, $end_of_last_year, $two_years_ago_start, $two_years_ago_end );
-        $total_refund   = $this->calculate_last_year_refunds( $start_of_last_year, $end_of_last_year, $two_years_ago_start, $two_years_ago_end );
-        $total_sales    = $this->calculate_last_year_sales( $start_of_last_year, $end_of_last_year, $two_years_ago_start, $two_years_ago_end );
-         
-      }
-      if ( $pdate == 'custom') {
-        $startDate  = $_POST['startDate'];
-        $endDate    = $_POST['endDate'];
-        $order_count   = $this->get_custom_order_count( $startDate, $endDate );
-        $table_end     = $wpdb->prefix . 'rpress_customers';
-        $result        = $this->get_custom_customer_counts( $table_end, $startDate, $endDate );
-        $total_refund = $this->calculate_custom_refunds( $startDate, $endDate );
-        $total_sales  = $this->calculate_custom_sales( $startDate, $endDate );
-      }
-      $data = array(
-        'order_count'             =>  $order_count,
-        'customer_count'          =>  $result['customer_count'],    
-        'total_refund'            =>  $total_refund['total_refund'],
-        'total_sales'             =>  sprintf("%0.2f",$total_sales['total_sales']),
-        'order_percentage'        =>  number_format( $percentage_change, 2 ),
-        'customer_percentage'     =>  $result['percentage_change_customer'],
-        'refund_percentage'       =>  $total_refund['total_refund_percentage'],
-        'sales_percentage'        =>  $total_sales['total_sales_percentage'],
+    private function get_selected_filter_ranges( $filter, $custom_start = '', $custom_end = '' ) {
+      $today = gmdate( 'Y-m-d' );
+      $ranges = array(
+        'current_start'  => $today,
+        'current_end'    => $today,
+        'previous_start' => '',
+        'previous_end'   => '',
       );
+
+      switch ( $filter ) {
+        case 'this_year':
+          $ranges['current_start']  = gmdate( 'Y-01-01' );
+          $ranges['current_end']    = gmdate( 'Y-12-31' );
+          $ranges['previous_start'] = gmdate( 'Y-01-01', strtotime( '-1 year' ) );
+          $ranges['previous_end']   = gmdate( 'Y-12-31', strtotime( '-1 year' ) );
+          break;
+        case 'yesterday':
+          $ranges['current_start']  = gmdate( 'Y-m-d', strtotime( '-1 day' ) );
+          $ranges['current_end']    = $ranges['current_start'];
+          $ranges['previous_start'] = gmdate( 'Y-m-d', strtotime( '-2 day' ) );
+          $ranges['previous_end']   = $ranges['previous_start'];
+          break;
+        case 'last_week':
+          $ranges['current_start']  = gmdate( 'Y-m-d', strtotime( 'last week monday' ) );
+          $ranges['current_end']    = gmdate( 'Y-m-d', strtotime( 'last week sunday' ) );
+          $ranges['previous_start'] = gmdate( 'Y-m-d', strtotime( 'monday -2 weeks' ) );
+          $ranges['previous_end']   = gmdate( 'Y-m-d', strtotime( 'sunday -2 weeks' ) );
+          break;
+        case 'last_month':
+          $ranges['current_start']  = gmdate( 'Y-m-01', strtotime( 'last month' ) );
+          $ranges['current_end']    = gmdate( 'Y-m-t', strtotime( 'last month' ) );
+          $ranges['previous_start'] = gmdate( 'Y-m-01', strtotime( '-2 months' ) );
+          $ranges['previous_end']   = gmdate( 'Y-m-t', strtotime( '-2 months' ) );
+          break;
+        case 'last_year':
+          $ranges['current_start']  = gmdate( 'Y-01-01', strtotime( '-1 year' ) );
+          $ranges['current_end']    = gmdate( 'Y-12-31', strtotime( '-1 year' ) );
+          $ranges['previous_start'] = gmdate( 'Y-01-01', strtotime( '-2 years' ) );
+          $ranges['previous_end']   = gmdate( 'Y-12-31', strtotime( '-2 years' ) );
+          break;
+        case 'custom':
+          $ranges['current_start'] = $this->sanitize_dashboard_date( $custom_start, $today );
+          $ranges['current_end']   = $this->sanitize_dashboard_date( $custom_end, $ranges['current_start'] );
+          if ( strtotime( $ranges['current_end'] ) < strtotime( $ranges['current_start'] ) ) {
+            $temp                    = $ranges['current_start'];
+            $ranges['current_start'] = $ranges['current_end'];
+            $ranges['current_end']   = $temp;
+          }
+          break;
+        case 'today':
+        default:
+          $ranges['current_start']  = $today;
+          $ranges['current_end']    = $today;
+          $ranges['previous_start'] = gmdate( 'Y-m-d', strtotime( '-1 day' ) );
+          $ranges['previous_end']   = $ranges['previous_start'];
+          break;
+      }
+
+      return $ranges;
+    }
+
+    private function sanitize_dashboard_date( $date, $fallback ) {
+      $date = sanitize_text_field( wp_unslash( (string) $date ) );
+      $time = strtotime( $date );
+      if ( false === $time ) {
+        return $fallback;
+      }
+
+      return gmdate( 'Y-m-d', $time );
+    }
+
+    private function calculate_dashboard_percentage( $current, $previous ) {
+      $previous = (float) $previous;
+      if ( 0.0 === $previous ) {
+        return 0.0;
+      }
+
+      return ( ( (float) $current - $previous ) / $previous ) * 100;
+    }
+
+    private function get_delivery_order_count_by_range( $start_date, $end_date ) {
+      global $wpdb;
+
+      $query = $wpdb->prepare(
+        "SELECT COUNT(DISTINCT pm.post_id)
+        FROM {$wpdb->postmeta} pm
+        INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+        WHERE pm.meta_key = '_rpress_delivery_date'
+          AND pm.meta_value BETWEEN %s AND %s
+          AND p.post_type = 'rpress_payment'",
+        $start_date,
+        $end_date
+      );
+
+      return (int) $wpdb->get_var( $query );
+    }
+
+    private function get_customer_count_by_range( $start_date, $end_date ) {
+      global $wpdb;
+      $table_name = $wpdb->prefix . 'rpress_customers';
+
+      $table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) );
+      if ( $table_exists !== $table_name ) {
+        return 0;
+      }
+
+      $start_datetime = $start_date . ' 00:00:00';
+      $end_datetime   = gmdate( 'Y-m-d 00:00:00', strtotime( $end_date . ' +1 day' ) );
+
+      $query = $wpdb->prepare(
+        "SELECT COUNT(*)
+        FROM {$table_name}
+        WHERE date_created >= %s
+          AND date_created < %s",
+        $start_datetime,
+        $end_datetime
+      );
+
+      return (int) $wpdb->get_var( $query );
+    }
+
+    private function get_payment_total_by_range_and_status( $start_date, $end_date, $status ) {
+      global $wpdb;
+
+      $query = $wpdb->prepare(
+        "SELECT COALESCE(SUM(CAST(pm_total.meta_value AS DECIMAL(18,2))), 0)
+        FROM {$wpdb->posts} p
+        INNER JOIN {$wpdb->postmeta} pm_date
+          ON pm_date.post_id = p.ID
+          AND pm_date.meta_key = '_rpress_delivery_date'
+        INNER JOIN {$wpdb->postmeta} pm_total
+          ON pm_total.post_id = p.ID
+          AND pm_total.meta_key = '_rpress_payment_total'
+        WHERE p.post_type = 'rpress_payment'
+          AND p.post_status = %s
+          AND pm_date.meta_value BETWEEN %s AND %s",
+        $status,
+        $start_date,
+        $end_date
+      );
+
+      return (float) $wpdb->get_var( $query );
+    }
+
+    public function get_dashboard_summary_by_range( $current_start, $current_end, $previous_start = '', $previous_end = '' ) {
+      $order_count    = $this->get_delivery_order_count_by_range( $current_start, $current_end );
+      $customer_count = $this->get_customer_count_by_range( $current_start, $current_end );
+      $total_refund   = $this->get_payment_total_by_range_and_status( $current_start, $current_end, 'refunded' );
+      $total_sales    = $this->get_payment_total_by_range_and_status( $current_start, $current_end, 'publish' );
+
+      $order_percentage    = 0.0;
+      $customer_percentage = 0.0;
+      $refund_percentage   = 0.0;
+      $sales_percentage    = 0.0;
+
+      if ( ! empty( $previous_start ) && ! empty( $previous_end ) ) {
+        $previous_order_count    = $this->get_delivery_order_count_by_range( $previous_start, $previous_end );
+        $previous_customer_count = $this->get_customer_count_by_range( $previous_start, $previous_end );
+        $previous_total_refund   = $this->get_payment_total_by_range_and_status( $previous_start, $previous_end, 'refunded' );
+        $previous_total_sales    = $this->get_payment_total_by_range_and_status( $previous_start, $previous_end, 'publish' );
+
+        $order_percentage    = $this->calculate_dashboard_percentage( $order_count, $previous_order_count );
+        $customer_percentage = $this->calculate_dashboard_percentage( $customer_count, $previous_customer_count );
+        $refund_percentage   = $this->calculate_dashboard_percentage( $total_refund, $previous_total_refund );
+        $sales_percentage    = $this->calculate_dashboard_percentage( $total_sales, $previous_total_sales );
+      }
+
+      return array(
+        'order_count'          => $order_count,
+        'customer_count'       => $customer_count,
+        'total_refund'         => $total_refund,
+        'total_sales'          => $total_sales,
+        'order_percentage'     => $order_percentage,
+        'customer_percentage'  => $customer_percentage,
+        'refund_percentage'    => $refund_percentage,
+        'sales_percentage'     => $sales_percentage,
+      );
+    }
+
+    public function selected_filter() {
+      check_ajax_referer( 'selected-filter', 'nonce' );
+
+      $pdate      = isset( $_POST['date'] ) ? sanitize_text_field( wp_unslash( $_POST['date'] ) ) : 'today';
+      $start_date = isset( $_POST['startDate'] ) ? sanitize_text_field( wp_unslash( $_POST['startDate'] ) ) : '';
+      $end_date   = isset( $_POST['endDate'] ) ? sanitize_text_field( wp_unslash( $_POST['endDate'] ) ) : '';
+      $ranges     = $this->get_selected_filter_ranges( $pdate, $start_date, $end_date );
+      $summary    = $this->get_dashboard_summary_by_range(
+        $ranges['current_start'],
+        $ranges['current_end'],
+        $ranges['previous_start'],
+        $ranges['previous_end']
+      );
+
+      $data = array(
+        'order_count'         => (int) $summary['order_count'],
+        'customer_count'      => (int) $summary['customer_count'],
+        'total_refund'        => number_format( (float) $summary['total_refund'], 2, '.', '' ),
+        'total_sales'         => number_format( (float) $summary['total_sales'], 2, '.', '' ),
+        'order_percentage'    => number_format( (float) $summary['order_percentage'], 2, '.', '' ),
+        'customer_percentage' => number_format( (float) $summary['customer_percentage'], 2, '.', '' ),
+        'refund_percentage'   => number_format( (float) $summary['refund_percentage'], 2, '.', '' ),
+        'sales_percentage'    => number_format( (float) $summary['sales_percentage'], 2, '.', '' ),
+      );
+
       wp_send_json( $data );
-    
-      wp_die();
     }
     public function get_today_order_count( $date ) {
       global $wpdb;
@@ -1779,39 +1856,37 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         return $SalesByDate;
     }
     public function customers_data_filter(){
-      global $wpdb;
-      $customer = $_POST['selected_option'];
-        if( $customer == 'yearly' ) {
-          $start_of_this_year = gmdate( 'Y-01-01' );
-          $end_of_this_year   = gmdate( 'Y-12-31' );
-          $last_year_start    = gmdate('Y-m-01');
-          $last_year_end      = gmdate('Y-m-t');
-          $table_name         = $wpdb->prefix . 'rpress_customers';
-          $result             = $this->get_this_year_customers_data( $table_name, $start_of_this_year, $end_of_this_year, $last_year_start, $last_year_end );
-        }
-        if ( $customer == 'monthly') {
-          $start_of_this_month = gmdate('Y-m-01');
-          $end_of_this_month = gmdate('Y-m-t');
-          $start_of_last_month    = gmdate('Y-m-d', strtotime('-6 days'));
-          $end_of_last_month      = gmdate('Y-m-d');
-          $table_name             = $wpdb->prefix . 'rpress_customers';
-          $result                 = $this->get_this_month_customer_counts( $table_name, $start_of_this_month, $end_of_this_month, $start_of_last_month, $end_of_last_month );
-        }
-        if(  $customer == 'weekly') {
-          $this_week_start      = gmdate( 'Y-m-d',  strtotime('-1 days') );
-          $this_week_end        = gmdate( 'Y-m-d' );
-          $start_of_last_week   = gmdate('Y-m-d', strtotime('-1 days'));
-          $end_of_last_week     = gmdate('Y-m-d');
-          $table_name           = $wpdb->prefix . 'rpress_customers';
-          $result               = $this->get_this_week_customer_counts( $table_name, $this_week_start, $this_week_end, $start_of_last_week, $end_of_last_week );
-        }
-        
-        $data = array(
-          'customer_count'          =>  $result['customer_count'],
-          'customer_percentage'     =>  $result['percentage_change_customer'],
-          'customer_count_last'     => $result['customer_count_last'],  
-        );
-        wp_send_json( $data );
+      $customer_filter = isset( $_POST['selected_option'] ) ? sanitize_text_field( wp_unslash( $_POST['selected_option'] ) ) : 'monthly';
+      $today           = gmdate( 'Y-m-d' );
+
+      $current_start  = gmdate( 'Y-m-01' );
+      $current_end    = $today;
+      $previous_start = gmdate( 'Y-m-01', strtotime( '-1 month' ) );
+      $previous_end   = gmdate( 'Y-m-d', strtotime( $today . ' -1 month' ) );
+
+      if ( 'yearly' === $customer_filter ) {
+        $current_start  = gmdate( 'Y-01-01' );
+        $current_end    = $today;
+        $previous_start = gmdate( 'Y-01-01', strtotime( '-1 year' ) );
+        $previous_end   = gmdate( 'Y-m-d', strtotime( $today . ' -1 year' ) );
+      } elseif ( 'weekly' === $customer_filter ) {
+        $current_start  = gmdate( 'Y-m-d', strtotime( '-6 days' ) );
+        $current_end    = $today;
+        $previous_start = gmdate( 'Y-m-d', strtotime( '-13 days' ) );
+        $previous_end   = gmdate( 'Y-m-d', strtotime( '-7 days' ) );
+      }
+
+      $customer_count      = $this->get_customer_count_by_range( $current_start, $current_end );
+      $customer_count_last = $this->get_customer_count_by_range( $previous_start, $previous_end );
+      $customer_change     = $this->calculate_dashboard_percentage( $customer_count, $customer_count_last );
+
+      $data = array(
+        'customer_count'      => $customer_count,
+        'customer_percentage' => number_format( $customer_change, 2, '.', '' ),
+        'customer_count_last' => $customer_count_last,
+      );
+
+      wp_send_json( $data );
     }
     public function get_this_year_customers_data( $table_name, $this_year_start, $this_year_end, $start_of_last_year, $end_of_last_year ) {
       global $wpdb;
@@ -1908,4 +1983,21 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     
   }
 endif;
-return new RP_Admin_Assets();
+if ( ! function_exists( 'rpress_admin_assets' ) ) {
+  /**
+   * Admin assets singleton accessor.
+   *
+   * @return RP_Admin_Assets
+   */
+  function rpress_admin_assets() {
+    static $instance = null;
+
+    if ( null === $instance ) {
+      $instance = new RP_Admin_Assets();
+    }
+
+    return $instance;
+  }
+}
+
+return rpress_admin_assets();

@@ -1085,8 +1085,6 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
     	if( 'flat' === $discount_type ){
     		$discount_value = $discount_amount;
     	}else{
-    		// $discount_value = ( $discount_amount / 100 ) * $subtotal;
-            // $discount_value = ( $discount_amount / 100 ) * $subtotal;	
             // Due to discount error on calculation it will always calculate it from food items discount value with rounded 
             foreach ( $cart_items as $key => $cart_item ) {
 

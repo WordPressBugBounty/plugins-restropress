@@ -104,6 +104,7 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 			);
 			$args   = apply_filters( 'rpress_stats_earnings_args', $args );
 			$cached = get_transient( 'rpress_stats_earnings' );
+			$cached = is_array( $cached ) ? $cached : array();
 			$key    = md5( json_encode( $args ) );
 			if ( ! isset( $cached[ $key ] ) ) {
 				$sales    = get_posts( $args );
@@ -138,6 +139,7 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 			);
 			$args   = apply_filters( 'rpress_stats_earnings_args', $args );
 			$cached = get_transient( 'rpress_stats_earnings' );
+			$cached = is_array( $cached ) ? $cached : array();
 			$key    = md5( json_encode( $args ) );
 			if ( ! isset( $cached[ $key ] ) ) {
 				$this->timestamp = false;
@@ -221,8 +223,19 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 			return $this->end_date;
 		}
 		$cached = get_transient( 'rpress_stats_sales' );
-		$key    = md5( $range . '_' . gmdate( 'Y-m-d', $this->start_date ) . '_' . gmdate( 'Y-m-d', strtotime( '+1 DAY', $this->end_date ) ) );
-		$sales  = isset( $cached[ $key ] ) ? $cached[ $key ] : false;
+		$cached = is_array( $cached ) ? $cached : array();
+		$cache_key = md5(
+			wp_json_encode(
+				array(
+					$range,
+					(bool) $day_by_day,
+					gmdate( 'Y-m-d', $this->start_date ),
+					gmdate( 'Y-m-d', strtotime( '+1 DAY', $this->end_date ) ),
+					$status,
+				)
+			)
+		);
+		$sales  = isset( $cached[ $cache_key ] ) ? $cached[ $cache_key ] : false;
 		if ( false === $sales || ! $this->is_cacheable( $range ) ) {
 			if ( ! $day_by_day ) {
 				$select = "DATE_FORMAT(posts.post_date, '%%m') AS m, YEAR(posts.post_date) AS y, COUNT(DISTINCT posts.ID) as count";
@@ -239,24 +252,39 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 			if ( $range == 'today' || $range == 'yesterday' ) {
 				$grouping = "YEAR(posts.post_date), MONTH(posts.post_date), DAY(posts.post_date), HOUR(posts.post_date)";
 			}
-			$statuses = apply_filters( 'rpress_payment_stats_post_statuses', array( 'publish', 'revoked' ) );
-			$statuses = "'" . implode( "', '", $statuses ) . "'";
-			$sales = $wpdb->get_results( $wpdb->prepare(
-				"SELECT $select
-				 FROM {$wpdb->posts} AS posts
-				 WHERE posts.post_type IN ('rpress_payment')
-				 AND posts.post_status IN (%s)
-				 AND posts.post_date >= %s
-				 AND posts.post_date < %s
-				 AND posts.post_status IN ($statuses)
-				 GROUP BY $grouping
-				 ORDER by posts.post_date ASC", $status, gmdate( 'Y-m-d', $this->start_date ), gmdate( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ) ), ARRAY_A );
+			$statuses_data       = $this->prepare_statuses_sql(
+				$status,
+				apply_filters( 'rpress_payment_stats_post_statuses', array( 'publish', 'revoked' ) )
+			);
+			$status_placeholders = $statuses_data['placeholders'];
+			$status_values       = $statuses_data['values'];
+			$query_params        = array_merge(
+				array(
+					gmdate( 'Y-m-d', $this->start_date ),
+					gmdate( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ),
+				),
+				$status_values
+			);
+			$sales = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT $select
+					 FROM {$wpdb->posts} AS posts
+					 WHERE posts.post_type IN ('rpress_payment')
+					 AND posts.post_date >= %s
+					 AND posts.post_date < %s
+					 AND posts.post_status IN ($status_placeholders)
+					 GROUP BY $grouping
+					 ORDER BY posts.post_date ASC",
+					$query_params
+				),
+				ARRAY_A
+			);
 			if ( $this->is_cacheable( $range ) ) {
-				$cached[ $key ] = $sales;
+				$cached[ $cache_key ] = $sales;
 				set_transient( 'rpress_stats_sales', $cached, HOUR_IN_SECONDS );
 			}
 		}
-		return $sales;
+		return is_array( $sales ) ? $sales : array();
 	}
 	/**
 	 * Retrieve sales stats based on range provided (used for Reporting)
@@ -282,10 +310,21 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 			return $this->end_date;
 		}
 		$earnings = array();
-		$cached = get_transient( 'rpress_stats_earnings' );
-		$key    = md5( $range . '_' . gmdate( 'Y-m-d', $this->start_date ) . '_' . gmdate( 'Y-m-d', strtotime( '+1 DAY', $this->end_date ) ) );
-		$sales  = isset( $cached[ $key ] ) ? $cached[ $key ] : false;
-		if ( false === $sales || ! $this->is_cacheable( $range ) ) {
+		$cached   = get_transient( 'rpress_stats_earnings' );
+		$cached   = is_array( $cached ) ? $cached : array();
+		$cache_key = md5(
+			wp_json_encode(
+				array(
+					$range,
+					(bool) $day_by_day,
+					(bool) $include_taxes,
+					gmdate( 'Y-m-d', $this->start_date ),
+					gmdate( 'Y-m-d', strtotime( '+1 DAY', $this->end_date ) ),
+				)
+			)
+		);
+		$earnings = isset( $cached[ $cache_key ] ) ? $cached[ $cache_key ] : false;
+		if ( false === $earnings || ! $this->is_cacheable( $range ) ) {
 			if ( ! $day_by_day ) {
 				$select = "DATE_FORMAT(posts.post_date, '%%m') AS m, YEAR(posts.post_date) AS y, COUNT(DISTINCT posts.ID) as count";
 				$grouping = "YEAR(posts.post_date), MONTH(posts.post_date)";
@@ -301,39 +340,66 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 			if ( $range == 'today' || $range == 'yesterday' ) {
 				$grouping = "YEAR(posts.post_date), MONTH(posts.post_date), DAY(posts.post_date), HOUR(posts.post_date)";
 			}
-			$statuses = apply_filters( 'rpress_payment_stats_post_statuses', array( 'publish', 'revoked' ) );
-			$statuses = "'" . implode( "', '", $statuses ) . "'";
-			$earnings = $wpdb->get_results( $wpdb->prepare(
-				"SELECT SUM(meta_value) AS total, $select
-				 FROM {$wpdb->posts} AS posts
-				 INNER JOIN {$wpdb->postmeta} ON posts.ID = {$wpdb->postmeta}.post_ID
-				 WHERE posts.post_type IN ('rpress_payment')
-				 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_total'
-				 AND posts.post_date >= %s
-				 AND posts.post_date < %s
-				 AND posts.post_status IN ($statuses)
-				 GROUP BY $grouping
-				 ORDER by posts.post_date ASC", gmdate( 'Y-m-d', $this->start_date ), gmdate( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ) ), ARRAY_A );
-			if ( ! $include_taxes ) {
-				$taxes = $wpdb->get_results( $wpdb->prepare(
-					"SELECT SUM(meta_value) AS tax, $select
+			$statuses_data       = $this->prepare_statuses_sql(
+				apply_filters( 'rpress_payment_stats_post_statuses', array( 'publish', 'revoked' ) ),
+				array( 'publish', 'revoked' )
+			);
+			$status_placeholders = $statuses_data['placeholders'];
+			$status_values       = $statuses_data['values'];
+			$query_params        = array_merge(
+				array(
+					gmdate( 'Y-m-d', $this->start_date ),
+					gmdate( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ),
+				),
+				$status_values
+			);
+			$earnings = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT SUM(meta_value) AS total, $select
 					 FROM {$wpdb->posts} AS posts
 					 INNER JOIN {$wpdb->postmeta} ON posts.ID = {$wpdb->postmeta}.post_ID
 					 WHERE posts.post_type IN ('rpress_payment')
-					 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_tax'
+					 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_total'
 					 AND posts.post_date >= %s
 					 AND posts.post_date < %s
-					 AND posts.post_status IN ($statuses)
+					 AND posts.post_status IN ($status_placeholders)
 					 GROUP BY $grouping
-					 ORDER by posts.post_date ASC", gmdate( 'Y-m-d', $this->start_date ), gmdate( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ) ), ARRAY_A );
-				foreach ( $earnings as $key => $value ) {
-					$earnings[ $key ]['total'] -= $taxes[ $key ]['tax'];
+					 ORDER BY posts.post_date ASC",
+					$query_params
+				),
+				ARRAY_A
+			);
+			if ( ! $include_taxes ) {
+				$taxes = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT SUM(meta_value) AS tax, $select
+						 FROM {$wpdb->posts} AS posts
+						 INNER JOIN {$wpdb->postmeta} ON posts.ID = {$wpdb->postmeta}.post_ID
+						 WHERE posts.post_type IN ('rpress_payment')
+						 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_tax'
+						 AND posts.post_date >= %s
+						 AND posts.post_date < %s
+						 AND posts.post_status IN ($status_placeholders)
+						 GROUP BY $grouping
+						 ORDER BY posts.post_date ASC",
+						$query_params
+					),
+					ARRAY_A
+				);
+				foreach ( $earnings as $entry_key => $value ) {
+					$tax_amount = isset( $taxes[ $entry_key ]['tax'] ) ? (float) $taxes[ $entry_key ]['tax'] : 0;
+					$earnings[ $entry_key ]['total'] -= $tax_amount;
 				}
 			}
-			return $earnings;
+			if ( $this->is_cacheable( $range ) ) {
+				$cached[ $cache_key ] = $earnings;
+				set_transient( 'rpress_stats_earnings', $cached, HOUR_IN_SECONDS );
+			}
 		}
+
+		return is_array( $earnings ) ? $earnings : array();
 	}
-    public function get_refunded_by_range( $range = 'today', $day_by_day = false, $start_date = false, $end_date = false, $include_taxes = true ) {
+	public function get_refunded_by_range( $range = 'today', $day_by_day = false, $start_date = false, $end_date = false, $include_taxes = true ) {
 		global $wpdb;
 		$this->setup_dates( $start_date, $end_date );
 		$this->end_date = strtotime( 'midnight', $this->end_date );
@@ -346,10 +412,21 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 			return $this->end_date;
 		}
 		$earnings = array();
-		$cached = get_transient( 'rpress_stats_refunded' );
-		$key    = md5( $range . '_' . date( 'Y-m-d', $this->start_date ) . '_' . date( 'Y-m-d', strtotime( '+1 DAY', $this->end_date ) ) );
-		$sales  = isset( $cached[ $key ] ) ? $cached[ $key ] : false;
-		if ( false === $sales || ! $this->is_cacheable( $range ) ) {
+		$cached   = get_transient( 'rpress_stats_refunded' );
+		$cached   = is_array( $cached ) ? $cached : array();
+		$cache_key = md5(
+			wp_json_encode(
+				array(
+					$range,
+					(bool) $day_by_day,
+					(bool) $include_taxes,
+					gmdate( 'Y-m-d', $this->start_date ),
+					gmdate( 'Y-m-d', strtotime( '+1 DAY', $this->end_date ) ),
+				)
+			)
+		);
+		$earnings = isset( $cached[ $cache_key ] ) ? $cached[ $cache_key ] : false;
+		if ( false === $earnings || ! $this->is_cacheable( $range ) ) {
 			if ( ! $day_by_day ) {
 				$select = "DATE_FORMAT(posts.post_date, '%%m') AS m, YEAR(posts.post_date) AS y, COUNT(DISTINCT posts.ID) as count";
 				$grouping = "YEAR(posts.post_date), MONTH(posts.post_date)";
@@ -365,37 +442,64 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 			if ( $range == 'today' || $range == 'yesterday' ) {
 				$grouping = "YEAR(posts.post_date), MONTH(posts.post_date), DAY(posts.post_date), HOUR(posts.post_date)";
 			}
-			$statuses = apply_filters( 'rpress_payment_stats_post_statuses', array( 'refunded' ) );
-			$statuses = "'" . implode( "', '", $statuses ) . "'";
-			$earnings = $wpdb->get_results( $wpdb->prepare(
-				"SELECT SUM(meta_value) AS total, $select
-				 FROM {$wpdb->posts} AS posts
-				 INNER JOIN {$wpdb->postmeta} ON posts.ID = {$wpdb->postmeta}.post_ID
-				 WHERE posts.post_type IN ('rpress_payment')
-				 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_total'
-				 AND posts.post_date >= %s
-				 AND posts.post_date < %s
-				 AND posts.post_status IN ($statuses)
-				 GROUP BY $grouping
-				 ORDER by posts.post_date ASC", date( 'Y-m-d', $this->start_date ), date( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ) ), ARRAY_A );
-			if ( ! $include_taxes ) {
-				$taxes = $wpdb->get_results( $wpdb->prepare(
-					"SELECT SUM(meta_value) AS tax, $select
+			$statuses_data       = $this->prepare_statuses_sql(
+				apply_filters( 'rpress_payment_stats_post_statuses', array( 'refunded' ) ),
+				array( 'refunded' )
+			);
+			$status_placeholders = $statuses_data['placeholders'];
+			$status_values       = $statuses_data['values'];
+			$query_params        = array_merge(
+				array(
+					gmdate( 'Y-m-d', $this->start_date ),
+					gmdate( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ),
+				),
+				$status_values
+			);
+			$earnings = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT SUM(meta_value) AS total, $select
 					 FROM {$wpdb->posts} AS posts
 					 INNER JOIN {$wpdb->postmeta} ON posts.ID = {$wpdb->postmeta}.post_ID
 					 WHERE posts.post_type IN ('rpress_payment')
-					 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_tax'
+					 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_total'
 					 AND posts.post_date >= %s
 					 AND posts.post_date < %s
-					 AND posts.post_status IN ($statuses)
+					 AND posts.post_status IN ($status_placeholders)
 					 GROUP BY $grouping
-					 ORDER by posts.post_date ASC", date( 'Y-m-d', $this->start_date ), date( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ) ), ARRAY_A );
-				foreach ( $earnings as $key => $value ) {
-					$earnings[ $key ]['total'] -= $taxes[ $key ]['tax'];
+					 ORDER BY posts.post_date ASC",
+					$query_params
+				),
+				ARRAY_A
+			);
+			if ( ! $include_taxes ) {
+				$taxes = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT SUM(meta_value) AS tax, $select
+						 FROM {$wpdb->posts} AS posts
+						 INNER JOIN {$wpdb->postmeta} ON posts.ID = {$wpdb->postmeta}.post_ID
+						 WHERE posts.post_type IN ('rpress_payment')
+						 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_tax'
+						 AND posts.post_date >= %s
+						 AND posts.post_date < %s
+						 AND posts.post_status IN ($status_placeholders)
+						 GROUP BY $grouping
+						 ORDER BY posts.post_date ASC",
+						$query_params
+					),
+					ARRAY_A
+				);
+				foreach ( $earnings as $entry_key => $value ) {
+					$tax_amount = isset( $taxes[ $entry_key ]['tax'] ) ? (float) $taxes[ $entry_key ]['tax'] : 0;
+					$earnings[ $entry_key ]['total'] -= $tax_amount;
 				}
 			}
-			return $earnings;
+			if ( $this->is_cacheable( $range ) ) {
+				$cached[ $cache_key ] = $earnings;
+				set_transient( 'rpress_stats_refunded', $cached, HOUR_IN_SECONDS );
+			}
 		}
+
+		return is_array( $earnings ) ? $earnings : array();
 	}
 	public function get_taxes_by_range( $range = 'today', $day_by_day = false, $start_date = false, $end_date = false, $include_taxes = true ) {
 		global $wpdb;
@@ -409,11 +513,21 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 		if ( is_wp_error( $this->end_date ) ) {
 			return $this->end_date;
 		}
-		$earnings = array();
+		$taxes  = array();
 		$cached = get_transient( 'rpress_stats_taxes' );
-		$key    = md5( $range . '_' . date( 'Y-m-d', $this->start_date ) . '_' . date( 'Y-m-d', strtotime( '+1 DAY', $this->end_date ) ) );
-		$sales  = isset( $cached[ $key ] ) ? $cached[ $key ] : false;
-		if ( false === $sales || ! $this->is_cacheable( $range ) ) {
+		$cached = is_array( $cached ) ? $cached : array();
+		$cache_key = md5(
+			wp_json_encode(
+				array(
+					$range,
+					(bool) $day_by_day,
+					gmdate( 'Y-m-d', $this->start_date ),
+					gmdate( 'Y-m-d', strtotime( '+1 DAY', $this->end_date ) ),
+				)
+			)
+		);
+		$taxes  = isset( $cached[ $cache_key ] ) ? $cached[ $cache_key ] : false;
+		if ( false === $taxes || ! $this->is_cacheable( $range ) ) {
 			if ( ! $day_by_day ) {
 				$select = "DATE_FORMAT(posts.post_date, '%%m') AS m, YEAR(posts.post_date) AS y, COUNT(DISTINCT posts.ID) as count";
 				$grouping = "YEAR(posts.post_date), MONTH(posts.post_date)";
@@ -429,22 +543,72 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 			if ( $range == 'today' || $range == 'yesterday' ) {
 				$grouping = "YEAR(posts.post_date), MONTH(posts.post_date), DAY(posts.post_date), HOUR(posts.post_date)";
 			}
-			$statuses = apply_filters( 'rpress_payment_stats_post_statuses', array( 'publish', 'revoked' ) );
-			$statuses = "'" . implode( "', '", $statuses ) . "'";
-			$taxes = $wpdb->get_results( $wpdb->prepare(
-				"SELECT SUM(meta_value) AS tax, $select
-				 FROM {$wpdb->posts} AS posts
-				 INNER JOIN {$wpdb->postmeta} ON posts.ID = {$wpdb->postmeta}.post_ID
-				 WHERE posts.post_type IN ('rpress_payment')
-				 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_tax'
-				 AND posts.post_date >= %s
-				 AND posts.post_date < %s
-				 AND posts.post_status IN ($statuses)
-				 GROUP BY $grouping
-				 ORDER by posts.post_date ASC", date( 'Y-m-d', $this->start_date ), date( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ) ), ARRAY_A );
-			return $taxes;
+			$statuses_data       = $this->prepare_statuses_sql(
+				apply_filters( 'rpress_payment_stats_post_statuses', array( 'publish', 'revoked' ) ),
+				array( 'publish', 'revoked' )
+			);
+			$status_placeholders = $statuses_data['placeholders'];
+			$status_values       = $statuses_data['values'];
+			$query_params        = array_merge(
+				array(
+					gmdate( 'Y-m-d', $this->start_date ),
+					gmdate( 'Y-m-d', strtotime( '+1 day', $this->end_date ) ),
+				),
+				$status_values
+			);
+			$taxes = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT SUM(meta_value) AS tax, $select
+					 FROM {$wpdb->posts} AS posts
+					 INNER JOIN {$wpdb->postmeta} ON posts.ID = {$wpdb->postmeta}.post_ID
+					 WHERE posts.post_type IN ('rpress_payment')
+					 AND {$wpdb->postmeta}.meta_key = '_rpress_payment_tax'
+					 AND posts.post_date >= %s
+					 AND posts.post_date < %s
+					 AND posts.post_status IN ($status_placeholders)
+					 GROUP BY $grouping
+					 ORDER BY posts.post_date ASC",
+					$query_params
+				),
+				ARRAY_A
+			);
+			if ( $this->is_cacheable( $range ) ) {
+				$cached[ $cache_key ] = $taxes;
+				set_transient( 'rpress_stats_taxes', $cached, HOUR_IN_SECONDS );
+			}
 		}
+
+		return is_array( $taxes ) ? $taxes : array();
 	}
+
+	/**
+	 * Prepare a safe SQL IN() status list for report queries.
+	 *
+	 * @since 3.2.6
+	 *
+	 * @param string|array $statuses Status list.
+	 * @param array        $fallback Fallback statuses.
+	 *
+	 * @return array
+	 */
+	private function prepare_statuses_sql( $statuses, $fallback = array() ) {
+		$statuses = array_filter( array_map( 'sanitize_key', (array) $statuses ) );
+		$fallback = array_filter( array_map( 'sanitize_key', (array) $fallback ) );
+
+		if ( empty( $statuses ) ) {
+			$statuses = $fallback;
+		}
+
+		if ( empty( $statuses ) ) {
+			$statuses = array( 'publish' );
+		}
+
+		return array(
+			'placeholders' => implode( ', ', array_fill( 0, count( $statuses ), '%s' ) ),
+			'values'       => array_values( $statuses ),
+		);
+	}
+
 	/**
 	 * Is the date range cachable
 	 *

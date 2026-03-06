@@ -44,8 +44,6 @@ $template = rpress_get_option('template', 'list');
 		'category_menu' => !empty($shortcode_atts['category_menu']) ? true : false,
 		'excluded_category' => !empty($shortcode_atts['category_exclude']) ? $shortcode_atts['category_exclude'] : '',
 	);
-	// do_action('rpress_get_food_categories');
-	// do_action('rp_get_categories', $category_params);
 	?>
 
 	<div class="rpress_fooditems_grid rp-col-lg-8 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">

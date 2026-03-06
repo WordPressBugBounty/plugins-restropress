@@ -29,51 +29,51 @@ function rpress_admin_home_page()
         rpress_update_option('enable_service', $enable_service);
 
         if (isset($_POST['default_service']) && !empty($_POST['default_service'])) {
-            rpress_update_option('default_service', sanitize_text_field($_POST['default_service']));
+            rpress_update_option('default_service', sanitize_text_field(wp_unslash($_POST['default_service'])));
         }
 
         if (isset($_POST['enable_asap_option']) && !empty($_POST['enable_asap_option'])) {
-            rpress_update_option('enable_asap_option', sanitize_text_field($_POST['enable_asap_option']));
+            rpress_update_option('enable_asap_option', sanitize_text_field(wp_unslash($_POST['enable_asap_option'])));
         }
 
         if (isset($_POST['store_time_format']) && !empty($_POST['store_time_format'])) {
-            rpress_update_option('store_time_format', sanitize_text_field($_POST['store_time_format']));
+            rpress_update_option('store_time_format', sanitize_text_field(wp_unslash($_POST['store_time_format'])));
         }
 
         if (isset($_POST['open_time']) && !empty($_POST['open_time'])) {
-            rpress_update_option('open_time', sanitize_text_field($_POST['open_time']));
+            rpress_update_option('open_time', sanitize_text_field(wp_unslash($_POST['open_time'])));
         }
 
         if (isset($_POST['close_time']) && !empty($_POST['close_time'])) {
-            rpress_update_option('close_time', sanitize_text_field($_POST['close_time']));
+            rpress_update_option('close_time', sanitize_text_field(wp_unslash($_POST['close_time'])));
         }
 
         if (isset($_POST['country']) && !empty($_POST['country'])) {
-            rpress_update_option('base_country', sanitize_text_field($_POST['country']));
+            rpress_update_option('base_country', sanitize_text_field(wp_unslash($_POST['country'])));
         }
 
         if (isset($_POST['state']) && !empty($_POST['state'])) {
-            rpress_update_option('base_state', sanitize_text_field($_POST['state']));
+            rpress_update_option('base_state', sanitize_text_field(wp_unslash($_POST['state'])));
         }
 
         if (isset($_POST['address']) && !empty($_POST['address'])) {
-            rpress_update_option('store_address', sanitize_text_field($_POST['address']));
+            rpress_update_option('store_address', sanitize_text_field(wp_unslash($_POST['address'])));
         }
 
         if (isset($_POST['currency']) && !empty($_POST['currency'])) {
-            rpress_update_option('currency', sanitize_text_field($_POST['currency']));
+            rpress_update_option('currency', sanitize_text_field(wp_unslash($_POST['currency'])));
         }
 
         if (isset($_POST['enable_order_notification']) && !empty($_POST['enable_order_notification'])) {
-            rpress_update_option('enable_order_notification', sanitize_text_field($_POST['enable_order_notification']));
+            rpress_update_option('enable_order_notification', sanitize_text_field(wp_unslash($_POST['enable_order_notification'])));
         }
 
         if (isset($_POST['enable_printing']) && !empty($_POST['enable_printing'])) {
-            rpress_update_option('enable_printing', sanitize_text_field($_POST['enable_printing']));
+            rpress_update_option('enable_printing', sanitize_text_field(wp_unslash($_POST['enable_printing'])));
         }
 
         if (isset($_POST['template']) && !empty($_POST['template'])) {
-            rpress_update_option('template', sanitize_text_field($_POST['template']));
+            rpress_update_option('template', sanitize_text_field(wp_unslash($_POST['template'])));
         }
 
         if ( isset($_FILES['store_logo']) && ! empty($_FILES['store_logo']['name']) ) {

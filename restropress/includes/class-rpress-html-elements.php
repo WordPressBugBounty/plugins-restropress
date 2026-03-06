@@ -313,6 +313,9 @@ class RPRESS_HTML_Elements {
 	 */
 	public function category_dropdown( $name = 'rpress_categories', $selected = 0 ) {
 		$categories = get_terms( 'addon_category', apply_filters( 'rpress_category_dropdown', array() ) );
+		if ( is_wp_error( $categories ) || ! is_array( $categories ) ) {
+			$categories = array();
+		}
 		$options    = array();
 		foreach ( $categories as $category ) {
 			$options[ absint( $category->term_id ) ] = esc_html( $category->name );
@@ -358,30 +361,23 @@ class RPRESS_HTML_Elements {
 			'posts_per_page' => $args['number'],
 		);
 		$categories     = get_terms( $category_args );
-		$existing_ids = wp_list_pluck( $categories, 'term_id' );
+		if ( is_wp_error( $categories ) || ! is_array( $categories ) ) {
+			$categories = array();
+		}
 		$options    = array();
 		foreach ( $categories as $category ) {
 			$options[ absint( $category->term_id ) ] = esc_html( $category->name );
 		}
 		if ( ! empty( $args['selected'] ) ) {
-
-		    // Ensure selected is always an array
-		    $selected_items = is_array( $args['selected'] )
-		        ? $args['selected']
-		        : array( $args['selected'] );
-
-		    foreach ( $selected_items as $s_value ) {
-
-		        if ( ! array_key_exists( $s_value, $options ) ) {
-
-		            // Correct function: get a single term, not an array of terms
-		            $category = get_term( $s_value, 'food-category' );
-
-		            if ( $category && ! is_wp_error( $category ) ) {
-		                $options[ absint( $s_value ) ] = esc_html( $category->name );
-		            }
-		        }
-		    }
+			$selected_items = is_array( $args['selected'] ) ? $args['selected'] : array( $args['selected'] );
+			foreach ( $selected_items as $s_value ) {
+				if ( ! array_key_exists( $s_value, $options ) ) {
+					$category = get_term( $s_value, 'food-category' );
+					if ( $category && ! is_wp_error( $category ) ) {
+						$options[ absint( $s_value ) ] = esc_html( $category->name );
+					}
+				}
+			}
 		}
 
 		$output = $this->select( array(
@@ -479,6 +475,11 @@ class RPRESS_HTML_Elements {
 			'disabled'         => false,
 		);
 		$args = wp_parse_args( $args, $defaults );
+		$args['data']    = is_array( $args['data'] ) ? $args['data'] : array();
+		$args['options'] = is_array( $args['options'] ) ? $args['options'] : array();
+		if ( $args['multiple'] && ! is_array( $args['selected'] ) ) {
+			$args['selected'] = empty( $args['selected'] ) ? array() : array( $args['selected'] );
+		}
 		$data_elements = '';
 		foreach ( $args['data'] as $key => $value ) {
 			$data_elements .= ' data-' . esc_attr( $key ) . '="' . esc_attr( $value ) . '"';

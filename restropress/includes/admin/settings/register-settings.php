@@ -519,15 +519,6 @@ function rpress_get_registered_settings()
 						),
 						'std' => 'delivery',
 					),
-					// 'default_time' => array(
-					// 	'id'            => 'default_time',
-					// 	'name'          => esc_html__( 'Default Time', 'restropress' ),
-					// 	'desc'          => esc_html__( 'Select restaurant default time', 'restropress' ),
-					// 	'type'          => 'text',
-					// 	'std'       	=> '9:00am',
-					// 	'field_class' 	=> 'rpress_timings',
-					// 	'allow_blank'	=> false,
-					// ),
 					'store_time_format' => array(
 						'id' => 'store_time_format',
 						'name' => esc_html__('Store Time Format', 'restropress'),
@@ -874,16 +865,6 @@ function rpress_get_registered_settings()
 						'desc' => esc_html__('Disable Category Menu In Food Item Page', 'restropress'),
 						'type' => 'checkbox',
 					),
-					// 'option_view_food_items' => array(
-					// 	'id'            => 'option_view_food_items',
-					// 	'type'          => 'radio',
-					// 	'desc'          => esc_html__( 'For Use This List View And Grid View Option First Check Disable Category Menu Option', 'restropress' ),
-					// 	'options' 		=> array(
-					// 		'list_view'  => esc_html__( 'List View', 'restropress' ),
-					// 		'grid_view'  => esc_html__( 'Grid View', 'restropress' ),
-					// 	),
-					// 	'std' => 'list_view',
-					// ),
 					'button_header' => array(
 						'id' => 'button_header',
 						'name' => '<strong>' . esc_html__('Buttons', 'restropress') . '</strong>',
@@ -1074,6 +1055,152 @@ function rpress_get_registered_settings()
 						'type' => 'rich_editor',
 					),
 				),
+				'realtime_updates' => array(
+					'realtime_updates_intro' => array(
+						'id'   => 'realtime_updates_intro',
+						'name' => esc_html__( 'Realtime Setup Guide', 'restropress' ),
+						'type' => 'descriptive_text',
+						'desc' => esc_html__( 'Enable realtime updates, enter your websocket provider credentials, then save settings. For Pusher Cloud, App ID, Key, Secret, Cluster and TLS are usually enough.', 'restropress' ),
+					),
+					'realtime_enabled' => array(
+						'id'      => 'realtime_enabled',
+						'name'    => esc_html__( 'Enable Realtime Updates', 'restropress' ),
+						'desc'    => esc_html__( 'Turn on live order status updates and frontend push notifications.', 'restropress' ),
+						'type'    => 'select',
+						'std'     => 'yes',
+						'options' => array(
+							'no'  => esc_html__( 'No', 'restropress' ),
+							'yes' => esc_html__( 'Yes', 'restropress' ),
+						),
+					),
+					'realtime_provider' => array(
+						'id'      => 'realtime_provider',
+						'name'    => esc_html__( 'Realtime Provider', 'restropress' ),
+						'desc'    => esc_html__( 'Select your websocket provider. Pusher-compatible providers are supported.', 'restropress' ),
+						'type'    => 'select',
+						'std'     => 'pusher',
+						'options' => array(
+							'pusher' => esc_html__( 'Pusher-Compatible', 'restropress' ),
+						),
+					),
+					'realtime_app_id' => array(
+						'id'          => 'realtime_app_id',
+						'name'        => esc_html__( 'App ID', 'restropress' ),
+						'desc'        => esc_html__( 'Provider App ID used for server-side event publishing.', 'restropress' ),
+						'type'        => 'text',
+						'size'        => 'regular',
+						'allow_blank' => true,
+					),
+					'realtime_key' => array(
+						'id'          => 'realtime_key',
+						'name'        => esc_html__( 'App Key', 'restropress' ),
+						'desc'        => esc_html__( 'Public key used by frontend to subscribe to order channels.', 'restropress' ),
+						'type'        => 'text',
+						'size'        => 'regular',
+						'allow_blank' => true,
+					),
+					'realtime_secret' => array(
+						'id'          => 'realtime_secret',
+						'name'        => esc_html__( 'App Secret', 'restropress' ),
+						'desc'        => esc_html__( 'Private secret used for secure server-side request signing.', 'restropress' ),
+						'type'        => 'password',
+						'size'        => 'regular',
+						'allow_blank' => true,
+					),
+					'realtime_cluster' => array(
+						'id'          => 'realtime_cluster',
+						'name'        => esc_html__( 'Cluster', 'restropress' ),
+						'desc'        => esc_html__( 'Use your provider cluster (example: mt1, ap2, eu).', 'restropress' ),
+						'type'        => 'text',
+						'std'         => 'mt1',
+						'size'        => 'regular',
+						'allow_blank' => true,
+					),
+					'realtime_use_tls' => array(
+						'id'      => 'realtime_use_tls',
+						'name'    => esc_html__( 'Use TLS', 'restropress' ),
+						'desc'    => esc_html__( 'Use secure websocket/HTTPS connections. Keep this enabled in production.', 'restropress' ),
+						'type'    => 'select',
+						'std'     => 'yes',
+						'options' => array(
+							'yes' => esc_html__( 'Yes', 'restropress' ),
+							'no'  => esc_html__( 'No', 'restropress' ),
+						),
+					),
+					'realtime_host' => array(
+						'id'          => 'realtime_host',
+						'name'        => esc_html__( 'API Host', 'restropress' ),
+						'desc'        => esc_html__( 'Optional. Leave blank to auto-generate Pusher host from cluster.', 'restropress' ),
+						'type'        => 'text',
+						'size'        => 'regular',
+						'allow_blank' => true,
+					),
+					'realtime_port' => array(
+						'id'          => 'realtime_port',
+						'name'        => esc_html__( 'API Port', 'restropress' ),
+						'desc'        => esc_html__( 'Publish API port. Use 443 for HTTPS and 80 for HTTP.', 'restropress' ),
+						'type'        => 'number',
+						'std'         => 443,
+						'min'         => 1,
+						'max'         => 65535,
+						'step'        => 1,
+						'allow_blank' => true,
+					),
+					'realtime_scheme' => array(
+						'id'      => 'realtime_scheme',
+						'name'    => esc_html__( 'API Scheme', 'restropress' ),
+						'desc'    => esc_html__( 'Publishing request protocol.', 'restropress' ),
+						'type'    => 'select',
+						'std'     => 'https',
+						'options' => array(
+							'https' => esc_html__( 'HTTPS', 'restropress' ),
+							'http'  => esc_html__( 'HTTP', 'restropress' ),
+						),
+					),
+					'realtime_client_script_url' => array(
+						'id'          => 'realtime_client_script_url',
+						'name'        => esc_html__( 'Client Script URL', 'restropress' ),
+						'desc'        => esc_html__( 'Frontend websocket client library URL.', 'restropress' ),
+						'type'        => 'text',
+						'std'         => 'https://js.pusher.com/8.4.0/pusher.min.js',
+						'size'        => 'regular',
+						'allow_blank' => true,
+					),
+					'realtime_client_ws_host' => array(
+						'id'          => 'realtime_client_ws_host',
+						'name'        => esc_html__( 'Client WS Host', 'restropress' ),
+						'desc'        => esc_html__( 'Optional. Required only for self-hosted websocket setup.', 'restropress' ),
+						'type'        => 'text',
+						'size'        => 'regular',
+						'allow_blank' => true,
+					),
+					'realtime_client_ws_port' => array(
+						'id'          => 'realtime_client_ws_port',
+						'name'        => esc_html__( 'Client WS Port', 'restropress' ),
+						'desc'        => esc_html__( 'Optional non-TLS websocket port (example: 6001).', 'restropress' ),
+						'type'        => 'number',
+						'min'         => 1,
+						'max'         => 65535,
+						'step'        => 1,
+						'allow_blank' => true,
+					),
+					'realtime_client_wss_port' => array(
+						'id'          => 'realtime_client_wss_port',
+						'name'        => esc_html__( 'Client WSS Port', 'restropress' ),
+						'desc'        => esc_html__( 'Optional TLS websocket port (example: 443).', 'restropress' ),
+						'type'        => 'number',
+						'min'         => 1,
+						'max'         => 65535,
+						'step'        => 1,
+						'allow_blank' => true,
+					),
+					'realtime_updates_note' => array(
+						'id'   => 'realtime_updates_note',
+						'name' => esc_html__( 'Note', 'restropress' ),
+						'type' => 'descriptive_text',
+						'desc' => esc_html__( 'Saved settings are used first. If a value is empty, RestroPress will still use corresponding RPRESS_REALTIME_* constants when available.', 'restropress' ),
+					),
+				),
 			)
 		),
 		'sms_notification' => apply_filters('rpress_settings_sms_notification', array()),
@@ -1158,11 +1285,11 @@ function rpress_settings_sanitize($input = array())
 	$input = $input ? $input : array();
 	if ($doing_section) {
 		// Pull out the tab and section
-		parse_str(sanitize_text_field($_POST['_wp_http_referer']), $referrer);
+		parse_str(sanitize_text_field(wp_unslash($_POST['_wp_http_referer'])), $referrer);
 		$tab = isset($referrer['tab']) ? $referrer['tab'] : 'general';
 		$section = isset($referrer['section']) ? $referrer['section'] : 'main';
 		if (!empty($_POST['rpress_section_override'])) {
-			$section = sanitize_text_field($_POST['rpress_section_override']);
+			$section = sanitize_text_field(wp_unslash($_POST['rpress_section_override']));
 		}
 		$setting_types = rpress_get_registered_settings_types($tab, $section);
 		// Run a general sanitization for the tab for special fields (like taxes)
@@ -1336,6 +1463,85 @@ function rpress_settings_sanitize_gateways($input)
 }
 add_filter('rpress_settings_gateways_sanitize', 'rpress_settings_sanitize_gateways');
 /**
+ * Realtime Settings Sanitization
+ *
+ * @since 3.2.6
+ * @param array $input The value inputted in the field.
+ * @return array
+ */
+function rpress_settings_sanitize_misc_realtime_updates($input)
+{
+	if (!current_user_can('manage_shop_settings')) {
+		return $input;
+	}
+
+	$yes_no_keys = array(
+		'realtime_enabled',
+		'realtime_use_tls',
+	);
+
+	foreach ($yes_no_keys as $key) {
+		if (isset($input[$key])) {
+			$input[$key] = ('yes' === $input[$key]) ? 'yes' : 'no';
+		}
+	}
+
+	if (isset($input['realtime_provider'])) {
+		$provider = sanitize_key($input['realtime_provider']);
+		$input['realtime_provider'] = ('pusher' === $provider) ? $provider : 'pusher';
+	}
+
+	$text_keys = array(
+		'realtime_app_id',
+		'realtime_key',
+		'realtime_secret',
+		'realtime_host',
+		'realtime_client_ws_host',
+	);
+
+	foreach ($text_keys as $key) {
+		if (isset($input[$key])) {
+			$input[$key] = sanitize_text_field($input[$key]);
+		}
+	}
+
+	if (isset($input['realtime_cluster'])) {
+		$input['realtime_cluster'] = sanitize_key($input['realtime_cluster']);
+	}
+
+	if (isset($input['realtime_scheme'])) {
+		$scheme = sanitize_key($input['realtime_scheme']);
+		$input['realtime_scheme'] = in_array($scheme, array('http', 'https'), true) ? $scheme : 'https';
+	}
+
+	if (isset($input['realtime_client_script_url'])) {
+		$input['realtime_client_script_url'] = esc_url_raw($input['realtime_client_script_url']);
+	}
+
+	$port_keys = array(
+		'realtime_port',
+		'realtime_client_ws_port',
+		'realtime_client_wss_port',
+	);
+
+	foreach ($port_keys as $key) {
+		if (!isset($input[$key])) {
+			continue;
+		}
+
+		$port = absint($input[$key]);
+		if (empty($port) || $port > 65535) {
+			unset($input[$key]);
+			continue;
+		}
+
+		$input[$key] = $port;
+	}
+
+	return $input;
+}
+add_filter('rpress_settings_misc-realtime_updates_sanitize', 'rpress_settings_sanitize_misc_realtime_updates');
+/**
  * Sanitize text fields
  *
  * @since 1.0
@@ -1490,6 +1696,7 @@ function rpress_get_registered_settings_sections()
 		'misc' => apply_filters('rpress_settings_sections_misc', array(
 			'main' => esc_html__('Miscellaneous', 'restropress'),
 			'site_terms' => esc_html__('Terms of Agreement', 'restropress'),
+			'realtime_updates' => esc_html__('Realtime Updates', 'restropress'),
 		)),
 		'privacy' => apply_filters('rpress_settings_section_privacy', array(
 			'export_erase' => esc_html__('Export & Erase', 'restropress'),
@@ -2513,7 +2720,7 @@ function rpress_order_notification_settings_callback($args)
 		</tbody>
 	</table>
 	<?php
-	$order_status = !empty($_GET['rpress_order_status']) ? strtolower(sanitize_text_field($_GET['rpress_order_status'])) : '';
+	$order_status = !empty($_GET['rpress_order_status']) ? strtolower(sanitize_text_field(wp_unslash($_GET['rpress_order_status']))) : '';
 	$order_statuses = rpress_get_order_statuses();
 	$order_status_names = array();
 	if (is_array($order_statuses) && !empty($order_statuses)) {

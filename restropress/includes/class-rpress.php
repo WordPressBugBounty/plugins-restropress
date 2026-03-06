@@ -5,7 +5,7 @@
  * @package RestroPress
  * @since   2.2
  */
-defined('ABSPATH') || exit;
+defined( 'ABSPATH' ) || exit;
 /**
  * Main RestroPress Class.
  *
@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.2.5';
+	public $version = '3.2.6';
 	/**
 	 * The single instance of the class.
 	 *
@@ -115,8 +115,10 @@ final class RestroPress
 	 */
 	public static function instance()
 	{
-		if (!isset(self::$instance) && !(self::$instance instanceof RestroPress)) {
-			self::$instance = new RestroPress;
+		if ( ! isset( self::$instance ) && ! ( self::$instance instanceof RestroPress ) ) {
+			self::$instance = new self();
+			// Preload translations before includes to avoid early i18n notices.
+			self::$instance->load_textdomain();
 			self::$instance->includes();
 			self::$instance->init_hooks();
 			self::$instance->roles = new RPRESS_Roles();
@@ -155,7 +157,6 @@ final class RestroPress
 	 */
 	public function __construct()
 	{
-		
 		$this->define_constants();
 	}
 	/**
@@ -192,11 +193,13 @@ final class RestroPress
 			case 'admin':
 				return is_admin();
 			case 'ajax':
-				return defined('DOING_AJAX');
+				return defined( 'DOING_AJAX' ) && DOING_AJAX;
 			case 'cron':
-				return defined('DOING_CRON');
+				return defined( 'DOING_CRON' ) && DOING_CRON;
 			case 'frontend':
-				return (!is_admin() || defined('DOING_AJAX')) && !defined('DOING_CRON');
+				return ( ! is_admin() || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) && ! ( defined( 'DOING_CRON' ) && DOING_CRON );
+			default:
+				return false;
 		}
 	}
 	/**
@@ -214,6 +217,7 @@ final class RestroPress
 		include_once RP_PLUGIN_DIR . 'includes/class-rpress-category-sorting.php';
 		require_once RP_PLUGIN_DIR . 'includes/rp-ajax-functions.php';
 		include_once RP_PLUGIN_DIR . 'includes/class-rpress-ajax.php';
+		require_once RP_PLUGIN_DIR . 'includes/class-rpress-realtime.php';
 		require_once RP_PLUGIN_DIR . 'includes/template-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/template-actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/checkout/template.php';
@@ -244,7 +248,7 @@ final class RestroPress
 		require_once RP_PLUGIN_DIR . 'includes/rp-core-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/functions.php';
-		if (version_compare(phpversion(), 5.3, '>')) {
+		if ( version_compare( phpversion(), '5.3', '>' ) ) {
 			require_once RP_PLUGIN_DIR . 'includes/gateways/amazon-payments.php';
 		}
 		require_once RP_PLUGIN_DIR . 'includes/gateways/paypal-standard.php';
@@ -277,7 +281,7 @@ final class RestroPress
 		require_once RP_PLUGIN_DIR . 'includes/privacy-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/shortcodes.php';
 		require_once RP_PLUGIN_DIR . 'includes/vendor/autoload.php';
-		require_once RP_PLUGIN_DIR . "includes/firebase/class-rpress-firebase-fcm-impl.php";
+		require_once RP_PLUGIN_DIR . 'includes/firebase/class-rpress-firebase-fcm-impl.php';
 		/**
 		 * Migrating 3.0 Features to 2.x
 		 *
@@ -345,9 +349,9 @@ final class RestroPress
 
 	private function init_hooks()
 	{
-		add_action('init', array($this, 'load_rest_api'));
-		add_action('init', array($this, 'load_textdomain'));
-		add_action("init", [$this, 'rpress_handle_service_cookie']);
+		add_action( 'init', array( $this, 'load_rest_api' ) );
+		add_action( 'init', array( $this, 'load_textdomain' ), 0 );
+		add_action( 'init', array( $this, 'rpress_handle_service_cookie' ) );
 	}
 
 	/**
@@ -357,13 +361,13 @@ final class RestroPress
 	{
 		$service_type = rpress_get_option('enable_service', 'delivery_and_pickup');
 		$cookie_service = isset($_COOKIE['service_type'])
-			? sanitize_text_field($_COOKIE['service_type'])
+			? sanitize_text_field(wp_unslash($_COOKIE['service_type']))
 			: '';
 		// Determine valid services
 		$services = $service_type === 'delivery_and_pickup'
 			? ['delivery', 'pickup']
 			: [$service_type];
-		$services =  apply_filters( 'rpress_handle_service_cookie', $services );
+		$services = apply_filters('rpress_handle_service_cookie', $services);
 		// If cookie missing or invalid
 		if (empty($cookie_service) || !in_array($cookie_service, $services, true)) {
 			if ($service_type === 'delivery_and_pickup') {
@@ -372,7 +376,9 @@ final class RestroPress
 				$cookie_service = $service_type;
 			}
 			// Set cookie safely before any HTML output
-			setcookie('service_type', $cookie_service, time() + (86400 * 30), "/");
+			if ( ! headers_sent() ) {
+				setcookie('service_type', $cookie_service, time() + (86400 * 30), '/');
+			}
 		}
 	}
 	/**
@@ -382,7 +388,14 @@ final class RestroPress
 	 */
 	public function load_textdomain()
 	{
-		load_plugin_textdomain('restropress', false, dirname(plugin_basename(RP_PLUGIN_FILE)) . '/languages/');
+		$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+		$mofile = 'restropress-' . $locale . '.mo';
+
+		// Preload the active locale to avoid just-in-time i18n notices before init.
+		load_textdomain( 'restropress', WP_LANG_DIR . '/plugins/' . $mofile );
+		load_textdomain( 'restropress', RP_PLUGIN_DIR . 'languages/' . $mofile );
+
+		load_plugin_textdomain( 'restropress', false, dirname( plugin_basename( RP_PLUGIN_FILE ) ) . '/languages/' );
 	}
 
 	/**

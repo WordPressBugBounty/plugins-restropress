@@ -13,7 +13,12 @@ $context = rpress_get_service_context();
 ] = $context;
 ?>
 
-<div class="tab-pane fade delivery-settings-wrapper"
+<?php $delivery_pane_classes = 'tab-pane fade delivery-settings-wrapper'; ?>
+<?php if ( 'delivery' === $current_service ) : ?>
+    <?php $delivery_pane_classes .= ' active show'; ?>
+<?php endif; ?>
+
+<div class="<?php echo esc_attr( $delivery_pane_classes ); ?>"
      id="nav-delivery"
      role="tabpanel"
      aria-labelledby="nav-delivery-tab">
@@ -50,7 +55,8 @@ $context = rpress_get_service_context();
             <select
                 class="rpress-delivery rpress-allowed-delivery-hrs rpress-hrs rp-form-control"
                 id="rpress-delivery-hours"
-                name="rpress_allowed_hours">
+                name="rpress_allowed_hours"
+                aria-label="<?php esc_attr_e('Delivery time', 'restropress'); ?>">
 
                 <?php if (is_array($store_timings)) : ?>
                     <?php foreach ($store_timings as $key => $time) : ?>

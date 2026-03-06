@@ -36,13 +36,14 @@ $context = rpress_get_service_context();
                 <!-- Service Tabs -->
                 <ul class="nav nav-pills" id="rpressdeliveryTab" role="tablist">
                     <?php foreach ($services as $service): ?>
-                        <li class="nav-item" role="presentation">
+                        <?php $is_active = ($service === $current_service); ?>
+                        <li class="nav-item <?php echo $is_active ? 'active' : ''; ?>" role="presentation">
                             <a class="nav-link single-service-selected <?php echo $service === $current_service ? 'active' : ''; ?>"
                                 id="nav-<?php echo esc_attr($service); ?>-tab"
                                 data-service-type="<?php echo esc_attr($service); ?>" data-toggle="tab"
                                 href="#nav-<?php echo esc_attr($service); ?>" role="tab"
                                 aria-controls="nav-<?php echo esc_attr($service); ?>"
-                                aria-selected="<?php echo $service === $current_service ? 'true' : 'false'; ?>">
+                                aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>">
                                 <?php
                                 $filtered_label = apply_filters(
                                     'rpress_modify_service_label',

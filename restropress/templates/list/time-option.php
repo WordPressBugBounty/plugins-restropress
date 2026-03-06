@@ -8,12 +8,17 @@ $context = rpress_get_service_context();
     "service_type" => $service_type,
     "service_date" => $service_date,
     "service_time" => $service_time,
+    "selected_time" => $selected_time,
     "delivery_address" => $delivery_address,
     "is_store_open" => $is_store_open,
     "store_timings" => $store_timings,
     "service_enabled" => $enabled_service,
     "service_date_raw" => $service_date_raw
 ] = $context;
+
+$hide_service_time = function_exists( 'rp_otil_is_service_time_hidden' )
+    ? rp_otil_is_service_time_hidden( $service_type )
+    : false;
 
 /**
  * Store closed handling
@@ -60,9 +65,11 @@ if ((empty($store_timings) || !$is_store_open) && ($enabled_service !== 'deliver
         <?php echo esc_html(!empty($service_date_raw) ? date_i18n('F j', strtotime($service_date_raw)) : $service_date); ?>,
     </span>
 
-    <span id="deliveryTime">
-        <?php echo esc_html($service_time); ?>
-    </span>
+    <?php if ( ! $hide_service_time ) : ?>
+        <span id="deliveryTime">
+            <?php echo esc_html( ! empty( $service_time ) ? $service_time : $selected_time ); ?>
+        </span>
+    <?php endif; ?>
 
     <a id="editDateTime">
         <?php esc_html_e('Edit', 'restropress'); ?>

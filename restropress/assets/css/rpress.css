@@ -364,8 +364,590 @@ div.rpress_fooditems_grid .rpress_fooditem.rpress-list .rpress_fooditem_inner {
 .image-placeholder-disabled .rp-grid-view-wrap{
 	display: none;
 }
+
+/*--------------------------------------
+  Modern Order Confirmation (Receipt)
+---------------------------------------*/
+.rp-thankyou-page {
+	--rp-thankyou-accent: #ed5575;
+	--rp-thankyou-accent-ink: #c83258;
+	--rp-thankyou-bg: #ffffff;
+	--rp-thankyou-surface: #fff7fa;
+	--rp-thankyou-border: #f0dfe6;
+	--rp-thankyou-text: #1f2b46;
+	--rp-thankyou-subtext: #5c6884;
+	max-width: 1180px;
+	margin: 24px auto 48px;
+	padding: 0 16px;
+	font-family: "Poppins", "Nunito Sans", "Helvetica Neue", sans-serif;
+	color: var(--rp-thankyou-text);
+}
+
+.rp-thankyou-hero {
+	position: relative;
+	overflow: hidden;
+	border-radius: 22px;
+	border: 1px solid var(--rp-thankyou-border);
+	background: linear-gradient(140deg, #ffffff 0%, #fff4f8 48%, #ffffff 100%);
+	padding: 30px;
+	display: grid;
+	gap: 24px;
+	box-shadow: 0 20px 45px rgba(31, 43, 70, 0.08);
+}
+
+.rp-thankyou-hero::before {
+	content: "";
+	position: absolute;
+	width: 300px;
+	height: 300px;
+	border-radius: 50%;
+	right: -120px;
+	top: -140px;
+	background: radial-gradient(circle at center, rgba(237, 85, 117, 0.18), rgba(237, 85, 117, 0));
+}
+
+.rp-thankyou-hero-main {
+	position: relative;
+	z-index: 1;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 16px;
+	align-items: start;
+}
+
+.rp-thankyou-check {
+	width: 56px;
+	height: 56px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 16px;
+	background: linear-gradient(135deg, var(--rp-thankyou-accent), #ff7c98);
+	box-shadow: 0 10px 20px rgba(237, 85, 117, 0.3);
+}
+
+.rp-thankyou-check svg {
+	width: 28px;
+	height: 28px;
+	fill: #ffffff;
+}
+
+.rp-thankyou-kicker {
+	margin: 2px 0 8px;
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	font-weight: 700;
+	color: var(--rp-thankyou-accent-ink);
+}
+
+.rp-thankyou-hero h2 {
+	margin: 0;
+	font-size: 36px;
+	line-height: 1.15;
+	font-weight: 700;
+}
+
+.rp-thankyou-message {
+	margin: 12px 0 0;
+	font-size: 16px;
+	color: var(--rp-thankyou-subtext);
+	line-height: 1.6;
+}
+
+.rp-thankyou-message strong {
+	color: var(--rp-thankyou-text);
+	font-weight: 600;
+	word-break: break-word;
+}
+
+.rp-thankyou-live-status {
+	position: relative;
+	z-index: 1;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 14px;
+	align-items: center;
+	padding: 14px;
+	border-radius: 16px;
+	border: 1px solid #f3d8e1;
+	background: rgba(255, 255, 255, 0.88);
+}
+
+.rp-thankyou-live-status-media {
+	width: 72px;
+	height: 72px;
+	flex-shrink: 0;
+	background: #ffffff;
+	border-radius: 14px;
+	border: 1px solid #f0dfe6;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.rp-thankyou-live-status-media img {
+	max-width: 56px;
+	max-height: 56px;
+	width: auto;
+	height: auto;
+}
+
+.rp-thankyou-live-status-content h4 {
+	margin: 0;
+	font-size: 24px;
+	line-height: 1.15;
+	font-weight: 700;
+	color: var(--rp-thankyou-text);
+}
+
+.rp-thankyou-live-status-content p {
+	margin: 0;
+}
+
+.rp-live-status-kicker {
+	margin: 0 0 4px;
+	font-size: 11px;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	font-weight: 700;
+	color: var(--rp-thankyou-accent-ink);
+}
+
+#rp-live-order-status-desc {
+	margin-top: 6px;
+	color: var(--rp-thankyou-subtext);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+#rp-live-status-updated {
+	margin-top: 6px;
+	font-size: 12px;
+	color: #707b93;
+}
+
+.rp-thankyou-live-status-actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.rp-thankyou-notify-btn {
+	border: 1px solid var(--rp-thankyou-accent);
+	background: #ffffff;
+	color: var(--rp-thankyou-accent-ink);
+	border-radius: 999px;
+	font-size: 13px;
+	line-height: 1;
+	font-weight: 600;
+	padding: 10px 14px;
+	cursor: pointer;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.rp-thankyou-notify-btn:hover,
+.rp-thankyou-notify-btn:focus {
+	background: var(--rp-thankyou-accent);
+	color: #ffffff;
+	border-color: var(--rp-thankyou-accent);
+}
+
+.rp-thankyou-notify-btn[disabled] {
+	cursor: not-allowed;
+	opacity: 0.74;
+}
+
+.rp-thankyou-meta {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+	position: relative;
+	z-index: 1;
+}
+
+.rp-thankyou-meta-item {
+	background: rgba(255, 255, 255, 0.88);
+	backdrop-filter: blur(2px);
+	border: 1px solid var(--rp-thankyou-border);
+	border-radius: 14px;
+	padding: 12px 14px;
+}
+
+.rp-thankyou-meta-item span {
+	display: block;
+	font-size: 12px;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--rp-thankyou-subtext);
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.rp-thankyou-meta-item strong {
+	font-size: 18px;
+	line-height: 1.2;
+	font-weight: 700;
+	color: var(--rp-thankyou-text);
+}
+
+.rp-thankyou-details-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+	margin-top: 18px;
+}
+
+.rp-thankyou-card {
+	background: var(--rp-thankyou-bg);
+	border: 1px solid #eaedf4;
+	border-radius: 18px;
+	padding: 22px 22px 20px;
+	box-shadow: 0 8px 22px rgba(22, 34, 60, 0.05);
+}
+
+.rp-thankyou-card h3 {
+	margin: 0;
+	font-size: 28px;
+	line-height: 1.2;
+	font-weight: 600;
+}
+
+.rp-thankyou-subhead {
+	margin-top: 20px !important;
+}
+
+.rp-thankyou-list {
+	margin: 16px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.rp-thankyou-list li {
+	margin: 0;
+	padding: 11px 0;
+	border-bottom: 1px solid #f0f3f8;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.rp-thankyou-list li:last-child {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+
+.rp-thankyou-list span {
+	font-size: 14px;
+	color: var(--rp-thankyou-subtext);
+}
+
+.rp-thankyou-list strong {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--rp-thankyou-text);
+	text-align: right;
+}
+
+.rp-thankyou-card-wide {
+	grid-column: 1 / -1;
+}
+
+.rp-thankyou-address {
+	margin: 12px 0 0;
+	font-size: 15px;
+	color: var(--rp-thankyou-subtext);
+	line-height: 1.6;
+}
+
+.rp-thankyou-summary {
+	margin-top: 18px;
+}
+
+.rp-thankyou-summary-header {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.rp-thankyou-summary-header p {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--rp-thankyou-accent-ink);
+}
+
+.rp-thankyou-table-wrap {
+	overflow-x: auto;
+	border: 1px solid #edf0f5;
+	border-radius: 14px;
+}
+
+.rp-thankyou-page table#rp-order-summary {
+	margin: 0;
+	border: 0;
+	min-width: 620px;
+	background: #ffffff;
+}
+
+.rp-thankyou-page table#rp-order-summary th,
+.rp-thankyou-page table#rp-order-summary td {
+	padding: 14px 16px;
+	border-color: #eef1f5;
+	font-size: 15px;
+	vertical-align: top;
+}
+
+.rp-thankyou-page table#rp-order-summary thead th {
+	background: #f7f9fc;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: #5f6a84;
+}
+
+.rp-thankyou-page table#rp-order-summary tfoot td {
+	font-weight: 600;
+	background: #fcfdff;
+}
+
+.rp-thankyou-page table#rp-order-summary .rp-bold {
+	color: #0f1a36;
+}
+
+.rp-thankyou-page .rpress_purchase_receipt_product_name span.rpress-main-item-name {
+	font-weight: 600;
+	display: inline-block;
+	margin-bottom: 2px;
+}
+
+.rp-thankyou-page .rpress_purchase_receipt_product_name .rpress-receipt-addon-item {
+	color: #647089;
+	font-size: 13px;
+}
+
+.rp-thankyou-page .rpress_purchase_receipt_product_name span:not(.rpress-main-item-name) {
+	display: block;
+	margin-top: 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #5a647d;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.rp-thankyou-page .rpress_purchase_receipt_product_name small {
+	display: block;
+	font-size: 13px;
+	color: #404c66;
+}
+
+.rp-thankyou-next {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+	margin-top: 18px;
+}
+
+.rp-thankyou-next-item {
+	border-radius: 14px;
+	background: var(--rp-thankyou-surface);
+	border: 1px solid var(--rp-thankyou-border);
+	padding: 14px 16px;
+}
+
+.rp-thankyou-next-item h4 {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 700;
+}
+
+.rp-thankyou-next-item p {
+	margin: 6px 0 0;
+	font-size: 13px;
+	color: var(--rp-thankyou-subtext);
+	line-height: 1.5;
+}
+
+.rp-live-status-toast {
+	position: fixed;
+	right: 18px;
+	bottom: 18px;
+	z-index: 9999;
+	max-width: min(92vw, 360px);
+	padding: 10px 14px;
+	border-radius: 12px;
+	background: #1f2b46;
+	color: #ffffff;
+	font-size: 14px;
+	line-height: 1.4;
+	box-shadow: 0 14px 28px rgba(18, 31, 60, 0.25);
+	opacity: 0;
+	transform: translateY(8px);
+	pointer-events: none;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.rp-live-status-toast.is-visible {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.rp-reveal {
+	opacity: 0;
+	transform: translateY(10px);
+	animation: rp-thankyou-fade 0.45s ease-out forwards;
+}
+
+.rp-reveal-2 {
+	animation-delay: 0.08s;
+}
+
+.rp-reveal-3 {
+	animation-delay: 0.16s;
+}
+
+.rp-reveal-4 {
+	animation-delay: 0.24s;
+}
+
+@keyframes rp-thankyou-fade {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rp-reveal {
+		animation: none;
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media only screen and (max-width: 1024px) {
+	.rp-thankyou-hero h2 {
+		font-size: 30px;
+	}
+
+	.rp-thankyou-live-status {
+		grid-template-columns: auto 1fr;
+	}
+
+	.rp-thankyou-live-status-actions {
+		grid-column: 1 / -1;
+		justify-content: flex-start;
+	}
+
+	.rp-thankyou-meta {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media only screen and (max-width: 767px) {
+	.rp-thankyou-page {
+		margin-top: 14px;
+		padding: 0 12px;
+	}
+
+	.rp-thankyou-hero {
+		padding: 22px 18px;
+		border-radius: 18px;
+	}
+
+	.rp-thankyou-hero-main {
+		grid-template-columns: 1fr;
+	}
+
+	.rp-thankyou-check {
+		width: 50px;
+		height: 50px;
+	}
+
+	.rp-thankyou-hero h2 {
+		font-size: 26px;
+	}
+
+	.rp-thankyou-live-status {
+		grid-template-columns: 1fr;
+	}
+
+	.rp-thankyou-live-status-media {
+		width: 64px;
+		height: 64px;
+	}
+
+	.rp-thankyou-live-status-content h4 {
+		font-size: 21px;
+	}
+
+	.rp-thankyou-notify-btn {
+		width: 100%;
+	}
+
+	.rp-live-status-toast {
+		left: 12px;
+		right: 12px;
+		bottom: 12px;
+		max-width: none;
+	}
+
+	.rp-thankyou-meta {
+		grid-template-columns: 1fr;
+	}
+
+	.rp-thankyou-details-grid,
+	.rp-thankyou-next {
+		grid-template-columns: 1fr;
+	}
+
+	.rp-thankyou-card {
+		border-radius: 14px;
+		padding: 18px 16px;
+	}
+
+	.rp-thankyou-summary-header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+}
 .image-placeholder-disabled .rp-col-md-8{
 	width: 100%;
+}
+.rpress_fooditems_grid .image-placeholder-disabled.rpress_fooditem_inner {
+	height: 100%;
+}
+div.rpress_fooditems_grid .image-placeholder-disabled.rpress_fooditem_inner .rpress_fooditem_excerpt p {
+	width: 100%;
+}
+div.rpress_fooditems_grid .rp-no-img-no-desc.rpress_fooditem_inner .rp-col-md-8.rp-col-xs-8.rp-col-sm-9 {
+	min-height: 92px;
+	padding-bottom: 40px;
+}
+div.rpress_fooditems_grid .rp-no-img-no-desc.rpress_fooditem_inner .rpress-price-holder {
+	bottom: 8px;
+}
+div.rpress_fooditems_grid .rp-no-img-no-desc.rpress_fooditem_inner .rpress-price-holder span.price {
+	line-height: 18px;
+}
+div.rpress_fooditems_grid .image-placeholder-disabled.rp-no-img.rpress_fooditem_inner .rp-col-md-8.rp-col-xs-8.rp-col-sm-9 {
+	min-height: 92px;
+	padding-bottom: 40px;
+}
+div.rpress_fooditems_grid .image-placeholder-disabled.rp-no-img.rpress_fooditem_inner .rpress-price-holder {
+	bottom: 8px;
+}
+div.rpress_fooditems_grid .image-placeholder-disabled.rp-no-img.rpress_fooditem_inner .rpress-price-holder span.price {
+	line-height: 18px;
 }
 .rp-no-img.rpress_fooditem_inner .rp-col-md-8 .rpress_purchase_submit_wrapper {
     padding: 0;
@@ -384,6 +966,7 @@ div.rpress_fooditems_grid .rpress_fooditem {
     box-shadow: 0px 4px 20px 0px #0000000F;
     background-color: #fff;
     border-radius: 12px;
+    height: 100%;
 }
 div.rpress_fooditems_grid .rpress-thumbnail-holder img {
 	margin-bottom:0;
@@ -689,10 +1272,13 @@ div.rpress-element-title.matched {
 }
 .rpress_fooditems_list .rpress_fooditem_buy_button {
     position: absolute;
-    left: auto;
+    left: 50%;
+    right: auto;
     bottom: -16px;
-    width:100%;
-	    padding: 0 16px;
+    width: auto;
+    padding: 0;
+    transform: translateX(-50%);
+    z-index: 2;
 }
 .rpress_fooditems_list .rpress_purchase_submit_wrapper {
     padding: 0;
@@ -1200,6 +1786,15 @@ div.rpress-popup-actions .btn-count .qtyminus-wrap{
 	margin-bottom: 6px;
 	display: block;
 }
+.rpress-edit-address-popup .delivery-time-text,
+.rpress-edit-address-popup .pickup-time-text {
+	color: #202427;
+	text-align: left;
+	font-weight: 500;
+	font-size: 16px;
+	letter-spacing: -0.3px;
+	margin-bottom: 6px;
+}
 .rpress-edit-address-popup input[type="date"], 
 .rpress-edit-address-popup input[type="time"],
 select#rpress-delivery-hours,
@@ -1430,6 +2025,40 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates:focus,
     transform: translateX(0px);
     transition: transform 300ms;
     padding: 14px 14px;
+}
+/*---service tabs highlight (order-online)---*/
+.order-online .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs {
+	gap: 4px;
+	padding: 4px;
+}
+.order-online .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item {
+	flex: 1 1 0;
+}
+.order-online .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item:before,
+.order-online .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item.active + li.nav-item:before {
+	content: none;
+}
+.order-online .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item > a.nav-link {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	padding: 0 14px;
+	min-height: 30px;
+	line-height: 1.2;
+	border-radius: 999px;
+	font-weight: 500;
+	transition: all 0.2s ease-in-out;
+}
+.order-online .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item.active > a.nav-link {
+	background-color: #ffffff;
+	color: #1f1f1f;
+	box-shadow: 0 0 0 1px rgba(237, 85, 117, 0.35), 0 4px 10px rgba(0, 0, 0, 0.10);
+	font-weight: 700;
+}
+.order-online .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item > a.nav-link:focus-visible {
+	outline: 2px solid #ed5575;
+	outline-offset: 1px;
 }
 .rpress-options-row{
 	display: flex; 
@@ -3328,7 +3957,9 @@ width: 32px;
 
 .rpress_fooditems_list .rpress_fooditem_buy_button {
     width: auto;
-    right: 0;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
 }
 @media only screen and (min-width: 320px) and (max-width: 768px) {
     .container-actionmenu.cart-has-items {

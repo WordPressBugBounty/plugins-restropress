@@ -67,6 +67,12 @@ class RPRESS_Batch_Import {
 	 */
 	public $field_mapping = array();
 	/**
+	 * Whether the import is complete.
+	 *
+	 * @since 1.0.0
+	 */
+	public $done = false;
+	/**
 	 * Get things started
 	 *
 	 * @param $_step int The step to process

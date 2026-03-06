@@ -1696,6 +1696,155 @@ td.rpress_order_price {
 .rpress-graph-notes span {
 	display: block
 }
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .postbox.rpress-report-postbox {
+	border: 1px solid #d9e0e8;
+	border-radius: 12px;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+	overflow: hidden
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap {
+	clear: both;
+	width: 100%;
+	margin-top: 14px
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .metabox-holder {
+	margin: 0 !important;
+	padding: 0 !important;
+	width: 100%;
+	max-width: 100%
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .postbox.rpress-report-postbox {
+	float: none;
+	margin: 0 0 14px
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .postbox.rpress-report-postbox > h3 {
+	margin: 0;
+	padding: 16px 20px;
+	border-bottom: 1px solid #e4e8ee;
+	background: linear-gradient(180deg, #fff 0%, #f8fafc 100%)
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .postbox.rpress-report-postbox .inside.rpress-report-inside {
+	padding: 16px 20px 20px
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .postbox.rpress-report-postbox .inside.rpress-report-inside:after {
+	content: "";
+	display: block;
+	clear: both
+}
+body.restropress_page_rpress-reports #rpress-graphs-filter.rpress-graphs-filter-form {
+	margin: 0 0 16px
+}
+body.restropress_page_rpress-reports #rpress-graphs-filter .tablenav.top {
+	margin: 0;
+	padding: 0;
+	height: auto;
+	min-height: 0;
+	overflow: visible
+}
+body.restropress_page_rpress-reports #rpress-graphs-filter .alignleft.actions.rpress-graphs-filter-row {
+	float: none;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	padding: 12px;
+	border: 1px solid #dde3ea;
+	border-radius: 10px;
+	background: #f8fafd
+}
+body.restropress_page_rpress-reports #rpress-graphs-date-options,
+body.restropress_page_rpress-reports #rpress-date-range-options.rpress-date-range-options,
+body.restropress_page_rpress-reports #rpress-graphs-filter .graph-option-section {
+	float: none
+}
+body.restropress_page_rpress-reports #rpress-date-range-options.rpress-date-range-options {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px
+}
+body.restropress_page_rpress-reports #rpress-date-range-options.rpress-date-range-options span {
+	margin: 0;
+	color: #4f5b68;
+	font-weight: 500
+}
+body.restropress_page_rpress-reports #rpress-graphs-filter select {
+	min-height: 36px;
+	border-color: #c8d0d9;
+	background-color: #fff
+}
+body.restropress_page_rpress-reports #rpress-graphs-filter .rpress-graph-filter-submit.graph-option-section {
+	padding-right: 0
+}
+body.restropress_page_rpress-reports #rpress-graphs-filter .rpress-graph-filter-submit .button-secondary {
+	min-height: 36px;
+	padding: 4px 16px;
+	font-weight: 600
+}
+body.restropress_page_rpress-reports #rpress-graphs-filter .rpress-graphs-filter-row > * {
+	margin: 0 !important
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .rpress-graph {
+	width: 100% !important;
+	min-height: 300px
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .rpress-report-empty-state {
+	margin-bottom: 14px;
+	padding: 12px 14px;
+	border: 1px dashed #c6d4e4;
+	border-radius: 10px;
+	background: #f8fbff;
+	color: #34495e
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .rpress-report-empty-state p {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.5
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .rpress-report-stat-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+	gap: 10px;
+	margin: 14px 0 6px
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .rpress-report-stat-card {
+	margin: 0;
+	padding: 12px 14px;
+	border: 1px solid #dfe5ec;
+	border-radius: 10px;
+	background-color: #fff
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .rpress-report-stat-label {
+	display: block;
+	margin-bottom: 6px;
+	font-size: 12px;
+	line-height: 1.4;
+	text-transform: uppercase;
+	letter-spacing: .03em;
+	color: #5c6b7a;
+	font-weight: 600
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .rpress-report-stat-value {
+	display: inline-block;
+	font-size: 22px;
+	line-height: 1.2;
+	color: #1d2327
+}
+body.restropress_page_rpress-reports #rpress-dashboard-widgets-wrap.rpress-report-dashboard-wrap .rpress_graph_notes {
+	margin-top: 8px;
+	color: #6b7b8c
+}
+@media screen and (max-width: 782px) {
+	body.restropress_page_rpress-reports #rpress-graphs-filter .alignleft.actions.rpress-graphs-filter-row {
+		padding: 10px
+	}
+	body.restropress_page_rpress-reports #rpress-date-range-options.rpress-date-range-options {
+		width: 100%
+	}
+	body.restropress_page_rpress-reports #rpress-graphs-filter .rpress-graph-filter-submit.graph-option-section {
+		margin-left: auto
+	}
+}
 .rpress-pie-graph .legend {
 	display: none
 }
@@ -3475,6 +3624,86 @@ button.add-product-btn{
 .rightbg{
     background-color:#F2F2FC;
     padding:50px 20px;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap,
+.restropress_page_rpress-dashboard .sales-page-wrap {
+    max-width: 100%;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap > .row,
+.restropress_page_rpress-dashboard .sales-page-wrap > .row {
+    align-items: flex-start;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .leftbg,
+.restropress_page_rpress-dashboard .sales-page-wrap .leftbg {
+    padding: 32px 24px 32px 0;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .rightbg,
+.restropress_page_rpress-dashboard .sales-page-wrap .rightbg {
+    padding: 32px 20px;
+    border-left: 1px solid #e6eaf2;
+    background: linear-gradient(180deg, #f5f6ff 0%, #f7f8ff 100%);
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .page-header,
+.restropress_page_rpress-dashboard .sales-page-wrap .page-header {
+    margin-bottom: 16px;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .rp-sales-overview-box,
+.restropress_page_rpress-dashboard .sales-page-wrap .rp-sales-overview-box {
+    min-height: 190px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .today-sale-wrap,
+.restropress_page_rpress-dashboard .sales-page-wrap .today-sale-wrap {
+    min-height: 138px;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .table-responsive,
+.restropress_page_rpress-dashboard .sales-page-wrap .table-responsive {
+    border: 1px solid #edf0f6;
+    border-radius: 18px;
+    background: #fff;
+    padding: 8px;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .table tbody tr,
+.restropress_page_rpress-dashboard .sales-page-wrap .table tbody tr {
+    transition: background-color .2s ease;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .table tbody tr:hover,
+.restropress_page_rpress-dashboard .sales-page-wrap .table tbody tr:hover {
+    background-color: #f7f9ff;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .rp-bestselling-product-wrap,
+.restropress_page_rpress-dashboard .sales-page-wrap .rp-bestselling-product-wrap {
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f8;
+}
+.toplevel_page_rpress-dashboard .sales-page-wrap .rp-bestselling-product-wrap:last-child,
+.restropress_page_rpress-dashboard .sales-page-wrap .rp-bestselling-product-wrap:last-child {
+    border-bottom: 0;
+}
+@media (max-width: 1279px) {
+    .toplevel_page_rpress-dashboard .sales-page-wrap .leftbg,
+    .restropress_page_rpress-dashboard .sales-page-wrap .leftbg {
+        padding-right: 16px;
+    }
+    .toplevel_page_rpress-dashboard .sales-page-wrap .rightbg,
+    .restropress_page_rpress-dashboard .sales-page-wrap .rightbg {
+        padding: 24px 16px;
+    }
+}
+@media (max-width: 991px) {
+    .toplevel_page_rpress-dashboard .sales-page-wrap .leftbg,
+    .restropress_page_rpress-dashboard .sales-page-wrap .leftbg {
+        padding-right: 0;
+        padding-bottom: 20px;
+    }
+    .toplevel_page_rpress-dashboard .sales-page-wrap .rightbg,
+    .restropress_page_rpress-dashboard .sales-page-wrap .rightbg {
+        border-left: 0;
+        border-top: 1px solid #e6eaf2;
+    }
 }
 .sales-page-wrap .current-year-btn{
     background-color: #fff;

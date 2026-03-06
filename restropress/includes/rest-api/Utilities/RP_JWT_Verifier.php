@@ -19,7 +19,6 @@ use WP_User;
 class RP_JWT_Verifier {
 	public $result;
 	public function __construct( WP_REST_Request $request ) {
-		//$this->result = $this->incoming_token_verify( $request );
 	}
 	/**
 	 * JSON token verifying

@@ -48,105 +48,1264 @@ function rpress_register_paypal_gateway_settings($gateway_settings)
             'name' => '<strong>' . __('PayPal Standard Settings', 'restropress') . '</strong>',
             'type' => 'header',
         ),
+        'paypal_connect_account' => array(
+            'id'   => 'paypal_connect_account',
+            'name' => __('PayPal Connect', 'restropress'),
+            'desc' => __('Add your PayPal REST app credentials, then click Connect PayPal to securely pull your account email and merchant ID.', 'restropress'),
+            'type' => 'paypal_connect',
+        ),
+        'paypal_rest_client_id' => array(
+            'id'   => 'paypal_rest_client_id',
+            'name' => __('PayPal REST Client ID', 'restropress'),
+            'desc' => __('Used for one-click PayPal account connection.', 'restropress'),
+            'type' => 'text',
+            'size' => 'regular',
+        ),
+        'paypal_rest_client_secret' => array(
+            'id'   => 'paypal_rest_client_secret',
+            'name' => __('PayPal REST Client Secret', 'restropress'),
+            'desc' => __('Used for one-click PayPal account connection.', 'restropress'),
+            'type' => 'password',
+            'size' => 'regular',
+        ),
         'paypal_email' => array(
             'id'   => 'paypal_email',
-            'name' => __('PayPal Email', 'restropress'),
-            'desc' => __('Enter your PayPal account\'s email', 'restropress'),
+            'name' => __('PayPal Merchant Email', 'restropress'),
+            'desc' => __('Business merchant email used for checkout and display.', 'restropress'),
             'type' => 'text',
             'size' => 'regular',
         ),
-        'paypal_id' => array(
-            'id'   => 'paypal_id',
-            'name' => __('PayPal ID', 'restropress'),
-            'desc' => __('Enter your PayPal account\'s ID', 'restropress'),
-            'type' => 'text',
-            'size' => 'regular',
-        ),
-        'paypal_image_url' => array(
-            'id'   => 'paypal_image_url',
-            'name' => __('PayPal Image URL', 'restropress'),
-            'desc' => __('Upload an image to display on the PayPal checkout page.', 'restropress'),
-            'type' => 'upload',
-            'size' => 'regular',
-        ),
-    );
-    $pdt_desc = sprintf(
-        __('Enter your PayPal Identity Token in order to enable Payment Data Transfer (PDT). This allows payments to be verified without relying on the PayPal IPN. See our <a href="%s" target="_blank">documentation</a> for further information.', 'restropress'),
-        'https://docs.restropress.com/docs/restropress/payment-gateway/paypal-gateway/'
-    );
-    $paypal_settings['paypal_identify_token'] = array(
-        'id'   => 'paypal_identity_token',
-        'name' => __('PayPal Identity Token', 'restropress'),
-        'type' => 'text',
-        'desc' => $pdt_desc,
-        'size' => 'regular',
-    );
-    $disable_ipn_desc = __('If you are unable to use Payment Data Transfer and payments are not getting marked as complete, then check this box. This forces the site to use a slightly less secure method of verifying purchases.', 'restropress');
-    $paypal_settings['disable_paypal_verification'] = array(
-        'id'   => 'disable_paypal_verification',
-        'name' => __('Disable PayPal IPN Verification', 'restropress'),
-        'desc' => $disable_ipn_desc,
-        'type' => 'checkbox',
-    );
-    $api_key_settings = array(
-        'paypal_api_keys_desc' => array(
-            'id'   => 'paypal_api_keys_desc',
-            'name' => __('API Credentials', 'restropress'),
+        'paypal_simple_mode_note' => array(
+            'id'   => 'paypal_simple_mode_note',
+            'name' => __('Setup', 'restropress'),
             'type' => 'descriptive_text',
-            'desc' => sprintf(
-                __('API credentials are necessary to process PayPal refunds from inside WordPress. These can be obtained from <a href="%s" target="_blank">your PayPal account</a>.', 'restropress'),
-                'https://developer.paypal.com/docs/classic/api/apiCredentials/#creating-an-api-signature'
-            )
+            'desc' => __('Use Connect PayPal for setup. Account email and merchant ID are saved automatically after authorization.', 'restropress'),
         ),
-        'paypal_live_api_username' => array(
-            'id'   => 'paypal_live_api_username',
-            'name' => __('Live API Username', 'restropress'),
-            'desc' => __('Your PayPal live API username. ', 'restropress'),
-            'type' => 'text',
-            'size' => 'regular'
-        ),
-        'paypal_live_api_password' => array(
-            'id'   => 'paypal_live_api_password',
-            'name' => __('Live API Password', 'restropress'),
-            'desc' => __('Your PayPal live API password.', 'restropress'),
-            'type' => 'text',
-            'size' => 'regular'
-        ),
-        'paypal_live_api_signature' => array(
-            'id'   => 'paypal_live_api_signature',
-            'name' => __('Live API Signature', 'restropress'),
-            'desc' => __('Your PayPal live API signature.', 'restropress'),
-            'type' => 'text',
-            'size' => 'regular'
-        ),
-        'paypal_test_api_username' => array(
-            'id'   => 'paypal_test_api_username',
-            'name' => __('Test API Username', 'restropress'),
-            'desc' => __('Your PayPal test API username.', 'restropress'),
-            'type' => 'text',
-            'size' => 'regular'
-        ),
-        'paypal_test_api_password' => array(
-            'id'   => 'paypal_test_api_password',
-            'name' => __('Test API Password', 'restropress'),
-            'desc' => __('Your PayPal test API password.', 'restropress'),
-            'type' => 'text',
-            'size' => 'regular'
-        ),
-        'paypal_test_api_signature' => array(
-            'id'   => 'paypal_test_api_signature',
-            'name' => __('Test API Signature', 'restropress'),
-            'desc' => __('Your PayPal test API signature.', 'restropress'),
-            'type' => 'text',
-            'size' => 'regular'
-        )
     );
-    $paypal_settings = array_merge($paypal_settings, $api_key_settings);
+
     $paypal_settings            = apply_filters('rpress_paypal_settings', $paypal_settings);
     $gateway_settings['paypal'] = $paypal_settings;
+
     return $gateway_settings;
 }
 add_filter('rpress_settings_gateways', 'rpress_register_paypal_gateway_settings', 1, 1);
+add_action('admin_post_rpress_paypal_connect', 'rpress_handle_paypal_connect_request');
+add_action('admin_post', 'rpress_handle_paypal_connect_callback');
+add_action('admin_post_rpress_paypal_connect_callback', 'rpress_handle_paypal_connect_callback');
+
+/**
+ * Get PayPal settings page URL.
+ *
+ * @since 3.2.6
+ * @param array $args Additional URL args.
+ * @return string
+ */
+function rpress_get_paypal_settings_page_url($args = array())
+{
+    $defaults = array(
+        'page'    => 'rpress-settings',
+        'tab'     => 'gateways',
+        'section' => 'paypal',
+    );
+    $args = wp_parse_args($args, $defaults);
+    return add_query_arg($args, admin_url('admin.php'));
+}
+
+/**
+ * Get the transient key used for PayPal connect state.
+ *
+ * @since 3.2.6
+ * @param int $user_id User ID.
+ * @return string
+ */
+function rpress_get_paypal_connect_state_transient_key($user_id)
+{
+    return 'rpress_paypal_connect_state_' . absint($user_id);
+}
+
+/**
+ * Get transient key used for PayPal connect mode.
+ *
+ * @since 3.2.6
+ * @param int $user_id User ID.
+ * @return string
+ */
+function rpress_get_paypal_connect_mode_transient_key($user_id)
+{
+    return 'rpress_paypal_connect_mode_' . absint($user_id);
+}
+
+/**
+ * Get transient key used for PayPal connect ID token.
+ *
+ * @since 3.2.6
+ * @param int $user_id User ID.
+ * @return string
+ */
+function rpress_get_paypal_connect_id_token_transient_key($user_id)
+{
+    return 'rpress_paypal_connect_id_token_' . absint($user_id);
+}
+
+/**
+ * Get transient key used for PayPal connect error details.
+ *
+ * @since 3.2.6
+ * @param int $user_id User ID.
+ * @return string
+ */
+function rpress_get_paypal_connect_error_transient_key($user_id)
+{
+    return 'rpress_paypal_connect_error_' . absint($user_id);
+}
+
+/**
+ * Save PayPal connect error detail for next admin page load.
+ *
+ * @since 3.2.6
+ * @param string $message Error detail message.
+ * @return void
+ */
+function rpress_set_paypal_connect_error_detail($message)
+{
+    $message = is_string($message) ? trim(wp_strip_all_tags($message)) : '';
+    if (empty($message)) {
+        return;
+    }
+
+    set_transient(
+        rpress_get_paypal_connect_error_transient_key(get_current_user_id()),
+        $message,
+        5 * MINUTE_IN_SECONDS
+    );
+}
+
+/**
+ * Retrieve and clear PayPal connect error detail.
+ *
+ * @since 3.2.6
+ * @return string
+ */
+function rpress_pop_paypal_connect_error_detail()
+{
+    $key     = rpress_get_paypal_connect_error_transient_key(get_current_user_id());
+    $message = get_transient($key);
+    delete_transient($key);
+
+    if (! is_string($message)) {
+        return '';
+    }
+
+    return trim($message);
+}
+
+/**
+ * Build readable error detail from a WP_Error object.
+ *
+ * @since 3.2.6
+ * @param WP_Error $error Error object.
+ * @return string
+ */
+function rpress_get_paypal_error_detail_from_wp_error($error)
+{
+    if (! $error instanceof WP_Error) {
+        return '';
+    }
+
+    $data = $error->get_error_data();
+    if (is_array($data)) {
+        if (! empty($data['paypal_error_description'])) {
+            $description = (string) $data['paypal_error_description'];
+            if (! empty($data['paypal_error'])) {
+                return $description . ' (' . (string) $data['paypal_error'] . ')';
+            }
+            return $description;
+        }
+
+        if (! empty($data['paypal_error'])) {
+            return (string) $data['paypal_error'];
+        }
+    }
+
+    return (string) $error->get_error_message();
+}
+
+/**
+ * Get the PayPal OAuth API base URL.
+ *
+ * @since 3.2.6
+ * @param string $mode Optional mode override: sandbox|live.
+ * @return string
+ */
+function rpress_get_paypal_oauth_api_base_url($mode = '')
+{
+    if (empty($mode)) {
+        $mode = rpress_is_test_mode() ? 'sandbox' : 'live';
+    }
+
+    if ('sandbox' === $mode) {
+        return 'https://api-m.sandbox.paypal.com';
+    }
+
+    return 'https://api-m.paypal.com';
+}
+
+/**
+ * Get the PayPal OAuth web base URL.
+ *
+ * @since 3.2.6
+ * @param string $mode Optional mode override: sandbox|live.
+ * @return string
+ */
+function rpress_get_paypal_oauth_web_base_url($mode = '')
+{
+    if (empty($mode)) {
+        $mode = rpress_is_test_mode() ? 'sandbox' : 'live';
+    }
+
+    if ('sandbox' === $mode) {
+        return 'https://www.sandbox.paypal.com';
+    }
+
+    return 'https://www.paypal.com';
+}
+
+/**
+ * Validate PayPal client credentials against the given API base URL.
+ *
+ * @since 3.2.6
+ * @param string $api_base      PayPal API base URL.
+ * @param string $client_id     PayPal client ID.
+ * @param string $client_secret PayPal client secret.
+ * @return bool
+ */
+function rpress_validate_paypal_client_credentials($api_base, $client_id, $client_secret)
+{
+    $response = wp_remote_post(
+        trailingslashit($api_base) . 'v1/oauth2/token',
+        array(
+            'timeout' => 25,
+            'headers' => array(
+                'Authorization'   => 'Basic ' . base64_encode($client_id . ':' . $client_secret),
+                'Accept'          => 'application/json',
+                'Accept-Language' => 'en_US',
+                'Content-Type'    => 'application/x-www-form-urlencoded',
+            ),
+            'body' => array(
+                'grant_type' => 'client_credentials',
+            ),
+        )
+    );
+
+    if (is_wp_error($response)) {
+        return false;
+    }
+
+    $status = (int) wp_remote_retrieve_response_code($response);
+    $body   = json_decode(wp_remote_retrieve_body($response), true);
+
+    return (200 <= $status && 300 > $status && is_array($body) && ! empty($body['access_token']));
+}
+
+/**
+ * Detect whether PayPal credentials belong to sandbox or live.
+ *
+ * @since 3.2.6
+ * @param string $client_id     PayPal client ID.
+ * @param string $client_secret PayPal client secret.
+ * @return string
+ */
+function rpress_detect_paypal_credentials_mode($client_id, $client_secret)
+{
+    if (rpress_validate_paypal_client_credentials('https://api-m.sandbox.paypal.com', $client_id, $client_secret)) {
+        return 'sandbox';
+    }
+
+    if (rpress_validate_paypal_client_credentials('https://api-m.paypal.com', $client_id, $client_secret)) {
+        return 'live';
+    }
+
+    return 'unknown';
+}
+
+/**
+ * Get token endpoints to try for PayPal OAuth code exchange.
+ *
+ * @since 3.2.6
+ * @param string $api_base PayPal API base URL.
+ * @return array
+ */
+function rpress_get_paypal_oauth_token_endpoints($api_base)
+{
+    $api_base = untrailingslashit($api_base);
+
+    $endpoints = array(
+        $api_base . '/v1/identity/openidconnect/tokenservice',
+        $api_base . '/v1/oauth2/token',
+    );
+
+    return array_values(array_unique($endpoints));
+}
+
+/**
+ * Extract PayPal OAuth error code and description from API response.
+ *
+ * @since 3.2.6
+ * @param mixed $decoded Decoded API response body.
+ * @return array
+ */
+function rpress_extract_paypal_oauth_error($decoded)
+{
+    $paypal_error      = '';
+    $paypal_error_desc = '';
+
+    if (is_array($decoded)) {
+        if (! empty($decoded['error'])) {
+            $paypal_error = sanitize_text_field($decoded['error']);
+        } elseif (! empty($decoded['name'])) {
+            $paypal_error = sanitize_text_field($decoded['name']);
+        }
+
+        if (! empty($decoded['error_description'])) {
+            $paypal_error_desc = sanitize_text_field($decoded['error_description']);
+        } elseif (! empty($decoded['message'])) {
+            $paypal_error_desc = sanitize_text_field($decoded['message']);
+        } elseif (
+            ! empty($decoded['details']) &&
+            is_array($decoded['details']) &&
+            ! empty($decoded['details'][0]['description'])
+        ) {
+            $paypal_error_desc = sanitize_text_field($decoded['details'][0]['description']);
+        }
+    }
+
+    return array(
+        'paypal_error'             => $paypal_error,
+        'paypal_error_description' => $paypal_error_desc,
+    );
+}
+
+/**
+ * Request access token for PayPal OAuth authorization code.
+ *
+ * @since 3.2.6
+ * @param string $request_url        PayPal token endpoint URL.
+ * @param string $authorization_code OAuth authorization code.
+ * @param string $client_id          PayPal client ID.
+ * @param string $client_secret      PayPal client secret.
+ * @param bool   $use_basic_auth     Whether to use HTTP Basic auth.
+ * @return array
+ */
+function rpress_request_paypal_oauth_token($request_url, $authorization_code, $client_id, $client_secret, $use_basic_auth = true)
+{
+    $headers = array(
+        'Accept'          => 'application/json',
+        'Accept-Language' => 'en_US',
+        'Content-Type'    => 'application/x-www-form-urlencoded',
+    );
+
+    $body = array(
+        'grant_type'   => 'authorization_code',
+        'code'         => $authorization_code,
+        'redirect_uri' => rpress_get_paypal_oauth_redirect_url(),
+    );
+
+    if ($use_basic_auth) {
+        $headers['Authorization'] = 'Basic ' . base64_encode($client_id . ':' . $client_secret);
+    } else {
+        $body['client_id']     = $client_id;
+        $body['client_secret'] = $client_secret;
+    }
+
+    $response = wp_remote_post(
+        $request_url,
+        array(
+            'timeout' => 45,
+            'headers' => $headers,
+            'body'    => $body,
+        )
+    );
+
+    if (is_wp_error($response)) {
+        return array(
+            'access_token'             => '',
+            'id_token'                 => '',
+            'response_code'            => 0,
+            'paypal_error'             => 'request_failed',
+            'paypal_error_description' => (string) $response->get_error_message(),
+        );
+    }
+
+    $response_code = (int) wp_remote_retrieve_response_code($response);
+    $decoded       = json_decode(wp_remote_retrieve_body($response), true);
+
+    if (200 <= $response_code && 300 > $response_code && is_array($decoded) && ! empty($decoded['access_token'])) {
+        return array(
+            'access_token'             => sanitize_text_field((string) $decoded['access_token']),
+            'id_token'                 => ! empty($decoded['id_token']) ? sanitize_text_field((string) $decoded['id_token']) : '',
+            'response_code'            => $response_code,
+            'paypal_error'             => '',
+            'paypal_error_description' => '',
+        );
+    }
+
+    $error_data = rpress_extract_paypal_oauth_error($decoded);
+
+    return array(
+        'access_token'             => '',
+        'id_token'                 => '',
+        'response_code'            => $response_code,
+        'paypal_error'             => (string) $error_data['paypal_error'],
+        'paypal_error_description' => (string) $error_data['paypal_error_description'],
+    );
+}
+
+/**
+ * Get the callback URL used by PayPal OAuth.
+ *
+ * @since 3.2.6
+ * @return string
+ */
+function rpress_get_paypal_oauth_redirect_url()
+{
+    return admin_url('admin-post.php');
+}
+
+/**
+ * Get PayPal OAuth scopes used for quick onboarding.
+ *
+ * @since 3.2.6
+ * @return array
+ */
+function rpress_get_paypal_oauth_scopes()
+{
+    $scopes = array(
+        'openid',
+        'email',
+    );
+    return apply_filters('rpress_paypal_oauth_scopes', $scopes);
+}
+
+/**
+ * Get the PayPal connect action URL.
+ *
+ * @since 3.2.6
+ * @return string
+ */
+function rpress_get_paypal_connect_action_url()
+{
+    return wp_nonce_url(
+        add_query_arg(
+            'action',
+            'rpress_paypal_connect',
+            admin_url('admin-post.php')
+        ),
+        'rpress_paypal_connect'
+    );
+}
+
+/**
+ * Get a human-readable PayPal connect notice.
+ *
+ * @since 3.2.6
+ * @param string $notice Notice key.
+ * @return array
+ */
+function rpress_get_paypal_connect_notice($notice)
+{
+    $notices = array(
+        'success' => array(
+            'class'   => 'notice-success',
+            'message' => __('PayPal account connected successfully.', 'restropress'),
+        ),
+        'missing_credentials' => array(
+            'class'   => 'notice-error',
+            'message' => __('Please add the PayPal REST Client ID and Client Secret before connecting.', 'restropress'),
+        ),
+        'access_denied' => array(
+            'class'   => 'notice-warning',
+            'message' => __('PayPal authorization was canceled.', 'restropress'),
+        ),
+        'missing_code' => array(
+            'class'   => 'notice-error',
+            'message' => __('PayPal did not return an authorization code. Please try again.', 'restropress'),
+        ),
+        'invalid_state' => array(
+            'class'   => 'notice-error',
+            'message' => __('PayPal connect session expired or is invalid. Please try connecting again.', 'restropress'),
+        ),
+        'token_failed' => array(
+            'class'   => 'notice-error',
+            'message' => __('Unable to complete PayPal token exchange. Check your client credentials and try again.', 'restropress'),
+        ),
+        'profile_failed' => array(
+            'class'   => 'notice-error',
+            'message' => __('Unable to retrieve PayPal account details after authorization.', 'restropress'),
+        ),
+        'save_failed' => array(
+            'class'   => 'notice-error',
+            'message' => __('PayPal account was authorized but account details could not be saved.', 'restropress'),
+        ),
+        'missing_email_scope' => array(
+            'class'   => 'notice-warning',
+            'message' => __('PayPal authorized successfully, but email was not returned. Enable Email scope in your PayPal app Log in with PayPal settings, then reconnect.', 'restropress'),
+        ),
+    );
+
+    if (isset($notices[$notice])) {
+        return $notices[$notice];
+    }
+
+    return array(
+        'class'   => '',
+        'message' => '',
+    );
+}
+
+/**
+ * Render the PayPal connect settings row.
+ *
+ * @since 3.2.6
+ * @param array $args Field args.
+ * @return void
+ */
+function rpress_paypal_connect_callback($args)
+{
+    $notice_key = '';
+    if (! empty($_GET['rpress-paypal-connect'])) {
+        $notice_key = sanitize_key(wp_unslash($_GET['rpress-paypal-connect']));
+    }
+
+    $notice           = rpress_get_paypal_connect_notice($notice_key);
+    $connect_url      = rpress_get_paypal_connect_action_url();
+    $client_id        = trim((string) rpress_get_option('paypal_rest_client_id', ''));
+    $client_secret    = trim((string) rpress_get_option('paypal_rest_client_secret', ''));
+    $paypal_email     = trim((string) rpress_get_option('paypal_email', ''));
+    $paypal_id        = trim((string) rpress_get_option('paypal_id', ''));
+    $connected_at     = trim((string) rpress_get_option('paypal_connected_at', ''));
+    $connected_mode   = trim((string) rpress_get_option('paypal_connected_mode', ''));
+    $is_connected     = (! empty($paypal_email) && ! empty($connected_at));
+    $button_label     = $is_connected ? __('Reconnect PayPal', 'restropress') : __('Connect PayPal', 'restropress');
+    $mode_label       = ('sandbox' === $connected_mode) ? __('Sandbox', 'restropress') : __('Live', 'restropress');
+    $connected_pretty = '';
+    $callback_url     = rpress_get_paypal_oauth_redirect_url();
+    $error_detail     = rpress_pop_paypal_connect_error_detail();
+
+    if (! empty($paypal_id) && preg_match('~identity/user/([^/?#]+)~', $paypal_id, $paypal_id_match)) {
+        $paypal_id = sanitize_text_field($paypal_id_match[1]);
+    }
+
+    if (! empty($connected_at)) {
+        $timestamp = strtotime($connected_at);
+        if ($timestamp) {
+            $connected_pretty = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $timestamp);
+        }
+    }
+
+    if (! empty($notice['message'])) {
+        echo '<div class="notice inline ' . esc_attr($notice['class']) . '"><p>' . esc_html($notice['message']) . '</p></div>';
+
+        if (! empty($error_detail)) {
+            echo '<p class="description"><strong>' . esc_html__('PayPal response:', 'restropress') . '</strong> ' . esc_html($error_detail) . '</p>';
+        }
+    }
+
+    if ($is_connected || ! empty($paypal_email)) {
+        $identity = ! empty($paypal_email) ? $paypal_email : __('Connected account', 'restropress');
+        $details  = sprintf(
+            /* translators: 1: PayPal email, 2: mode label, 3: connected date */
+            __('Connected as %1$s in %2$s mode%3$s.', 'restropress'),
+            '<strong>' . esc_html($identity) . '</strong>',
+            esc_html($mode_label),
+            $connected_pretty ? ' ' . sprintf(
+                /* translators: %s: connected date */
+                __('on %s', 'restropress'),
+                esc_html($connected_pretty)
+            ) : ''
+        );
+
+        echo '<p>' . wp_kses_post($details) . '</p>';
+
+        if (! empty($paypal_id)) {
+            echo '<p class="description">' . sprintf(
+                /* translators: %s: merchant ID */
+                esc_html__('Merchant ID: %s', 'restropress'),
+                esc_html($paypal_id)
+            ) . '</p>';
+        }
+
+    }
+
+    if (empty($client_id) || empty($client_secret)) {
+        echo '<p class="description">' . esc_html__('Enter your PayPal REST Client ID and Client Secret, then click Connect PayPal.', 'restropress') . '</p>';
+    }
+
+    echo '<p><a href="' . esc_url($connect_url) . '" class="button button-primary">' . esc_html($button_label) . '</a></p>';
+    echo '<p class="description"><strong>' . esc_html__('Important:', 'restropress') . '</strong> ' .
+        esc_html__('In your PayPal app, enable "Log in with PayPal", use Client ID and Secret from the same app, and set Return URL exactly to:', 'restropress') .
+        ' <code>' . esc_html($callback_url) . '</code></p>';
+    echo '<p class="description">' .
+        esc_html__('If you want automatic account email fill, enable Email in Log in with PayPal -> Advanced Options.', 'restropress') .
+        '</p>';
+    echo '<p class="description">' . wp_kses_post($args['desc']) . '</p>';
+}
+
+/**
+ * Start PayPal OAuth connect flow from admin settings.
+ *
+ * @since 3.2.6
+ * @return void
+ */
+function rpress_handle_paypal_connect_request()
+{
+    if (! current_user_can('manage_shop_settings')) {
+        wp_die(esc_html__('You do not have permission to manage payment gateway settings.', 'restropress'), esc_html__('Error', 'restropress'), array('response' => 403));
+    }
+
+    check_admin_referer('rpress_paypal_connect');
+
+    $client_id     = trim((string) rpress_get_option('paypal_rest_client_id', ''));
+    $client_secret = trim((string) rpress_get_option('paypal_rest_client_secret', ''));
+
+    if (empty($client_id) || empty($client_secret)) {
+        wp_safe_redirect(rpress_get_paypal_settings_page_url(array('rpress-paypal-connect' => 'missing_credentials')));
+        exit;
+    }
+
+    $oauth_mode = rpress_detect_paypal_credentials_mode($client_id, $client_secret);
+    if (! in_array($oauth_mode, array('sandbox', 'live'), true)) {
+        rpress_set_paypal_connect_error_detail(__('Client Authentication failed. Verify the REST Client ID and Secret from the same PayPal app.', 'restropress'));
+        wp_safe_redirect(rpress_get_paypal_settings_page_url(array('rpress-paypal-connect' => 'token_failed')));
+        exit;
+    }
+
+    $state = wp_generate_password(32, false, false);
+    set_transient(
+        rpress_get_paypal_connect_state_transient_key(get_current_user_id()),
+        $state,
+        15 * MINUTE_IN_SECONDS
+    );
+    set_transient(
+        rpress_get_paypal_connect_mode_transient_key(get_current_user_id()),
+        $oauth_mode,
+        15 * MINUTE_IN_SECONDS
+    );
+
+    $authorize_url = add_query_arg(
+        array(
+            'response_type' => 'code',
+            'client_id'     => $client_id,
+            'scope'         => implode(' ', rpress_get_paypal_oauth_scopes()),
+            'prompt'        => 'login',
+            'redirect_uri'  => rpress_get_paypal_oauth_redirect_url(),
+            'state'         => $state,
+        ),
+        trailingslashit(rpress_get_paypal_oauth_web_base_url($oauth_mode)) . 'signin/authorize'
+    );
+
+    wp_redirect($authorize_url);
+    exit;
+}
+
+/**
+ * Handle PayPal OAuth callback and save account details.
+ *
+ * @since 3.2.6
+ * @return void
+ */
+function rpress_handle_paypal_connect_callback()
+{
+    // Allow other no-action admin-post handlers to run untouched.
+    if (empty($_GET['error']) && empty($_GET['state']) && empty($_GET['code'])) {
+        return;
+    }
+
+    if (! current_user_can('manage_shop_settings')) {
+        wp_die(esc_html__('You do not have permission to manage payment gateway settings.', 'restropress'), esc_html__('Error', 'restropress'), array('response' => 403));
+    }
+
+    if (! empty($_GET['error'])) {
+        wp_safe_redirect(rpress_get_paypal_settings_page_url(array('rpress-paypal-connect' => 'access_denied')));
+        exit;
+    }
+
+    $state = '';
+    if (! empty($_GET['state'])) {
+        $state = wp_unslash($_GET['state']);
+        $state = is_string($state) ? trim($state) : '';
+    }
+
+    $authorization_code = '';
+    if (! empty($_GET['code'])) {
+        $authorization_code = wp_unslash($_GET['code']);
+        $authorization_code = is_string($authorization_code) ? trim($authorization_code) : '';
+    }
+
+    $state_key    = rpress_get_paypal_connect_state_transient_key(get_current_user_id());
+    $mode_key     = rpress_get_paypal_connect_mode_transient_key(get_current_user_id());
+    $id_token_key = rpress_get_paypal_connect_id_token_transient_key(get_current_user_id());
+    $saved_state  = (string) get_transient($state_key);
+    $oauth_mode   = (string) get_transient($mode_key);
+
+    if (empty($state) || empty($saved_state) || ! hash_equals($saved_state, $state)) {
+        wp_safe_redirect(rpress_get_paypal_settings_page_url(array('rpress-paypal-connect' => 'invalid_state')));
+        exit;
+    }
+
+    delete_transient($state_key);
+    delete_transient($mode_key);
+    delete_transient($id_token_key);
+
+    if (! in_array($oauth_mode, array('sandbox', 'live'), true)) {
+        $oauth_mode = rpress_is_test_mode() ? 'sandbox' : 'live';
+    }
+
+    if (empty($authorization_code)) {
+        wp_safe_redirect(rpress_get_paypal_settings_page_url(array('rpress-paypal-connect' => 'missing_code')));
+        exit;
+    }
+
+    $access_token = rpress_exchange_paypal_oauth_code($authorization_code, $oauth_mode);
+
+    if (is_wp_error($access_token)) {
+        rpress_set_paypal_connect_error_detail(rpress_get_paypal_error_detail_from_wp_error($access_token));
+        wp_safe_redirect(rpress_get_paypal_settings_page_url(array('rpress-paypal-connect' => 'token_failed')));
+        exit;
+    }
+
+    $account = rpress_get_paypal_oauth_account($access_token, $oauth_mode);
+
+    if (is_wp_error($account)) {
+        rpress_set_paypal_connect_error_detail(rpress_get_paypal_error_detail_from_wp_error($account));
+        wp_safe_redirect(rpress_get_paypal_settings_page_url(array('rpress-paypal-connect' => 'profile_failed')));
+        exit;
+    }
+
+    $saved = rpress_store_connected_paypal_account($account, $oauth_mode);
+    delete_transient($id_token_key);
+
+    if (is_wp_error($saved)) {
+        $notice_key = 'save_failed';
+        if ('rpress_paypal_missing_email_scope' === $saved->get_error_code()) {
+            $notice_key = 'missing_email_scope';
+        }
+
+        wp_safe_redirect(rpress_get_paypal_settings_page_url(array('rpress-paypal-connect' => $notice_key)));
+        exit;
+    }
+
+    wp_safe_redirect(rpress_get_paypal_settings_page_url(array('rpress-paypal-connect' => 'success')));
+    exit;
+}
+
+/**
+ * Exchange OAuth authorization code for access token.
+ *
+ * @since 3.2.6
+ * @param string $authorization_code OAuth authorization code.
+ * @param string $oauth_mode         Optional mode override: sandbox|live.
+ * @return string|WP_Error
+ */
+function rpress_exchange_paypal_oauth_code($authorization_code, $oauth_mode = '')
+{
+    $client_id     = trim((string) rpress_get_option('paypal_rest_client_id', ''));
+    $client_secret = trim((string) rpress_get_option('paypal_rest_client_secret', ''));
+
+    if (empty($client_id) || empty($client_secret)) {
+        return new WP_Error('rpress_paypal_missing_credentials', __('PayPal credentials are missing.', 'restropress'));
+    }
+
+    if (! in_array($oauth_mode, array('sandbox', 'live'), true)) {
+        $oauth_mode = rpress_is_test_mode() ? 'sandbox' : 'live';
+    }
+
+    $request_urls = rpress_get_paypal_oauth_token_endpoints(rpress_get_paypal_oauth_api_base_url($oauth_mode));
+
+    $last_response_code    = 0;
+    $paypal_error_code     = '';
+    $paypal_error_desc     = '';
+    $client_auth_failed    = false;
+    $auth_strategies       = array(true, false);
+
+    foreach ($request_urls as $request_url) {
+        foreach ($auth_strategies as $use_basic_auth) {
+            $result = rpress_request_paypal_oauth_token(
+                $request_url,
+                $authorization_code,
+                $client_id,
+                $client_secret,
+                $use_basic_auth
+            );
+
+            if (! empty($result['access_token'])) {
+                $id_token_key = rpress_get_paypal_connect_id_token_transient_key(get_current_user_id());
+                if (! empty($result['id_token'])) {
+                    set_transient($id_token_key, (string) $result['id_token'], 15 * MINUTE_IN_SECONDS);
+                } else {
+                    delete_transient($id_token_key);
+                }
+
+                return (string) $result['access_token'];
+            }
+
+            if (! empty($result['response_code'])) {
+                $last_response_code = (int) $result['response_code'];
+            }
+
+            if (! empty($result['paypal_error'])) {
+                $paypal_error_code = sanitize_text_field((string) $result['paypal_error']);
+            }
+
+            if (! empty($result['paypal_error_description'])) {
+                $paypal_error_desc = sanitize_text_field((string) $result['paypal_error_description']);
+            }
+
+            $combined_error_text = strtolower($paypal_error_code . ' ' . $paypal_error_desc);
+            if (
+                false !== strpos($combined_error_text, 'invalid_client') ||
+                false !== strpos($combined_error_text, 'unauthorized_client') ||
+                false !== strpos($combined_error_text, 'client authentication failed')
+            ) {
+                $client_auth_failed = true;
+            }
+        }
+    }
+
+    if ($client_auth_failed) {
+        $current_mode  = $oauth_mode;
+        $detected_mode = rpress_detect_paypal_credentials_mode($client_id, $client_secret);
+
+        if ('unknown' !== $detected_mode && $detected_mode !== $current_mode) {
+            $paypal_error_code = 'mode_mismatch';
+            $paypal_error_desc = sprintf(
+                /* translators: 1: credentials mode, 2: current RestroPress mode */
+                __('PayPal credentials are for %1$s mode, but RestroPress is in %2$s mode. Switch mode or use matching credentials.', 'restropress'),
+                ('sandbox' === $detected_mode) ? __('Sandbox', 'restropress') : __('Live', 'restropress'),
+                ('sandbox' === $current_mode) ? __('Sandbox', 'restropress') : __('Live', 'restropress')
+            );
+        } elseif (empty($paypal_error_desc)) {
+            $paypal_error_desc = __('Client Authentication failed. Verify the REST Client ID and Secret from the same PayPal app and mode.', 'restropress');
+        }
+    }
+
+    return new WP_Error(
+        'rpress_paypal_token_failed',
+        __('PayPal token exchange failed.', 'restropress'),
+        array(
+            'paypal_error'             => $paypal_error_code,
+            'paypal_error_description' => $paypal_error_desc,
+            'response_code'            => $last_response_code,
+        )
+    );
+}
+
+/**
+ * Extract email from PayPal profile response.
+ *
+ * @since 3.2.6
+ * @param array $decoded Decoded profile response.
+ * @return string
+ */
+function rpress_extract_paypal_profile_email($decoded, $oauth_mode = '')
+{
+    if (! is_array($decoded)) {
+        return '';
+    }
+
+    $emails = array();
+
+    if (! empty($decoded['email'])) {
+        $primary_email = sanitize_email($decoded['email']);
+        if (! empty($primary_email)) {
+            $emails[] = $primary_email;
+        }
+    }
+
+    if (! empty($decoded['emails']) && is_array($decoded['emails'])) {
+        foreach ($decoded['emails'] as $email_row) {
+            if (! empty($email_row['value'])) {
+                $candidate = sanitize_email($email_row['value']);
+                if (! empty($candidate)) {
+                    $emails[] = $candidate;
+                }
+            }
+        }
+    }
+
+    $emails = array_values(array_unique(array_filter($emails)));
+
+    if ('sandbox' === $oauth_mode) {
+        foreach ($emails as $candidate) {
+            if (preg_match('/@business\.example\.com$/i', $candidate)) {
+                return $candidate;
+            }
+        }
+    }
+
+    if (! empty($emails)) {
+        return $emails[0];
+    }
+
+    return '';
+}
+
+/**
+ * Extract merchant/payer ID from PayPal profile response.
+ *
+ * @since 3.2.6
+ * @param array $decoded Decoded profile response.
+ * @return string
+ */
+function rpress_extract_paypal_profile_payer_id($decoded)
+{
+    if (! is_array($decoded)) {
+        return '';
+    }
+
+    foreach (array('payer_id', 'payerId', 'merchant_id') as $id_key) {
+        if (! empty($decoded[$id_key])) {
+            return sanitize_text_field((string) $decoded[$id_key]);
+        }
+    }
+
+    foreach (array('user_id', 'sub') as $url_key) {
+        if (empty($decoded[$url_key]) || ! is_string($decoded[$url_key])) {
+            continue;
+        }
+
+        if (preg_match('~identity/user/([^/?#]+)~', $decoded[$url_key], $match)) {
+            return sanitize_text_field($match[1]);
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Extract account type from PayPal profile response.
+ *
+ * @since 3.2.6
+ * @param array $decoded Decoded profile response.
+ * @return string
+ */
+function rpress_extract_paypal_profile_account_type($decoded)
+{
+    if (! is_array($decoded)) {
+        return '';
+    }
+
+    if (! empty($decoded['account_type']) && is_string($decoded['account_type'])) {
+        return strtoupper(sanitize_text_field($decoded['account_type']));
+    }
+
+    if (! empty($decoded['accountType']) && is_string($decoded['accountType'])) {
+        return strtoupper(sanitize_text_field($decoded['accountType']));
+    }
+
+    return '';
+}
+
+/**
+ * Decode a base64url string.
+ *
+ * @since 3.2.6
+ * @param string $value Base64url value.
+ * @return string
+ */
+function rpress_base64url_decode($value)
+{
+    $value = is_string($value) ? trim($value) : '';
+    if ('' === $value) {
+        return '';
+    }
+
+    $value = strtr($value, '-_', '+/');
+    $pad   = strlen($value) % 4;
+    if ($pad > 0) {
+        $value .= str_repeat('=', 4 - $pad);
+    }
+
+    $decoded = base64_decode($value, true);
+    if (false === $decoded) {
+        return '';
+    }
+
+    return (string) $decoded;
+}
+
+/**
+ * Extract PayPal account details from an ID token.
+ *
+ * @since 3.2.6
+ * @param string $id_token ID token.
+ * @return array
+ */
+function rpress_get_paypal_account_from_id_token($id_token, $oauth_mode = '')
+{
+    if (! is_string($id_token) || '' === trim($id_token)) {
+        return array(
+            'email'    => '',
+            'payer_id' => '',
+        );
+    }
+
+    $parts = explode('.', trim($id_token));
+    if (count($parts) < 2) {
+        return array(
+            'email'    => '',
+            'payer_id' => '',
+        );
+    }
+
+    $payload_json = rpress_base64url_decode($parts[1]);
+    if ('' === $payload_json) {
+        return array(
+            'email'    => '',
+            'payer_id' => '',
+        );
+    }
+
+    $payload = json_decode($payload_json, true);
+    if (! is_array($payload)) {
+        return array(
+            'email'    => '',
+            'payer_id' => '',
+        );
+    }
+
+    return array(
+        'email'        => rpress_extract_paypal_profile_email($payload, $oauth_mode),
+        'payer_id'     => rpress_extract_paypal_profile_payer_id($payload),
+        'account_type' => rpress_extract_paypal_profile_account_type($payload),
+    );
+}
+
+/**
+ * Get PayPal profile endpoint URLs to try.
+ *
+ * @since 3.2.6
+ * @param string $oauth_mode Optional mode override: sandbox|live.
+ * @return array
+ */
+function rpress_get_paypal_profile_endpoints($oauth_mode = '')
+{
+    $base = untrailingslashit(rpress_get_paypal_oauth_api_base_url($oauth_mode));
+
+    return array(
+        $base . '/v1/identity/openidconnect/userinfo/?schema=openid',
+        $base . '/v1/identity/openidconnect/userinfo?schema=openid',
+        $base . '/v1/oauth2/token/userinfo?schema=openid',
+        $base . '/v1/identity/oauth2/userinfo?schema=paypalv1.1',
+    );
+}
+
+/**
+ * Retrieve account details from PayPal user info endpoint.
+ *
+ * @since 3.2.6
+ * @param string $access_token OAuth access token.
+ * @param string $oauth_mode   Optional mode override: sandbox|live.
+ * @return array|WP_Error
+ */
+function rpress_get_paypal_oauth_account($access_token, $oauth_mode = '')
+{
+    if (! in_array($oauth_mode, array('sandbox', 'live'), true)) {
+        $oauth_mode = rpress_is_test_mode() ? 'sandbox' : 'live';
+    }
+
+    $profile_endpoints   = rpress_get_paypal_profile_endpoints($oauth_mode);
+    $last_response_code  = 0;
+    $paypal_error_code   = '';
+    $paypal_error_detail = '';
+
+    foreach ($profile_endpoints as $profile_url) {
+        $response = wp_remote_get(
+            $profile_url,
+            array(
+                'timeout' => 45,
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $access_token,
+                    'Accept'        => 'application/json',
+                ),
+            )
+        );
+
+        if (is_wp_error($response)) {
+            $paypal_error_detail = (string) $response->get_error_message();
+            continue;
+        }
+
+        $response_code = (int) wp_remote_retrieve_response_code($response);
+        $decoded       = json_decode(wp_remote_retrieve_body($response), true);
+
+        if (! empty($response_code)) {
+            $last_response_code = $response_code;
+        }
+
+        if (200 <= $response_code && 300 > $response_code && is_array($decoded)) {
+            $email        = rpress_extract_paypal_profile_email($decoded, $oauth_mode);
+            $payer_id     = rpress_extract_paypal_profile_payer_id($decoded);
+            $account_type = rpress_extract_paypal_profile_account_type($decoded);
+
+            if (! empty($email) || ! empty($payer_id)) {
+                return array(
+                    'email'        => $email,
+                    'payer_id'     => $payer_id,
+                    'account_type' => $account_type,
+                );
+            }
+
+            $paypal_error_code   = 'profile_empty';
+            $paypal_error_detail = __('PayPal profile did not return an email or merchant ID.', 'restropress');
+            continue;
+        }
+
+        $error_data = rpress_extract_paypal_oauth_error($decoded);
+
+        if (! empty($error_data['paypal_error'])) {
+            $paypal_error_code = (string) $error_data['paypal_error'];
+        }
+
+        if (! empty($error_data['paypal_error_description'])) {
+            $paypal_error_detail = (string) $error_data['paypal_error_description'];
+        }
+    }
+
+    $id_token = (string) get_transient(rpress_get_paypal_connect_id_token_transient_key(get_current_user_id()));
+    if ('' !== $id_token) {
+        $account_from_token = rpress_get_paypal_account_from_id_token($id_token, $oauth_mode);
+        if (! empty($account_from_token['email']) || ! empty($account_from_token['payer_id'])) {
+            return $account_from_token;
+        }
+    }
+
+    return new WP_Error(
+        'rpress_paypal_profile_failed',
+        __('Failed to retrieve PayPal account profile.', 'restropress'),
+        array(
+            'paypal_error'             => $paypal_error_code,
+            'paypal_error_description' => $paypal_error_detail,
+            'response_code'            => $last_response_code,
+        )
+    );
+}
+
+/**
+ * Store connected PayPal account details in plugin settings.
+ *
+ * @since 3.2.6
+ * @param array  $account    Account values.
+ * @param string $oauth_mode Optional mode override: sandbox|live.
+ * @return true|WP_Error
+ */
+function rpress_store_connected_paypal_account($account, $oauth_mode = '')
+{
+    if (! in_array($oauth_mode, array('sandbox', 'live'), true)) {
+        $oauth_mode = rpress_is_test_mode() ? 'sandbox' : 'live';
+    }
+
+    $settings = get_option('rpress_settings', array());
+    if (! is_array($settings)) {
+        $settings = array();
+    }
+
+    $existing_email = '';
+    if (! empty($settings['paypal_email'])) {
+        $existing_email = sanitize_email($settings['paypal_email']);
+    }
+
+    if (! empty($account['email'])) {
+        $incoming_email = sanitize_email($account['email']);
+
+        // In sandbox, keep an existing business email if OAuth returns a personal login email.
+        if (
+            'sandbox' === $oauth_mode &&
+            ! empty($existing_email) &&
+            preg_match('/@business\.example\.com$/i', $existing_email) &&
+            ! empty($incoming_email) &&
+            preg_match('/@personal\.example\.com$/i', $incoming_email)
+        ) {
+            $settings['paypal_email'] = $existing_email;
+        } else {
+            $settings['paypal_email'] = $incoming_email;
+        }
+    }
+
+    if (! empty($account['payer_id'])) {
+        $settings['paypal_id'] = sanitize_text_field($account['payer_id']);
+    }
+
+    if (! empty($account['account_type']) && is_string($account['account_type'])) {
+        $settings['paypal_account_type'] = strtoupper(sanitize_text_field($account['account_type']));
+    } else {
+        unset($settings['paypal_account_type']);
+    }
+
+    if (empty($settings['paypal_email'])) {
+        return new WP_Error('rpress_paypal_missing_email_scope', __('PayPal email is missing from the connected account.', 'restropress'));
+    }
+
+    $settings['paypal_connected_at']   = current_time('mysql');
+    $settings['paypal_connected_mode'] = $oauth_mode;
+
+    update_option('rpress_settings', $settings);
+
+    return true;
+}
+
+/**
+ * Get PayPal merchant identifier used in checkout redirect.
+ *
+ * @since 3.2.6
+ * @return string
+ */
+function rpress_get_paypal_merchant_identifier()
+{
+    $merchant_email = sanitize_email((string) rpress_get_option('paypal_email', ''));
+    if (! empty($merchant_email)) {
+        return $merchant_email;
+    }
+
+    $merchant_id = trim((string) rpress_get_option('paypal_id', ''));
+    if (! empty($merchant_id)) {
+        return sanitize_text_field($merchant_id);
+    }
+
+    return '';
+}
+
+/**
+ * Get the currency used for PayPal Standard checkout.
+ *
+ * PayPal Sandbox classic checkout returns shopping cart errors for INR in many
+ * test account setups. In test mode, fallback to USD for checkout requests.
+ *
+ * @since 3.2.6
+ * @param string $store_currency Optional store currency.
+ * @return string
+ */
+function rpress_get_paypal_checkout_currency($store_currency = '')
+{
+    if (empty($store_currency)) {
+        $store_currency = rpress_get_currency();
+    }
+
+    $store_currency = strtoupper(trim((string) $store_currency));
+
+    if (rpress_is_test_mode() && 'INR' === $store_currency) {
+        $fallback_currency = apply_filters('rpress_paypal_sandbox_fallback_currency', 'USD', $store_currency);
+        $fallback_currency = strtoupper(trim((string) $fallback_currency));
+
+        if (empty($fallback_currency)) {
+            $fallback_currency = 'USD';
+        }
+
+        return $fallback_currency;
+    }
+
+    return $store_currency;
+}
+
 /**
  * Process PayPal Purchase
  *
@@ -159,13 +1318,47 @@ function rpress_process_paypal_purchase($purchase_data)
     if (! wp_verify_nonce($purchase_data['gateway_nonce'], 'rpress-gateway')) {
         wp_die(esc_html__('Nonce verification has failed', 'restropress'), esc_html__('Error', 'restropress'), array('response' => 403));
     }
+
+    $merchant_email = strtolower(trim((string) rpress_get_option('paypal_email', '')));
+    $buyer_email    = '';
+    if (! empty($purchase_data['user_email'])) {
+        $buyer_email = strtolower(sanitize_email($purchase_data['user_email']));
+    }
+
+    $merchant_identifier = rpress_get_paypal_merchant_identifier();
+    $gateway_mode        = ! empty($purchase_data['post_data']['rpress-gateway']) ? $purchase_data['post_data']['rpress-gateway'] : 'paypal';
+    $store_currency      = strtoupper(trim((string) rpress_get_currency()));
+    $paypal_currency     = rpress_get_paypal_checkout_currency($store_currency);
+
+    if (empty($merchant_identifier)) {
+        rpress_set_error('paypal_missing_merchant', __('PayPal merchant account is not configured. Reconnect your PayPal account in gateway settings.', 'restropress'));
+        rpress_send_back_to_checkout('?payment-mode=' . $gateway_mode);
+        return;
+    }
+
+    if (! empty($merchant_email) && ! empty($buyer_email) && $merchant_email === $buyer_email) {
+        rpress_set_error('paypal_same_account', __('Use a different PayPal buyer account. The connected PayPal merchant account cannot pay its own order.', 'restropress'));
+        rpress_send_back_to_checkout('?payment-mode=' . $gateway_mode);
+        return;
+    }
+
+    if ($store_currency !== $paypal_currency) {
+        rpress_debug_log(
+            sprintf(
+                'PayPal sandbox currency fallback applied. Store currency: %1$s, checkout currency: %2$s.',
+                $store_currency,
+                $paypal_currency
+            )
+        );
+    }
+
     // Collect payment data
     $payment_data = array(
         'price'         => $purchase_data['price'],
         'date'          => $purchase_data['date'],
         'user_email'    => $purchase_data['user_email'],
         'purchase_key'  => $purchase_data['purchase_key'],
-        'currency'      => rpress_get_currency(),
+        'currency'      => $paypal_currency,
         'fooditems'     => $purchase_data['fooditems'],
         'user_info'     => $purchase_data['user_info'],
         'cart_details'  => $purchase_data['cart_details'],
@@ -179,7 +1372,7 @@ function rpress_process_paypal_purchase($purchase_data)
         // Record the error
         rpress_record_gateway_error(__('Payment Error', 'restropress'), sprintf(__('Payment creation failed before sending buyer to PayPal. Payment data: %s', 'restropress'), json_encode($payment_data)), $payment);
         // Problems? send back
-        rpress_send_back_to_checkout('?payment-mode=' . $purchase_data['post_data']['rpress-gateway']);
+        rpress_send_back_to_checkout('?payment-mode=' . $gateway_mode);
     } else {
         // Only send to PayPal if the pending payment is created successfully
         $listener_url = add_query_arg('rpress-listener', 'IPN', home_url('index.php'));
@@ -194,86 +1387,27 @@ function rpress_process_paypal_purchase($purchase_data)
         $paypal_redirect = trailingslashit(rpress_get_paypal_redirect()) . '?';
         // Setup PayPal arguments
         $paypal_args = array(
-            'business'      => rpress_get_option('paypal_email', false),
-            'email'         => $purchase_data['user_email'],
-            'first_name'    => $purchase_data['user_info']['first_name'],
-            'last_name'     => $purchase_data['user_info']['last_name'],
+            'business'      => $merchant_identifier,
+            'cmd'           => '_xclick',
             'invoice'       => $purchase_data['purchase_key'],
-            'no_shipping'   => '1',
-            'shipping'      => '0',
             'no_note'       => '1',
-            'currency_code' => rpress_get_currency(),
-            'charset'       => get_bloginfo('charset'),
+            'currency_code' => $paypal_currency,
             'custom'        => $payment,
             'rm'            => '2',
             'return'        => $return_url,
             'cancel_return' => rpress_get_failed_transaction_uri('?payment-id=' . $payment),
             'notify_url'    => $listener_url,
-            'image_url'     => rpress_get_paypal_image_url(),
-            'cbt'           => get_bloginfo('name'),
-            'bn'            => 'RestroPress_SP'
+            'item_name'     => get_bloginfo('name') . ' Order ID :' . $payment,
+            'amount'        => rpress_sanitize_amount((string) $purchase_data['price']),
+            'quantity'      => '1',
+            'bn'            => 'RestroPress_SP',
         );
-        if (! empty($purchase_data['user_info']['address'])) {
-            $paypal_args['address1'] = $purchase_data['user_info']['address']['line1'];
-            $paypal_args['address2'] = $purchase_data['user_info']['address']['line2'];
-            $paypal_args['city']     = $purchase_data['user_info']['address']['city'];
-            $paypal_args['country']  = $purchase_data['user_info']['address']['country'];
+
+        $image_url = rpress_get_paypal_image_url();
+        if (! empty($image_url)) {
+            $paypal_args['image_url'] = $image_url;
         }
-        $paypal_extra_args = array(
-            'cmd'    => '_cart',
-            'upload' => '1'
-        );
-        $paypal_args = array_merge($paypal_extra_args, $paypal_args);
-        // Add cart items
-        // $i = 1;
-        // $paypal_sum = 0;
-        // if( is_array( $purchase_data['cart_details'] ) && ! empty( $purchase_data['cart_details'] ) ) {
-        // 	foreach ( $purchase_data['cart_details'] as $item ) {
-        // 		$item_amount = rpress_format_amount( ( $item['subtotal'] / $item['quantity'] ) - ( $item['discount'] / $item['quantity'] ), 2 );
-        // 		if( $item_amount <= 0 ) {
-        // 			$item_amount = 0;
-        // 		}
-        // 		$paypal_args['item_name_' . $i ] = stripslashes_deep( html_entity_decode( rpress_get_cart_item_name( $item ), ENT_COMPAT, 'UTF-8' ) );
-        // 		$paypal_args['quantity_' . $i ]  = $item['quantity'];
-        // 		$paypal_args['amount_' . $i ]    = $item_amount;
-        // 		$paypal_sum += ( $item_amount * $item['quantity'] );
-        // 		$i++;
-        // 	}
-        // }
-        // // Calculate discount
-        // $discounted_amount = 0.00;
-        // if ( ! empty( $purchase_data['fees'] ) ) {
-        // 	$i = empty( $i ) ? 1 : $i;
-        // 	foreach ( $purchase_data['fees'] as $fee ) {
-        // 		if ( empty( $fee['fooditem_id'] ) && floatval( $fee['amount'] ) > '0' ) {
-        // 			// this is a positive fee
-        // 			$paypal_args['item_name_' . $i ] = stripslashes_deep( html_entity_decode( wp_strip_all_tags( $fee['label']."\n" ), ENT_COMPAT, 'UTF-8' ) );
-        // 			$paypal_args['quantity_' . $i ]  = '1';
-        // 			$paypal_args['amount_' . $i ]    = rpress_sanitize_amount( $fee['amount'] );
-        // 			$i++;
-        // 		} else if ( empty( $fee['fooditem_id'] ) ) {
-        // 			// This is a negative fee (discount) not assigned to a specific fooditem
-        // 			$discounted_amount += abs( $fee['amount'] );
-        // 		}
-        // 	}
-        // }
-        // if ( $discounted_amount > '0' ) {
-        // 	$paypal_args['discount_amount_cart'] = rpress_sanitize_amount( $discounted_amount );
-        // }
-        // if( $paypal_sum > $purchase_data['price'] ) {
-        // 	$difference = rpress_format_amount( $paypal_sum - $purchase_data['price'], 2 );
-        // 	if( ! isset( $paypal_args['discount_amount_cart'] ) ) {
-        // 		$paypal_args['discount_amount_cart'] = 0;
-        // 	}
-        // 	$paypal_args['discount_amount_cart'] += $difference;
-        // }
-        // // Add taxes to the cart
-        // if ( rpress_use_taxes() ) {
-        // 	$paypal_args['tax_cart'] = rpress_sanitize_amount( $purchase_data['tax'] );
-        // }
-        $paypal_args['item_name_1'] = get_bloginfo('name') . ' Order ID :' . $payment;
-        $paypal_args['quantity_1']  = '1';
-        $paypal_args['amount_1']    = $purchase_data['price'];
+
         $paypal_args = apply_filters('rpress_paypal_redirect_args', $paypal_args, $purchase_data);
         rpress_debug_log('PayPal arguments: ' . print_r($paypal_args, true));
 
@@ -295,7 +1429,6 @@ add_action('rpress_gateway_paypal', 'rpress_process_paypal_purchase');
  */
 function rpress_listen_for_paypal_ipn()
 {
-    // print_r($_REQUEST);exit;
     // Regular PayPal IPN
 
     if (isset($_REQUEST['rpress-listener']) && 'ipn' === strtolower($_REQUEST['rpress-listener'])) {
@@ -398,7 +1531,7 @@ function rpress_process_paypal_ipn()
             rpress_debug_log('Invalid IPN verification response. IPN data: ' . print_r($api_response, true));
             return; // Something went wrong
         }
-        if (wp_remote_retrieve_body($api_response) !== 'VERIFIED' && rpress_get_option('disable_paypal_verification', false)) {
+        if (wp_remote_retrieve_body($api_response) !== 'VERIFIED') {
             rpress_record_gateway_error(__('IPN Error', 'restropress'), sprintf(__('Invalid IPN verification response. IPN data: %s', 'restropress'), json_encode($api_response)));
             rpress_debug_log('Invalid IPN verification response. IPN data: ' . print_r($api_response, true));
             return; // Response not okay
@@ -465,12 +1598,25 @@ function rpress_process_paypal_web_accept_and_cart($data, $payment_id)
     $paypal_amount  = $data['mc_gross'];
     $payment_status = strtolower($data['payment_status']);
     $currency_code  = strtolower($data['mc_currency']);
-    $receiver_id = isset($data['receiver_id']);
+    $receiver_id    = isset($data['receiver_id']) ? sanitize_text_field($data['receiver_id']) : '';
+    $receiver_email = isset($data['receiver_email']) ? sanitize_email($data['receiver_email']) : '';
     if ($payment->gateway != 'paypal') {
         return; // this isn't a PayPal standard IPN
     }
     // Verify payment recipient
-    if ($receiver_id != trim(rpress_get_option('paypal_id', true))) {
+    $expected_receiver_id    = trim((string) rpress_get_option('paypal_id', true));
+    $expected_receiver_email = strtolower(trim((string) rpress_get_option('paypal_email', true)));
+    $receiver_matches        = false;
+
+    if (! empty($expected_receiver_id) && $receiver_id === $expected_receiver_id) {
+        $receiver_matches = true;
+    }
+
+    if (! $receiver_matches && ! empty($expected_receiver_email) && ! empty($receiver_email) && strtolower($receiver_email) === $expected_receiver_email) {
+        $receiver_matches = true;
+    }
+
+    if (! $receiver_matches) {
         rpress_record_gateway_error(__('IPN Error', 'restropress'), sprintf(__('Invalid business email in IPN response. IPN data: %s', 'restropress'), json_encode($data)), $payment_id);
         rpress_debug_log('Invalid business email in IPN response. IPN data: ' . print_r($data, true));
         rpress_update_payment_status($payment_id, 'failed');

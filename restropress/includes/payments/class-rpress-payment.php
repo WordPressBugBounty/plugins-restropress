@@ -446,7 +446,6 @@ public function __set( $key, $value ) {
 		$this->fooditems       = $this->setup_fooditems();
 		// Currency Based
 		$this->total           = $this->setup_total();
-		//$this->total           = '';
 		$this->tax             = $this->setup_tax();
 		$this->tax_rate        = $this->setup_tax_rate();
 		$this->fees_total      = $this->setup_fees_total();
@@ -552,7 +551,6 @@ public function __set( $key, $value ) {
 			}
 			if (rpress_get_option( 'enable_sequential' ) ) {
 				$number = rpress_get_next_payment_number();
-				echo esc_html( $number );
 				$this->number = rpress_format_payment_number( $number );
 				$this->update_meta( '_rpress_payment_number', $this->number );
 				update_option( 'rpress_last_payment_number', $number );
@@ -981,9 +979,8 @@ public function __set( $key, $value ) {
 		$quantity   = absint( $args['quantity'] );
 		$amount     = round( $item_price * $quantity, rpress_currency_decimal_filter() );
 		// Calculating addon prices
-		// $addon_prices = 0;
         $rpress_cart = new RPRESS_Cart();
-  		if( !empty($options) ) {
+   		if( !empty($options) ) {
             foreach ( $options as &$addon_item ) { // Notice the '&' here
                 $addon_price = (float) $rpress_cart->get_addon_price( $addon_item['addon_id'], $options, $addon_item['price'] );
                $addon_price= round($addon_price,rpress_currency_decimal_filter());
@@ -992,9 +989,6 @@ public function __set( $key, $value ) {
             }
             // Unset the reference to avoid unintended modifications
             unset($addon_item);
-    		// $addon_prices = wp_list_pluck($options, 'price');
-    		// $addon_prices = array_sum($addon_prices);
-    		// $addon_prices = floatval($addon_prices) * $quantity;
     	}
 		// Setup the fooditems meta item
 		$new_fooditem = array(
@@ -1013,9 +1007,6 @@ public function __set( $key, $value ) {
 		$discount   = $args['discount'];
 		$subtotal   = $amount;
 		$tax        = $args['tax'];
-		// if ( rpress_prices_include_tax() ) {
-		// 	$subtotal -= round( $tax, rpress_currency_decimal_filter() );
-		// }
 		$total = $subtotal - $discount + $tax;
 		// Do not allow totals to go negative
 		if( $total < 0 ) {

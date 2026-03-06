@@ -44,10 +44,12 @@
                       <?php echo esc_html( ucfirst( $service_label ) ); ?> <?php esc_html_e( 'Date', 'restropress' ); ?>
                       <span><?php echo esc_html( $service_date ); ?></span>
                     </p>
-                    <p>
-                      <?php echo esc_html( ucfirst( $service_label ) ); ?> <?php esc_html_e( 'Time', 'restropress' ); ?>
-                      <span><?php echo esc_html( $service_time ); ?></span>
-                    </p>
+                    <?php if ( ! empty( $service_time ) ) : ?>
+                      <p>
+                        <?php echo esc_html( ucfirst( $service_label ) ); ?> <?php esc_html_e( 'Time', 'restropress' ); ?>
+                        <span><?php echo esc_html( $service_time ); ?></span>
+                      </p>
+                    <?php endif; ?>
                     <p><?php esc_html_e( "Payment Type", 'restropress' ) ?><span><?php echo esc_html( rpress_get_gateway_checkout_label( rpress_get_payment_gateway( $payment->ID ) ) ); ?></span></p>
                     <p><?php esc_html_e( "Payment Status", 'restropress' ) ?><span><?php echo esc_html( $payment_status ) ?></span></p>  
                 </div>

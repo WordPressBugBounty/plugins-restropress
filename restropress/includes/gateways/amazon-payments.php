@@ -36,7 +36,8 @@ final class RPRESS_Amazon_Payments {
 		$this->reference_id = ! empty( $_REQUEST['amazon_reference_id'] ) ? sanitize_text_field( $_REQUEST['amazon_reference_id'] ) : '';
 		// Run this separate so we can ditch as early as possible
 		$this->register();
-		if ( ! rpress_is_gateway_active( $this->gateway_id ) ) {
+		$enabled_gateways = (array) rpress_get_option( 'gateways', array() );
+		if ( empty( $enabled_gateways[ $this->gateway_id ] ) ) {
 			return;
 		}
 		$this->config();

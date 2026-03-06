@@ -1512,9 +1512,6 @@ function rpress_get_discount_price_by_payment_id( $payment_id = 0 ) {
     $discount_type 	= rpress_get_discount_type( $discount_data->ID );
     if( $discount_type == 'flat' ){
 	    if ( is_array( $cart_contents ) && !empty( $cart_contents ) ) {
-	        // foreach( $cart_contents as $key => $cart_content ) {
-	        //     $discount = isset( $cart_content['discount'] ) ? floatval($cart_content['discount']) : 0;
-	        // }
             $discount =$discount_data->get_amount();
 	    }
     }

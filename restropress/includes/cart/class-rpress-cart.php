@@ -241,10 +241,6 @@ class RPRESS_Cart {
 				$tax = $tax_price - ( $subtotal - $discount );
 				if( $include_tax == 'yes'){
                     $tax = $tax_price -  $subtotal;
-                //     $tax = $this->get_item_tax( $item['id'], $item, ($subtotal-$discount),true );
-                //    error_log("asdfasd f ".$tax.'  '.$item_price);
-				// 	$tax = round( $tax, rpress_currency_decimal_filter() );
-                   
 				}
 			}    
 			foreach ( $fees as $fee ) {

@@ -867,20 +867,6 @@ function rpress_detach_deleted_user( $user_id ) {
 	return $detached;
 }
 add_action( 'delete_user', 'rpress_detach_deleted_user', 10, 1 );
-/**
- * Adding keys
- *
- * @since 3.0.0
- *  */
-if ( '1' === rpress_get_option( 'activate_api' ) ) {
-	/**
-	 * Adding  API keys
-	 *
-	 * @since 3.0.0
-	 * * */
-	//add_action( 'show_user_profile', 'rpress_user_api_keys_display' );
-	//add_action( 'edit_user_profile', 'rpress_user_api_keys_display' );
-}
 if ( ! function_exists( 'rpress_user_api_keys_display' ) ) {
 	/**
 	 * @param WP_User $profile | A  user object, Which is currently editing

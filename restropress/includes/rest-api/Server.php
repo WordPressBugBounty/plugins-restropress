@@ -8,7 +8,6 @@ namespace Restropress\RestApi;
 
 require RP_PLUGIN_DIR . 'includes/rest-api/Utilities/SingletonTrait.php';
 require RP_PLUGIN_DIR . 'includes/rest-api/Utilities/RP_JWT_Verifier.php';
-// include RP_PLUGIN_DIR . 'includes/rest-api/Controllers/class-rp-rest-system-status-v1-controller.php';
 require RP_PLUGIN_DIR . 'includes/rest-api/Controllers/Version1/class-rp-rest-posts-controller.php';
 require RP_PLUGIN_DIR . 'includes/rest-api/Controllers/Version1/class-rp-rest-terms-controller.php';
 require RP_PLUGIN_DIR . 'includes/rest-api/Controllers/Version1/class-rp-rest-foods-v1-controller.php';
@@ -37,19 +36,22 @@ class Server {
 	 * Hook into WordPress ready to init the REST API as needed.
 	 */
 	public function init() {
-		add_filter( 'rest_pre_serve_request', array( $this, 'add_cors_support' ), 10 );
+		add_filter( 'rest_pre_serve_request', array( $this, 'add_cors_support' ), 10, 4 );
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ), 10 );
 	}
 
 	/**
 	 * Add CORs suppot to the request.
 	 */
-	public function add_cors_support() {
+	public function add_cors_support( $served, $result, $request, $server ) {
 
 		$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, x-api-key, Accept, Origin, Authorization' );
 
-		// print_r($headers);
-		header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
+		if ( ! headers_sent() ) {
+			header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
+		}
+
+		return $served;
 	}
 	
 	/**

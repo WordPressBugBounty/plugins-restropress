@@ -101,7 +101,8 @@ class RP_AJAX {
       'checkout_update_service_option',
       'remove_fees_after_empty_cart',
       'reorder',
-      "update_modal_on_service_switch"
+      "update_modal_on_service_switch",
+      'receipt_order_status',
     );
     foreach ( $ajax_events_nopriv as $ajax_event ) {
       add_action( 'wp_ajax_rpress_' . $ajax_event, array( __CLASS__, $ajax_event ) );
@@ -286,6 +287,87 @@ class RP_AJAX {
     }
     
     wp_send_json( [ 'redirect' => esc_url( $redirect ) ], 200 );
+  }
+
+  /**
+  *
+  * Fetches live order status for frontend confirmation page polling.
+  *
+  * @since 3.2.6
+  * @return void
+  */
+  public static function receipt_order_status() {
+    $payment_id  = isset( $_REQUEST['payment_id'] ) ? absint( $_REQUEST['payment_id'] ) : 0;
+    $payment_key = isset( $_REQUEST['payment_key'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['payment_key'] ) ) : '';
+    $security    = isset( $_REQUEST['security'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['security'] ) ) : '';
+
+    if ( empty( $payment_id ) || empty( $payment_key ) ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'Missing payment details.', 'restropress' ),
+        ),
+        400
+      );
+    }
+
+    if ( ! wp_verify_nonce( $security, 'rpress-receipt-status-' . $payment_id ) ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'Invalid request.', 'restropress' ),
+        ),
+        403
+      );
+    }
+
+    if ( 'rpress_payment' !== get_post_type( $payment_id ) ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'Invalid payment.', 'restropress' ),
+        ),
+        404
+      );
+    }
+
+    $payment_id_from_key = absint( rpress_get_purchase_id_by_key( $payment_key ) );
+    if ( $payment_id_from_key !== $payment_id ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'Payment key mismatch.', 'restropress' ),
+        ),
+        403
+      );
+    }
+
+    if ( ! rpress_can_view_receipt( $payment_key ) ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'Receipt access denied.', 'restropress' ),
+        ),
+        403
+      );
+    }
+
+    $status            = sanitize_key( rpress_get_order_status( $payment_id ) );
+    $status_label      = rpress_get_order_status_label( $status );
+    $status_colors     = function_exists( 'rpress_get_order_status_colors' ) ? rpress_get_order_status_colors() : array();
+    $status_color      = isset( $status_colors[ $status ] ) ? sanitize_hex_color( $status_colors[ $status ] ) : '';
+    $payment_number    = rpress_get_payment_number( $payment_id );
+    $formatted_number  = rpress_format_payment_number( $payment_number );
+    $updated_at_unix   = absint( get_post_meta( $payment_id, '_rpress_order_status_updated_at', true ) );
+    if ( empty( $updated_at_unix ) ) {
+      $updated_at_unix = (int) get_post_modified_time( 'U', true, $payment_id );
+    }
+
+    wp_send_json_success(
+      array(
+        'payment_id'      => $payment_id,
+        'order_number'    => $formatted_number,
+        'status'          => $status,
+        'status_label'    => wp_strip_all_tags( (string) $status_label ),
+        'status_color'    => $status_color,
+        'updated_at_unix' => $updated_at_unix,
+      )
+    );
   }
   /**
    * Load addon child items when after selecting parent addon

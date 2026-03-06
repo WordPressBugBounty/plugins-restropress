@@ -222,18 +222,14 @@ function rpress_reports_graph()
 				$last_month = end($month_keys);
 				if ($day_by_day) {
 					foreach ($months as $month => $days) {
-						$day_keys = array_keys($days);
-						$last_day = end($day_keys);
-						$month_keys = array_keys($months);
-						$consolidated_date = $month === end($month_keys) ? cal_days_in_month(CAL_GREGORIAN, $month, $year) : 1;
+						$consolidated_date = ((int) $month === (int) $last_month) ? cal_days_in_month(CAL_GREGORIAN, $month, $year) : 1;
 						$sales = array_sum($days);
 						$date = mktime(0, 0, 0, $month, $consolidated_date, $year) * 1000;
 						$sales_data[] = array($date, $sales);
 					}
 				} else {
 					foreach ($months as $month => $count) {
-						$month_keys = array_keys($months);
-						$consolidated_date = $month === end($month_keys) ? cal_days_in_month(CAL_GREGORIAN, $month, $year) : 1;
+						$consolidated_date = ((int) $month === (int) $last_month) ? cal_days_in_month(CAL_GREGORIAN, $month, $year) : 1;
 						$date = mktime(0, 0, 0, $month, $consolidated_date, $year) * 1000;
 						$sales_data[] = array($date, $count);
 					}
@@ -251,18 +247,14 @@ function rpress_reports_graph()
 				$last_month = end($month_keys);
 				if ($day_by_day) {
 					foreach ($months as $month => $days) {
-						$day_keys = array_keys($days);
-						$last_day = end($day_keys);
-						$month_keys = array_keys($months);
-						$consolidated_date = $month === end($month_keys) ? cal_days_in_month(CAL_GREGORIAN, $month, $year) : 1;
+						$consolidated_date = ((int) $month === (int) $last_month) ? cal_days_in_month(CAL_GREGORIAN, $month, $year) : 1;
 						$earnings = array_sum($days);
 						$date = mktime(0, 0, 0, $month, $consolidated_date, $year) * 1000;
 						$earnings_data[] = array($date, $earnings);
 					}
 				} else {
 					foreach ($months as $month => $count) {
-						$month_keys = array_keys($months);
-						$consolidated_date = $month === end($month_keys) ? cal_days_in_month(CAL_GREGORIAN, $month, $year) : 1;
+						$consolidated_date = ((int) $month === (int) $last_month) ? cal_days_in_month(CAL_GREGORIAN, $month, $year) : 1;
 						$date = mktime(0, 0, 0, $month, $consolidated_date, $year) * 1000;
 						$earnings_data[] = array($date, $count);
 					}
@@ -281,14 +273,28 @@ function rpress_reports_graph()
 		esc_html__('Earnings', 'restropress') => $earnings_data,
 		esc_html__('Sales', 'restropress') => $sales_data
 	);
+	$has_earnings_data = false;
+	$has_sales_data    = false;
+	foreach ($earnings_data as $earning_point) {
+		if (!empty($earning_point[1])) {
+			$has_earnings_data = true;
+			break;
+		}
+	}
+	foreach ($sales_data as $sales_point) {
+		if (!empty($sales_point[1])) {
+			$has_sales_data = true;
+			break;
+		}
+	}
 	// start our own output buffer
 	ob_start();
 	do_action('rpress_reports_graph_before'); ?>
-	<div id="rpress-dashboard-widgets-wrap">
+	<div id="rpress-dashboard-widgets-wrap" class="rpress-report-dashboard-wrap">
 		<div class="metabox-holder" style="padding-top: 0;">
-			<div class="postbox">
+			<div class="postbox rpress-report-postbox">
 				<h3><span><?php esc_html_e('Earnings Over Time', 'restropress'); ?></span></h3>
-				<div class="inside">
+				<div class="inside rpress-report-inside">
 					<?php
 					rpress_reports_graph_controls();
 					$graph = new RPRESS_Graph($data);
@@ -299,38 +305,38 @@ function rpress_reports_graph()
 						$estimated = rpress_estimated_monthly_stats($include_taxes);
 					}
 					?>
-					<p class="rpress_graph_totals">
-						<strong>
-							<?php
-							esc_html_e('Total earnings for period shown: ', 'restropress');
-							echo esc_html(rpress_currency_filter(rpress_format_amount($earnings_totals)));
-							?>
-						</strong>
-						<?php if (!$include_taxes): ?>
-							<sup>&dagger;</sup>
-						<?php endif; ?>
-					</p>
-					<p class="rpress_graph_totals">
-						<strong><?php esc_html_e('Total sales for period shown: ', 'restropress');
-						echo esc_html(rpress_format_amount($sales_totals, false)); ?></strong>
-					</p>
-					<?php if (!empty($dates['range']) && 'this_month' == $dates['range']): ?>
-						<p class="rpress_graph_totals">
-							<strong>
-								<?php
-								esc_html_e('Estimated monthly earnings: ', 'restropress');
-								echo esc_html(rpress_currency_filter(rpress_format_amount($estimated['earnings'])));
-								?>
-							</strong>
+					<?php if (!$has_earnings_data && !$has_sales_data): ?>
+						<div class="rpress-report-empty-state">
+							<p><?php esc_html_e('No earnings or sales found for this period. Try a different date range or update the active filters.', 'restropress'); ?>
+							</p>
+						</div>
+					<?php endif; ?>
+					<div class="rpress-report-stat-grid">
+						<p class="rpress_graph_totals rpress-report-stat-card">
+							<span class="rpress-report-stat-label"><?php esc_html_e('Total earnings for period shown', 'restropress'); ?></span>
+							<strong class="rpress-report-stat-value"><?php echo esc_html(rpress_currency_filter(rpress_format_amount($earnings_totals))); ?></strong>
 							<?php if (!$include_taxes): ?>
 								<sup>&dagger;</sup>
 							<?php endif; ?>
 						</p>
-						<p class="rpress_graph_totals">
-							<strong><?php esc_html_e('Estimated monthly sales: ', 'restropress');
-							echo esc_html(rpress_format_amount($estimated['sales'], false)); ?></strong>
+						<p class="rpress_graph_totals rpress-report-stat-card">
+							<span class="rpress-report-stat-label"><?php esc_html_e('Total sales for period shown', 'restropress'); ?></span>
+							<strong class="rpress-report-stat-value"><?php echo esc_html(rpress_format_amount($sales_totals, false)); ?></strong>
 						</p>
-					<?php endif; ?>
+						<?php if (!empty($dates['range']) && 'this_month' == $dates['range']): ?>
+							<p class="rpress_graph_totals rpress-report-stat-card">
+								<span class="rpress-report-stat-label"><?php esc_html_e('Estimated monthly earnings', 'restropress'); ?></span>
+								<strong class="rpress-report-stat-value"><?php echo esc_html(rpress_currency_filter(rpress_format_amount($estimated['earnings']))); ?></strong>
+								<?php if (!$include_taxes): ?>
+									<sup>&dagger;</sup>
+								<?php endif; ?>
+							</p>
+							<p class="rpress_graph_totals rpress-report-stat-card">
+								<span class="rpress-report-stat-label"><?php esc_html_e('Estimated monthly sales', 'restropress'); ?></span>
+								<strong class="rpress-report-stat-value"><?php echo esc_html(rpress_format_amount($estimated['sales'], false)); ?></strong>
+							</p>
+						<?php endif; ?>
+					</div>
 					<?php do_action('rpress_reports_graph_additional_stats'); ?>
 					<p class="rpress_graph_notes">
 						<?php if (false === $include_taxes): ?>
@@ -630,9 +636,9 @@ function rpress_reports_graph_controls()
 	}
 	
 	?>
-	<form id="rpress-graphs-filter" method="get" >
+	<form id="rpress-graphs-filter" class="rpress-graphs-filter-form" method="get">
 		<div class="tablenav top">
-			<div class="alignleft actions">
+			<div class="alignleft actions rpress-graphs-filter-row">
 				<input type="hidden" name="page" value="rpress-reports" />
 				<input type="hidden" name="view" value="<?php echo esc_attr($view); ?>" />
 				<?php if (isset($_GET['fooditem-id'])): ?>
@@ -644,7 +650,7 @@ function rpress_reports_graph_controls()
 							<?php echo esc_html($option); ?></option>
 					<?php endforeach; ?>
 				</select>
-				<div id="rpress-date-range-options" <?php echo wp_kses_post($display); ?>>
+				<div id="rpress-date-range-options" class="rpress-date-range-options" <?php echo wp_kses_post($display); ?>>
 					<span><?php esc_html_e('From', 'restropress'); ?>&nbsp;</span>
 					<select id="rpress-graphs-month-start" name="m_start">
 						<?php for ($i = 1; $i <= 12; $i++): ?>
@@ -711,14 +717,14 @@ function rpress_get_report_dates()
 {
 	$dates = array();
 	$current_time = current_time('timestamp');
-	$dates['range'] = isset($_GET['range']) ? sanitize_text_field($_GET['range']) : apply_filters('rpress_get_report_dates_default_range', 'last_30_days');
+	$dates['range'] = isset($_GET['range']) ? sanitize_text_field(wp_unslash($_GET['range'])) : apply_filters('rpress_get_report_dates_default_range', 'last_30_days');
 	if ('custom' !== $dates['range']) {
-		$dates['year'] = isset($_GET['year']) ? sanitize_text_field($_GET['year']) : gmdate('Y');
-		$dates['year_end'] = isset($_GET['year_end']) ? sanitize_text_field($_GET['year_end']) : gmdate('Y');
-		$dates['m_start'] = isset($_GET['m_start']) ? sanitize_text_field($_GET['m_start']) : 1;
-		$dates['m_end'] = isset($_GET['m_end']) ? sanitize_text_field($_GET['m_end']) : 12;
-		$dates['day'] = isset($_GET['day']) ? sanitize_text_field($_GET['day']) : 1;
-		$dates['day_end'] = isset($_GET['day_end']) ? sanitize_text_field($_GET['day_end']) : cal_days_in_month(CAL_GREGORIAN, $dates['m_end'], $dates['year']);
+		$dates['year'] = isset($_GET['year']) ? sanitize_text_field(wp_unslash($_GET['year'])) : gmdate('Y');
+		$dates['year_end'] = isset($_GET['year_end']) ? sanitize_text_field(wp_unslash($_GET['year_end'])) : gmdate('Y');
+		$dates['m_start'] = isset($_GET['m_start']) ? sanitize_text_field(wp_unslash($_GET['m_start'])) : 1;
+		$dates['m_end'] = isset($_GET['m_end']) ? sanitize_text_field(wp_unslash($_GET['m_end'])) : 12;
+		$dates['day'] = isset($_GET['day']) ? sanitize_text_field(wp_unslash($_GET['day'])) : 1;
+		$dates['day_end'] = isset($_GET['day_end']) ? sanitize_text_field(wp_unslash($_GET['day_end'])) : cal_days_in_month(CAL_GREGORIAN, $dates['m_end'], $dates['year']);
 	}
 	// Modify dates based on predefined ranges
 	switch ($dates['range']):
@@ -862,8 +868,8 @@ function rpress_parse_report_dates($data)
 {
 	$dates = rpress_get_report_dates();
 	$view = rpress_get_reporting_view();
-	$id = isset($_GET['fooditem-id']) ? sanitize_text_field($_GET['fooditem-id']) : null;
-	$exclude_taxes = isset($_GET['exclude_taxes']) ? sanitize_text_field($_GET['exclude_taxes']) : null;
+	$id = isset($_GET['fooditem-id']) ? sanitize_text_field(wp_unslash($_GET['fooditem-id'])) : null;
+	$exclude_taxes = isset($_GET['exclude_taxes']) ? sanitize_text_field(wp_unslash($_GET['exclude_taxes'])) : null;
 	wp_redirect(add_query_arg($dates, admin_url('admin.php?page=rpress-reports&view=' . esc_attr($view) . '&fooditem-id=' . absint($id) . '&exclude_taxes=' . absint($exclude_taxes))));
 	rpress_die();
 }

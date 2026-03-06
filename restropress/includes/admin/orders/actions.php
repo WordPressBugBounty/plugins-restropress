@@ -27,6 +27,7 @@ function rpress_update_order_status( $payment_id = 0, $new_status = 'completed' 
     rpress_update_payment_status( $payment_id, 'publish' );
   }
   update_post_meta( $payment_id, '_order_status', $new_status );
+  update_post_meta( $payment_id, '_rpress_order_status_updated_at', current_time( 'timestamp', true ) );
 }
 /**
  * Get order ststus by payment id
@@ -216,7 +217,6 @@ function rp_render_action_buttons( $actions ) {
   if ( !empty( $actions ) ) {
     foreach( $actions as $action ) {
       if ( isset( $action['group'] ) ) {
-        // $actions_html .= '<div class="rp-action-button-group"><label>' . $action['group'] . '</label> <span class="rp-action-button-group__items">' . rp_render_action_buttons( $action['actions'] ) . '</span></div>';
       } elseif ( isset( $action['action'], $action['name'] ) ) {
         $actions_html .= sprintf( '<a class="button rp-action-button rp-action-button-%1$s %1$s" data-update-status="%1$s"  aria-label="%2$s" data-payment="%3$s" data-action="rpress_update_order_status" title="%2$s" href="%4$s">%2$s</a>', esc_attr( $action['action'] ), esc_html( $action['name'] ), $action[ 'payment_id' ], $action['url'] );
       }

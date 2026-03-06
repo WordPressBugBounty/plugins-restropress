@@ -26,11 +26,21 @@ else {
 // Get selected template from settings (default to 'list')
 $template = rpress_get_option( 'template', 'list' );
 $image_placeholder = rpress_get_option( 'enable_image_placeholder', false );
-if ( ! has_post_thumbnail( $post->ID ) && $image_placeholder == 0 ) {
+$has_thumbnail = has_post_thumbnail( get_the_ID() );
+
+if ( ! $has_thumbnail && $image_placeholder == 0 ) {
     $image_placeholder_cls = 'image-placeholder-disabled';
 } else {
     $image_placeholder_cls = '';
 }
+
+$description = get_post_field( 'post_excerpt', get_the_ID() );
+if ( '' === trim( $description ) ) {
+	$description = get_post_field( 'post_content', get_the_ID() );
+}
+
+$has_description   = '' !== trim( wp_strip_all_tags( $description ) );
+$no_img_no_desc_cls = ( ! $has_thumbnail && ! $has_description ) ? 'rp-no-img-no-desc' : '';
 if(rpress_fooditem_available($id)) {
 	$product_available_class = "";
 } else {
@@ -55,8 +65,8 @@ $has_tags = ( $tags && ! is_wp_error( $tags ) ) ? 'has-tags' : '';
     ?>" 
     data-term-id="<?php echo esc_attr( $term_id ); ?>" 
     id="rpress_fooditem_<?php the_ID(); ?>">
-<?php $img_wrp = ( ! has_post_thumbnail( get_the_ID() ) ) ? 'rp-no-img' : ''; ?>
-	<div class="<?php echo  esc_attr( $image_placeholder_cls ) . ' ' . esc_attr( $img_wrp ) . ' ' . esc_attr( apply_filters( 'rpress_fooditem_inner_class', 'rpress_fooditem_inner', get_the_ID(), $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i ) ); ?>">
+<?php $img_wrp = ( ! $has_thumbnail ) ? 'rp-no-img' : ''; ?>
+	<div class="<?php echo  esc_attr( $image_placeholder_cls ) . ' ' . esc_attr( $img_wrp ) . ' ' . esc_attr( $no_img_no_desc_cls ) . ' ' . esc_attr( apply_filters( 'rpress_fooditem_inner_class', 'rpress_fooditem_inner', get_the_ID(), $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i ) ); ?>">
 		<?php do_action( 'rpress_fooditem_before' ); ?>
 		<div class="rp-col-md-4 rp-col-xs-4 rp-col-sm-3 rp-grid-view-wrap">
 			<?php

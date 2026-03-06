@@ -934,21 +934,6 @@ $customer_email = is_array(isset($payment_meta['user_info'])) ? $payment_meta['u
 											),
 										);
 
-										// 	$allowed_html = array(
-										// 	'select' => array(
-										// 		'name'        => true,
-										// 		'id'          => true,
-										// 		'class'       => true,
-										// 		'data-*'      => true,
-										// 		'multiple'    => true,
-										// 		'placeholder' => true,
-										// 	),
-										// 	'option' => array(
-										// 		'value'    => true,
-										// 		'selected' => true,
-										// 	),
-										// );
-										
 										echo wp_kses(
 											RPRESS()->html->product_dropdown(array(
 												'name' => 'rpress-order-fooditem-select',
@@ -1132,8 +1117,6 @@ $customer_email = is_array(isset($payment_meta['user_info'])) ? $payment_meta['u
 
 														if (!empty($states)) {
 															$states = array_map('esc_html', $states);
-															//$state = esc_attr($state);
-															//print_r($states);
 															$allowed_html = array(
 																'select' => array(
 																	'name' => true,

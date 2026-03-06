@@ -279,8 +279,6 @@ class RP_REST_Cart_V1_Controller extends WP_REST_Controller {
 			$posts = array();
 			for ( $index = 0; $index < count( $cart_data ); $index++ ) {
 				rpress_set_cart_item_quantity( (int) $cart_data[ $index ]->id, (int) $cart_data[ $index ]->quantity, (array) $cart_data[ $index ] );
-				// $data = $this->prepare_item_for_response( ( array ) $cart_data[ $index ], $request );
-				// $posts[] = $this->prepare_response_for_collection( $data );
 			}
 			return $this->get_cart_content( $request );
 		}

@@ -115,7 +115,6 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 			'ajax'     => false,
 		) );
 		$this->get_payment_counts();
-		// $this->process_bulk_action();
 		$this->base_url = admin_url( 'admin.php?page=rpress-payment-history' );
 		add_action( 'admin_footer', array( $this, 'order_preview_template' ) );
 	}

@@ -22,20 +22,6 @@ $asap_text_key      = $service_type . '_asap_text';
 $delivery_asap_text = rpress_get_option($asap_text_key, '');
 
 /**
- * Time format
- */
-$store_time_format = rpress_get_option('store_time_format');
-// $time_format = (!empty($store_time_format) && $store_time_format === '24hrs')
-//     ? 'H:i'
-//     : 'h:ia';
-
-// $time_format = apply_filters(
-//     'rpress_store_time_format',
-//     $time_format,
-//     $store_time_format
-// );
-
-/**
  * ASAP-only handling
  */
 if ($asap_option_only == 1 && is_array($store_timings)) {
@@ -62,72 +48,80 @@ if ($asap_option_only == 1 && is_array($store_timings)) {
                 <h3><?php esc_html_e('Time preference', 'restropress'); ?></h3>
 
                 <div class="bg-gray rpress-time-preference-wrap">
-                    <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
-
-                        <label>
-                            <span class="rpress-service-label">
-                                <?php echo esc_html(rpress_service_label($service_type)); ?>
-                            </span>
-                            <?php esc_html_e('time', 'restropress'); ?>
-                        </label>
-                        <select
-                            class="rpress-delivery rpress-allowed-delivery-hrs rpress-hrs rp-form-control"
-                            id="rpress-delivery-hours"
-                            name="rpress_allowed_hours"
-                        >
-                            <?php if (is_array($store_timings)) : ?>
-                               
-                                <?php foreach ($store_timings as $index => $time_slot) : ?>
-
-                                    <?php
-                                    // Allow hooks to hide time slots dynamically
-                                    $filtered_time = apply_filters(
-                                        'rpress_store_delivery_timings_slot_remaining',
-                                        $time_slot
-                                    );
-
-                                    if (empty($filtered_time)) {
-                                        continue;
-                                    }
-
-                                    $is_asap = ($asap_option && $index === 0);
-                                    ?>
-
-                                    <?php if (class_exists('RPRESS_SlotLimit')) : ?>
-
-                                        <option
-                                            value="<?php echo esc_attr($time_slot); ?>"
-                                            <?php selected($selected_time, $filtered_time); ?>
-                                            >
-                                            <?php echo esc_html($filtered_time); ?>
-                                        </option>
-
-                                    <?php else : ?>
+                    <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12 rpress-service-type-message">
+                        <?php do_action('rpress_popup_service_time', $service_type); ?>
+                    </div>
+                    <?php if(rpress_is_service_enabled($service_type)) : ?>
+                        <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
+                            <?php
+                            $time_label_text = ( 'pickup' === $service_type )
+                                ? apply_filters( 'rpress_pickup_time_string', __( 'Select a pickup time', 'restropress' ) )
+                                : apply_filters( 'rpress_delivery_time_string', __( 'Select a delivery time', 'restropress' ) );
+                            $time_label_class = ( 'pickup' === $service_type ) ? 'pickup-time-text' : 'delivery-time-text';
+                            $time_aria_label  = ( 'pickup' === $service_type ) ? __( 'Pickup time', 'restropress' ) : __( 'Delivery time', 'restropress' );
+                            ?>
+                            <div class="<?php echo esc_attr( $time_label_class ); ?>">
+                                <?php echo esc_html( $time_label_text ); ?>
+                            </div>
+                            <select
+                                class="rpress-delivery rpress-allowed-delivery-hrs rpress-hrs rp-form-control"
+                                id="rpress-delivery-hours"
+                                name="rpress_allowed_hours"
+                                aria-label="<?php echo esc_attr( $time_aria_label ); ?>"
+                            >
+                                <?php if (is_array($store_timings)) : ?>
+                                
+                                    <?php foreach ($store_timings as $index => $time_slot) : ?>
 
                                         <?php
-                                        $option_value = $is_asap
-                                            ? 'ASAP' . esc_html($delivery_asap_text)
-                                            : esc_attr($filtered_time);
+                                        // Allow hooks to hide time slots dynamically
+                                        $filtered_time = apply_filters(
+                                            'rpress_store_delivery_timings_slot_remaining',
+                                            $time_slot
+                                        );
 
-                                        $option_label = $is_asap
-                                            ? __('ASAP', 'restropress') . ' ' . esc_html($delivery_asap_text)
-                                            : esc_html($filtered_time);
+                                        if (empty($filtered_time)) {
+                                            continue;
+                                        }
+
+                                        $is_asap = ($asap_option && $index === 0);
                                         ?>
 
-                                        <option
-                                            value="<?php echo esc_attr($option_value); ?>"
-                                            <?php selected($selected_time, $filtered_time); ?>
-                                        >
-                                            <?php echo esc_html($option_label); ?>
-                                        </option>
+                                        <?php if (class_exists('RPRESS_SlotLimit')) : ?>
 
-                                    <?php endif; ?>
+                                            <option
+                                                value="<?php echo esc_attr($time_slot); ?>"
+                                                <?php selected($selected_time, $filtered_time); ?>
+                                                >
+                                                <?php echo esc_html($filtered_time); ?>
+                                            </option>
 
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-                    </div>
+                                        <?php else : ?>
 
+                                            <?php
+                                            $option_value = $is_asap
+                                                ? 'ASAP' . esc_html($delivery_asap_text)
+                                                : esc_attr($filtered_time);
+
+                                            $option_label = $is_asap
+                                                ? __('ASAP', 'restropress') . ' ' . esc_html($delivery_asap_text)
+                                                : esc_html($filtered_time);
+                                            ?>
+
+                                            <option
+                                                value="<?php echo esc_attr($option_value); ?>"
+                                                <?php selected($selected_time, $filtered_time); ?>
+                                            >
+                                                <?php echo esc_html($option_label); ?>
+                                            </option>
+
+                                        <?php endif; ?>
+
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                     <?php endif; ?>                   
                     <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
                         <?php do_action('rpress_before_service_time', $service_type); ?>
                     </div>

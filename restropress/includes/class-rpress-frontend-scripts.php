@@ -79,7 +79,7 @@ class RP_Frontend_Scripts
   private static function enqueue_script($handle, $path = '', $deps = array('jquery'), $version = RP_VERSION, $in_footer = true)
   {
     if (!in_array($handle, self::$scripts, true) && $path) {
-      self::register_script($handle, $path, $deps, time(), $in_footer);
+      self::register_script($handle, $path, $deps, $version, $in_footer);
     }
     wp_enqueue_script($handle);
   }
@@ -233,6 +233,7 @@ class RP_Frontend_Scripts
       self::enqueue_script('rp-tabs');
       self::enqueue_script('rp-reorder');
     }
+
     self::enqueue_script('rp-frontend');
     if (rpress_is_checkout()) {
       self::enqueue_script('rp-checkout');
@@ -255,7 +256,6 @@ class RP_Frontend_Scripts
     } else {
       $default_service = !empty(rpress_get_option('enable_service')) ? rpress_get_option('enable_service') : '';
     }
-    // $default_time = !empty(rpress_get_option('default_time')) ? rpress_get_option('default_time') : '';
     $minimum_order_error_title = !empty(rpress_get_option('minimum_order_error_title')) ? rpress_get_option('minimum_order_error_title') : __('Minimum Order Error', 'restropress');
     $expire_cookie_time = !empty(rpress_get_option('expire_service_cookie')) ? rpress_get_option('expire_service_cookie') : 90;
     $cart_quantity = rpress_get_cart_quantity();
@@ -277,7 +277,6 @@ class RP_Frontend_Scripts
       'order_details_nonce' => wp_create_nonce('show-order-details'),
       'service_options' => $service_options,
       'default_service' => $default_service,
-      // 'default_time' => $default_time,
       'minimum_order_title' => $minimum_order_error_title,
       'edit_cart_fooditem_nonce' => wp_create_nonce('edit-cart-fooditem'),
       'update_cart_item_nonce' => wp_create_nonce('update-cart-item'),
@@ -298,11 +297,12 @@ class RP_Frontend_Scripts
       'cart_quantity' => $cart_quantity,
       'items' => esc_html__('Items', 'restropress'),
       'no_image' => RP_PLUGIN_URL . 'assets/images/no-image.png',
+      'always_open' => !empty(rpress_get_option('enable_always_open')) ? '1' : '0',
       'open_hours' => (rpress_get_option('enable_always_open')) ? '12:00am' : rpress_get_option('open_time'),
       'close_hours' => (rpress_get_option('enable_always_open')) ? '11:59pm' : rpress_get_option('close_time'),
       'closed_message' => $closed_message,
     );
-    $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field($_COOKIE['service_type']) : $default_service;
+    $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) : $default_service;
     $cookie_service = apply_filters('rpress_current_service_type', $cookie_service);
 
     $params = apply_filters('rpress_frontend_script_vars', $params, $cookie_service);

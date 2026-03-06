@@ -46,8 +46,8 @@ if ( ! is_user_logged_in() ) :
 			</p>
 			<p class="rpress-login-remember">
 				<span>
-					<input name="rememberme" type="checkbox" id="rememberme" value="forever" /> <?php esc_html_e( 'Remember Me', 'restropress' ); ?>
-					<label for="rememberme"></label>
+					<input name="rememberme" type="checkbox" id="rememberme" value="forever" />
+					<label for="rememberme"><?php esc_html_e( 'Remember Me', 'restropress' ); ?></label>
 				</span>
 				<a class="rpress-lost-password" href="<?php echo esc_url( site_url('/forgot-password') ); ?>">
 					<?php esc_html_e( 'Forgot Password?', 'restropress' ); ?>

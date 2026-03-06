@@ -24,7 +24,7 @@ if (!defined('ABSPATH'))
  */
 function rpress_tools_page()
 {
-	$active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
+	$active_tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'general';
 	?>
 	<div class="wrap">
 		<h2><?php esc_html_e('RestroPress Tools', 'restropress'); ?></h2>
@@ -313,14 +313,16 @@ function rpress_extension_has_beta_support($slug)
  */
 function rpress_tools_enabled_betas_save()
 {
-	if (!wp_verify_nonce(sanitize_text_field($_POST['rpress_save_betas_nonce']), 'rpress_save_betas_nonce')) {
+	if (empty($_POST['rpress_save_betas_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['rpress_save_betas_nonce'])), 'rpress_save_betas_nonce')) {
 		return;
 	}
 	if (!current_user_can('manage_shop_settings')) {
 		return;
 	}
 	if (!empty($_POST['enabled_betas'])) {
-		$enabled_betas = array_filter(array_map('rpress_tools_enabled_betas_sanitize_value', sanitize_text_field($_POST['enabled_betas'])));
+		$enabled_betas = wp_unslash($_POST['enabled_betas']);
+		$enabled_betas = is_array($enabled_betas) ? array_map('sanitize_text_field', $enabled_betas) : array(sanitize_text_field($enabled_betas));
+		$enabled_betas = array_filter(array_map('rpress_tools_enabled_betas_sanitize_value', $enabled_betas));
 		rpress_update_option('enabled_betas', $enabled_betas);
 	} else {
 		rpress_delete_option('enabled_betas');
@@ -347,7 +349,7 @@ function rpress_tools_enabled_betas_sanitize_value($value)
  */
 function rpress_tools_banned_emails_save()
 {
-	if (!wp_verify_nonce(sanitize_text_field($_POST['rpress_banned_emails_nonce']), 'rpress_banned_emails_nonce')) {
+	if (empty($_POST['rpress_banned_emails_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['rpress_banned_emails_nonce'])), 'rpress_banned_emails_nonce')) {
 		return;
 	}
 	if (!current_user_can('manage_shop_settings')) {
@@ -355,7 +357,7 @@ function rpress_tools_banned_emails_save()
 	}
 	if (!empty($_POST['banned_emails'])) {
 		// Sanitize the input
-		$emails = array_map('trim', explode("\n", sanitize_email($_POST['banned_emails'])));
+		$emails = array_map('trim', explode("\n", sanitize_email(wp_unslash($_POST['banned_emails']))));
 		$emails = array_unique($emails);
 		$emails = array_map('sanitize_text_field', $emails);
 		foreach ($emails as $id => $email) {
@@ -377,7 +379,7 @@ add_action('rpress_save_banned_emails', 'rpress_tools_banned_emails_save');
  */
 function rpress_tools_clear_upgrade_notice()
 {
-	if (!wp_verify_nonce(sanitize_text_field($_POST['rpress_clear_upgrades_nonce']), 'rpress_clear_upgrades_nonce')) {
+	if (empty($_POST['rpress_clear_upgrades_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['rpress_clear_upgrades_nonce'])), 'rpress_clear_upgrades_nonce')) {
 		return;
 	}
 	if (!current_user_can('manage_shop_settings')) {
@@ -1487,7 +1489,7 @@ function rpress_handle_submit_debug_log()
 		nocache_headers();
 		header('Content-Type: text/plain');
 		header('Content-Disposition: attachment; filename="rpress-debug-log.txt"');
-		echo esc_html(wp_strip_all_tags(sanitize_text_field($_REQUEST['rpress-debug-log-contents'])));
+		echo esc_html(wp_strip_all_tags(sanitize_text_field(wp_unslash($_REQUEST['rpress-debug-log-contents']))));
 		exit;
 	} elseif (isset($_REQUEST['rpress-clear-debug-log'])) {
 		// Clear the debug log.
@@ -1768,7 +1770,7 @@ function rpress_tools_sysinfo_fooditem()
 	nocache_headers();
 	header('Content-Type: text/plain');
 	header('Content-Disposition: attachment; filename="rpress-system-info.txt"');
-	echo esc_html(wp_strip_all_tags(sanitize_text_field($_POST['rpress-sysinfo'])));
+	echo esc_html(wp_strip_all_tags(sanitize_text_field(wp_unslash($_POST['rpress-sysinfo']))));
 	rpress_die();
 }
 add_action('rpress_fooditem_sysinfo', 'rpress_tools_sysinfo_fooditem');

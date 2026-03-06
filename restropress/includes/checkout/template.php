@@ -250,9 +250,9 @@ function rpress_order_details_fields(){
 			}
 		endif;
 	?>
-	<p id="rpress-order-note" class="rp-col-sm-12">
+	<p id="rpress-order-note-wrap" class="rp-col-sm-12">
     <label class="rpress-order-note" for="rpress-order-note"><?php echo sprintf( esc_html__('%s Instructions', 'restropress'), esc_html(rpress_selected_service( 'label' )) ); ?></label>
-    <textarea name="rpress_order_note" class="rpress-input" rows="5" cols="8" placeholder="<?php echo sprintf( esc_html__('Add %s instructions (optional)', 'restropress'), esc_html(strtolower( rpress_selected_service( 'label' ) )) ); ?>"></textarea>
+    <textarea id="rpress-order-note" name="rpress_order_note" class="rpress-input" rows="5" cols="8" placeholder="<?php echo sprintf( esc_html__('Add %s instructions (optional)', 'restropress'), esc_html(strtolower( rpress_selected_service( 'label' ) )) ); ?>"></textarea>
   </p>
 	<?php do_action( 'rpress_purchase_form_order_details' ); ?>
 	<?php do_action( 'rpress_purchase_form_order_details_fields' ); ?>
@@ -614,7 +614,7 @@ function rpress_get_login_fields() {
 		</p>
 		<?php do_action('rpress_checkout_login_fields_before'); ?>
 		<p id="rpress-user-login-wrap" class="rp-col-md-6 rp-col-sm-12">
-			<label class="rpress-label" for="rpress-username">
+			<label class="rpress-label" for="rpress_user_login">
 				<?php esc_html_e( 'Username or Email', 'restropress' ); ?>
 				<?php if( rpress_no_guest_checkout() ) { ?>
 				<span class="rpress-required-indicator">*</span>
@@ -623,7 +623,7 @@ function rpress_get_login_fields() {
 			<input class="<?php if(rpress_no_guest_checkout()) { echo 'required '; } ?>rpress-input" type="text" name="rpress_user_login" id="rpress_user_login" value="" placeholder="<?php esc_html_e( 'Your username or email address', 'restropress' ); ?>"/>
 		</p>
 		<p id="rpress-user-pass-wrap" class="rp-col-md-6 rp-col-sm-12 rpress_login_password">
-			<label class="rpress-label" for="rpress-password">
+			<label class="rpress-label" for="rpress_user_pass">
 				<?php esc_html_e( 'Password', 'restropress' ); ?>
 				<?php if( rpress_no_guest_checkout() ) { ?>
 				<span class="rpress-required-indicator">*</span>

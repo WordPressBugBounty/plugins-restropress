@@ -134,51 +134,8 @@ class RPRESS_Batch_RestroPress_Export extends RPRESS_Batch_Export
 						$food_type = get_post_meta($fooditem->ID, 'rpress_food_type', true);
 						$row[$key] = $food_type;
 					} else if ('categories' == $key) {
-						// $terms = get_the_terms( $fooditem->ID, 'food-category' );
-						// if( $terms ) {
-						// 	$terms = wp_list_pluck( $terms, 'name' );
-						// 	$row[ $key ] = implode( ' | ', $terms );
-						// }
 						$row[$key] = $this->get_terms_str($fooditem->ID, 'food-category');
 					} else if ('addons' == $key) {
-						// $foodId=$fooditem->ID;
-						// $termsCat        = wp_get_post_terms( $foodId, 'addon_category', array( 'parent' => 0 ) );
-						// $addonCategories = array();
-						// $addonTerms      = '';
-						// if ( $termsCat ) {
-						//     foreach ( $termsCat as $term ) {
-						//         $addonTerms                        = $addonTerms . ' | ' . $term->name . ' , ';
-						//         $addonCategories[ $term->term_id ] = $term->name;
-						//     }
-						// }
-						// global $wpdb;
-						// // $terms = get_the_terms( $foodId, 'addon_category' );
-						// // Custom database query to retrieve terms where the parent is not equal to 0
-						// $terms = $wpdb->get_results(
-						//     $wpdb->prepare(
-						//         "SELECT t.*, tt.parent as parent FROM $wpdb->terms AS t
-						// INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id
-						// INNER JOIN $wpdb->term_relationships AS tr ON tr.term_taxonomy_id = tt.term_taxonomy_id
-						// WHERE tr.object_id = %d AND tt.taxonomy = %s AND tt.parent != 0
-						// ORDER BY t.name DESC",
-						//         $foodId,
-						//         'addon_category'
-						//     )
-						// );
-						// if ( $terms ) {
-
-						//     foreach ( $terms as $term ) {
-						//         $parent_id = $term->parent;
-						//         if ( $parent_id !== 0 ) {
-
-						//             $addonTerms =
-						//             str_replace( $addonCategories[ $parent_id ] . ' , ', $addonCategories[ $parent_id ] . ' , ' . $term->name . ' , ', $addonTerms );
-
-						//         }
-						//     }
-
-						// }
-
 						$row[$key] = $this->get_terms_str($fooditem->ID, 'addon_category');
 
 					} else if ('addon_prices' == $key) {

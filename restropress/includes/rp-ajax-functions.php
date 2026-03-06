@@ -336,9 +336,6 @@ function get_fooditem_lists($fooditem_id, $cart_key = '')
                                         </div> <?php
                                     endforeach;
                                 else:
-                                    //  $cart_contents = $cart_contents[$cart_key];
-        
-
                                     $get_addon_price = rpress_dynamic_addon_price($fooditem_id, $child_data->term_id, $child_data->parent);
                                     ?>
                                     <div class="food-item-list active <?php echo esc_attr($item_classes); ?>">

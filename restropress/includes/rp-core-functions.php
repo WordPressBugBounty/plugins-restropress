@@ -176,7 +176,7 @@ if (!function_exists('rpress_search_form')) {
   {
     ?>
     <div class="rpress-search-wrap rpress-live-search">
-      <input id="rpress-food-search" type="text" placeholder="<?php esc_html_e('Search', 'restropress'); ?>">
+      <input id="rpress-food-search" type="text" placeholder="<?php esc_html_e('Search', 'restropress'); ?>" aria-label="<?php esc_attr_e('Search food items', 'restropress'); ?>">
     </div>
     <?php
   }
@@ -313,7 +313,9 @@ function rpress_get_instruction_by_key($cart_key)
  */
 function get_delivery_options($changeble)
 {
-  $service_date = isset($_COOKIE['delivery_date']) ? sanitize_text_field($_COOKIE['delivery_date']) : '';
+  $service_date = isset($_COOKIE['delivery_date']) ? sanitize_text_field(wp_unslash($_COOKIE['delivery_date'])) : '';
+  $service_type_cookie = isset( $_COOKIE['service_type'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_type'] ) ) : '';
+  $hide_service_time = function_exists( 'rp_otil_is_service_time_hidden' ) ? rp_otil_is_service_time_hidden( $service_type_cookie ) : false;
   $current_time = current_time('timestamp');
   $close_time = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
   $close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
@@ -342,8 +344,8 @@ function get_delivery_options($changeble)
     <div class="delivery-opts">
       <?php if (!empty($_COOKIE['service_type'])): ?>
         <span
-          class="delMethod"><?php echo esc_html(rpress_service_label(sanitize_text_field($_COOKIE['service_type']))) . ', ' . esc_html($service_date); ?></span>
-        <?php if (!empty($_COOKIE['service_time'])): ?>
+          class="delMethod"><?php echo esc_html(rpress_service_label(sanitize_text_field(wp_unslash($_COOKIE['service_type'])))) . ', ' . esc_html($service_date); ?></span>
+        <?php if ( ! $hide_service_time && !empty($_COOKIE['service_time']) ): ?>
           <span
             class="delTime"><?php printf(esc_html__(', %s', 'restropress'), esc_html(sanitize_text_field($service_time_str))); ?></span>
         <?php endif; ?>
@@ -365,7 +367,9 @@ function get_delivery_options($changeble)
 
 function get_date_time_options($changeble)
 {
-  $service_date = isset($_COOKIE['delivery_date']) ? sanitize_text_field($_COOKIE['delivery_date']) : '';
+  $service_date = isset($_COOKIE['delivery_date']) ? sanitize_text_field(wp_unslash($_COOKIE['delivery_date'])) : '';
+  $service_type_cookie = isset( $_COOKIE['service_type'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_type'] ) ) : '';
+  $hide_service_time = function_exists( 'rp_otil_is_service_time_hidden' ) ? rp_otil_is_service_time_hidden( $service_type_cookie ) : false;
   $current_time = current_time('timestamp');
   $close_time = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
   $close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
@@ -394,7 +398,7 @@ function get_date_time_options($changeble)
     <div class="delivery-opts">
       <?php if (!empty($_COOKIE['service_type'])): ?>
         <span class="delMethod"><?php echo esc_html($service_date); ?></span>
-        <?php if (!empty($_COOKIE['service_time'])): ?>
+        <?php if ( ! $hide_service_time && !empty($_COOKIE['service_time']) ): ?>
           <span
             class="delTime"><?php printf(esc_html__(', %s', 'restropress'), esc_html(sanitize_text_field($service_time_str))); ?></span>
         <?php endif; ?>
@@ -531,15 +535,15 @@ function rp_get_store_timings($hide_past_time = true, $service_type = null)
 
   foreach ($store_times as $store_time) {
     if ($hide_past_time) {
-      if ($store_time > $current_time) {
-        $store_timings[] = date_i18n($date_format, $store_time);
-      } else if (!empty(rpress_get_option(key: 'enable_always_open')) && $current_time > $close_time) {
-        $store_timings[] = date_i18n($date_format, $store_time);
-      }
+        if ($store_time > $current_time) {
+            $store_timings[] = date_i18n($date_format, $store_time);
+        } elseif (!empty(rpress_get_option('enable_always_open')) && $current_time > $close_time) {
+            $store_timings[] = date_i18n($date_format, $store_time);
+        }
     } else {
-      $store_timings[] = date_i18n($date_format, $store_time);
+        $store_timings[] = date_i18n($date_format, $store_time);
     }
-  }
+}
   return $store_timings;
 }
 /**
@@ -682,14 +686,11 @@ function rp_get_store_service_hours(
     return;
   }
 
-  foreach ($store_timings as $key => $time) {
+  foreach ($store_timings as $time) {
 
     if (empty($time)) {
       continue;
     }
-
-    // Fix dot format if exists
-    //$time = str_replace('.', ':', $time);
 
     // Convert to timestamp
     $time_int = is_numeric($time) ? (int) $time : strtotime($time);
@@ -802,7 +803,7 @@ function rp_selected($value, $options)
  */
 function rpress_selected_service($type = '')
 {
-  $service_type = isset($_COOKIE['service_type']) ? sanitize_text_field($_COOKIE['service_type']) : '';
+  $service_type = isset($_COOKIE['service_type']) ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) : '';
   //Return service type label when $type is label
   if ($type == 'label')
     $service_type = rpress_service_label($service_type);
@@ -851,15 +852,15 @@ function rpress_checkout_delivery_type($service_type, $service_time)
 function rpress_pre_validate_order() {
 
     $service_type = !empty($_COOKIE['service_type']) 
-        ? sanitize_text_field($_COOKIE['service_type']) 
+        ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) 
         : '';
 
     $service_time_raw = !empty($_COOKIE['service_time']) 
-        ? sanitize_text_field($_COOKIE['service_time']) 
+        ? sanitize_text_field(wp_unslash($_COOKIE['service_time'])) 
         : '';
 
     $service_date = !empty($_COOKIE['service_date']) 
-        ? sanitize_text_field($_COOKIE['service_date']) 
+        ? sanitize_text_field(wp_unslash($_COOKIE['service_date'])) 
         : '';
 
     // ✅ Fix invalid or past date
@@ -932,8 +933,15 @@ function rpress_pre_validate_order() {
     ============================== */
 
     $allow_asap = rpress_get_option('enable_asap_option');
+    $should_validate_time_slot = apply_filters(
+        'rpress_should_validate_time_slot',
+        function_exists( 'rp_otil_is_service_time_hidden' ) && ( defined( 'RP_OTIAL_VERSION' ) || class_exists( 'RP_Order_Time_intervals_Limit_Functions', false ) ),
+        $service_type,
+        $service_date,
+        $service_time_raw
+    );
 
-    if ( $service_time < $current_time && !$allow_asap ) {
+    if ( $should_validate_time_slot && $service_time < $current_time && !$allow_asap ) {
 
         return array(
             'status' => 'error',
@@ -2130,7 +2138,6 @@ function my_plugin_handle_setup_form()
     // Update with new values
     $options['enable_service'] = sanitize_text_field($_POST['enable_service']);
     $options['default_service'] = sanitize_text_field($_POST['default_service']);
-    // $options['default_time'] = sanitize_text_field($_POST['default_time']);
 
     // Save back
     update_option('rpress_settings', $options);
@@ -2159,20 +2166,31 @@ add_filter('body_class', function ($classes) {
 function rpress_is_store_open($service_type, $selected_date = '')
 {
   $current_time = current_time('timestamp');
+  $current_day = date_i18n('Y-m-d', $current_time);
 
-  if (empty(rpress_get_option('enable_always_open'))) {
-    $open_time = !empty(rpress_get_option('open_time')) ? rpress_get_option('open_time') : '9:00am';
-    $close_time = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
+  if (!empty(rpress_get_option('enable_always_open'))) {
+    $open_time = strtotime($current_day . ' 00:00');
+    $close_time = strtotime($current_day . ' 23:59');
+    $is_open = true;
   } else {
-    $open_time = '12:00am';
-    $close_time = '11:59pm';
+    $open_time_raw = !empty(rpress_get_option('open_time')) ? rpress_get_option('open_time') : '9:00am';
+    $close_time_raw = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
+
+    $open_time = strtotime($current_day . ' ' . $open_time_raw);
+    $close_time = strtotime($current_day . ' ' . $close_time_raw);
+
+    if ($open_time === false || $close_time === false) {
+      $is_open = false;
+    } elseif ($close_time < $open_time) {
+      // Overnight window (for example 6:00pm to 2:00am).
+      $is_open = ($current_time >= $open_time || $current_time <= $close_time);
+    } elseif ($close_time === $open_time) {
+      // Same open/close values are treated as closed unless "always open" is enabled.
+      $is_open = false;
+    } else {
+      $is_open = ($current_time >= $open_time && $current_time <= $close_time);
+    }
   }
-
-  $open_time = strtotime(date_i18n('Y-m-d') . ' ' . $open_time);
-  $close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
-
-  // Check if store is open
-  $is_open = ($current_time >= $open_time && $current_time <= $close_time);
   if (empty($selected_date)) {
     $selected_date = date_i18n('Y-m-d', $current_time);
   }
@@ -2221,6 +2239,10 @@ function rpress_get_service_context(): array
   $context['service_time'] = isset($_COOKIE['service_time'])
     ? sanitize_text_field(wp_unslash($_COOKIE['service_time']))
     : '';
+
+  if ( function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $context['service_type'] ) ) {
+    $context['service_time'] = '';
+  }
 
   $context['service_date_raw'] = isset($_COOKIE['service_date'])
     ? sanitize_text_field(wp_unslash($_COOKIE['service_date']))
@@ -2285,7 +2307,6 @@ function rpress_get_service_context(): array
     $context['service_type'],
     $context['service_date']
   );
-
   /* ---------------- Store Open Check ---------------- */
 
   if (!rpress_is_store_open($context['service_type'], $context['service_date'])) {

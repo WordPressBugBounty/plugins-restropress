@@ -29,13 +29,13 @@ $button_style = rpress_get_option('button_style', 'button');
           <div class="rp-col-md-4 rp-col-xs-4">
             <div class="btn-count">
               <div class="qtyminus-wrap">
-                <input type="button" value="&#8722;" class="qtyminus qtyminus-style qtyminus-style-edit">
+                <input type="button" value="&#8722;" class="qtyminus qtyminus-style qtyminus-style-edit" aria-label="<?php esc_attr_e('Decrease quantity', 'restropress'); ?>">
               </div>
               <div class="qty-num-wrap">
-                <input type="text" name="quantity" value="1" class="qty qty-style" readonly>
+                <input type="text" name="quantity" value="1" class="qty qty-style" readonly aria-label="<?php esc_attr_e('Quantity', 'restropress'); ?>">
               </div>
               <div class="qtyplus-wrap">
-                <input type="button" value="&#43;" class="qtyplus qtyplus-style qtyplus-style-edit">
+                <input type="button" value="&#43;" class="qtyplus qtyplus-style qtyplus-style-edit" aria-label="<?php esc_attr_e('Increase quantity', 'restropress'); ?>">
               </div>
             </div>
           </div>
