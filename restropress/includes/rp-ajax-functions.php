@@ -117,25 +117,27 @@ function rpress_get_ajax_url()
 function get_fooditem_lists($fooditem_id, $cart_key = '')
 {
     $addons = get_post_meta($fooditem_id, '_addon_items', true);
-    $cart_data = rpress_get_cart_contents();
+    if (!is_array($addons)) {
+        $addons = array();
+    }
+
     $chosen_addons = array();
     $addon_quantity = [];
     $price_id = 0;
     $addon_ids = $child_ids = array();
-    if ($addons) {
+    if (!empty($addons)) {
         foreach ($addons as $addon) {
             if (!empty($addon['category'])) {
-
-
+                $addon_ids[] = absint($addon['category']);
                 if (isset($addon['items']) && is_array($addon['items'])) {
                     $child_ids = array_merge($child_ids, $addon['items']);
-                    array_push($addon_ids, $addon['category']);
-
                 }
-
             }
         }
     }
+    $addon_ids = array_values(array_unique(array_filter(array_map('absint', $addon_ids))));
+    $child_ids = array_values(array_unique(array_filter(array_map('absint', $child_ids))));
+
     if ($cart_key !== '') {
         $cart_contents = rpress_get_cart_contents();
         $cart_contents = $cart_contents[$cart_key];
@@ -215,10 +217,22 @@ function get_fooditem_lists($fooditem_id, $cart_key = '')
                 $addon_name = $addon_items->name;
                 $addon_slug = $addon_items->slug;
                 $addon_id = $addon_items->term_id;
-                $is_required = isset($addons[$parent]['is_required']) ? $addons[$parent]['is_required'] : 'no';
-                $max_addons = isset($addons[$parent]['max_addons']) ? $addons[$parent]['max_addons'] : 0;
-                $min_addons = isset($addons[$parent]['min_addons']) ? $addons[$parent]['min_addons'] : 0;
-                $is_default = isset($addons[$parent]['default']) ? $addons[$parent]['default'] : array();
+                $addon_config = isset($addons[$parent]) && is_array($addons[$parent]) ? $addons[$parent] : array();
+
+                // Backward compatibility: some datasets store addon rows as numeric arrays.
+                if (empty($addon_config)) {
+                    foreach ($addons as $addon_row) {
+                        if (!empty($addon_row['category']) && absint($addon_row['category']) === absint($parent)) {
+                            $addon_config = $addon_row;
+                            break;
+                        }
+                    }
+                }
+
+                $is_required = isset($addon_config['is_required']) ? $addon_config['is_required'] : 'no';
+                $max_addons = isset($addon_config['max_addons']) ? $addon_config['max_addons'] : 0;
+                $min_addons = isset($addon_config['min_addons']) ? $addon_config['min_addons'] : 0;
+                $is_default = isset($addon_config['default']) ? $addon_config['default'] : array();
 
                 if (!empty($is_default))
                     $chosen_addons = array_merge($chosen_addons, $is_default);
@@ -265,7 +279,13 @@ function get_fooditem_lists($fooditem_id, $cart_key = '')
                     <input type="hidden" name="max_limit" class="addon_max_limit" value="<?php echo esc_attr($max_addons); ?>" />
                     <input type="hidden" name="min_limit" class="addon_min_limit" value="<?php echo esc_attr($min_addons); ?>" />
                     <?php
-                    $addon_category_args = array('taxonomy' => 'addon_category', 'parent' => $addon_items->term_id, 'include' => $child_ids);
+                    $addon_category_args = array(
+                        'taxonomy' => 'addon_category',
+                        'parent' => $addon_items->term_id,
+                    );
+                    if (!empty($child_ids)) {
+                        $addon_category_args['include'] = $child_ids;
+                    }
                     $child_addons = get_terms(apply_filters('rp_addon_category', $addon_category_args));
                     if ($child_addons) {
                         $child_addons = wp_list_pluck($child_addons, 'term_id');

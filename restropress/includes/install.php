@@ -341,16 +341,57 @@ add_action( 'admin_init', 'rpress_install_roles_on_network' );
  * @since  2.6
  * @return bool
  */
-function rpress_needs_migration() {
-	$current_version = get_option( 'rpress_version', true  );
-	if ( empty( $current_version ) ) {
-		$current_version = '2.5';
-	}
-	if ( ! defined( 'IFRAME_REQUEST' ) && version_compare( $current_version, RPRESS()->version, '<' ) ) {
+function rpress_has_legacy_addon_data_to_migrate() {
+	global $wpdb;
+
+	$legacy_term_meta_count = (int) $wpdb->get_var(
+		"SELECT COUNT(option_id) FROM {$wpdb->options} WHERE option_name LIKE 'taxonomy_term_%'"
+	);
+
+	if ( $legacy_term_meta_count > 0 ) {
 		return true;
-	} else {
+	}
+
+	$has_legacy_fooditem_addons = (int) $wpdb->get_var(
+		"SELECT p.ID
+		FROM {$wpdb->posts} p
+		INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+		INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+		LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_addon_items'
+		WHERE p.post_type = 'fooditem'
+		AND tt.taxonomy = 'addon_category'
+		AND (
+			pm.meta_id IS NULL
+			OR pm.meta_value = ''
+			OR pm.meta_value = 'a:0:{}'
+		)
+		LIMIT 1"
+	);
+
+	return $has_legacy_fooditem_addons > 0;
+}
+
+function rpress_needs_migration() {
+	if ( defined( 'IFRAME_REQUEST' ) ) {
 		return false;
 	}
+
+	if ( get_option( 'rpress_legacy_addon_migration_completed' ) ) {
+		return false;
+	}
+
+	$current_version = get_option( 'rpress_version', true  );
+
+	// Only support legacy migration path for very old versions.
+	if ( ! empty( $current_version ) && version_compare( $current_version, '2.6', '>=' ) ) {
+		return false;
+	}
+
+	if ( empty( $current_version ) ) {
+		return rpress_has_legacy_addon_data_to_migrate();
+	}
+
+	return rpress_has_legacy_addon_data_to_migrate();
 }
 /**
  * Update post meta with terms
@@ -365,10 +406,10 @@ function rpress_db_migration() {
 	if ( is_array( $get_fooditems ) && ! empty( $get_fooditems ) ) {
 		foreach( $get_fooditems as $key => $get_fooditem ) {
 			$fooditem_id = $get_fooditem['ID'];
+			$meta_term   = array();
 			//Get post terms
 			$get_fooditems_terms = wp_get_post_terms( $fooditem_id, 'addon_category', array( 'fields' => 'id=>parent' ) );
 			if( is_array( $get_fooditems_terms ) ) {
-				$meta_term = array();
 				foreach( $get_fooditems_terms as $term_id => $parent_id ) {
 					if( $parent_id != 0 )
 						continue;
@@ -382,8 +423,16 @@ function rpress_db_migration() {
 						array_push( $meta_term[$parent_id]['items'], $term_id );
 				}
 			}
-			// Update Post Meta
-			update_post_meta( $fooditem_id, '_addon_items', $meta_term );
+
+			// Do not overwrite existing add-on configurations and pricing mappings.
+			$existing_addons = get_post_meta( $fooditem_id, '_addon_items', true );
+			if ( is_array( $existing_addons ) && ! empty( $existing_addons ) ) {
+				continue;
+			}
+
+			if ( ! empty( $meta_term ) ) {
+				update_post_meta( $fooditem_id, '_addon_items', $meta_term );
+			}
 		}
 	}
 	//Update add-ons meta if upgrading
@@ -398,22 +447,39 @@ function rpress_db_migration() {
 		$addon_meta  = get_option( 'taxonomy_term_' . $addon->term_id );
 		if( empty( $addon_meta ) ) continue;
 		$addon_type  = ! empty( $addon_meta['use_it_like'] ) && $addon_meta['use_it_like'] == 'checkbox' ? 'multiple' : 'single';
-		$addon_price = $addon_meta['price'];
+		$addon_price = isset( $addon_meta['price'] ) ? $addon_meta['price'] : '';
 		
-		if( ! empty( $addon->parent ) )
-			update_term_meta( $addon->term_id, '_price', $addon_price );
-		else
-			update_term_meta( $addon->term_id, '_type', $addon_type );
+		if( ! empty( $addon->parent ) ) {
+			$existing_price = get_term_meta( $addon->term_id, '_price', true );
+			if ( '' === (string) $existing_price && '' !== (string) $addon_price ) {
+				update_term_meta( $addon->term_id, '_price', $addon_price );
+			}
+		} else {
+			$existing_type = get_term_meta( $addon->term_id, '_type', true );
+			if ( empty( $existing_type ) ) {
+				update_term_meta( $addon->term_id, '_type', $addon_type );
+			}
+		}
 		
 		//Clean the old term data
 		delete_option( 'taxonomy_term_' . $addon->term_id );
 	}
+
+	update_option( 'rpress_legacy_addon_migration_completed', '1' );
 }
 function rpress_check_migartion() {
 	if ( rpress_needs_migration() ) {
   	rpress_db_migration();
-    delete_option( 'rpress_version' );
-    add_option( 'rpress_version', RPRESS()->version );
+    update_option( 'rpress_version', RPRESS()->version );
+		return;
   }
+
+	if ( ! get_option( 'rpress_version', false ) ) {
+		update_option( 'rpress_version', RPRESS()->version );
+	}
+
+	if ( ! get_option( 'rpress_legacy_addon_migration_completed', false ) && ! rpress_has_legacy_addon_data_to_migrate() ) {
+		update_option( 'rpress_legacy_addon_migration_completed', '1' );
+	}
 }
 add_action( 'admin_init', 'rpress_check_migartion' );

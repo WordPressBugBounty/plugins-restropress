@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.2.6';
+	public $version = '3.2.7';
 	/**
 	 * The single instance of the class.
 	 *
@@ -217,7 +217,11 @@ final class RestroPress
 		include_once RP_PLUGIN_DIR . 'includes/class-rpress-category-sorting.php';
 		require_once RP_PLUGIN_DIR . 'includes/rp-ajax-functions.php';
 		include_once RP_PLUGIN_DIR . 'includes/class-rpress-ajax.php';
-		require_once RP_PLUGIN_DIR . 'includes/class-rpress-realtime.php';
+		$realtime_file = RP_PLUGIN_DIR . 'includes/class-rpress-realtime.php';
+		// Realtime is an optional module; do not hard-fail if a deployment missed this file.
+		if ( file_exists( $realtime_file ) ) {
+			require_once $realtime_file;
+		}
 		require_once RP_PLUGIN_DIR . 'includes/template-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/template-actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/checkout/template.php';
