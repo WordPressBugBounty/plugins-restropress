@@ -50,7 +50,7 @@ class RPRESS_Notices {
                     ), 
 			    esc_url( admin_url( 'admin.php?page=rpress-settings' ) ) 
 			); ?></p>
-				<p><a href="<?php echo esc_url( esc_url( add_query_arg( array( 'rpress_action' => 'dismiss_notices', 'rpress_notice' => 'set_menupage' ) ) ) ); ?>"><?php esc_html_e( 'Dismiss Notice', 'restropress' ); ?></a></p>
+				<p><a href="<?php echo esc_url( esc_url( add_query_arg( array( 'rpress_action' => 'dismiss_notices', 'rpress_notice' => 'set_menupage', '_wpnonce' => wp_create_nonce( 'rpress-dismiss-notice' ) ) ) ) ); ?>"><?php esc_html_e( 'Dismiss Notice', 'restropress' ); ?></a></p>
 			</div>
 			<?php
 			$allowed_html = array(
@@ -80,7 +80,7 @@ class RPRESS_Notices {
                     ) 
                 ), 
                  esc_url ( admin_url( 'admin.php?page=rpress-settings' ) ) ); ?></p>
-				<p><a href="<?php echo esc_url( add_query_arg( array( 'rpress_action' => 'dismiss_notices', 'rpress_notice' => 'set_checkout' ) ) ); ?>"><?php esc_html_e( 'Dismiss Notice', 'restropress' ); ?></a></p>
+				<p><a href="<?php echo esc_url( add_query_arg( array( 'rpress_action' => 'dismiss_notices', 'rpress_notice' => 'set_checkout', '_wpnonce' => wp_create_nonce( 'rpress-dismiss-notice' ) ) ) ); ?>"><?php esc_html_e( 'Dismiss Notice', 'restropress' ); ?></a></p>
 			</div>
 			<?php
 			$allowed_html = array(
@@ -256,11 +256,23 @@ class RPRESS_Notices {
 	 * @return void
 	 */
 	function dismiss_notices() {
-		if( isset( $_GET['rpress_notice'] ) ) {
-			update_user_meta( get_current_user_id(), '_rpress_' . sanitize_text_field( $_GET['rpress_notice'] ) . '_dismissed', 1 );
-			wp_redirect( remove_query_arg( array( 'rpress_action', 'rpress_notice' ) ) );
-			exit;
+		if( ! isset( $_GET['rpress_notice'] ) ) {
+			return;
 		}
+
+		if ( ! current_user_can( 'manage_shop_settings' ) && ! current_user_can( 'edit_pages' ) && ! current_user_can( 'view_shop_reports' ) ) {
+			return;
+		}
+
+		$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'rpress-dismiss-notice' ) ) {
+			return;
+		}
+
+		$notice_key = sanitize_text_field( wp_unslash( $_GET['rpress_notice'] ) );
+		update_user_meta( get_current_user_id(), '_rpress_' . $notice_key . '_dismissed', 1 );
+		wp_redirect( remove_query_arg( array( 'rpress_action', 'rpress_notice', '_wpnonce' ) ) );
+		exit;
 	}
 }
 new RPRESS_Notices;

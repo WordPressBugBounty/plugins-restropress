@@ -134,15 +134,63 @@ class RP_AJAX {
       add_action( 'wp_ajax_rpress_' . $ajax_event, array( __CLASS__, $ajax_event ) );
     }
   }
+
+  /**
+   * Check whether the current request can access a frontend order action.
+   *
+   * Logged-in users can only access their own user-linked orders.
+   * Guest orders require a valid payment key that can view the receipt.
+   *
+   * @since 3.2.8
+   *
+   * @param int $order_id Payment post ID.
+   * @return bool
+   */
+  private static function can_access_frontend_order_action( $order_id ) {
+    $order_id = absint( $order_id );
+    if ( $order_id <= 0 || 'rpress_payment' !== get_post_type( $order_id ) ) {
+      return false;
+    }
+
+    $user          = rpress_get_payment_meta_user_info( $order_id );
+    $order_user_id = isset( $user['id'] ) ? absint( $user['id'] ) : 0;
+
+    if ( is_user_logged_in() ) {
+      return ( $order_user_id > 0 && get_current_user_id() === $order_user_id );
+    }
+
+    if ( $order_user_id > 0 ) {
+      return false;
+    }
+
+    $payment_key = isset( $_REQUEST['payment_key'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['payment_key'] ) ) : '';
+    if ( empty( $payment_key ) ) {
+      return false;
+    }
+
+    $payment_id_from_key = absint( rpress_get_purchase_id_by_key( $payment_key ) );
+    if ( $payment_id_from_key !== $order_id ) {
+      return false;
+    }
+
+    return (bool) rpress_can_view_receipt( $payment_key );
+  }
   /**
    *  for order reorder.
    */
   public static function  reorder() {
-    
-    $user = rpress_get_payment_meta_user_info( absint( $_POST['order_id'] ) );
-    
-    if( get_current_user_id() !== $user['id'] ) return;
-    $order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : ''; 
+    check_ajax_referer( 'show-order-details', 'security' );
+
+    $order_id = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
+    if ( ! self::can_access_frontend_order_action( $order_id ) ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'You do not have permission to reorder this order.', 'restropress' ),
+        ),
+        403
+      );
+    }
+
     $payment = get_post( $order_id );
     if( empty( $payment ) ) return;
     $cart = rpress_get_payment_meta_cart_details( $payment->ID, true );
@@ -485,14 +533,76 @@ class RP_AJAX {
    */
   public static function show_products() {
     check_ajax_referer( 'show-products', 'security' );
-    $service_type = filter_input( INPUT_POST, 'service_type' );
-    $selected_date = filter_input( INPUT_POST, 'selected_date' );
-    if ( empty( $_POST['fooditem_id'] ) || empty( $service_type ) )
-      return;
-    if( ! rpress_is_store_open( $service_type, $selected_date ) ){
-      $response = array('status' => 'error', 'error_msg' => rpress_store_closed_message($service_type));
+    $service_type = sanitize_key( (string) filter_input( INPUT_POST, 'service_type' ) );
+    $selected_date = sanitize_text_field( (string) filter_input( INPUT_POST, 'selected_date' ) );
+    $selected_time = sanitize_text_field( (string) filter_input( INPUT_POST, 'selected_time' ) );
+    if ( empty( $_POST['fooditem_id'] ) ) {
+      wp_send_json_error(
+        array(
+          'status' => 'error',
+          'error_msg' => __( 'Unable to load item details. Please try again.', 'restropress' ),
+        )
+      );
+    }
+    $enabled_service = rpress_get_option( 'enable_service', 'delivery_and_pickup' );
+    $allowed_services = ( 'delivery_and_pickup' === $enabled_service ) ? array( 'delivery', 'pickup' ) : array( $enabled_service );
+    $allowed_services = array_map( 'sanitize_key', $allowed_services );
+    if ( empty( $service_type ) || ! in_array( $service_type, $allowed_services, true ) ) {
+      wp_send_json_error(
+        array(
+          'status' => 'error',
+          'error_msg' => __( 'Please select a service type.', 'restropress' ),
+        )
+      );
+    }
+    if ( empty( $selected_date ) ) {
+      wp_send_json_error(
+        array(
+          'status' => 'error',
+          'error_msg' => __( 'Please select a service date.', 'restropress' ),
+        )
+      );
+    }
+    $selected_date_ts = strtotime( $selected_date );
+    if ( false === $selected_date_ts ) {
+      wp_send_json_error(
+        array(
+          'status' => 'error',
+          'error_msg' => __( 'Please select a valid service date.', 'restropress' ),
+        )
+      );
+    }
+    $selected_date = date_i18n( 'Y-m-d', $selected_date_ts );
+    $service_time_hidden = function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $service_type );
+    $service_time = ! empty( $selected_time )
+      ? $selected_time
+      : ( isset( $_COOKIE['service_time'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_time'] ) ) : '' );
+    if ( ! $service_time_hidden && empty( $service_time ) ) {
+      wp_send_json_error(
+        array(
+          'status' => 'error',
+          'error_msg' => __( 'Please select a service time.', 'restropress' ),
+        )
+      );
+    }
+    if ( ! rpress_is_store_open( $service_type, $selected_date ) ) {
+      $response = array( 'status' => 'error', 'error_msg' => rpress_store_closed_message( $service_type ) );
       wp_send_json_error( $response );
       die();
+    }
+    if ( ! $service_time_hidden && ! empty( $service_time ) ) {
+      $allow_asap = rpress_get_option( 'enable_asap_option' );
+      $prep_time  = (int) rpress_get_option( 'prep_time', 0 ) * 60;
+      $current_time = current_time( 'timestamp' ) + $prep_time;
+      $service_time_ts = strtotime( $selected_date . ' ' . $service_time );
+      if ( false !== $service_time_ts && $service_time_ts < $current_time && ! $allow_asap ) {
+        wp_send_json_error(
+          array(
+            'status' => 'error',
+            'error_msg' => __( 'Selected time slot is no longer available. Please choose another time.', 'restropress' ),
+          )
+        );
+      }
     }
     $fooditem_id = sanitize_text_field ( wp_unslash( $_POST['fooditem_id'] ) );
     $price = '';
@@ -581,6 +691,7 @@ class RP_AJAX {
    * Check Service Options availibility
    */
   public static function check_service_slot() {
+    check_ajax_referer( 'service-type', 'security' );
     $data = rpress_sanitize_array( $_POST );
     $response = apply_filters( 'rpress_check_service_slot', $data );
     $response = apply_filters( 'rpress_validate_slot', $response );
@@ -869,6 +980,8 @@ class RP_AJAX {
   * Proceed Checkout
   */
   public static function proceed_checkout() {
+    check_ajax_referer( 'proceed-checkout', 'security' );
+
     $response = rpress_pre_validate_order();
     $response = apply_filters( 'rpress_proceed_checkout', $response );
     wp_send_json( $response );
@@ -880,12 +993,22 @@ class RP_AJAX {
    */
   public static function get_order_details() {
     check_admin_referer( 'rpress-preview-order', 'security' );
-    if ( isset( $_GET['payment_id'] ) ){
-      if( ! current_user_can( 'edit_shop_payments', $_GET['payment_id'] ) ) {
-        wp_die( esc_html__( 'You do not have permission to update this order', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
-      }
+    $order_id = isset( $_GET['order_id'] ) ? absint( wp_unslash( $_GET['order_id'] ) ) : 0;
+
+    if ( empty( $order_id ) ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'Invalid order request.', 'restropress' ),
+        ),
+        400
+      );
     }
-    $order = rpress_get_payment( absint( $_GET['order_id'] ) );
+
+    if ( ! current_user_can( 'edit_shop_payments', $order_id ) ) {
+      wp_die( esc_html__( 'You do not have permission to update this order', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
+    }
+
+    $order = rpress_get_payment( $order_id );
     if ( $order ) {
       include_once 'admin/payments/class-payments-table.php';
       wp_send_json_success( RPRESS_Payment_History_Table::order_preview_get_order_details( $order ) );
@@ -1151,7 +1274,7 @@ class RP_AJAX {
    */
   public static function fooditem_search() {
     global $wpdb;
-    $search   = sanitize_text_field( $_GET['s'] );
+    $search   = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
     $excludes = ( isset( $_GET['current_id'] ) ? (array) $_GET['current_id'] : array() );
     $excludes = array_unique( array_map( 'absint', $excludes ) );
     $exclude  = implode( ",", $excludes );
@@ -1186,7 +1309,7 @@ class RP_AJAX {
       foreach( $items as $item ) {
         $results[] = array(
           'id'   => $item->ID,
-          'name' => $item->post_title
+          'name' => wp_strip_all_tags( $item->post_title )
         );
         if ( $variations && rpress_has_variable_prices( $item->ID ) ) {
           $prices = rpress_get_variable_prices( $item->ID );
@@ -1220,7 +1343,7 @@ class RP_AJAX {
    */
   public static function customer_search() {
     global $wpdb;
-    $search  = esc_sql( sanitize_text_field( $_GET['s'] ) );
+    $search  = isset( $_GET['s'] ) ? esc_sql( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : '';
     $results = array();
     $customer_view_role = apply_filters( 'rpress_view_customers_role', 'view_shop_reports' );
     if ( ! current_user_can( $customer_view_role ) ) {
@@ -1237,13 +1360,15 @@ class RP_AJAX {
     }
     if( $customers ) {
       foreach( $customers as $customer ) {
+        $customer_name  = isset( $customer->name ) ? wp_strip_all_tags( $customer->name ) : '';
+        $customer_email = isset( $customer->email ) ? sanitize_email( $customer->email ) : '';
         $results[] = array(
           'id'   => $customer->id,
-          'name' => $customer->name . '(' .  $customer->email . ')'
+          'name' => $customer_name . '(' .  $customer_email . ')'
         );
       }
     } else {
-      $customers[] = array(
+      $results[] = array(
         'id'   => 0,
         'name' => __( 'No results found', 'restropress' )
       );
@@ -1259,7 +1384,7 @@ class RP_AJAX {
    */
   public static function user_search() {
     global $wpdb;
-    $search         = esc_sql( sanitize_text_field( $_GET['s'] ) );
+    $search         = isset( $_GET['s'] ) ? esc_sql( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : '';
     $results        = array();
     $user_view_role = apply_filters( 'rpress_view_users_role', 'view_shop_reports' );
     if ( ! current_user_can( $user_view_role ) ) {
@@ -1275,7 +1400,7 @@ class RP_AJAX {
       foreach( $users as $user ) {
         $results[] = array(
           'id'   => $user->ID,
-          'name' => $user->display_name,
+          'name' => wp_strip_all_tags( $user->display_name ),
         );
       }
     } else {
@@ -1295,8 +1420,8 @@ class RP_AJAX {
    */
   public static function search_users() {
     if( current_user_can( 'manage_shop_settings' ) ) {
-      $search_query = trim( sanitize_text_field( $_POST['user_name'] ) );
-      $exclude      = trim( sanitize_text_field( $_POST['exclude'] ) );
+      $search_query = isset( $_POST['user_name'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['user_name'] ) ) ) : '';
+      $exclude      = isset( $_POST['exclude'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['exclude'] ) ) ) : '';
       $get_users_args = array(
         'number' => 9999,
         'search' => $search_query . '*'
@@ -1328,6 +1453,18 @@ class RP_AJAX {
    * @return      json | user notification json object
    */
   public static function check_new_orders() {
+    $orders_cap = apply_filters( 'rpress_check_new_orders_cap', 'edit_shop_payments' );
+    if ( ! current_user_can( $orders_cap ) ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'You do not have permission to access this resource.', 'restropress' ),
+        ),
+        403
+      );
+    }
+
+    check_ajax_referer( 'rpress-check-new-orders', 'security' );
+
     $last_order = get_option( 'rp_last_order_id' );
     $order      = rpress_get_payments( array( 'number' => 1, 'status' => array( 'publish'     => __( 'Paid', 'restropress' ), 'processing'  => __( 'Processing', 'restropress' )) ) );
     if( is_array( $order ) && $order[0]->ID != $last_order ) {
@@ -1392,7 +1529,8 @@ class RP_AJAX {
         'url'        => home_url()
       );
       // Call the custom API.
-      $response = wp_remote_post( 'https://www.restropress.com', array( 'timeout' => 15, 'sslverify' => false, 'body' => $api_params ) );
+      $verify_ssl = (bool) apply_filters( 'rpress_remote_request_verify_ssl', true );
+      $response = wp_remote_post( 'https://www.restropress.com', array( 'timeout' => 15, 'sslverify' => $verify_ssl, 'body' => $api_params ) );
       // make sure the response came back okay
       if ( is_wp_error( $response )
         || 200 !== wp_remote_retrieve_response_code( $response ) ) {
@@ -1471,7 +1609,8 @@ class RP_AJAX {
         'url'        => home_url()
       );
       // Call the custom API.
-      $response = wp_remote_post( 'https://www.restropress.com', array( 'timeout' => 15, 'sslverify' => false, 'body' => $api_params ) );
+      $verify_ssl = (bool) apply_filters( 'rpress_remote_request_verify_ssl', true );
+      $response = wp_remote_post( 'https://www.restropress.com', array( 'timeout' => 15, 'sslverify' => $verify_ssl, 'body' => $api_params ) );
       // make sure the response came back okay
       if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
         if ( is_wp_error( $response ) ) {
@@ -1504,9 +1643,18 @@ class RP_AJAX {
   public static function show_order_details() {
     
     check_ajax_referer( 'show-order-details', 'security' );
-    $user = rpress_get_payment_meta_user_info( absint( $_POST['order_id'] ) );
-    
-    if( get_current_user_id() !== $user['id'] ) return;
+    $order_id = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
+
+    if ( ! self::can_access_frontend_order_action( $order_id ) ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'You do not have permission to view this order.', 'restropress' ),
+        ),
+        403
+      );
+    }
+
+    $_POST['order_id'] = $order_id;
     ob_start();
     rpress_get_template_part( 'rpress', 'show-order-details' );
     $html = ob_get_clean();
@@ -1524,6 +1672,16 @@ class RP_AJAX {
    */
   public static function more_order_history() {
     check_ajax_referer( 'show-order-details', 'security' );
+
+    if ( ! is_user_logged_in() ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'You must be logged in to view order history.', 'restropress' ),
+        ),
+        403
+      );
+    }
+
     ob_start();
     include RP_PLUGIN_DIR . '/templates/rpress-order-history-load-more.php';
     $html = ob_get_clean();
@@ -1531,13 +1689,19 @@ class RP_AJAX {
     rpress_die();
   }
   public static function delete_user_address(){
+    check_ajax_referer( 'rpress-user-address', 'security' );
+
+    if ( ! is_user_logged_in() ) {
+      wp_send_json_error( array( 'success' => false ), 403 );
+    }
+
     if( isset( $_POST['index'] ) ) {
-      $index    = $_POST['index'];
+      $index    = absint( wp_unslash( $_POST['index'] ) );
       $user_id  = get_current_user_id();
       // Get user addresses
       $user_addresses = get_user_meta($user_id, 'user_addresses', true);
       
-      if(!empty($user_addresses)){
+      if(!empty($user_addresses) && isset( $user_addresses[ $index ] )){
           // Remove the address array from the main array
           unset($user_addresses[$index]);
           
@@ -1558,11 +1722,21 @@ class RP_AJAX {
     }
   }
   public static function default_user_address(){
+    check_ajax_referer( 'rpress-user-address', 'security' );
+
+    if ( ! is_user_logged_in() ) {
+      wp_send_json_error( array( 'success' => false ), 403 );
+    }
+
     if( isset( $_POST['index'] ) ) {
-      $index    = $_POST['index'];
+      $index    = absint( wp_unslash( $_POST['index'] ) );
       $user_id  = get_current_user_id();
       // Get user addresses
       $user_addresses = get_user_meta( $user_id, 'user_addresses', true );
+      if ( empty( $user_addresses ) || ! isset( $user_addresses[ $index ] ) ) {
+        echo wp_json_encode( ['success' => false] );
+        return;
+      }
       $default_address = $user_addresses[$index];
       
       $new_address = array(
@@ -1596,6 +1770,7 @@ class RP_AJAX {
    * @return json
    */
   public static function checkout_update_service_option() {
+    check_ajax_referer( 'update-service', 'security' );
     do_action( 'rpress_checkout_service_option_updated' );
     ob_start();
     rpress_order_details_fields();
@@ -1613,6 +1788,7 @@ class RP_AJAX {
     rpress_die();
   }
   public static function remove_fees_after_empty_cart() {
+    check_ajax_referer( 'clear-cart', 'security' );
     
     RPRESS()->session->set('rpress_cart', null);
     // Remove all cart fees.
@@ -1629,7 +1805,9 @@ class RP_AJAX {
   }
 
   public static function update_modal_on_service_switch() {
-     $service_type = $_GET['service_type'];
+    check_ajax_referer( 'service-type', 'security' );
+
+    $service_type = isset( $_GET['service_type'] ) ? sanitize_text_field( wp_unslash( $_GET['service_type'] ) ) : '';
    
     ob_start();
     rpress_get_template_part('rpress','datetime-popup');

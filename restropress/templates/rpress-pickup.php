@@ -4,13 +4,17 @@
  * Context-driven (no cookies, no recomputation)
  */
 
-$context = rpress_get_service_context();
+$active_context = rpress_get_service_context();
+$context        = rpress_get_service_context( 'pickup' );
 
 [
-    'service_type'  => $current_service,
+    'service_type'  => $service_type,
     'store_timings' => $store_timings,
     'selected_time' => $selected_time,
+    'is_store_open' => $is_store_open,
 ] = $context;
+
+$current_service = $active_context['service_type'];
 ?>
 
 <?php $pickup_pane_classes = 'tab-pane fade delivery-settings-wrapper'; ?>
@@ -24,10 +28,12 @@ $context = rpress_get_service_context();
      aria-labelledby="nav-pickup-tab">
 
     <div class="rpress-pickup-time-wrap rpress-time-wrap">
-
-        <?php do_action('rpress_before_service_time', 'pickup'); ?>
-
-        <?php if (rpress_is_service_enabled('pickup')) : ?>
+        <?php if ( empty( $store_timings ) || ! $is_store_open ) : ?>
+            <div class="alert alert-warning rpress-service-closed-message">
+                <?php echo esc_html( rpress_store_closed_message( 'pickup' ) ); ?>
+            </div>
+        <?php elseif (rpress_is_service_enabled('pickup')) : ?>
+            <?php do_action('rpress_before_service_time', 'pickup'); ?>
 
             <div class="pickup-time-text">
                 <?php
@@ -108,9 +114,7 @@ $context = rpress_get_service_context();
 
             </select>
 
+            <?php do_action('rpress_after_service_time', 'pickup'); ?>
         <?php endif; ?>
-
-        <?php do_action('rpress_after_service_time', 'pickup'); ?>
-
     </div>
 </div>

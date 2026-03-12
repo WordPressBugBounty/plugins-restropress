@@ -133,12 +133,13 @@ class RPRESS_Print_Receipts {
    *
    */
   public function rp_print_payment_data() {
-    
-    if( ! current_user_can( 'edit_shop_payments', $_GET['payment_id'] ) ) {
-        wp_die( esc_html__( 'You do not have permission to update this order', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
+    check_ajax_referer( 'rpress-order', 'security' );
+
+    $payment_id = isset( $_GET['payment_id'] ) ? absint( wp_unslash( $_GET['payment_id'] ) ) : '';
+
+    if ( ! current_user_can( 'edit_shop_payments', $payment_id ) ) {
+      wp_die( esc_html__( 'You do not have permission to update this order', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
     }
-    
-    $payment_id = isset( $_GET['payment_id'] ) ? absint( $_GET['payment_id'] ) : '';
     
     if( empty( $payment_id ) ) return;
     

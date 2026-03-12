@@ -319,9 +319,15 @@ add_action( 'save_post', 'rpress_price_save_quick_edit' );
  * @return void
  */
 function rpress_save_bulk_edit() {
-	$post_ids = ( isset( $_POST['post_ids'] ) && ! empty( $_POST['post_ids'] ) ) ? rpress_sanitize_array( $_POST['post_ids'] ) : array();
+	check_ajax_referer( 'rpress-bulk-edit', 'rpress_bulk_nonce' );
+
+	if ( ! current_user_can( 'edit_products' ) ) {
+		wp_die( esc_html__( 'You do not have permission to edit food items.', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
+	}
+
+	$post_ids = ( isset( $_POST['post_ids'] ) && ! empty( $_POST['post_ids'] ) ) ? rpress_sanitize_array( wp_unslash( $_POST['post_ids'] ) ) : array();
 	if ( ! empty( $post_ids ) && is_array( $post_ids ) ) {
-		$price = isset( $_POST['price'] ) ? strip_tags( stripslashes( sanitize_text_field( $_POST['price'] ) ) ) : 0;
+		$price = isset( $_POST['price'] ) ? strip_tags( stripslashes( sanitize_text_field( wp_unslash( $_POST['price'] ) ) ) ) : 0;
 		foreach ( $post_ids as $post_id ) {
 			if( ! current_user_can( 'edit_post', $post_id ) ) {
 				continue;

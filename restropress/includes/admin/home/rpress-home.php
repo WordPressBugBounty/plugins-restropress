@@ -14,7 +14,15 @@ if (!defined('ABSPATH'))
 function rpress_admin_home_page()
 {
     // Handle form submission before any output
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+        if ( ! current_user_can( 'manage_shop_settings' ) ) {
+            wp_die( esc_html__( 'You do not have permission to update these settings.', 'restropress' ) );
+        }
+
+        $nonce = isset( $_POST['rpress_admin_home_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_admin_home_nonce'] ) ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'rpress_admin_home_save' ) ) {
+            wp_die( esc_html__( 'Security check failed. Please try again.', 'restropress' ) );
+        }
 
         if (isset($_POST['service-pickup']) && isset($_POST['service-delivery'])) {
             $enable_service = 'delivery_and_pickup';
@@ -149,6 +157,7 @@ function rpress_admin_home_page()
             <div class="card-body">
                 <!-- tab -->
                 <form class="multiStep" action="" method="POST">
+                    <?php wp_nonce_field( 'rpress_admin_home_save', 'rpress_admin_home_nonce' ); ?>
                     <div class="tab">
                         <div class="welcome-step-1">
                         <!-- tab1_content -->

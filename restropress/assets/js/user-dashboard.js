@@ -37,6 +37,7 @@ jQuery('document').ready(function($) {
             type: 'POST',
             data: {
                 index: index,
+                security: users.address_nonce,
                 action: 'rpress_delete_user_address'
             },
             success: function(response){
@@ -57,6 +58,7 @@ jQuery('document').ready(function($) {
             type: 'POST',
             data: {
                 index: index,
+                security: users.address_nonce,
                 action: 'rpress_default_user_address'
             },
             success: function(response){

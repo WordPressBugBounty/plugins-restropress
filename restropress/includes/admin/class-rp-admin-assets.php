@@ -22,14 +22,10 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       add_action( 'admin_enqueue_scripts', array( $this, 'register_styles' ), 100 );
       add_action( 'admin_head', array( $this, 'admin_icons_buttons' ) );
       add_action( 'wp_ajax_selected_filter', array( $this, 'selected_filter' ) );
-      add_action( 'wp_ajax_nopriv_selected_filter',array( $this, 'selected_filter' ) );
       add_action( 'wp_ajax_rpress_do_ajax_export', array($this, 'rpress_do_ajax_export' ) );
       add_action( 'wp_ajax_order_graph_filter', array( $this, 'order_graph_filter' ) );
-      add_action( 'wp_ajax_nopriv_order_graph_filter', array( $this, 'order_graph_filter') );
       add_action( 'wp_ajax_revenue_graph_filter', array( $this, 'revenue_graph_filter' ) );
-      add_action( 'wp_ajax_nopriv_revenue_graph_filter',array( $this, 'revenue_graph_filter' ) );
       add_action( 'wp_ajax_customers_data_filter', array( $this, 'customers_data_filter') );
-      add_action( 'wp_ajax_nopriv_customers_data_filter', array( $this, 'customers_data_filter') );
     }
     /**
      * Enqueue styles.
@@ -166,9 +162,13 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         'load_admin_addon_nonce'      => wp_create_nonce( 'load-admin-addon' ),
         'preview_nonce'               => wp_create_nonce( 'rpress-preview-order' ),
         'order_nonce'                 => wp_create_nonce( 'rpress-order' ),
+        'reports_nonce'               => wp_create_nonce( 'rpress-admin-reports' ),
+        'payment_note_nonce'          => wp_create_nonce( 'rpress-payment-note' ),
+        'check_new_orders_nonce'      => wp_create_nonce( 'rpress-check-new-orders' ),
         'activate_license'            => wp_create_nonce( 'activate-license' ),
         'deactivate_license'          => wp_create_nonce( 'deactivate-license' ),
         'selected_filter_nonce'       => wp_create_nonce( 'selected-filter' ),
+        'bulk_edit_nonce'             => wp_create_nonce( 'rpress-bulk-edit' ),
       );
       wp_localize_script( 'rp-admin', 'rpress_vars',
         $admin_params
@@ -228,6 +228,12 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     * @return void
     */
     public function revenue_graph_filter(){
+      if ( ! current_user_can( apply_filters( 'rpress_dashboard_stats_cap', 'view_shop_reports' ) ) ) {
+        wp_send_json_error( array( 'message' => esc_html__( 'You do not have permission to access this resource.', 'restropress' ) ), 403 );
+      }
+
+      check_ajax_referer( 'rpress-admin-reports', 'nonce' );
+
       $filter_type = isset( $_POST['select_filter'] ) ? $_POST['select_filter'] : '';
       $SalesByDate = [];
       if( $filter_type == 'yearly') {
@@ -586,6 +592,10 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     }
 
     public function selected_filter() {
+      if ( ! current_user_can( apply_filters( 'rpress_dashboard_stats_cap', 'view_shop_reports' ) ) ) {
+        wp_send_json_error( array( 'message' => esc_html__( 'You do not have permission to access this resource.', 'restropress' ) ), 403 );
+      }
+
       check_ajax_referer( 'selected-filter', 'nonce' );
 
       $pdate      = isset( $_POST['date'] ) ? sanitize_text_field( wp_unslash( $_POST['date'] ) ) : 'today';
@@ -1800,6 +1810,12 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       }
     }
     public function order_graph_filter() {
+      if ( ! current_user_can( apply_filters( 'rpress_dashboard_stats_cap', 'view_shop_reports' ) ) ) {
+        wp_send_json_error( array( 'message' => esc_html__( 'You do not have permission to access this resource.', 'restropress' ) ), 403 );
+      }
+
+      check_ajax_referer( 'rpress-admin-reports', 'nonce' );
+
       $filter_type = isset( $_POST[ 'select_filter' ] ) ? $_POST[ 'select_filter' ] : '';
       $SalesByDate = [];
       if (  $filter_type === 'monthly' || $filter_type === 'weekly' || $filter_type === 'yearly'  ) {
@@ -1856,6 +1872,12 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         return $SalesByDate;
     }
     public function customers_data_filter(){
+      if ( ! current_user_can( apply_filters( 'rpress_dashboard_stats_cap', 'view_shop_reports' ) ) ) {
+        wp_send_json_error( array( 'message' => esc_html__( 'You do not have permission to access this resource.', 'restropress' ) ), 403 );
+      }
+
+      check_ajax_referer( 'rpress-admin-reports', 'nonce' );
+
       $customer_filter = isset( $_POST['selected_option'] ) ? sanitize_text_field( wp_unslash( $_POST['selected_option'] ) ) : 'monthly';
       $today           = gmdate( 'Y-m-d' );
 

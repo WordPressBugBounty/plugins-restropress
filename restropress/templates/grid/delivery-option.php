@@ -15,6 +15,22 @@ $context = rpress_get_service_context();
     'service_enabled' => $service_enabled
 ] = $context;
 
+$preorder_enabled = false;
+if ( class_exists( 'RP_StoreTiming_Settings' ) ) {
+    $location_id = isset( $_COOKIE['branch'] ) ? absint( wp_unslash( $_COOKIE['branch'] ) ) : 0;
+    if ( $location_id <= 0 ) {
+        $rpress_settings = get_option( 'rpress_settings', array() );
+        $location_id = ! empty( $rpress_settings['default_location'] ) ? absint( $rpress_settings['default_location'] ) : 0;
+    }
+    if ( $location_id <= 0 ) {
+        $multi_location_settings = get_option( 'rp_multi_location', array() );
+        $location_id = ! empty( $multi_location_settings['default_location'] ) ? absint( $multi_location_settings['default_location'] ) : 0;
+    }
+    $timing_settings = RP_StoreTiming_Settings::rpress_timing_options( $location_id );
+    $preorder_enabled = ( 'delivery' === $current_service && ! empty( $timing_settings['pre_order'] ) )
+        || ( 'pickup' === $current_service && ! empty( $timing_settings['pre_order_pickup'] ) );
+}
+
 /**
  * Determine visibility
  */
@@ -24,7 +40,7 @@ $closed_message = '';
 if ($service_enabled === 'delivery_and_pickup') {
     $show_service_tabs = true;
 } else {
-    if (!empty($store_timings) && $is_store_open) {
+    if ((!empty($store_timings) && $is_store_open) || $preorder_enabled) {
         $show_service_tabs = true;
     } else {
         $closed_message = rpress_store_closed_message($current_service);

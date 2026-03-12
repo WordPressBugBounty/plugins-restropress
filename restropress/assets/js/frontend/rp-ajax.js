@@ -121,6 +121,52 @@ jQuery(document)
           return;
         }
         e.preventDefault();
+        var selectedServiceType = '';
+        var selectedServiceTime = '';
+        var selectedServiceDate = '';
+        var $activeServiceTab = $('.rp-checkout-service-option #rpressdeliveryTab .single-service-selected.active, #rpress_checkout_order_details #rpressdeliveryTab .single-service-selected.active')
+          .first();
+        if ($activeServiceTab.length) {
+          selectedServiceType = String($activeServiceTab.data('service-type') || '')
+            .toLowerCase();
+        }
+        if (!selectedServiceType) {
+          selectedServiceType = String(rp_getCookie('service_type') || '')
+            .toLowerCase();
+        }
+        var $checkoutScope = $('.rp-checkout-service-option')
+          .first();
+        if (!$checkoutScope.length) {
+          $checkoutScope = $('#rpress_checkout_order_details')
+            .first();
+        }
+        var $activePane = $();
+        if (selectedServiceType) {
+          $activePane = $checkoutScope.find('.delivery-settings-wrapper#nav-' + selectedServiceType)
+            .first();
+        }
+        if (!$activePane.length) {
+          $activePane = $checkoutScope.find('.delivery-settings-wrapper.active')
+            .first();
+        }
+        if ($activePane.length) {
+          selectedServiceTime = String($activePane.find('.rpress-hrs')
+            .first()
+            .val() || '');
+          selectedServiceDate = String($activePane.find('.rpress_get_delivery_dates')
+            .first()
+            .val() || '');
+        }
+        if (selectedServiceType) {
+          rp_setCookie('service_type', selectedServiceType, rp_scripts.expire_cookie_time);
+        }
+        if (selectedServiceTime) {
+          rp_setCookie('service_time', selectedServiceTime, rp_scripts.expire_cookie_time);
+        }
+        if (selectedServiceDate) {
+          rp_setCookie('service_date', selectedServiceDate, rp_scripts.expire_cookie_time);
+          rp_setCookie('delivery_date', selectedServiceDate, rp_scripts.expire_cookie_time);
+        }
         var complete_purchase_val = $(this)
           .val();
         $(this)
@@ -130,8 +176,18 @@ jQuery(document)
         $(this)
           .after('<span class="rp-loading"></span>');
         $(this).parents('body').append('<div class="blur-content"><p class="blur-txt">'+rpress_scripts.blurtxt+'</p><span class="blur-loader"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin: auto; background: rgb(255, 255, 255); display: block; shape-rendering: auto;" width="200px" height="200px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" r="32" stroke-width="8" stroke="#fe718d" stroke-dasharray="50.26548245743669 50.26548245743669" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" keyTimes="0;1" values="0 50 50;360 50 50"></animateTransform></circle></svg></span></div>');
-        $.post(rpress_global_vars.ajaxurl, $('#rpress_purchase_form')
-          .serialize() + '&action=rpress_process_checkout&rpress_ajax=true',
+        var requestData = $('#rpress_purchase_form')
+          .serialize() + '&action=rpress_process_checkout&rpress_ajax=true';
+        if (selectedServiceType) {
+          requestData += '&rpress_service_type=' + encodeURIComponent(selectedServiceType);
+        }
+        if (selectedServiceTime) {
+          requestData += '&rpress_service_time=' + encodeURIComponent(selectedServiceTime);
+        }
+        if (selectedServiceDate) {
+          requestData += '&rpress_service_date=' + encodeURIComponent(selectedServiceDate);
+        }
+        $.post(rpress_global_vars.ajaxurl, requestData,
           function (data) {
             if ($.trim(data) == 'success') {
               $('.rpress_errors')

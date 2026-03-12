@@ -317,6 +317,8 @@ function rpress_trigger_destroy_order( $data ) {
 }
 add_action( 'rpress_delete_order', 'rpress_trigger_destroy_order' );
 function rpress_ajax_store_payment_note() {
+	check_ajax_referer( 'rpress-payment-note', 'security' );
+
 	$payment_id = absint( $_POST['payment_id'] );
 	$note       = wp_kses( $_POST['note'], array() );
 	if( ! current_user_can( 'edit_shop_payments', $payment_id ) ) {
@@ -371,6 +373,8 @@ add_action( 'rpress_delete_payment_note', 'rpress_trigger_payment_note_deletion'
  * @return void
 */
 function rpress_ajax_delete_payment_note() {
+	check_ajax_referer( 'rpress-payment-note', 'security' );
+
 	if( ! current_user_can( 'edit_shop_payments', absint( $_POST['payment_id'] ) ) ) {
 		wp_die( esc_html__( 'You do not have permission to edit this payment record', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
@@ -390,87 +394,123 @@ add_action( 'wp_ajax_rpress_delete_payment_note', 'rpress_ajax_delete_payment_no
  * @since 3.0
  */
 function rpress_orders_list_table_process_bulk_actions() {
-	// Bail if this method was called directly.
-	if (isset($_GET['page']) && $_GET['page'] === 'rpress-payment-history') {
-		$action = isset( $_REQUEST['action'] ) // WPCS: CSRF ok.
-		? sanitize_text_field( $_REQUEST['action'] )
-		: '';
-		// If this is a 'delete' action, the capability changes from edit to delete.
-		$cap = 'delete' === $action ? 'delete_shop_payments' : 'edit_shop_payments';
-		// Check the current user's capability.
-		if ( ! current_user_can( $cap ) ) {
-			return;
-		}
-		
-		// Bail if we aren't processing bulk actions.
-		if ( '-1' === $action ) {
-			return;
-		}
-		$ids = isset( $_GET['payment'] ) // WPCS: CSRF ok.
-			? $_GET['payment']
-			: false;
-		if ( ! is_array( $ids ) ) {
-			$ids = array( $ids );
-		}
-		if ( empty( $action ) ) {
-			return;
-		}
-		$ids = wp_parse_id_list( $ids );
-		foreach ( $ids as $id ) {
-			switch ( $action ) {
-				case 'trash':
-					rpress_trash_order( $id );
-					break;
-				case 'restore':
-					rpress_restore_order( $id );
-					break;
-				case 'delete':
-					rpress_delete_order( $id );
-					break;
-				case 'set-payment-status-paid':
-					rpress_update_payment_status( $id, 'complete' );
-					break;
-				case 'set-payment-status-pending':
-					rpress_update_payment_status( $id, 'pending' );
-					break;
-				case 'set-payment-status-processing':
-					rpress_update_payment_status( $id, 'processing' );
-					break;
-				case 'set-payment-status-failed':
-					rpress_update_payment_status( $id, 'failed' );
-					break;
-				case 'set-payment-status-refunded':
-					rpress_update_payment_status( $id, 'refunded' );
-					break;
-				case 'set-order-status-pending':
-					rpress_update_order_status( $id, 'pending' );
-					break;
-				case 'set-order-status-accepted':
-					rpress_update_order_status( $id, 'accepted' );
-					break;
-				case 'set-order-status-processing':
-					rpress_update_order_status( $id, 'processing' );
-					break;
-				case 'set-order-status-ready':
-					rpress_update_order_status( $id, 'ready' );
-					break;
-				case 'set-order-status-transit':
-					rpress_update_order_status( $id, 'transit' );
-					break;
-				
-				case 'set-order-status-cancelled':
-					rpress_update_order_status( $id, 'cancelled' );
-					break;
-				case 'set-order-status-completed':
-					rpress_update_order_status( $id, 'completed' );
-					break;
-				case 'resend-receipt':
-					rpress_email_purchase_receipt( $id, false );
-					break;
-			}
-			do_action( 'rpress_payments_table_do_bulk_action', $id, $action );
-		}
-		wp_safe_redirect( wp_get_referer() );
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	if ( 'rpress-payment-history' !== $page ) {
+		return;
 	}
+
+	$action = isset( $_REQUEST['action'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		? sanitize_text_field( wp_unslash( $_REQUEST['action'] ) )
+		: '';
+
+	// Bail if we aren't processing bulk actions.
+	if ( empty( $action ) || '-1' === $action ) {
+		return;
+	}
+
+	$nonce = isset( $_REQUEST['_wpnonce'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) )
+		: '';
+	$plural              = rpress_get_label_plural();
+	$bulk_nonce_actions  = array(
+		'bulk-' . $plural,
+		'bulk-' . strtolower( $plural ),
+		'bulk-' . sanitize_key( $plural ),
+		'bulk-payments',
+		'bulk-orders',
+	);
+	$has_valid_bulk_nonce = false;
+
+	foreach ( $bulk_nonce_actions as $nonce_action ) {
+		if ( ! empty( $nonce_action ) && wp_verify_nonce( $nonce, $nonce_action ) ) {
+			$has_valid_bulk_nonce = true;
+			break;
+		}
+	}
+
+	if ( ! $has_valid_bulk_nonce ) {
+		return;
+	}
+
+	// If this is a 'delete' action, the capability changes from edit to delete.
+	$cap = 'delete' === $action ? 'delete_shop_payments' : 'edit_shop_payments';
+	if ( ! current_user_can( $cap ) ) {
+		return;
+	}
+
+	$ids = isset( $_GET['payment'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		? $_GET['payment'] // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		: false;
+	if ( ! is_array( $ids ) ) {
+		$ids = array( $ids );
+	}
+
+	$ids = wp_parse_id_list( $ids );
+	foreach ( $ids as $id ) {
+		if ( ! current_user_can( $cap, $id ) ) {
+			continue;
+		}
+
+		switch ( $action ) {
+			case 'trash':
+				rpress_trash_order( $id );
+				break;
+			case 'restore':
+				rpress_restore_order( $id );
+				break;
+			case 'delete':
+				rpress_delete_order( $id );
+				break;
+			case 'set-payment-status-paid':
+				rpress_update_payment_status( $id, 'complete' );
+				break;
+			case 'set-payment-status-pending':
+				rpress_update_payment_status( $id, 'pending' );
+				break;
+			case 'set-payment-status-processing':
+				rpress_update_payment_status( $id, 'processing' );
+				break;
+			case 'set-payment-status-failed':
+				rpress_update_payment_status( $id, 'failed' );
+				break;
+			case 'set-payment-status-refunded':
+				rpress_update_payment_status( $id, 'refunded' );
+				break;
+			case 'set-order-status-pending':
+				rpress_update_order_status( $id, 'pending' );
+				break;
+			case 'set-order-status-accepted':
+				rpress_update_order_status( $id, 'accepted' );
+				break;
+			case 'set-order-status-processing':
+				rpress_update_order_status( $id, 'processing' );
+				break;
+			case 'set-order-status-ready':
+				rpress_update_order_status( $id, 'ready' );
+				break;
+			case 'set-order-status-transit':
+				rpress_update_order_status( $id, 'transit' );
+				break;
+			case 'set-order-status-cancelled':
+				rpress_update_order_status( $id, 'cancelled' );
+				break;
+			case 'set-order-status-completed':
+				rpress_update_order_status( $id, 'completed' );
+				break;
+			case 'resend-receipt':
+				rpress_email_purchase_receipt( $id, false );
+				break;
+		}
+
+		do_action( 'rpress_payments_table_do_bulk_action', $id, $action );
+	}
+
+	$redirect_url = wp_get_referer();
+	if ( empty( $redirect_url ) ) {
+		$redirect_url = admin_url( 'admin.php?page=rpress-payment-history' );
+	}
+
+	wp_safe_redirect( $redirect_url );
+	exit;
 }
 add_action( 'admin_init', 'rpress_orders_list_table_process_bulk_actions' );

@@ -326,7 +326,7 @@ function get_delivery_options($changeble)
   }
 
   // Assume the cookie 'service_time_text' is set to 'ASAP- 50 min'
-  $service_time_str = isset($_COOKIE['service_type']) ? $_COOKIE['service_type'] : '';
+  $service_time_str = isset($_COOKIE['service_time_text']) ? sanitize_text_field(wp_unslash($_COOKIE['service_time_text'])) : '';
 
   // Check if the string contains 'ASAP'
   if (strpos($service_time_str, 'ASAP') !== false) {
@@ -334,9 +334,6 @@ function get_delivery_options($changeble)
     $service_time_str = str_replace('ASAP', '', $service_time_str);
     // Trim any leading or trailing whitespace
     $service_time_str = __('ASAP', 'restropress') . $service_time_str;
-  } else {
-    $service_time_str = isset($_COOKIE['service_time_text']) ? $_COOKIE['service_time_text'] : '';
-
   }
   ob_start();
   ?>
@@ -380,7 +377,7 @@ function get_date_time_options($changeble)
   }
 
   // Assume the cookie 'service_time_text' is set to 'ASAP- 50 min'
-  $service_time_str = isset($_COOKIE['service_type']) ? $_COOKIE['service_type'] : '';
+  $service_time_str = isset($_COOKIE['service_time_text']) ? sanitize_text_field(wp_unslash($_COOKIE['service_time_text'])) : '';
 
   // Check if the string contains 'ASAP'
   if (strpos($service_time_str, 'ASAP') !== false) {
@@ -388,9 +385,6 @@ function get_date_time_options($changeble)
     $service_time_str = str_replace('ASAP', '', $service_time_str);
     // Trim any leading or trailing whitespace
     $service_time_str = __('ASAP', 'restropress') . $service_time_str;
-  } else {
-    $service_time_str = isset($_COOKIE['service_time_text']) ? $_COOKIE['service_time_text'] : '';
-
   }
   ob_start();
   ?>
@@ -851,11 +845,26 @@ function rpress_checkout_delivery_type($service_type, $service_time)
  */
 function rpress_pre_validate_order() {
 
-    $service_type = !empty($_COOKIE['service_type']) 
+    $service_type = !empty($_COOKIE['service_type'])
         ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) 
         : '';
 
-    $service_time_raw = !empty($_COOKIE['service_time']) 
+    $normalized_service_type = sanitize_key( $service_type );
+    $enabled_service = rpress_get_option( 'enable_service', 'delivery_and_pickup' );
+    $allowed_services = ( 'delivery_and_pickup' === $enabled_service ) ? array( 'delivery', 'pickup' ) : array( $enabled_service );
+    $allowed_services = array_map( 'sanitize_key', $allowed_services );
+
+    if ( empty( $normalized_service_type ) || ! in_array( $normalized_service_type, $allowed_services, true ) ) {
+        return array(
+            'status' => 'error',
+            'error_type' => 'service_type_not_set',
+            'error_msg' => __( 'Please select a service type.', 'restropress' ),
+        );
+    }
+
+    $service_type = $normalized_service_type;
+
+    $service_time_raw = !empty($_COOKIE['service_time'])
         ? sanitize_text_field(wp_unslash($_COOKIE['service_time'])) 
         : '';
 
@@ -872,13 +881,23 @@ function rpress_pre_validate_order() {
         $_COOKIE['service_date'] = $service_date;
     }
 
+    if ( ! rpress_is_store_open( $service_type, $service_date ) ) {
+        return array(
+            'status' => 'error',
+            'error_type' => 'service_closed',
+            'error_msg' => rpress_store_closed_message( $service_type ),
+        );
+    }
+
+    $service_time_hidden = function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $service_type );
+
     // ✅ Preparation Time
     $prep_time = (int) rpress_get_option('prep_time', 0) * 60;
 
     $current_time = current_time('timestamp') + $prep_time;
 
     // ❌ If service time not selected
-    if ( empty($service_time_raw) ) {
+    if ( empty($service_time_raw) && ! $service_time_hidden ) {
         return array(
             'status' => 'error',
             'error_type' => 'service_time_not_set',
@@ -886,7 +905,7 @@ function rpress_pre_validate_order() {
         );
     }
 
-    $service_time = strtotime($service_date . ' ' . $service_time_raw);
+    $service_time = empty( $service_time_raw ) ? 0 : strtotime($service_date . ' ' . $service_time_raw);
 
     /* ==============================
        Minimum Order Validation
@@ -941,7 +960,7 @@ function rpress_pre_validate_order() {
         $service_time_raw
     );
 
-    if ( $should_validate_time_slot && $service_time < $current_time && !$allow_asap ) {
+    if ( $should_validate_time_slot && ! $service_time_hidden && $service_time < $current_time && !$allow_asap ) {
 
         return array(
             'status' => 'error',
@@ -2214,7 +2233,7 @@ function rpress_store_closed_message($service_type)
  * Nessery cookies and   time slot for RPRESS
  * @since 3.2.3
  */
-function rpress_get_service_context(): array
+function rpress_get_service_context( $service_type_override = '' ): array
 {
 
   $context = [
@@ -2248,9 +2267,15 @@ function rpress_get_service_context(): array
     ? sanitize_text_field(wp_unslash($_COOKIE['service_date']))
     : '';
 
-  $context['delivery_address'] = isset($_COOKIE['branch_name'])
+  $delivery_address = isset($_COOKIE['branch_name'])
     ? sanitize_text_field(wp_unslash($_COOKIE['branch_name']))
-    : ($_COOKIE['delivery_address'] ?? '');
+    : (isset($_COOKIE['delivery_address']) ? sanitize_text_field(wp_unslash($_COOKIE['delivery_address'])) : '');
+
+  $context['delivery_address'] = apply_filters(
+    'rpress_service_context_delivery_address',
+    $delivery_address,
+    $context
+  );
 
   /* ---------------- Service Type ---------------- */
 
@@ -2265,6 +2290,11 @@ function rpress_get_service_context(): array
 
   if (!in_array($context['service_type'], $context['services'], true)) {
     $context['service_type'] = rpress_get_option('default_service', 'delivery');
+  }
+
+  $service_type_override = strtolower( sanitize_text_field( (string) $service_type_override ) );
+  if ( ! empty( $service_type_override ) && in_array( $service_type_override, $context['services'], true ) ) {
+    $context['service_type'] = $service_type_override;
   }
 
   $context['service_type'] = apply_filters(
@@ -2309,7 +2339,11 @@ function rpress_get_service_context(): array
   );
   /* ---------------- Store Open Check ---------------- */
 
-  if (!rpress_is_store_open($context['service_type'], $context['service_date'])) {
+  $service_date_for_checks = !empty($context['service_date_raw'])
+    ? rp_row_date($context['service_date_raw'], $context['service_type'])
+    : date_i18n('Y-m-d');
+
+  if (!rpress_is_store_open($context['service_type'], $service_date_for_checks)) {
     $context['is_store_open'] = false;
   }
 

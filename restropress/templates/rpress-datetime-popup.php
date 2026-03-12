@@ -8,6 +8,7 @@ $service_type   = $context['service_type'];
 $service_date   = $context['service_date'];
 $selected_time  = $context['selected_time'];
 $store_timings  = $context['store_timings'];
+$is_store_open  = $context['is_store_open'];
 
 
 
@@ -17,6 +18,9 @@ $store_timings  = $context['store_timings'];
 $asap_option        = rpress_get_option('enable_asap_option', '');
 $asap_option_only   = rpress_get_option('enable_asap_option_only', '');
 $button_style       = rpress_get_option('button_style', 'button');
+$has_store_timings  = is_array($store_timings) && !empty($store_timings);
+$closed_notice      = rpress_store_closed_message($service_type);
+$show_update_button = rpress_is_service_enabled( $service_type ) && $has_store_timings;
 
 $asap_text_key      = $service_type . '_asap_text';
 $delivery_asap_text = rpress_get_option($asap_text_key, '');
@@ -51,8 +55,14 @@ if ($asap_option_only == 1 && is_array($store_timings)) {
                     <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12 rpress-service-type-message">
                         <?php do_action('rpress_popup_service_time', $service_type); ?>
                     </div>
-                    <?php if(rpress_is_service_enabled($service_type)) : ?>
+                    <?php if ( empty( $store_timings ) || ! $is_store_open ) : ?>
                         <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
+                            <div class="alert alert-warning rpress-service-closed-message rp-store-timing-notice-row" data-service-type="<?php echo esc_attr( $service_type ); ?>">
+                                <span class="rp-store-timing-notice"><?php echo esc_html( $closed_notice ); ?></span>
+                            </div>
+                        </div>
+                    <?php elseif(rpress_is_service_enabled($service_type)) : ?>
+                        <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12 rpress-service-hours-row">
                             <?php
                             $time_label_text = ( 'pickup' === $service_type )
                                 ? apply_filters( 'rpress_pickup_time_string', __( 'Select a pickup time', 'restropress' ) )
@@ -69,8 +79,7 @@ if ($asap_option_only == 1 && is_array($store_timings)) {
                                 name="rpress_allowed_hours"
                                 aria-label="<?php echo esc_attr( $time_aria_label ); ?>"
                             >
-                                <?php if (is_array($store_timings)) : ?>
-                                
+                                <?php if ($has_store_timings) : ?>
                                     <?php foreach ($store_timings as $index => $time_slot) : ?>
 
                                         <?php
@@ -121,7 +130,7 @@ if ($asap_option_only == 1 && is_array($store_timings)) {
                                 <?php endif; ?>
                             </select>
                         </div>
-                     <?php endif; ?>                   
+                    <?php endif; ?>
                     <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
                         <?php do_action('rpress_before_service_time', $service_type); ?>
                     </div>
@@ -139,6 +148,7 @@ if ($asap_option_only == 1 && is_array($store_timings)) {
                     <button
                         type="submit"
                         class="rpress-editaddress-submit-btn <?php echo esc_attr($button_style); ?>"
+                        <?php echo $show_update_button ? '' : 'style="display:none;"'; ?>
                     >
                         <span class="rp-ajax-toggle-text">
                             <?php esc_html_e('Update', 'restropress'); ?>

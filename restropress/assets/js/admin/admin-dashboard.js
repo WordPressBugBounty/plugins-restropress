@@ -6,7 +6,8 @@ $(document).ready(function ($) {
         dataType: 'json',
         data: {
             action: 'revenue_graph_filter',
-            select_filter: 'monthly'
+            select_filter: 'monthly',
+            nonce: rpress_vars.reports_nonce
         },
         success: function (data) {
             setRevenueGraph(data, 'monthly');
@@ -22,6 +23,7 @@ $(document).ready(function ($) {
         data: {
             action: 'customers_data_filter',
             selected_option: 'monthly',
+            nonce: rpress_vars.reports_nonce
         },
         success: function (data) {
             $('#customer-data').text(data.customer_count);
@@ -38,7 +40,8 @@ $(document).ready(function ($) {
         dataType: 'json',
         data: {
             action: 'order_graph_filter',
-            select_filter: 'monthly'
+            select_filter: 'monthly',
+            nonce: rpress_vars.reports_nonce
         },
         success: function (data) {
             setOrderGraph(data, 'monthly');
@@ -55,7 +58,8 @@ $(document).ready(function ($) {
             dataType: 'json',
             data: {
                 action: 'revenue_graph_filter',
-                select_filter: selectedValue
+                select_filter: selectedValue,
+                nonce: rpress_vars.reports_nonce
             },
             success: function (data) {
                 setRevenueGraph(data, selectedValue);
@@ -74,6 +78,7 @@ $(document).ready(function ($) {
             data: {
                 action: 'customers_data_filter',
                 selected_option: selectedOption,
+                nonce: rpress_vars.reports_nonce
             },
             success: function (data) {
                 $('#customer-data').text(data.customer_count);
@@ -94,7 +99,8 @@ $(document).ready(function ($) {
             dataType: 'json',
             data: {
                 action: 'order_graph_filter',
-                select_filter: selectedValue
+                select_filter: selectedValue,
+                nonce: rpress_vars.reports_nonce
             },
             success: function (data) {
                 setOrderGraph(data, selectedValue);

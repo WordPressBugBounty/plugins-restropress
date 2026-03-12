@@ -1,5 +1,5 @@
 <?php 
-	$paged = ( isset( $_GET['paged'] ) AND !empty( $_GET['paged'] ) ) ? sanitize_text_field( $_GET['paged'] ): 1 ;
+	$paged = ( isset( $_GET['paged'] ) && ! empty( $_GET['paged'] ) ) ? absint( wp_unslash( $_GET['paged'] ) ) : 1;
     $args = array(  
         'post_type'         => 'rpress_payment',
         'post_status'       => 'any',
@@ -58,7 +58,7 @@
                     				<?php endif ;?>
                     				<div class="rpress-order-type rpress-lable-txt"><span class="rp-bold-hs"><?php esc_html_e('Order Type :','restropress' ); ?></span> <?php echo esc_html( $service_type ); ?></div>
                     				<div class="rpess-view-details">
-                    					<a href="#" class="rpress-view-order-btn" data-order-id="<?php echo esc_attr__( $payment->ID ); ?>">
+                    					<a href="#" class="rpress-view-order-btn" data-order-id="<?php echo esc_attr( $payment->ID ); ?>">
                                             <span class="rp-ajax-toggle-text">
                                                 <?php esc_html_e('View Details', 'restropress') ?>
                                             </span> 

@@ -109,6 +109,7 @@ if ( ! is_user_logged_in() ) {
                         </div>
                         <div class="box-body">
                             <form method="POST" class="profile-form-wrap">
+                                <?php wp_nonce_field( 'rpress_user_profile_update', 'rpress_user_profile_nonce' ); ?>
                                 <div class="row">
                                     <div class="col-6">
                                         <div class="input-wrap mb-2">
@@ -369,6 +370,7 @@ if ( ! is_user_logged_in() ) {
                                     </div>
                                     <div class="box-body">
                                         <form method="POST" class="profile-form-wrap">
+                                            <?php wp_nonce_field( 'rpress_user_address_update', 'rpress_user_address_nonce' ); ?>
                                             <div class="row">
                                                 <div class="col-6">
                                                     <div class="input-wrap mb-2">
@@ -508,12 +510,19 @@ if ( ! is_user_logged_in() ) {
 </div>
     <?php
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_profile_form']) ) {
+if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['submit_profile_form'] ) ) {
+    if ( ! is_user_logged_in() ) {
+        wp_die( esc_html__( 'You must be logged in to update your profile.', 'restropress' ) );
+    }
+    $profile_nonce = isset( $_POST['rpress_user_profile_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_user_profile_nonce'] ) ) : '';
+    if ( ! wp_verify_nonce( $profile_nonce, 'rpress_user_profile_update' ) ) {
+        wp_die( esc_html__( 'Security check failed. Please refresh and try again.', 'restropress' ) );
+    }
     // Get submitted form data
-    $new_user_fname = sanitize_text_field( $_POST['first_name']);
-    $new_user_lname = sanitize_text_field( $_POST['last_name']);
-    $new_user_email = sanitize_email( $_POST['email']);
-    $new_user_phone = sanitize_text_field( $_POST['phone']);
+    $new_user_fname = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+    $new_user_lname = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+    $new_user_email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+    $new_user_phone = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
     // Update user data
     $current_user = wp_get_current_user();
     $user_id = $current_user->ID;
@@ -539,7 +548,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_profile_form'])
 	echo '<script>window.location.href = "' . esc_url($_SERVER['REQUEST_URI']) . '";</script>';
     exit;
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_user_address'])) {
+if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['submit_user_address'] ) ) {
+    if ( ! is_user_logged_in() ) {
+        wp_die( esc_html__( 'You must be logged in to update your address.', 'restropress' ) );
+    }
+    $address_nonce = isset( $_POST['rpress_user_address_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_user_address_nonce'] ) ) : '';
+    if ( ! wp_verify_nonce( $address_nonce, 'rpress_user_address_update' ) ) {
+        wp_die( esc_html__( 'Security check failed. Please refresh and try again.', 'restropress' ) );
+    }
     // Get current user ID
     $user_id = get_current_user_id();
     // Verify user ID
@@ -554,18 +570,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_user_address'])
         $existing_addresses = array(); // Initialize as empty array if no addresses exist
     }
     // Get form data
-    $firstName      = sanitize_text_field($_POST['first_name']);
-    $lastName       = sanitize_text_field($_POST['last_name']);
-    $phone          = sanitize_text_field($_POST['phone']);
-    $pincode        = sanitize_text_field($_POST['pincode']);
-    $street_address = sanitize_text_field($_POST['address']);
-    $apt_suite      = sanitize_text_field($_POST['apt_suite']);
-    $city           = sanitize_text_field($_POST['city']);
-    $addressType    = sanitize_text_field($_POST['address_type']);
+    $firstName      = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+    $lastName       = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+    $phone          = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
+    $pincode        = isset( $_POST['pincode'] ) ? sanitize_text_field( wp_unslash( $_POST['pincode'] ) ) : '';
+    $street_address = isset( $_POST['address'] ) ? sanitize_text_field( wp_unslash( $_POST['address'] ) ) : '';
+    $apt_suite      = isset( $_POST['apt_suite'] ) ? sanitize_text_field( wp_unslash( $_POST['apt_suite'] ) ) : '';
+    $city           = isset( $_POST['city'] ) ? sanitize_text_field( wp_unslash( $_POST['city'] ) ) : '';
+    $addressType    = isset( $_POST['address_type'] ) ? sanitize_text_field( wp_unslash( $_POST['address_type'] ) ) : '';
     $isDefault      = isset($_POST['default_address']) ? 1 : 0;
     // If edit index is provided, update the address, otherwise add a new one
-    if ( $_POST['edit_user_address_index'] != "" ) {
-        $edit_index = intval( $_POST['edit_user_address_index'] );
+    if ( isset( $_POST['edit_user_address_index'] ) && '' !== $_POST['edit_user_address_index'] ) {
+        $edit_index = intval( wp_unslash( $_POST['edit_user_address_index'] ) );
     
         if ( isset( $existing_addresses[$edit_index] ) ) {
     

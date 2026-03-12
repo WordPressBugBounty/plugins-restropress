@@ -381,20 +381,26 @@ class RestroPress_Addon_Updater {
 	}
 	public function show_changelog() {
 		// global $edd_plugin_data;
-		if( empty( $_REQUEST['edd_sl_action'] ) || 'view_plugin_changelog' != $_REQUEST['edd_sl_action'] ) {
+		$action = isset( $_REQUEST['edd_sl_action'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['edd_sl_action'] ) ) : '';
+		if ( empty( $action ) || 'view_plugin_changelog' !== $action ) {
 			return;
 		}
-		if( empty( $_REQUEST['plugin'] ) ) {
+		$plugin = isset( $_REQUEST['plugin'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['plugin'] ) ) : '';
+		$slug   = isset( $_REQUEST['slug'] ) ? sanitize_key( wp_unslash( $_REQUEST['slug'] ) ) : '';
+		if ( empty( $plugin ) ) {
 			return;
 		}
-		if( empty( $_REQUEST['slug'] ) ) {
+		if ( empty( $slug ) ) {
 			return;
 		}
 		if( ! current_user_can( 'update_plugins' ) ) {
 			wp_die( esc_html__( 'You do not have permission to install plugin updates', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 		}
 		$update_cache = get_site_transient( 'update_plugins' );
-		$version_info = $update_cache->response[$_REQUEST['plugin']];
+		if ( empty( $update_cache->response ) || ! is_array( $update_cache->response ) || ! isset( $update_cache->response[ $plugin ] ) ) {
+			return;
+		}
+		$version_info = $update_cache->response[ $plugin ];
 		if ( isset( $version_info->sections ) ) {
 			$sections = $this->convert_object_to_array( $version_info->sections );
 			if ( ! empty( $sections['changelog'] ) ) {

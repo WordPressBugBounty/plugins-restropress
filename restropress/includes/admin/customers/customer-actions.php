@@ -217,6 +217,11 @@ add_action( 'rpress_customer-add-email', 'rpress_add_customer_email', 10, 1 );
  * @return void
  */
 function rpress_remove_customer_email() {
+	$customer_edit_role = apply_filters( 'rpress_edit_customers_role', 'edit_shop_payments' );
+	if ( ! is_admin() || ! current_user_can( $customer_edit_role ) ) {
+		wp_die( esc_html__( 'You do not have permission to edit this customer.', 'restropress' ) );
+	}
+
 	if ( empty( $_GET['id'] ) || ! is_numeric( $_GET['id'] ) ) {
 		return false;
 	}
@@ -226,18 +231,18 @@ function rpress_remove_customer_email() {
 	if ( empty( $_GET['_wpnonce'] ) ) {
 		return false;
 	}
-	$nonce = sanitize_text_field( $_GET['_wpnonce'] );
+	$nonce = sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) );
 	if ( ! wp_verify_nonce( $nonce, 'rpress-remove-customer-email' ) ) {
 		wp_die( esc_html__( 'Nonce verification failed', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
-	$customer = new RPRESS_Customer( absint( $_GET['id'] ) );
-	if ( $customer->remove_email( sanitize_email( $_GET['email'] ) ) ) {
+	$customer = new RPRESS_Customer( absint( wp_unslash( $_GET['id'] ) ) );
+	if ( $customer->remove_email( sanitize_email( wp_unslash( $_GET['email'] ) ) ) ) {
 		$url = add_query_arg( 'rpress-message', 'email-removed', admin_url( 'admin.php?page=rpress-customers&view=overview&id=' . $customer->id ) );
 		$user          = wp_get_current_user();
 		$user_login    = ! empty( $user->user_login ) ? $user->user_login : 'RPRESSBot';
 		$customer_note = sprintf( 
 		 /* translators: 1: text, 2: admin url */
-			esc_html__( 'Email address %1$s removed by %2$s', 'restropress' ), sanitize_email( $_GET['email'] ), $user_login );
+			esc_html__( 'Email address %1$s removed by %2$s', 'restropress' ), sanitize_email( wp_unslash( $_GET['email'] ) ), $user_login );
 		$customer->add_note( $customer_note );
 	} else {
 		$url = add_query_arg( 'rpress-message', 'email-remove-failed', admin_url( 'admin.php?page=rpress-customers&view=overview&id=' . $customer->id ) );
@@ -254,6 +259,11 @@ add_action( 'rpress_customer-remove-email', 'rpress_remove_customer_email', 10 )
  * @return void
  */
 function rpress_set_customer_primary_email() {
+	$customer_edit_role = apply_filters( 'rpress_edit_customers_role', 'edit_shop_payments' );
+	if ( ! is_admin() || ! current_user_can( $customer_edit_role ) ) {
+		wp_die( esc_html__( 'You do not have permission to edit this customer.', 'restropress' ) );
+	}
+
 	if ( empty( $_GET['id'] ) || ! is_numeric( $_GET['id'] ) ) {
 		return false;
 	}
@@ -263,19 +273,19 @@ function rpress_set_customer_primary_email() {
 	if ( empty( $_GET['_wpnonce'] ) ) {
 		return false;
 	}
-	$nonce = sanitize_text_field( $_GET['_wpnonce'] );
+	$nonce = sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) );
 	if ( ! wp_verify_nonce( $nonce, 'rpress-set-customer-primary-email' ) ) {
 		wp_die( esc_html__( 'Nonce verification failed', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
-	$customer = new RPRESS_Customer( absint( $_GET['id'] ) );
-	if ( $customer->set_primary_email( sanitize_email( $_GET['email'] ) ) ){
+	$customer = new RPRESS_Customer( absint( wp_unslash( $_GET['id'] ) ) );
+	if ( $customer->set_primary_email( sanitize_email( wp_unslash( $_GET['email'] ) ) ) ){
 		$url = add_query_arg( 'rpress-message', 'primary-email-updated', admin_url( 'admin.php?page=rpress-customers&view=overview&id=' . $customer->id ) );
 			/* translators: 1: text, 2: admin url */
 		$user          = wp_get_current_user();
 		$user_login    = ! empty( $user->user_login ) ? $user->user_login : 'RPRESSBot';
 		$customer_note = sprintf
 		 /* translators: 1: text, 2: admin url */
-		( esc_html__( 'Email address %1$s set as primary by %2$s', 'restropress' ), sanitize_email( $_GET['email'] ), $user_login );
+		( esc_html__( 'Email address %1$s set as primary by %2$s', 'restropress' ), sanitize_email( wp_unslash( $_GET['email'] ) ), $user_login );
 		$customer->add_note( $customer_note );
 	} else {
 		$url = add_query_arg( 'rpress-message', 'primary-email-failed', admin_url( 'admin.php?page=rpress-customers&view=overview&id=' . $customer->id ) );
@@ -446,17 +456,22 @@ add_action( 'rpress_disconnect-userid', 'rpress_disconnect_customer_user_id', 10
  * @return void
  */
 function rpress_process_admin_user_verification() {
+	$customer_edit_role = apply_filters( 'rpress_edit_customers_role', 'edit_shop_payments' );
+	if ( ! is_admin() || ! current_user_can( $customer_edit_role ) ) {
+		wp_die( esc_html__( 'You do not have permission to verify this customer.', 'restropress' ) );
+	}
+
 	if ( empty( $_GET['id'] ) || ! is_numeric( $_GET['id'] ) ) {
 		return false;
 	}
 	if ( empty( $_GET['_wpnonce'] ) ) {
 		return false;
 	}
-	$nonce = sanitize_text_field( $_GET['_wpnonce'] );
+	$nonce = sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) );
 	if ( ! wp_verify_nonce( $nonce, 'rpress-verify-user' ) ) {
 		wp_die( esc_html__( 'Nonce verification failed', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
-	$customer = new RPRESS_Customer( absint( $_GET['id'] ) );
+	$customer = new RPRESS_Customer( absint( wp_unslash( $_GET['id'] ) ) );
 	rpress_set_user_to_verified( $customer->user_id );
 	$url = add_query_arg( 'rpress-message', 'user-verified', admin_url( 'admin.php?page=rpress-customers&view=overview&id=' . $customer->id ) );
 	wp_safe_redirect( esc_url( $url ) );

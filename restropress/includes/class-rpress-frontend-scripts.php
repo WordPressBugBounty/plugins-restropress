@@ -219,6 +219,7 @@ class RP_Frontend_Scripts
     self::enqueue_script('swl-js');
     $user_params = array(
       'ajaxurl' => rpress_get_ajax_url(),
+      'address_nonce' => wp_create_nonce( 'rpress-user-address' ),
     );
     wp_register_script('user-dashboard-scripts', plugin_dir_url(RP_PLUGIN_FILE) . 'assets/js/user-dashboard.js', array('jquery'), RP_VERSION, true);
     wp_localize_script('user-dashboard-scripts', 'users', $user_params);

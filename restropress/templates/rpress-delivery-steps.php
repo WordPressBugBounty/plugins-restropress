@@ -12,16 +12,48 @@ $context = rpress_get_service_context();
     'services' => $services,
     'store_timings' => $store_timings,
     'is_store_open' => $is_store_open,
+    'service_enabled' => $enabled_service,
 ] = $context;
+
+$preorder_enabled      = false;
+$show_service_tabs      = false;
+$closed_message_display = '';
+
+if ( class_exists( 'RP_StoreTiming_Settings' ) ) {
+    $location_id = isset( $_COOKIE['branch'] ) ? absint( wp_unslash( $_COOKIE['branch'] ) ) : 0;
+
+    if ( $location_id <= 0 ) {
+        $rpress_settings = get_option( 'rpress_settings', array() );
+        $location_id     = ! empty( $rpress_settings['default_location'] ) ? absint( $rpress_settings['default_location'] ) : 0;
+    }
+
+    if ( $location_id <= 0 ) {
+        $multi_location_settings = get_option( 'rp_multi_location', array() );
+        $location_id             = ! empty( $multi_location_settings['default_location'] ) ? absint( $multi_location_settings['default_location'] ) : 0;
+    }
+
+    $timing_settings  = RP_StoreTiming_Settings::rpress_timing_options( $location_id );
+    $preorder_enabled = ( 'delivery' === $current_service && ! empty( $timing_settings['pre_order'] ) )
+        || ( 'pickup' === $current_service && ! empty( $timing_settings['pre_order_pickup'] ) );
+}
+
+if ( 'delivery_and_pickup' === $enabled_service ) {
+    // Show both tabs and let each tab render its own open/closed state.
+    $show_service_tabs = true;
+} else {
+    if ( ( empty( $store_timings ) || ! $is_store_open ) && ! $preorder_enabled ) {
+        $closed_message_display = rpress_store_closed_message( $current_service );
+    } else {
+        $show_service_tabs = true;
+    }
+}
 ?>
 <div class="rpress-delivery-wrap">
-    <?php if (empty($store_timings) || !$is_store_open): ?>
+    <?php if ( ! $show_service_tabs && ! empty( $closed_message_display ) ) : ?>
         <div class="alert alert-warning">
-            <?php echo wp_kses_post(
-                rpress_store_closed_message($current_service)
-            ); ?>
+            <?php echo wp_kses_post( $closed_message_display ); ?>
         </div>
-    <?php else: ?>
+    <?php elseif ( $show_service_tabs ) : ?>
         <div class="rpress-row">
             <!-- Error Message -->
             <div class="alert alert-warning rpress-errors-wrap disabled"></div>

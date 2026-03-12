@@ -18,11 +18,21 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @return void
  */
 function rpress_process_actions() {
+	if ( ! is_admin() || ! is_user_logged_in() ) {
+		return;
+	}
+
 	if ( isset( $_POST['rpress-action'] ) ) {
-		do_action( 'rpress_' . sanitize_text_field( $_POST['rpress-action'] ), rpress_sanitize_array( $_POST ) );
+		$action = sanitize_key( wp_unslash( $_POST['rpress-action'] ) );
+		if ( ! empty( $action ) ) {
+			do_action( 'rpress_' . $action, rpress_sanitize_array( $_POST ) );
+		}
 	}
 	if ( isset( $_GET['rpress-action'] ) ) {
-		do_action( 'rpress_' . sanitize_text_field( $_GET['rpress-action'] ), rpress_sanitize_array( $_GET ) );
+		$action = sanitize_key( wp_unslash( $_GET['rpress-action'] ) );
+		if ( ! empty( $action ) ) {
+			do_action( 'rpress_' . $action, rpress_sanitize_array( $_GET ) );
+		}
 	}
 }
 add_action( 'admin_init', 'rpress_process_actions' );

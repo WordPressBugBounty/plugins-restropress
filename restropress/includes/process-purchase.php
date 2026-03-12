@@ -30,16 +30,42 @@ function rpress_process_purchase_form() {
 		// Validate the form $_POST data
 		$valid_data = rpress_purchase_form_validate_fields();
 
-		// Check cookies for service type and service time
-		$service_type = isset( $_COOKIE['service_type'] ) ? sanitize_text_field( $_COOKIE['service_type'] ) : '';
-		$service_time = isset( $_COOKIE['service_time'] ) ? sanitize_text_field( $_COOKIE['service_time'] ) : '';
-
+		// Validate selected service context from cookies.
+		$service_type = isset( $_POST['rpress_service_type'] ) ? sanitize_key( wp_unslash( $_POST['rpress_service_type'] ) ) : '';
 		if ( empty( $service_type ) ) {
+			$service_type = isset( $_COOKIE['service_type'] ) ? sanitize_key( wp_unslash( $_COOKIE['service_type'] ) ) : '';
+		}
+		$service_time = isset( $_POST['rpress_service_time'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_service_time'] ) ) : '';
+		if ( empty( $service_time ) ) {
+			$service_time = isset( $_COOKIE['service_time'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_time'] ) ) : '';
+		}
+		$service_date = isset( $_POST['rpress_service_date'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_service_date'] ) ) : '';
+		if ( empty( $service_date ) ) {
+			$service_date = isset( $_COOKIE['service_date'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_date'] ) ) : '';
+		}
+		$enabled_service = rpress_get_option( 'enable_service', 'delivery_and_pickup' );
+		$allowed_services = ( 'delivery_and_pickup' === $enabled_service ) ? array( 'delivery', 'pickup' ) : array( $enabled_service );
+		$allowed_services = array_map( 'sanitize_key', $allowed_services );
+
+		if ( empty( $service_type ) || ! in_array( $service_type, $allowed_services, true ) ) {
 			$valid_data = false;
 			rpress_set_error( 'missing_service_type', __( 'Please select a service type.', 'restropress' ) );
 		}
 
-		if ( empty( $service_time ) ) {
+		if ( ! empty( $service_type ) ) {
+			if ( empty( $service_date ) ) {
+				$service_date = rp_row_date( '', $service_type );
+			}
+
+			if ( ! rpress_is_store_open( $service_type, $service_date ) ) {
+				$valid_data = false;
+				// Reuse checkout-wide order error key to avoid duplicate store-closed notices.
+				rpress_set_error( 'order_error', rpress_store_closed_message( $service_type ) );
+			}
+		}
+
+		$service_time_hidden = ! empty( $service_type ) && function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $service_type );
+		if ( empty( $service_time ) && ! $service_time_hidden ) {
 			$valid_data = false;
 			rpress_set_error( 'missing_service_time', __( 'Please select a service time.', 'restropress' ) );
 		}
@@ -202,7 +228,9 @@ function rpress_process_purchase_login() {
 			do_action( 'rpress_ajax_checkout_errors' );
 			rpress_die();
 		} else {
-			wp_redirect( $_SERVER['HTTP_REFERER'] ); exit;
+			$redirect_url = wp_get_referer() ? wp_get_referer() : rpress_get_checkout_uri();
+			wp_safe_redirect( $redirect_url );
+			exit;
 		}
 	}
 	rpress_log_user_in( $user_data['user_id'], $user_data['user_login'], $user_data['user_pass'] );
@@ -210,7 +238,8 @@ function rpress_process_purchase_login() {
 		echo 'success';
 		rpress_die();
 	} else {
-		wp_redirect( rpress_get_checkout_uri( $_SERVER['QUERY_STRING'] ) );
+		$query_string = isset( $_SERVER['QUERY_STRING'] ) ? sanitize_text_field( wp_unslash( $_SERVER['QUERY_STRING'] ) ) : '';
+		wp_safe_redirect( rpress_get_checkout_uri( $query_string ) );
 	}
 }
 add_action( 'wp_ajax_rpress_process_checkout_login', 'rpress_process_purchase_login' );
@@ -310,7 +339,11 @@ function rpress_validate_order() {
 * @return bool
 */
 function rpress_validate_service_type() {
-	if( empty( $_COOKIE['service_type'] ) ) {
+	$service_type = isset( $_POST['rpress_service_type'] ) ? sanitize_key( wp_unslash( $_POST['rpress_service_type'] ) ) : '';
+	if ( empty( $service_type ) ) {
+		$service_type = isset( $_COOKIE['service_type'] ) ? sanitize_key( wp_unslash( $_COOKIE['service_type'] ) ) : '';
+	}
+	if( empty( $service_type ) ) {
 		rpress_set_error( 'empty_service_type', __( 'Please select a Service.', 'restropress' ) );
 	} else {
 		return true;

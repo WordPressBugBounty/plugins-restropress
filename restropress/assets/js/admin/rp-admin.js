@@ -152,7 +152,7 @@ jQuery(function ($) {
       var payment_id = $(this)
         .data('payment-id');
       $('#print-display-area-' + payment_id)
-        .load(ajaxurl + '?action=rp_print_payment_data&payment_id=' + payment_id, function () {
+        .load(ajaxurl + '?action=rp_print_payment_data&payment_id=' + payment_id + '&security=' + encodeURIComponent(rpress_vars.order_nonce), function () {
           var printContent = document.getElementById('print-display-area-' + payment_id);
           var WinPrint = window.open('', '', 'width=900,height=650');
           WinPrint.document.write(printContent.innerHTML);
@@ -1008,6 +1008,7 @@ jQuery(document)
               action: 'rpress_insert_payment_note',
               payment_id: $(this)
                 .data('payment-id'),
+              security: rpress_vars.payment_note_nonce,
               note: $('#rpress-payment-note')
                 .val()
             };
@@ -1051,6 +1052,7 @@ jQuery(document)
                 action: 'rpress_delete_payment_note',
                 payment_id: $(this)
                   .data('payment-id'),
+                security: rpress_vars.payment_note_nonce,
                 note_id: $(this)
                   .data('note-id')
               };
@@ -1502,7 +1504,7 @@ jQuery(document)
           .val();
         var data = {
           action: 'rpress_save_bulk_edit',
-          rpress_bulk_nonce: $post_ids,
+          rpress_bulk_nonce: rpress_vars.bulk_edit_nonce,
           post_ids: $post_ids,
           price: $price
         };
@@ -2396,7 +2398,8 @@ jQuery(function ($) {
             $.ajax({
               type: 'POST',
               data: {
-                action: 'rpress_check_new_orders'
+                action: 'rpress_check_new_orders',
+                security: rpress_vars.check_new_orders_nonce
               },
               url: ajaxurl,
               success: function (response) {

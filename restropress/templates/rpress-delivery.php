@@ -4,13 +4,17 @@
  * Context-driven (no cookies, no recomputation)
  */
 
-$context = rpress_get_service_context();
+$active_context = rpress_get_service_context();
+$context        = rpress_get_service_context( 'delivery' );
 
 [
-    'service_type'   => $current_service,
+    'service_type'   => $service_type,
     'store_timings'  => $store_timings,
     'selected_time'  => $selected_time,
+    'is_store_open'  => $is_store_open,
 ] = $context;
+
+$current_service = $active_context['service_type'];
 ?>
 
 <?php $delivery_pane_classes = 'tab-pane fade delivery-settings-wrapper'; ?>
@@ -24,10 +28,12 @@ $context = rpress_get_service_context();
      aria-labelledby="nav-delivery-tab">
 
     <div class="rpress-delivery-time-wrap rpress-time-wrap">
-
-        <?php do_action('rpress_before_service_time', 'delivery'); ?>
-
-        <?php if (rpress_is_service_enabled('delivery')) : ?>
+        <?php if ( empty( $store_timings ) || ! $is_store_open ) : ?>
+            <div class="alert alert-warning rpress-service-closed-message">
+                <?php echo esc_html( rpress_store_closed_message( 'delivery' ) ); ?>
+            </div>
+        <?php elseif (rpress_is_service_enabled('delivery')) : ?>
+            <?php do_action('rpress_before_service_time', 'delivery'); ?>
 
             <div class="delivery-time-text">
                 <?php
@@ -108,9 +114,7 @@ $context = rpress_get_service_context();
 
             </select>
 
+            <?php do_action('rpress_after_service_time', 'delivery'); ?>
         <?php endif; ?>
-
-        <?php do_action('rpress_after_service_time', 'delivery'); ?>
-
     </div>
 </div>

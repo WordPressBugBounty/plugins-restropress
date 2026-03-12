@@ -217,7 +217,8 @@ function rpress_fetch_items() {
 	$url = 'https://www.restropress.com/wp-json/restropress-server/';
 	$version = '1.0';
 	$remote_url = $url . 'v' . $version;
-	$feed = wp_remote_get( esc_url_raw( $remote_url ), array( 'sslverify' => false ) );
+	$verify_ssl = (bool) apply_filters( 'rpress_remote_request_verify_ssl', true );
+	$feed = wp_remote_get( esc_url_raw( $remote_url ), array( 'sslverify' => $verify_ssl ) );
 	$items = array();
 	if ( ! is_wp_error( $feed ) ) {
 		if ( isset( $feed['body'] ) && strlen( $feed['body'] ) > 0 ) {
