@@ -548,23 +548,36 @@ class RP_AJAX {
     $allowed_services = ( 'delivery_and_pickup' === $enabled_service ) ? array( 'delivery', 'pickup' ) : array( $enabled_service );
     $allowed_services = array_map( 'sanitize_key', $allowed_services );
     if ( empty( $service_type ) || ! in_array( $service_type, $allowed_services, true ) ) {
-      wp_send_json_error(
-        array(
-          'status' => 'error',
-          'error_msg' => __( 'Please select a service type.', 'restropress' ),
-        )
-      );
+      if ( 'delivery_and_pickup' === $enabled_service ) {
+        $configured_default = sanitize_key( (string) rpress_get_option( 'default_service', 'delivery' ) );
+        $service_type = in_array( $configured_default, $allowed_services, true )
+          ? $configured_default
+          : ( ! empty( $allowed_services ) ? (string) reset( $allowed_services ) : 'delivery' );
+      } else {
+        $service_type = sanitize_key( (string) $enabled_service );
+      }
+
+      if ( empty( $service_type ) || ! in_array( $service_type, $allowed_services, true ) ) {
+        wp_send_json_error(
+          array(
+            'status' => 'error',
+            'error_msg' => __( 'Please select a service type.', 'restropress' ),
+          )
+        );
+      }
     }
     if ( empty( $selected_date ) ) {
-      wp_send_json_error(
-        array(
-          'status' => 'error',
-          'error_msg' => __( 'Please select a service date.', 'restropress' ),
-        )
-      );
+      $selected_date = rpress_get_first_available_service_date( $service_type, '' );
+    } else {
+      $selected_date_ts = strtotime( $selected_date );
+      if ( false === $selected_date_ts ) {
+        $selected_date = rpress_get_first_available_service_date( $service_type, '' );
+      } else {
+        $selected_date = date_i18n( 'Y-m-d', $selected_date_ts );
+      }
     }
-    $selected_date_ts = strtotime( $selected_date );
-    if ( false === $selected_date_ts ) {
+
+    if ( empty( $selected_date ) ) {
       wp_send_json_error(
         array(
           'status' => 'error',
@@ -572,30 +585,46 @@ class RP_AJAX {
         )
       );
     }
-    $selected_date = date_i18n( 'Y-m-d', $selected_date_ts );
+    $selected_date = rpress_get_first_available_service_date( $service_type, $selected_date );
     $service_time_hidden = function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $service_type );
+    $allow_asap = ! empty( rpress_get_option( 'enable_asap_option' ) );
+    $available_slots = rpress_get_available_service_slots( $service_type, $selected_date, true );
     $service_time = ! empty( $selected_time )
       ? $selected_time
       : ( isset( $_COOKIE['service_time'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_time'] ) ) : '' );
-    if ( ! $service_time_hidden && empty( $service_time ) ) {
-      wp_send_json_error(
-        array(
-          'status' => 'error',
-          'error_msg' => __( 'Please select a service time.', 'restropress' ),
-        )
-      );
-    }
     if ( ! rpress_is_store_open( $service_type, $selected_date ) ) {
       $response = array( 'status' => 'error', 'error_msg' => rpress_store_closed_message( $service_type ) );
       wp_send_json_error( $response );
       die();
     }
-    if ( ! $service_time_hidden && ! empty( $service_time ) ) {
-      $allow_asap = rpress_get_option( 'enable_asap_option' );
+    if ( ! $service_time_hidden ) {
+      $prep_time  = (int) rpress_get_option( 'prep_time', 0 ) * 60;
+      $current_time = current_time( 'timestamp' ) + $prep_time;
+      $service_time = rpress_match_service_time_to_slot( $service_time, $available_slots, $allow_asap );
+      if ( empty( $service_time ) ) {
+        $service_time = rpress_get_next_available_service_time( $selected_date, $available_slots, $current_time );
+      }
+      if ( empty( $service_time ) ) {
+        wp_send_json_error(
+          array(
+            'status' => 'error',
+            'error_msg' => __( 'Please select a service time.', 'restropress' ),
+          )
+        );
+      }
+    }
+    if ( ! $service_time_hidden && ! empty( $service_time ) && ! $allow_asap ) {
       $prep_time  = (int) rpress_get_option( 'prep_time', 0 ) * 60;
       $current_time = current_time( 'timestamp' ) + $prep_time;
       $service_time_ts = strtotime( $selected_date . ' ' . $service_time );
-      if ( false !== $service_time_ts && $service_time_ts < $current_time && ! $allow_asap ) {
+      if ( false !== $service_time_ts && $service_time_ts < $current_time ) {
+        $fallback_service_time = rpress_get_next_available_service_time( $selected_date, $available_slots, $current_time );
+        if ( ! empty( $fallback_service_time ) ) {
+          $service_time = $fallback_service_time;
+          $service_time_ts = strtotime( $selected_date . ' ' . $service_time );
+        }
+      }
+      if ( false === $service_time_ts || $service_time_ts < $current_time ) {
         wp_send_json_error(
           array(
             'status' => 'error',
@@ -1509,6 +1538,16 @@ class RP_AJAX {
   public static function activate_addon_license() {
 
     check_ajax_referer( 'activate-license', 'security' );
+
+    if ( ! self::can_manage_addon_licenses() ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'You do not have permission to manage addon licenses.', 'restropress' ),
+        ),
+        403
+      );
+    }
+
     // listen for our activate button to be clicked
     if( isset( $_POST['license_key'] ) ) {
       // Get the license from the user
@@ -1519,7 +1558,15 @@ class RP_AJAX {
       // Name of the addon (Print Receipts)
       $name = isset( $_POST['product_name'] ) ? sanitize_text_field( $_POST['product_name'] )  : '';
       // Key to be saved in to DB
-      $license_key = isset( $_POST['license_key'] ) ? sanitize_text_field( $_POST['license_key'] ): '';
+      $license_key = isset( $_POST['license_key'] ) ? self::sanitize_addon_license_option_key( wp_unslash( $_POST['license_key'] ) ) : '';
+      if ( empty( $license_key ) ) {
+        wp_send_json_error(
+          array(
+            'message' => esc_html__( 'Invalid license key reference.', 'restropress' ),
+          ),
+          400
+        );
+      }
       // data to send in our API request
       $api_params = array(
         'edd_action' => 'activate_license',
@@ -1596,8 +1643,26 @@ class RP_AJAX {
   public static function deactivate_addon_license() {
 
     check_ajax_referer( 'deactivate-license', 'security' );
+
+    if ( ! self::can_manage_addon_licenses() ) {
+      wp_send_json_error(
+        array(
+          'message' => esc_html__( 'You do not have permission to manage addon licenses.', 'restropress' ),
+        ),
+        403
+      );
+    }
+
     if( isset($_POST['license_key']) ) {
-      $license_key = isset( $_POST['license_key'] ) ? sanitize_text_field( $_POST['license_key'] ) : '';
+      $license_key = isset( $_POST['license_key'] ) ? self::sanitize_addon_license_option_key( wp_unslash( $_POST['license_key'] ) ) : '';
+      if ( empty( $license_key ) ) {
+        wp_send_json_error(
+          array(
+            'message' => esc_html__( 'Invalid license key reference.', 'restropress' ),
+          ),
+          400
+        );
+      }
       // retrieve the license from the database
       $license = trim( get_option( $license_key ) );
       $item_name = isset( $_POST['product_name'] ) ? sanitize_text_field( $_POST['product_name'] ) : '';
@@ -1632,6 +1697,33 @@ class RP_AJAX {
       echo wp_json_encode( $return );
       wp_die();
     }
+  }
+
+  /**
+   * Check whether the current user can manage addon licenses.
+   *
+   * @since 3.2.8
+   * @return bool
+   */
+  private static function can_manage_addon_licenses() {
+    return current_user_can( 'manage_shop_settings' );
+  }
+
+  /**
+   * Validate the stored option name used for addon license data.
+   *
+   * @since 3.2.8
+   * @param string $license_key Raw option name from the request.
+   * @return string
+   */
+  private static function sanitize_addon_license_option_key( $license_key ) {
+    $license_key = sanitize_key( $license_key );
+
+    if ( empty( $license_key ) || '_license' !== substr( $license_key, -8 ) ) {
+      return '';
+    }
+
+    return $license_key;
   }
   /**
    * Show order details with AJAX call

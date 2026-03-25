@@ -973,7 +973,81 @@ if ( ! function_exists( 'restropress_update_user_api_key' ) ) {
 		}
 	}
 }
-if ( ! function_exists( 'generate_api_keys' ) ) {
+if ( ! function_exists( 'rp_generate_api_secret' ) ) {
+	/**
+	 * Generate a random API secret.
+	 *
+	 * @param int $bytes Secret length in bytes.
+	 * @return string
+	 * @since 3.0.0
+	 */
+	function rp_generate_api_secret( int $bytes = 32 ): string {
+		try {
+			return bin2hex( random_bytes( $bytes ) );
+		} catch ( Exception $e ) {
+			return wp_generate_password( $bytes * 2, false, false );
+		}
+	}
+}
+if ( ! function_exists( 'rp_build_user_api_token' ) ) {
+	/**
+	 * Build a signed JWT for the user API profile keys.
+	 *
+	 * @param string $api_key
+	 * @param int    $user_ID
+	 * @return string|WP_Error
+	 * @since 3.0.0
+	 */
+	function rp_build_user_api_token( string $api_key, int $user_ID ) {
+		try {
+			$token_id = base64_encode( random_bytes( 16 ) );
+		} catch ( Exception $e ) {
+			$token_id = wp_generate_password( 24, false, false );
+		}
+
+		$obj         = new DateTimeImmutable();
+		$expire      = null;
+		$server_name = wp_parse_url( home_url(), PHP_URL_HOST );
+
+		if ( empty( $server_name ) && ! empty( $_SERVER['SERVER_NAME'] ) ) {
+			$server_name = sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) );
+		}
+
+		if ( ! empty( rpress_get_option( 'api_expire' ) ) ) {
+			$exp    = rpress_get_option( 'api_expire' );
+			$expire = $obj->modify( '+' . $exp )->getTimestamp();
+		}
+
+		$data = array(
+			'iat'  => $obj->getTimestamp(),
+			'jti'  => $token_id,
+			'iss'  => $server_name,
+			'aud'  => $server_name,
+			'nbf'  => $obj->getTimestamp(),
+			'data' => array(
+				'api_key' => $api_key,
+				'user_id' => $user_ID,
+			),
+		);
+
+		if ( ! is_null( $expire ) ) {
+			$data['exp'] = $expire;
+		}
+
+		$data = apply_filters( 'rp_api_token_generate_data', $data );
+
+		if ( ! is_array( $data ) ) {
+			return new WP_Error( 'rp_api_invalid_token_data', __( 'Data should be an array', 'restropress' ) );
+		}
+
+		try {
+			return \Firebase\JWT\JWT::encode( $data, $api_key, 'HS512' );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rp_api_token_generation_failed', $e->getMessage() );
+		}
+	}
+}
+if ( ! function_exists( 'rp_generate_api_keys' ) ) {
 	/**
 	 * Generating API keys
 	 *
@@ -982,8 +1056,8 @@ if ( ! function_exists( 'generate_api_keys' ) ) {
 	 * * */
 	function rp_generate_api_keys( int $user_ID ) {
 		if ( true == filter_input( INPUT_POST, 'rp-generate-api-key' ) ) {
-			$public_key  = hash( 'sha512', time() );
-			$private_key = password_hash( $user_ID, null );
+			$public_key  = rp_generate_api_secret();
+			$private_key = password_hash( $user_ID, PASSWORD_DEFAULT );
 			rp_user_api_get_token( $private_key, $public_key, $user_ID );
 
 		}
@@ -1000,25 +1074,15 @@ if ( ! function_exists( 'rp_user_api_get_token' ) ) {
 	 * @since 3.0.0
 	 * * */
 	function rp_user_api_get_token( string $private_key, string $public_key, int $user_ID ) {
-		$url    = get_site_url() . '/wp-json/rp/v1/auth';
-		$arg    = array(
-			'headers' => array(
-				'Authorization' => $public_key,
-				'X-User-ID'     => $user_ID,
-			),
-		);
-		$result = wp_safe_remote_get( $url, $arg );
+		$token = rp_build_user_api_token( $public_key, $user_ID );
 
-		$response_data = json_decode( $result['body'] );
-		if ( 200 === $result['response']['code'] ) {
+		if ( ! is_wp_error( $token ) ) {
 			$clean_private_key = sanitize_meta( '_rp_api_user_private_key', $private_key, 'user' );
 			update_user_meta( $user_ID, '_rp_api_user_private_key', $clean_private_key );
 			$clean_public_key = sanitize_meta( '_rp_api_user_public_key', $public_key, 'user' );
 			update_user_meta( $user_ID, '_rp_api_user_public_key', $clean_public_key );
-			if ( property_exists( $response_data, 'token' ) ) {
-				$clean_token_key = sanitize_meta( '_rp_api_user_token_key', $response_data->token, 'user' );
-				update_user_meta( $user_ID, '_rp_api_user_token_key', $clean_token_key );
-			}
+			$clean_token_key = sanitize_meta( '_rp_api_user_token_key', $token, 'user' );
+			update_user_meta( $user_ID, '_rp_api_user_token_key', $clean_token_key );
 			update_user_meta( $user_ID, '_rp_api_keys_generated', true );
 		}
 	}
@@ -1048,7 +1112,7 @@ if ( ! function_exists( 'rp_user_api_refresh' ) ) {
 	 * ** */
 	function rp_user_api_refresh( int $user_ID ) {
 		$private_key = get_user_meta( $user_ID, '_rp_api_user_private_key', true );
-		$public_key  = hash( 'sha512', time() );
+		$public_key  = rp_generate_api_secret();
 		rp_user_api_get_token( $private_key, $public_key, $user_ID );
 	}
 }

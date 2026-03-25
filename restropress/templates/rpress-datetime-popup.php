@@ -24,6 +24,10 @@ $show_update_button = rpress_is_service_enabled( $service_type ) && $has_store_t
 
 $asap_text_key      = $service_type . '_asap_text';
 $delivery_asap_text = rpress_get_option($asap_text_key, '');
+$schedule_heading   = ( 'pickup' === $service_type )
+    ? __( 'Choose Your Pickup Schedule', 'restropress' )
+    : __( 'Choose Your Delivery Schedule', 'restropress' );
+$schedule_subtext   = __( 'Review the available date and time, then click Update to apply your selection.', 'restropress' );
 
 /**
  * ASAP-only handling
@@ -47,9 +51,10 @@ if ($asap_option_only == 1 && is_array($store_timings)) {
 
             <main class="modal__content" id="rpressDateTime-content">
 
-                <?php do_action('rpress_after_service_time', $service_type); ?>
-
-                <h3><?php esc_html_e('Time preference', 'restropress'); ?></h3>
+                <div class="rpress-popup-header-copy">
+                    <h3 id="rpressDateTime-title"><?php echo esc_html( $schedule_heading ); ?></h3>
+                    <p class="rpress-popup-subtext"><?php echo esc_html( $schedule_subtext ); ?></p>
+                </div>
 
                 <div class="bg-gray rpress-time-preference-wrap">
                     <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12 rpress-service-type-message">
@@ -62,6 +67,9 @@ if ($asap_option_only == 1 && is_array($store_timings)) {
                             </div>
                         </div>
                     <?php elseif(rpress_is_service_enabled($service_type)) : ?>
+                        <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
+                            <?php do_action('rpress_before_service_time', $service_type); ?>
+                        </div>
                         <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12 rpress-service-hours-row">
                             <?php
                             $time_label_text = ( 'pickup' === $service_type )
@@ -131,9 +139,6 @@ if ($asap_option_only == 1 && is_array($store_timings)) {
                             </select>
                         </div>
                     <?php endif; ?>
-                    <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
-                        <?php do_action('rpress_before_service_time', $service_type); ?>
-                    </div>
                 </div>
 
                 <div class="modal-footer">

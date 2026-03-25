@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
 Tested up to: 6.9
-Stable tag: 3.2.8
+Stable tag: 3.2.8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -121,13 +121,39 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Changelog ==
 
-= Version 3.2.8(2026-03-10) =
+= Version 3.2.8.1(2026-03-23) =
+* Updated: Plugin version bump to 3.2.8.1
+* Fixed: Add-to-cart address/zip validation now runs only for Delivery service, so Pickup with a selected branch no longer triggers unnecessary force-popup flow.
+* Fixed: Core datetime popup now renders service date controls before service time controls for consistent ordering across service switches.
+* Fixed: Food item popup now displays full item description content without 2-line truncation.
+* Fixed: Service-switch modal refresh now updates only the listing service summary and no longer overwrites popup address controls.
+* Improved: Delivery/Pickup service summary row keeps location, date/time, and Edit action aligned inline for consistent tab-row UI.
+* Improved: Delivery schedule popup structure/copy refinement for clearer service-edit flow without UX regressions.
+* Improved: Elementor builder shortcode detection for checkout and RestroPress page checks (supports `_elementor_data`)
+* Fixed: Stale modal/overlay lock state that could block clicks on Order Online and Checkout pages
+* Fixed: Datetime edit action now falls back to legacy service-options popup when datetime modal markup is unavailable
+* Improved: Missing service-time flow opens service selection directly instead of showing empty closed-message error toast
+* Fixed: Category scroll handler safety checks for invalid links/sections to avoid frontend JS interruptions
+* Security: Hardened add-on license AJAX actions with capability checks and strict option-key validation
+* Security: Restricted API token generation endpoint access to authenticated users with valid user-edit permissions
+* Security: Replaced weak time-based API/cart token generation with cryptographically secure random tokens
+* Security: Removed internal remote token-generation request path and now generates signed user API tokens locally
+* Fixed: Default Services setting now applies correctly when Choose Services is set to Both Delivery and Pickup
+* Fixed: Single-service mode (Delivery Only/Pickup Only) now always enforces the enabled service and ignores default-service fallback
+* Improved: Elementor builder compatibility for checkout and RestroPress page detection by scanning saved `_elementor_data` shortcode content
+* Fixed: Stale frontend modal/overlay lock state that could block clicks on Order Online and Checkout pages
+* Fixed: Datetime edit flow now falls back to legacy service options popup when datetime modal markup is unavailable
+* Improved: Missing service-time flow now opens service selection directly instead of showing blank/empty closed-message toast
+* Fixed: Category scrolling handler now safely skips invalid links/sections to prevent frontend JS interruptions
+
+= Version 3.2.8(2026-03-13) =
 * Updated: Plugin version bump to 3.2.8
 * Updated: Readme metadata and changelog synchronization
 * Fixed: Service type, date, and time state now stay synchronized across order-online, popup, and checkout flows
 * Fixed: Datetime edit popup now keeps the Update action available when service timing controls are editable
 * Fixed: Shared service context now validates store-open state against the normalized service date to avoid mismatched closed messages
 * Improved: Frontend service-state handling cleanup without UI or UX changes
+* Fixed: Vulnerabilities issues
 * Code Cleanup
 
 = Version 3.2.7(2026-03-09) =

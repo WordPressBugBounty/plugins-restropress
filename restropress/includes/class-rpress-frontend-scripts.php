@@ -252,10 +252,15 @@ class RP_Frontend_Scripts
     $please_wait_text = esc_html__('Please Wait...', 'restropress');
     $color = rpress_get_option('primary_color', '#ED5575');
     $service_options = !empty(rpress_get_option('enable_service')) ? rpress_get_option('enable_service') : 'delivery_and_pickup';
-    if (rpress_get_option('enable_service') == 'delivery_and_pickup') {
-      $default_service = !empty(rpress_get_option('default_service')) ? rpress_get_option('default_service') : '';
+    if ($service_options === 'delivery_and_pickup') {
+      $configured_default_service = sanitize_key((string) rpress_get_option('default_service', 'delivery'));
+      $default_service = in_array($configured_default_service, array('delivery', 'pickup'), true)
+        ? $configured_default_service
+        : 'delivery';
     } else {
-      $default_service = !empty(rpress_get_option('enable_service')) ? rpress_get_option('enable_service') : '';
+      $default_service = in_array($service_options, array('delivery', 'pickup'), true)
+        ? $service_options
+        : 'delivery';
     }
     $minimum_order_error_title = !empty(rpress_get_option('minimum_order_error_title')) ? rpress_get_option('minimum_order_error_title') : __('Minimum Order Error', 'restropress');
     $expire_cookie_time = !empty(rpress_get_option('expire_service_cookie')) ? rpress_get_option('expire_service_cookie') : 90;

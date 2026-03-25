@@ -34,6 +34,48 @@ class RP_REST_Auth_V1_Controller {
 	public function __construct() {
 		$this->response = new response();
 	}
+
+	/**
+	 * Get the requested user ID from the request.
+	 *
+	 * @param WP_REST_Request $request Rest request object.
+	 * @return int
+	 */
+	protected function get_requested_user_id( WP_REST_Request $request ): int {
+		$user_id = $request->get_param( 'user_id' );
+
+		if ( is_null( $user_id ) ) {
+			$user_id = $request->get_header( 'x-user-id' );
+		}
+
+		return absint( $user_id );
+	}
+
+	/**
+	 * Get the API key used to sign the token request.
+	 *
+	 * @param WP_REST_Request $request Rest request object.
+	 * @return string
+	 */
+	protected function get_request_api_key( WP_REST_Request $request ): string {
+		$api_key = $request->get_header( 'x-api-key' );
+
+		if ( empty( $api_key ) ) {
+			$api_key = $request->get_header( 'authorization' );
+		}
+
+		if ( ! is_string( $api_key ) ) {
+			return '';
+		}
+
+		$api_key = trim( $api_key );
+
+		if ( preg_match( '/^Bearer\s/i', $api_key ) ) {
+			return '';
+		}
+
+		return $api_key;
+	}
 	/**
 	 * Register the routes for foods.
 	 */
@@ -67,11 +109,14 @@ class RP_REST_Auth_V1_Controller {
 	 * @since 3.0.0
 	 * * */
 	public function get_token( WP_REST_Request $request ): WP_REST_Response {
-		$api_key = $request->get_header( 'x-api-key' );
 		// Initialize Expire
 		$expire = null;
 		// Generating unique token id
-		$token_id = base64_encode( random_bytes( 16 ) );
+		try {
+			$token_id = base64_encode( random_bytes( 16 ) );
+		} catch ( Exception $exc ) {
+			$token_id = wp_generate_password( 24, false, false );
+		}
 		// Get DateTimeImmutable Object for further use at Issuer time and not before
 		$obj = new DateTimeImmutable();
 		// Set expire time limit if it set at admin
@@ -80,7 +125,11 @@ class RP_REST_Auth_V1_Controller {
 			$expire = $obj->modify( '+' . $exp )->getTimestamp();      // Add expire time limit
 		}
 		// Initialize server name furether use for Issuer
-		$server_name = $_SERVER['SERVER_NAME'];
+		$server_name = wp_parse_url( home_url(), PHP_URL_HOST );
+		if ( empty( $server_name ) && ! empty( $_SERVER['SERVER_NAME'] ) ) {
+			$server_name = sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) );
+		}
+		$user_id = $this->get_requested_user_id( $request );
 		// Create the token as an array
 		$data = array(
 			'iat'  => $obj->getTimestamp(), // Issued at: time when the token was generated
@@ -90,17 +139,12 @@ class RP_REST_Auth_V1_Controller {
 			'nbf'  => $obj->getTimestamp(), // Not before
 			'data' => array(
 				'api_key' => $this->api_key, // API key
-				'user_id' => $request->get_header( 'x-user-id' ),
+				'user_id' => $user_id,
 			),
 		);
 		// Adding Expire time limit
 		if ( ! is_null( $expire ) ) {
 			$data['exp'] = $expire;
-		}
-		$user_id = null;
-		if ( ! is_null( $request->get_param( 'user_id' ) ) ) {
-			$user_id                 = $request->get_param( 'user_id' );
-			$data['data']['user_id'] = $user_id;
 		}
 		// Applying a filter for future adding data to token create array
 		$data = apply_filters( 'rp_api_token_generate_data', $data );
@@ -174,25 +218,44 @@ class RP_REST_Auth_V1_Controller {
 	 * @since 3.0.0
 	 * * */
 	public function get_auth_permissions_check( WP_REST_Request $request ) {
-		// Initialize Api_key
-		$api_key = null;
-		// Initialize enable status
-		$is_api_enabled = null;
-		// Getting API key from  header
-		$api_key = $request->get_header( 'authorization' );
-		// Get API enable status
+		$api_key        = $this->get_request_api_key( $request );
+		$user_id        = $this->get_requested_user_id( $request );
 		$is_api_enabled = rpress_get_option( 'activate_api' );
-		// Check if API not enabled | in true case return appropriate error message
+
 		if ( ! $is_api_enabled ) {
 			return new WP_Error(
 				'rest_forbidden',
 				apply_filters( 'rp_api_not_enabled_error_message', __( 'API has not enabled!!!.', 'restropress' ), $request ),
 				array( 'status' => rest_authorization_required_code() )
 			);
-		} else {
-			$this->api_key = $api_key;
-			return true;
 		}
-		return false;
+
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_forbidden',
+				apply_filters( 'rp_api_token_generate_error_message', __( 'You must be logged in to generate API tokens.', 'restropress' ), $request ),
+				array( 'status' => rest_authorization_required_code() )
+			);
+		}
+
+		if ( empty( $user_id ) || ! current_user_can( 'edit_user', $user_id ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				apply_filters( 'rp_api_token_generate_error_message', __( 'You are not allowed to generate an API token for this user.', 'restropress' ), $request ),
+				array( 'status' => rest_authorization_required_code() )
+			);
+		}
+
+		if ( empty( $api_key ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				apply_filters( 'rp_api_token_generate_error_message', __( 'A valid API key is required to generate a token.', 'restropress' ), $request ),
+				array( 'status' => rest_authorization_required_code() )
+			);
+		}
+
+		$this->api_key = $api_key;
+
+		return true;
 	}
 }

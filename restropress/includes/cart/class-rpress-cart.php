@@ -1315,7 +1315,13 @@ class RPRESS_Cart {
 	 * @return int
 	 */
 	public function generate_token() {
-		return apply_filters( 'rpress_generate_cart_token', md5( mt_rand() . time() ) );
+		try {
+			$token = bin2hex( random_bytes( 32 ) );
+		} catch ( Exception $e ) {
+			$token = wp_generate_password( 64, false, false );
+		}
+
+		return apply_filters( 'rpress_generate_cart_token', $token );
 	}
 }
 new RPRESS_Cart();

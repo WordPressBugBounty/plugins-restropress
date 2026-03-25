@@ -52,7 +52,8 @@ if ((empty($store_timings) || !$is_store_open) && ! $preorder_enabled && ($enabl
 }
 ?>
 
-<p class="rpress_order-address-wrap">
+<p class="rpress_order-address-wrap rpress-order-address-inline">
+    <span class="rpress-order-address-summary">
     <?php
     if (!function_exists('is_plugin_active')) {
         include_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -60,7 +61,7 @@ if ((empty($store_timings) || !$is_store_open) && ! $preorder_enabled && ($enabl
 
     if (is_plugin_active('restropress-multilocation/restropress-multilocation.php')):
         ?>
-        <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class="rpress-location-pin" width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path
                 d="M5.23944 0.0278769C4.12912 0.142737 3.09265 0.569361 2.19018 1.28587C1.90576 1.51012 1.38342 2.0434 1.17558 2.32234C0.122693 3.73075 -0.2465 5.50834 0.163715 7.17655C0.308657 7.76452 0.483682 8.2185 0.792711 8.81741C1.62681 10.4419 3.17196 12.162 5.06441 13.5841C5.46642 13.8849 5.677 13.9998 5.82741 13.9998C5.97235 13.9998 6.19113 13.8849 6.53845 13.6251C8.19025 12.3863 9.57677 10.9369 10.4792 9.49563C10.7336 9.09362 11.111 8.33609 11.2532 7.95322C11.5321 7.19569 11.6525 6.55029 11.6525 5.81737C11.6525 3.84834 10.6597 2.03519 8.97239 0.927614C7.9113 0.230249 6.51931 -0.103392 5.23944 0.0278769Z"
                 fill="black" />
@@ -87,8 +88,9 @@ if ((empty($store_timings) || !$is_store_open) && ! $preorder_enabled && ($enabl
             <?php echo esc_html( ! empty( $service_time ) ? $service_time : $selected_time ); ?>
         </span>
     <?php endif; ?>
+    </span>
 
-    <a id="editDateTime">
+    <a id="editDateTime" class="rpress-edit-datetime-link">
         <?php esc_html_e('Edit', 'restropress'); ?>
     </a>
 </p>

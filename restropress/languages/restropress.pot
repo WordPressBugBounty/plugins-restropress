@@ -2,8 +2,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: RestroPress\n"
-"POT-Creation-Date: 2026-03-13 01:59+0530\n"
-"PO-Revision-Date: 2026-03-13 01:58+0530\n"
+"POT-Creation-Date: 2026-03-24 01:28+0530\n"
+"PO-Revision-Date: 2026-03-24 01:13+0530\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -214,14 +214,14 @@ msgstr ""
 
 #: includes/admin/class-rp-admin-assets.php:108
 #: includes/class-rpress-frontend-scripts.php:252
-#: includes/class-rpress-frontend-scripts.php:326
+#: includes/class-rpress-frontend-scripts.php:331
 msgid "Please Wait..."
 msgstr ""
 
 #: includes/admin/class-rp-admin-assets.php:109
 #: includes/cart/class-rpress-cart.php:1242
 #: includes/cart/class-rpress-cart.php:1289
-#: includes/class-rpress-frontend-scripts.php:295
+#: includes/class-rpress-frontend-scripts.php:300
 #: templates/shortcode-profile-editor.php:34
 msgid "Success"
 msgstr ""
@@ -285,7 +285,7 @@ msgstr ""
 #: includes/class-rpress-ajax.php:321 includes/class-rpress-ajax.php:1008
 #: includes/class-rpress-api.php:1165 includes/class-rpress-api.php:1175
 #: includes/class-rpress-api.php:1177
-#: includes/class-rpress-frontend-scripts.php:287
+#: includes/class-rpress-frontend-scripts.php:292
 #: includes/class-rpress-print-receipts.php:141 includes/emails/actions.php:48
 #: includes/emails/template.php:271 includes/error-tracking.php:34
 #: includes/gateways/functions.php:199 includes/gateways/functions.php:482
@@ -985,7 +985,7 @@ msgstr ""
 #: includes/admin/payments/view-order-details.php:505
 #: includes/admin/payments/view-order-details.php:528
 #: includes/admin/thickbox.php:135 includes/class-rpress-html-elements.php:703
-#: templates/rpress-datetime-popup.php:145
+#: templates/rpress-datetime-popup.php:150
 msgid "Cancel"
 msgstr ""
 
@@ -1661,8 +1661,8 @@ msgid "Expiration"
 msgstr ""
 
 #: includes/admin/discounts/class-discount-codes-table.php:183
-#: templates/cart/item.php:41 templates/grid/time-option.php:92
-#: templates/list/time-option.php:91 templates/rpress-user-dashboard.php:318
+#: templates/cart/item.php:41 templates/grid/time-option.php:94
+#: templates/list/time-option.php:93 templates/rpress-user-dashboard.php:318
 msgid "Edit"
 msgstr ""
 
@@ -2328,9 +2328,9 @@ msgid "Payment type"
 msgstr ""
 
 #: includes/admin/payments/class-payments-table.php:435
-#: includes/class-rpress-frontend-scripts.php:289
+#: includes/class-rpress-frontend-scripts.php:294
 #: includes/rp-core-functions.php:336 includes/rp-core-functions.php:387
-#: includes/rp-core-functions.php:720 templates/rpress-datetime-popup.php:116
+#: includes/rp-core-functions.php:720 templates/rpress-datetime-popup.php:124
 #: templates/rpress-delivery.php:105 templates/rpress-pickup.php:105
 msgid "ASAP"
 msgstr ""
@@ -2596,7 +2596,7 @@ msgid "Time:"
 msgstr ""
 
 #: includes/admin/payments/view-order-details.php:189
-#: includes/admin/tools.php:934 includes/class-rpress-frontend-scripts.php:266
+#: includes/admin/tools.php:934 includes/class-rpress-frontend-scripts.php:271
 #: templates/cart/checkout.php:21 templates/checkout_cart.php:100
 #: templates/receipt/print-receipt-content.php:78
 #: templates/rpress-show-order-details.php:95
@@ -2972,7 +2972,7 @@ msgstr ""
 
 #: includes/admin/reporting/class-customer-reports-table.php:131
 #: includes/post-types.php:130 includes/privacy-functions.php:475
-#: includes/rp-core-functions.php:2038
+#: includes/rp-core-functions.php:2075
 msgid "Food Items"
 msgstr ""
 
@@ -3303,7 +3303,7 @@ msgid "Variable Price Label"
 msgstr ""
 
 #: includes/admin/reporting/export/class-batch-export-orders.php:38
-#: includes/post-types.php:129 includes/rp-core-functions.php:2037
+#: includes/post-types.php:129 includes/rp-core-functions.php:2074
 msgid "Food Item"
 msgstr ""
 
@@ -4203,8 +4203,8 @@ msgid "Message that would display when ordering is not possible."
 msgstr ""
 
 #: includes/admin/settings/register-settings.php:625
-#: includes/class-rpress-frontend-scripts.php:263
-#: includes/rp-core-functions.php:2227
+#: includes/class-rpress-frontend-scripts.php:268
+#: includes/rp-core-functions.php:2264
 msgid "Sorry, we are closed for ordering now."
 msgstr ""
 
@@ -5135,7 +5135,7 @@ msgstr ""
 
 #. translators: 1: %s for name
 #: includes/admin/settings/register-settings.php:2993
-#: includes/class-rpress-ajax.php:1564
+#: includes/class-rpress-ajax.php:1582
 #, php-format
 msgid "This appears to be an invalid license key for %s."
 msgstr ""
@@ -5279,7 +5279,7 @@ msgstr ""
 msgid "Use these tools to recount / reset store stats."
 msgstr ""
 
-#: includes/admin/tools.php:133 includes/class-rpress-frontend-scripts.php:348
+#: includes/admin/tools.php:133 includes/class-rpress-frontend-scripts.php:353
 msgid "Please select an option"
 msgstr ""
 
@@ -5881,7 +5881,7 @@ msgstr ""
 
 #: includes/cart/template.php:249
 #: includes/class-rpress-frontend-scripts.php:250
-#: includes/class-rpress-frontend-scripts.php:360
+#: includes/class-rpress-frontend-scripts.php:365
 msgid "Update Cart"
 msgstr ""
 
@@ -6131,7 +6131,7 @@ msgid "Enter a coupon code if you have one."
 msgstr ""
 
 #: includes/checkout/template.php:804
-#: includes/class-rpress-frontend-scripts.php:322
+#: includes/class-rpress-frontend-scripts.php:327
 #: includes/process-purchase.php:392
 msgid "Enter coupon code"
 msgstr ""
@@ -6291,41 +6291,49 @@ msgstr ""
 msgid "No users found"
 msgstr ""
 
-#: includes/class-rpress-ajax.php:1541 includes/class-rpress-ajax.php:1570
-#: includes/class-rpress-ajax.php:1619
+#: includes/class-rpress-ajax.php:1516 includes/class-rpress-ajax.php:1621
+msgid "You do not have permission to manage addon licenses."
+msgstr ""
+
+#: includes/class-rpress-ajax.php:1536 includes/class-rpress-ajax.php:1632
+msgid "Invalid license key reference."
+msgstr ""
+
+#: includes/class-rpress-ajax.php:1559 includes/class-rpress-ajax.php:1588
+#: includes/class-rpress-ajax.php:1655
 msgid "An error occurred, please try again."
 msgstr ""
 
-#: includes/class-rpress-ajax.php:1549
+#: includes/class-rpress-ajax.php:1567
 #, php-format
 msgid "Your license key expired on %s."
 msgstr ""
 
-#: includes/class-rpress-ajax.php:1554
+#: includes/class-rpress-ajax.php:1572
 msgid "Your license key has been disabled."
 msgstr ""
 
-#: includes/class-rpress-ajax.php:1557
+#: includes/class-rpress-ajax.php:1575
 msgid "Invalid license."
 msgstr ""
 
-#: includes/class-rpress-ajax.php:1561
+#: includes/class-rpress-ajax.php:1579
 msgid "Your license is not active for this URL."
 msgstr ""
 
-#: includes/class-rpress-ajax.php:1567
+#: includes/class-rpress-ajax.php:1585
 msgid "Your license key has reached its activation limit."
 msgstr ""
 
-#: includes/class-rpress-ajax.php:1630
+#: includes/class-rpress-ajax.php:1666
 msgid "License successfully deactivated."
 msgstr ""
 
-#: includes/class-rpress-ajax.php:1651
+#: includes/class-rpress-ajax.php:1714
 msgid "You do not have permission to view this order."
 msgstr ""
 
-#: includes/class-rpress-ajax.php:1679
+#: includes/class-rpress-ajax.php:1742
 msgid "You must be logged in to view order history."
 msgstr ""
 
@@ -6415,7 +6423,7 @@ msgid "New Product"
 msgstr ""
 
 #: includes/class-rpress-frontend-scripts.php:249
-#: includes/class-rpress-frontend-scripts.php:359
+#: includes/class-rpress-frontend-scripts.php:364
 msgid "Add To Cart"
 msgstr ""
 
@@ -6423,103 +6431,103 @@ msgstr ""
 msgid " is added to cart"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:260
+#: includes/class-rpress-frontend-scripts.php:265
 msgid "Minimum Order Error"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:273
+#: includes/class-rpress-frontend-scripts.php:278
 msgid "at"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:288
-#: includes/class-rpress-frontend-scripts.php:369
+#: includes/class-rpress-frontend-scripts.php:293
+#: includes/class-rpress-frontend-scripts.php:374
 #: includes/rp-core-functions.php:354 includes/rp-core-functions.php:404
 msgid "Change?"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:294
+#: includes/class-rpress-frontend-scripts.php:299
 msgid "Are you sure! You want to clear the cart?"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:296
+#: includes/class-rpress-frontend-scripts.php:301
 msgid "Cart cleared"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:299
-#: includes/class-rpress-frontend-scripts.php:373
+#: includes/class-rpress-frontend-scripts.php:304
+#: includes/class-rpress-frontend-scripts.php:378
 #: templates/receipt/print-receipt-content.php:31
 #: templates/shortcode-receipt.php:168
 msgid "Items"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:320
+#: includes/class-rpress-frontend-scripts.php:325
 msgid "Please select a payment method"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:321
+#: includes/class-rpress-frontend-scripts.php:326
 msgid "Please enter a discount code"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:323
+#: includes/class-rpress-frontend-scripts.php:328
 msgid "Discount Applied"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:324
+#: includes/class-rpress-frontend-scripts.php:329
 msgid "Please enter an email address before applying a discount code"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:325
+#: includes/class-rpress-frontend-scripts.php:330
 msgid "Please enter a username before applying a discount code"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:345
+#: includes/class-rpress-frontend-scripts.php:350
 msgid "You have already added this item to your cart"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:346
+#: includes/class-rpress-frontend-scripts.php:351
 #: includes/process-purchase.php:28
 msgid "Your cart is empty"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:347
+#: includes/class-rpress-frontend-scripts.php:352
 msgid "Loading"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:358
+#: includes/class-rpress-frontend-scripts.php:363
 msgid "Please Wait"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:367
-#: templates/rpress-datetime-popup.php:154
+#: includes/class-rpress-frontend-scripts.php:372
+#: templates/rpress-datetime-popup.php:159
 #: templates/rpress-delivery-steps.php:110
 msgid "Update"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:368
+#: includes/class-rpress-frontend-scripts.php:373
 msgid "SubTotal"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:370
+#: includes/class-rpress-frontend-scripts.php:375
 msgid "Fee"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:371
+#: includes/class-rpress-frontend-scripts.php:376
 #: templates/rpress-mobile-menu-category.php:25
 msgid "Close"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:372
+#: includes/class-rpress-frontend-scripts.php:377
 #: templates/rpress-mobile-menu-category.php:24
 #: templates/rpress-mobile-menu-category.php:28
 #: templates/rpress-mobile-menu-category.php:32
 msgid "Menu"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:374
+#: includes/class-rpress-frontend-scripts.php:379
 msgid "Please select time for "
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:375
+#: includes/class-rpress-frontend-scripts.php:380
 msgid ""
 "Notice: Please do not click back or refresh this page, until the transaction "
 "is not completed."
@@ -8682,12 +8690,25 @@ msgstr ""
 msgid "There was an error completing your order. Please try again."
 msgstr ""
 
-#: includes/rest-api/Controllers/Version1/class-rp-rest-auth-v1-controller.php:112
+#: includes/rest-api/Controllers/Version1/class-rp-rest-auth-v1-controller.php:156
+#: includes/user-functions.php:1040
 msgid "Data should be an array"
 msgstr ""
 
-#: includes/rest-api/Controllers/Version1/class-rp-rest-auth-v1-controller.php:189
+#: includes/rest-api/Controllers/Version1/class-rp-rest-auth-v1-controller.php:228
 msgid "API has not enabled!!!."
+msgstr ""
+
+#: includes/rest-api/Controllers/Version1/class-rp-rest-auth-v1-controller.php:236
+msgid "You must be logged in to generate API tokens."
+msgstr ""
+
+#: includes/rest-api/Controllers/Version1/class-rp-rest-auth-v1-controller.php:244
+msgid "You are not allowed to generate an API token for this user."
+msgstr ""
+
+#: includes/rest-api/Controllers/Version1/class-rp-rest-auth-v1-controller.php:252
+msgid "A valid API key is required to generate a token."
 msgstr ""
 
 #: includes/rest-api/Controllers/Version1/class-rp-rest-cart-v1-controller.php:83
@@ -9280,178 +9301,178 @@ msgstr ""
 msgid "%s draft updated."
 msgstr ""
 
-#: includes/rp-core-functions.php:1270
+#: includes/rp-core-functions.php:1307
 msgid "US Dollars (&#36;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1271
+#: includes/rp-core-functions.php:1308
 msgid "Euros (&euro;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1272
+#: includes/rp-core-functions.php:1309
 msgid "Pound Sterling (&pound;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1273
+#: includes/rp-core-functions.php:1310
 msgid "Australian Dollars (&#36;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1274
+#: includes/rp-core-functions.php:1311
 msgid "Brazilian Real (R&#36;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1275
+#: includes/rp-core-functions.php:1312
 msgid "Canadian Dollars (&#36;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1276
+#: includes/rp-core-functions.php:1313
 msgid "Czech Koruna (Kč)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1277
+#: includes/rp-core-functions.php:1314
 msgid "Danish Krone (kr)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1278
+#: includes/rp-core-functions.php:1315
 msgid "Hong Kong Dollar (&#36;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1279
+#: includes/rp-core-functions.php:1316
 msgid "Hungarian Forint (Ft)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1280
+#: includes/rp-core-functions.php:1317
 msgid "Israeli Shekel (₪)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1281
+#: includes/rp-core-functions.php:1318
 msgid "Japanese Yen (&yen;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1282
+#: includes/rp-core-functions.php:1319
 msgid "Malaysian Ringgits (RM)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1283
+#: includes/rp-core-functions.php:1320
 msgid "Mexican Peso (&#36;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1284
+#: includes/rp-core-functions.php:1321
 msgid "New Zealand Dollar (&#36;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1285
+#: includes/rp-core-functions.php:1322
 msgid "Norwegian Krone (kr)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1286
+#: includes/rp-core-functions.php:1323
 msgid "Pakistani Rupee (Rs)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1287
+#: includes/rp-core-functions.php:1324
 msgid "Philippine Pesos (₱)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1288
+#: includes/rp-core-functions.php:1325
 msgid "Polish Zloty (zł)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1289
+#: includes/rp-core-functions.php:1326
 msgid "Singapore Dollar (&#36;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1290
+#: includes/rp-core-functions.php:1327
 msgid "Swedish Krona (kr)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1291
+#: includes/rp-core-functions.php:1328
 msgid "Swiss Franc"
 msgstr ""
 
-#: includes/rp-core-functions.php:1292
+#: includes/rp-core-functions.php:1329
 msgid "Taiwan New Dollars ($)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1293
+#: includes/rp-core-functions.php:1330
 msgid "Thai Baht (฿)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1294
+#: includes/rp-core-functions.php:1331
 msgid "Indian Rupee (₹)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1295
+#: includes/rp-core-functions.php:1332
 msgid "Turkish Lira (₺)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1296
+#: includes/rp-core-functions.php:1333
 msgid "Iranian Rial (﷼)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1297
+#: includes/rp-core-functions.php:1334
 msgid "Russian Rubles (₽)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1298
+#: includes/rp-core-functions.php:1335
 msgid "Angolan Kwanza (Kz)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1299
+#: includes/rp-core-functions.php:1336
 msgid "Nigerian Naira (&#8358;)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1300
+#: includes/rp-core-functions.php:1337
 msgid "UAE Dirham (د.إ)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1301
+#: includes/rp-core-functions.php:1338
 msgid "Afghani (؋)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1302
+#: includes/rp-core-functions.php:1339
 msgid "Netherlands Antillean Guilder (֏)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1303
+#: includes/rp-core-functions.php:1340
 msgid "Vietnamese dong (₫)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1304
+#: includes/rp-core-functions.php:1341
 msgid "Renminbi (¥)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1305
+#: includes/rp-core-functions.php:1342
 msgid "South Korean won (₩)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1306
+#: includes/rp-core-functions.php:1343
 msgid "Bangladeshi taka (৳)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1307
+#: includes/rp-core-functions.php:1344
 msgid "Nepalese rupee (Rs)"
 msgstr ""
 
-#: includes/rp-core-functions.php:1308
+#: includes/rp-core-functions.php:1345
 msgid "Azerbaijani manat (₽)"
 msgstr ""
 
-#: includes/rp-core-functions.php:2089 includes/rp-core-functions.php:2093
+#: includes/rp-core-functions.php:2126 includes/rp-core-functions.php:2130
 #: templates/rpress-user-dashboard.php:406
 msgid "Street Address"
 msgstr ""
 
-#: includes/rp-core-functions.php:2098 includes/rp-core-functions.php:2102
+#: includes/rp-core-functions.php:2135 includes/rp-core-functions.php:2139
 #: templates/rpress-user-dashboard.php:412
 msgid "Apartment, suite, unit etc. (optional)"
 msgstr ""
 
-#: includes/rp-core-functions.php:2107 includes/rp-core-functions.php:2111
+#: includes/rp-core-functions.php:2144 includes/rp-core-functions.php:2148
 #: templates/rpress-user-dashboard.php:392
 msgid "Town / City"
 msgstr ""
 
-#: includes/rp-core-functions.php:2116 includes/rp-core-functions.php:2120
+#: includes/rp-core-functions.php:2153 includes/rp-core-functions.php:2157
 msgid "Postcode / ZIP"
 msgstr ""
 
@@ -9878,27 +9899,37 @@ msgstr ""
 msgid "Customer Note:&nbsp;"
 msgstr ""
 
-#: templates/rpress-datetime-popup.php:43
+#: templates/rpress-datetime-popup.php:28
+msgid "Choose Your Pickup Schedule"
+msgstr ""
+
+#: templates/rpress-datetime-popup.php:29
+msgid "Choose Your Delivery Schedule"
+msgstr ""
+
+#: templates/rpress-datetime-popup.php:30
+msgid ""
+"Review the available date and time, then click Update to apply your "
+"selection."
+msgstr ""
+
+#: templates/rpress-datetime-popup.php:47
 msgid "Close modal"
 msgstr ""
 
-#: templates/rpress-datetime-popup.php:52
-msgid "Time preference"
-msgstr ""
-
-#: templates/rpress-datetime-popup.php:68 templates/rpress-pickup.php:43
+#: templates/rpress-datetime-popup.php:76 templates/rpress-pickup.php:43
 msgid "Select a pickup time"
 msgstr ""
 
-#: templates/rpress-datetime-popup.php:69 templates/rpress-delivery.php:43
+#: templates/rpress-datetime-popup.php:77 templates/rpress-delivery.php:43
 msgid "Select a delivery time"
 msgstr ""
 
-#: templates/rpress-datetime-popup.php:71 templates/rpress-pickup.php:65
+#: templates/rpress-datetime-popup.php:79 templates/rpress-pickup.php:65
 msgid "Pickup time"
 msgstr ""
 
-#: templates/rpress-datetime-popup.php:71 templates/rpress-delivery.php:65
+#: templates/rpress-datetime-popup.php:79 templates/rpress-delivery.php:65
 msgid "Delivery time"
 msgstr ""
 

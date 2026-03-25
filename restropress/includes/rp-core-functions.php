@@ -221,7 +221,7 @@ function myplugin_custom_forgot_password_form()
         <input type="submit" name="custom_forgot_password_submit" class="reset-button" value="Get New Password" />
 
         <div class="login-link">
-          <a href="<?php echo esc_url(site_url('/login')); ?>">← Back to Login</a>
+          <a href="<?php echo esc_url(site_url('/login')); ?>">â† Back to Login</a>
         </div>
       </form>
 
@@ -670,7 +670,7 @@ function rp_get_store_service_hours(
   $selected_timestamp = 0;
   if (!empty($selected_time) && $selected_time !== 'ASAP') {
 
-    // Fix dot format like 7.00 AM → 7:00 AM
+    // Fix dot format like 7.00 AM â†’ 7:00 AM
     $selected_time = str_replace('.', ':', $selected_time);
 
     $selected_timestamp = strtotime($selected_time);
@@ -837,6 +837,173 @@ function rpress_checkout_delivery_type($service_type, $service_time)
   $_COOKIE['service_time'] = $service_time;
 }
 /**
+ * Build normalized service slots for a given service/date.
+ *
+ * @since 3.2.9
+ *
+ * @param string $service_type Service type.
+ * @param string $service_date Service date in Y-m-d.
+ * @param bool   $hide_past_time Hide past slots.
+ * @return array
+ */
+function rpress_get_available_service_slots( $service_type, $service_date = '', $hide_past_time = true ) {
+  $service_type = sanitize_key( (string) $service_type );
+  if ( empty( $service_type ) ) {
+    return array();
+  }
+
+  $service_date = rp_row_date( $service_date, $service_type );
+  $store_times  = rp_get_store_timings( $hide_past_time, $service_type );
+  $store_times  = apply_filters( 'rpress_store_timings', $store_times, $service_type, $service_date );
+
+  if ( empty( $store_times ) || ! is_array( $store_times ) ) {
+    return array();
+  }
+
+  $normalized_slots = array();
+  foreach ( $store_times as $slot ) {
+    if ( ! is_scalar( $slot ) ) {
+      continue;
+    }
+
+    $slot = trim( (string) $slot );
+    if ( '' === $slot ) {
+      continue;
+    }
+
+    $filtered_slot = apply_filters( 'rpress_store_delivery_timings_slot_remaining', $slot );
+    if ( ! is_scalar( $filtered_slot ) ) {
+      continue;
+    }
+
+    $filtered_slot = trim( (string) $filtered_slot );
+    if ( '' === $filtered_slot ) {
+      continue;
+    }
+
+    $normalized_slots[] = $filtered_slot;
+  }
+
+  if ( empty( $normalized_slots ) ) {
+    return array();
+  }
+
+  return array_values( array_unique( $normalized_slots ) );
+}
+/**
+ * Resolve first valid date for the service type.
+ *
+ * @since 3.2.9
+ *
+ * @param string $service_type Service type.
+ * @param string $requested_date Requested date.
+ * @param int    $lookahead_days Max days to inspect.
+ * @return string
+ */
+function rpress_get_first_available_service_date( $service_type, $requested_date = '', $lookahead_days = 30 ) {
+  $service_type = sanitize_key( (string) $service_type );
+  $seed_date    = rp_row_date( $requested_date, $service_type );
+  $seed_ts      = strtotime( $seed_date );
+
+  if ( false === $seed_ts ) {
+    $seed_ts = current_time( 'timestamp' );
+  }
+
+  $lookahead_days      = max( 0, (int) $lookahead_days );
+  $service_time_hidden = function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $service_type );
+
+  for ( $offset = 0; $offset <= $lookahead_days; $offset++ ) {
+    $candidate_date = wp_date( 'Y-m-d', strtotime( '+' . $offset . ' day', $seed_ts ) );
+
+    if ( ! rpress_is_store_open( $service_type, $candidate_date ) ) {
+      continue;
+    }
+
+    if ( $service_time_hidden ) {
+      return $candidate_date;
+    }
+
+    $candidate_slots = rpress_get_available_service_slots( $service_type, $candidate_date, true );
+    if ( ! empty( $candidate_slots ) ) {
+      return $candidate_date;
+    }
+  }
+
+  return wp_date( 'Y-m-d', $seed_ts );
+}
+/**
+ * Match service time with available slots.
+ *
+ * @since 3.2.9
+ *
+ * @param string $requested_time Requested slot.
+ * @param array  $available_slots Available slots.
+ * @param bool   $allow_asap Allow ASAP values.
+ * @return string
+ */
+function rpress_match_service_time_to_slot( $requested_time, array $available_slots, $allow_asap = false ) {
+  $requested_time = trim( (string) $requested_time );
+  if ( '' === $requested_time ) {
+    return '';
+  }
+
+  if ( $allow_asap && 0 === stripos( $requested_time, 'asap' ) ) {
+    return $requested_time;
+  }
+
+  if ( in_array( $requested_time, $available_slots, true ) ) {
+    return $requested_time;
+  }
+
+  foreach ( $available_slots as $slot ) {
+    if ( 0 === strcasecmp( $slot, $requested_time ) ) {
+      return $slot;
+    }
+  }
+
+  $requested_timestamp = strtotime( $requested_time );
+  if ( false !== $requested_timestamp ) {
+    foreach ( $available_slots as $slot ) {
+      $slot_timestamp = strtotime( $slot );
+      if ( false !== $slot_timestamp && $slot_timestamp === $requested_timestamp ) {
+        return $slot;
+      }
+    }
+  }
+
+  return '';
+}
+/**
+ * Get next available slot from available service slots.
+ *
+ * @since 3.2.9
+ *
+ * @param string $service_date Service date.
+ * @param array  $available_slots Available slots.
+ * @param int    $minimum_timestamp Minimum required timestamp.
+ * @return string
+ */
+function rpress_get_next_available_service_time( $service_date, array $available_slots, $minimum_timestamp = 0 ) {
+  if ( empty( $available_slots ) ) {
+    return '';
+  }
+
+  foreach ( $available_slots as $slot ) {
+    $slot_timestamp = strtotime( $service_date . ' ' . $slot );
+    if ( false === $slot_timestamp ) {
+      continue;
+    }
+
+    if ( ! empty( $minimum_timestamp ) && $slot_timestamp < $minimum_timestamp ) {
+      continue;
+    }
+
+    return $slot;
+  }
+
+  return (string) reset( $available_slots );
+}
+/**
  * Validates the cart before checkout
  *
  * @since       2.5
@@ -855,6 +1022,17 @@ function rpress_pre_validate_order() {
     $allowed_services = array_map( 'sanitize_key', $allowed_services );
 
     if ( empty( $normalized_service_type ) || ! in_array( $normalized_service_type, $allowed_services, true ) ) {
+        if ( 'delivery_and_pickup' === $enabled_service ) {
+            $configured_default = sanitize_key( (string) rpress_get_option( 'default_service', 'delivery' ) );
+            $normalized_service_type = in_array( $configured_default, $allowed_services, true )
+                ? $configured_default
+                : ( ! empty( $allowed_services ) ? (string) reset( $allowed_services ) : 'delivery' );
+        } else {
+            $normalized_service_type = sanitize_key( (string) $enabled_service );
+        }
+    }
+
+    if ( empty( $normalized_service_type ) || ! in_array( $normalized_service_type, $allowed_services, true ) ) {
         return array(
             'status' => 'error',
             'error_type' => 'service_type_not_set',
@@ -863,23 +1041,24 @@ function rpress_pre_validate_order() {
     }
 
     $service_type = $normalized_service_type;
+    setcookie( 'service_type', $service_type, time() + ( 86400 * 30 ), '/' );
+    $_COOKIE['service_type'] = $service_type;
 
     $service_time_raw = !empty($_COOKIE['service_time'])
-        ? sanitize_text_field(wp_unslash($_COOKIE['service_time'])) 
+        ? sanitize_text_field(wp_unslash($_COOKIE['service_time']))
         : '';
 
-    $service_date = !empty($_COOKIE['service_date']) 
-        ? sanitize_text_field(wp_unslash($_COOKIE['service_date'])) 
+    $service_date_raw = !empty($_COOKIE['service_date'])
+        ? sanitize_text_field(wp_unslash($_COOKIE['service_date']))
         : '';
 
-    // ✅ Fix invalid or past date
-    $row_date = rp_row_date("", $service_type);
+    $service_date = rpress_get_first_available_service_date( $service_type, $service_date_raw );
+    setcookie( 'service_date', $service_date, time() + ( 86400 * 30 ), '/' );
+    $_COOKIE['service_date'] = $service_date;
 
-    if ( empty($service_date) || strtotime($service_date) < strtotime($row_date) ) {
-        $service_date = $row_date;
-        setcookie("service_date", $service_date, time() + (86400 * 30), "/");
-        $_COOKIE['service_date'] = $service_date;
-    }
+    $service_display_date = date_i18n( 'F j', strtotime( $service_date ) );
+    setcookie( 'delivery_date', $service_display_date, time() + ( 86400 * 30 ), '/' );
+    $_COOKIE['delivery_date'] = $service_display_date;
 
     if ( ! rpress_is_store_open( $service_type, $service_date ) ) {
         return array(
@@ -891,21 +1070,35 @@ function rpress_pre_validate_order() {
 
     $service_time_hidden = function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $service_type );
 
-    // ✅ Preparation Time
+    // Preparation Time.
     $prep_time = (int) rpress_get_option('prep_time', 0) * 60;
 
     $current_time = current_time('timestamp') + $prep_time;
+    $allow_asap = ! empty( rpress_get_option( 'enable_asap_option' ) );
+    $available_slots = rpress_get_available_service_slots( $service_type, $service_date, true );
 
-    // ❌ If service time not selected
-    if ( empty($service_time_raw) && ! $service_time_hidden ) {
+    if ( ! $service_time_hidden ) {
+      $service_time_raw = rpress_match_service_time_to_slot( $service_time_raw, $available_slots, $allow_asap );
+
+      if ( empty( $service_time_raw ) ) {
+        $service_time_raw = rpress_get_next_available_service_time( $service_date, $available_slots, $current_time );
+      }
+
+      if ( empty( $service_time_raw ) ) {
         return array(
-            'status' => 'error',
-            'error_type' => 'service_time_not_set',
-            'error_msg' => __('Please select a service time.', 'restropress')
+          'status' => 'error',
+          'error_type' => 'service_time_not_set',
+          'error_msg' => __( 'Please select a service time.', 'restropress' ),
         );
+      }
+
+      setcookie( 'service_time', $service_time_raw, time() + ( 86400 * 30 ), '/' );
+      setcookie( 'service_time_text', $service_time_raw, time() + ( 86400 * 30 ), '/' );
+      $_COOKIE['service_time'] = $service_time_raw;
+      $_COOKIE['service_time_text'] = $service_time_raw;
     }
 
-    $service_time = empty( $service_time_raw ) ? 0 : strtotime($service_date . ' ' . $service_time_raw);
+    $service_time = empty( $service_time_raw ) ? 0 : strtotime( $service_date . ' ' . $service_time_raw );
 
     /* ==============================
        Minimum Order Validation
@@ -951,7 +1144,6 @@ function rpress_pre_validate_order() {
        Time Slot Validation
     ============================== */
 
-    $allow_asap = rpress_get_option('enable_asap_option');
     $should_validate_time_slot = apply_filters(
         'rpress_should_validate_time_slot',
         function_exists( 'rp_otil_is_service_time_hidden' ) && ( defined( 'RP_OTIAL_VERSION' ) || class_exists( 'RP_Order_Time_intervals_Limit_Functions', false ) ),
@@ -960,12 +1152,22 @@ function rpress_pre_validate_order() {
         $service_time_raw
     );
 
-    if ( $should_validate_time_slot && ! $service_time_hidden && $service_time < $current_time && !$allow_asap ) {
+    if ( $should_validate_time_slot && ! $service_time_hidden && ! $allow_asap && ( empty( $service_time ) || $service_time < $current_time ) ) {
+        $fallback_slot = rpress_get_next_available_service_time( $service_date, $available_slots, $current_time );
 
-        return array(
-            'status' => 'error',
-            'error_msg' => __('Selected time slot is no longer available. Please choose another time.', 'restropress')
-        );
+        if ( empty( $fallback_slot ) ) {
+            return array(
+                'status' => 'error',
+                'error_msg' => __('Selected time slot is no longer available. Please choose another time.', 'restropress')
+            );
+        }
+
+        $service_time_raw = $fallback_slot;
+        $service_time = strtotime( $service_date . ' ' . $service_time_raw );
+        setcookie( 'service_time', $service_time_raw, time() + ( 86400 * 30 ), '/' );
+        setcookie( 'service_time_text', $service_time_raw, time() + ( 86400 * 30 ), '/' );
+        $_COOKIE['service_time'] = $service_time_raw;
+        $_COOKIE['service_time_text'] = $service_time_raw;
     }
 
     /* ==============================
@@ -1055,23 +1257,60 @@ function is_restropress_page()
 {
   global $post;
   $rp_page = false;
-  $menu_page = rpress_get_option('food_items_page', '');
-  if (is_object($post)) {
-    if ($post->ID == $menu_page) {
-      $rp_page = true;
-    } else if (has_shortcode($post->post_content, 'fooditems')) {
-      $rp_page = true;
-    } else if (has_shortcode($post->post_content, 'fooditem_checkout')) {
-      $rp_page = true;
-    } else if (has_shortcode($post->post_content, 'fooditem_cart')) {
-      $rp_page = true;
-    } else if (has_shortcode($post->post_content, 'order_history')) {
-      $rp_page = true;
-    } else if (has_shortcode($post->post_content, 'rpress_receipt')) {
-      $rp_page = true;
+
+  $menu_page     = absint( rpress_get_option( 'food_items_page', 0 ) );
+  $checkout_page = absint( rpress_get_option( 'purchase_page', 0 ) );
+  $success_page  = absint( rpress_get_option( 'success_page', 0 ) );
+
+  if ( ! is_object( $post ) ) {
+    $queried_id = absint( get_queried_object_id() );
+    if ( $queried_id > 0 ) {
+      $post = get_post( $queried_id );
     }
   }
+
+  if ( is_object( $post ) ) {
+    $post_id = absint( $post->ID );
+    if ( $post_id > 0 && in_array( $post_id, array( $menu_page, $checkout_page, $success_page ), true ) ) {
+      $rp_page = true;
+    } else {
+      $shortcodes = array( 'fooditems', 'fooditem_checkout', 'fooditem_cart', 'order_history', 'rpress_receipt' );
+      foreach ( $shortcodes as $shortcode ) {
+        if ( rpress_post_has_shortcode_content( $post, $shortcode ) ) {
+          $rp_page = true;
+          break;
+        }
+      }
+    }
+  }
+
   return apply_filters('is_a_restropress_page', $rp_page);
+}
+
+/**
+ * Check if a post contains the shortcode in classic content or Elementor data.
+ *
+ * @since 3.0.1
+ * @param WP_Post $post      Post object.
+ * @param string  $shortcode Shortcode tag.
+ * @return bool
+ */
+function rpress_post_has_shortcode_content( $post, $shortcode ) {
+  if ( ! is_object( $post ) || empty( $shortcode ) ) {
+    return false;
+  }
+
+  $content = isset( $post->post_content ) ? (string) $post->post_content : '';
+  if ( ! empty( $content ) && has_shortcode( $content, $shortcode ) ) {
+    return true;
+  }
+
+  $elementor_data = get_post_meta( $post->ID, '_elementor_data', true );
+  if ( ! empty( $elementor_data ) && strpos( (string) $elementor_data, '[' . $shortcode ) !== false ) {
+    return true;
+  }
+
+  return false;
 }
 /**
  * Is Odd
@@ -1273,39 +1512,39 @@ function rpress_get_currencies()
     'AUD' => __('Australian Dollars (&#36;)', 'restropress'),
     'BRL' => __('Brazilian Real (R&#36;)', 'restropress'),
     'CAD' => __('Canadian Dollars (&#36;)', 'restropress'),
-    'CZK' => __('Czech Koruna (Kč)', 'restropress'),
+    'CZK' => __('Czech Koruna (KÄ)', 'restropress'),
     'DKK' => __('Danish Krone (kr)', 'restropress'),
     'HKD' => __('Hong Kong Dollar (&#36;)', 'restropress'),
     'HUF' => __('Hungarian Forint (Ft)', 'restropress'),
-    'ILS' => __('Israeli Shekel (₪)', 'restropress'),
+    'ILS' => __('Israeli Shekel (â‚ª)', 'restropress'),
     'JPY' => __('Japanese Yen (&yen;)', 'restropress'),
     'MYR' => __('Malaysian Ringgits (RM)', 'restropress'),
     'MXN' => __('Mexican Peso (&#36;)', 'restropress'),
     'NZD' => __('New Zealand Dollar (&#36;)', 'restropress'),
     'NOK' => __('Norwegian Krone (kr)', 'restropress'),
     'PKR' => __('Pakistani Rupee (Rs)', 'restropress'),
-    'PHP' => __('Philippine Pesos (₱)', 'restropress'),
-    'PLN' => __('Polish Zloty (zł)', 'restropress'),
+    'PHP' => __('Philippine Pesos (â‚±)', 'restropress'),
+    'PLN' => __('Polish Zloty (zÅ‚)', 'restropress'),
     'SGD' => __('Singapore Dollar (&#36;)', 'restropress'),
     'SEK' => __('Swedish Krona (kr)', 'restropress'),
     'CHF' => __('Swiss Franc', 'restropress'),
     'TWD' => __('Taiwan New Dollars ($)', 'restropress'),
-    'THB' => __('Thai Baht (฿)', 'restropress'),
-    'INR' => __('Indian Rupee (₹)', 'restropress'),
-    'TRY' => __('Turkish Lira (₺)', 'restropress'),
-    'RIAL' => __('Iranian Rial (﷼)', 'restropress'),
-    'RUB' => __('Russian Rubles (₽)', 'restropress'),
+    'THB' => __('Thai Baht (à¸¿)', 'restropress'),
+    'INR' => __('Indian Rupee (â‚¹)', 'restropress'),
+    'TRY' => __('Turkish Lira (â‚º)', 'restropress'),
+    'RIAL' => __('Iranian Rial (ï·¼)', 'restropress'),
+    'RUB' => __('Russian Rubles (â‚½)', 'restropress'),
     'AOA' => __('Angolan Kwanza (Kz)', 'restropress'),
     'NGN' => __('Nigerian Naira (&#8358;)', 'restropress'),
-    'AED' => __('UAE Dirham (د.إ)', 'restropress'),
-    'AFN' => __('Afghani (؋)', 'restropress'),
-    'AMD' => __('Netherlands Antillean Guilder (֏)', 'restropress'),
-    'VND' => __('Vietnamese dong (₫)', 'restropress'),
-    'CNY' => __('Renminbi (¥)', 'restropress'),
-    'KRW' => __('South Korean won (₩)', 'restropress'),
-    'BDT' => __('Bangladeshi taka (৳)', 'restropress'),
+    'AED' => __('UAE Dirham (Ø¯.Ø¥)', 'restropress'),
+    'AFN' => __('Afghani (Ø‹)', 'restropress'),
+    'AMD' => __('Netherlands Antillean Guilder (Ö)', 'restropress'),
+    'VND' => __('Vietnamese dong (â‚«)', 'restropress'),
+    'CNY' => __('Renminbi (Â¥)', 'restropress'),
+    'KRW' => __('South Korean won (â‚©)', 'restropress'),
+    'BDT' => __('Bangladeshi taka (à§³)', 'restropress'),
     'NPR' => __('Nepalese rupee (Rs)', 'restropress'),
-    'AZN' => __('Azerbaijani manat (₽)', 'restropress'),
+    'AZN' => __('Azerbaijani manat (â‚½)', 'restropress'),
   );
   return apply_filters('rpress_currencies', $currencies);
 }
@@ -1335,16 +1574,16 @@ function rpress_currency_symbol($currency = '')
   }
   switch ($currency):
     case "GBP":
-      $symbol = '£';
+      $symbol = 'Â£';
       break;
     case "BRL":
       $symbol = 'R$';
       break;
     case "EUR":
-      $symbol = '€';
+      $symbol = 'â‚¬';
       break;
     case "INR":
-      $symbol = '₹';
+      $symbol = 'â‚¹';
       break;
     case "USD":
     case "AUD":
@@ -1358,22 +1597,22 @@ function rpress_currency_symbol($currency = '')
       break;
     case "JPY":
     case "CNY":
-      $symbol = '¥';
+      $symbol = 'Â¥';
       break;
     case "AOA":
       $symbol = 'Kz';
       break;
     case "NGN":
-      $symbol = '₦';
+      $symbol = 'â‚¦';
       break;
     case "CZK":
-      $symbol = 'Kč';
+      $symbol = 'KÄ';
       break;
     case "HUF":
       $symbol = 'Ft';
       break;
     case "ILS":
-      $symbol = '₪';
+      $symbol = 'â‚ª';
       break;
     case "MYR":
       $symbol = 'RM';
@@ -1387,41 +1626,41 @@ function rpress_currency_symbol($currency = '')
       $symbol = 'Rs';
       break;
     case "PHP":
-      $symbol = '₱';
+      $symbol = 'â‚±';
       break;
     case "PLN":
-      $symbol = 'zł';
+      $symbol = 'zÅ‚';
       break;
     case "THB":
-      $symbol = '฿';
+      $symbol = 'à¸¿';
       break;
     case "RIAL":
-      $symbol = '﷼';
+      $symbol = 'ï·¼';
       break;
     case "RUB":
     case "AZN":
-      $symbol = '₽';
+      $symbol = 'â‚½';
       break;
     case "AED":
-      $symbol = 'د.إ';
+      $symbol = 'Ø¯.Ø¥';
       break;
     case "AFN":
-      $symbol = '؋';
+      $symbol = 'Ø‹';
       break;
     case "AMD":
-      $symbol = '֏';
+      $symbol = 'Ö';
       break;
     case "VND":
-      $symbol = '₫';
+      $symbol = 'â‚«';
       break;
     case "KRW":
-      $symbol = '₩';
+      $symbol = 'â‚©';
       break;
     case "BDT":
-      $symbol = '৳';
+      $symbol = 'à§³';
       break;
     case "TRY":
-      $symbol = '₺';
+      $symbol = 'â‚º';
       break;
     default:
       $symbol = $currency;
@@ -2289,7 +2528,15 @@ function rpress_get_service_context( $service_type_override = '' ): array
   );
 
   if (!in_array($context['service_type'], $context['services'], true)) {
-    $context['service_type'] = rpress_get_option('default_service', 'delivery');
+    if ('delivery_and_pickup' === $enabled) {
+      $configured_default = sanitize_key((string) rpress_get_option('default_service', 'delivery'));
+      $context['service_type'] = in_array($configured_default, $context['services'], true)
+        ? $configured_default
+        : 'delivery';
+    } else {
+      // In single-service mode, always force the enabled service.
+      $context['service_type'] = $enabled;
+    }
   }
 
   $service_type_override = strtolower( sanitize_text_field( (string) $service_type_override ) );
@@ -2303,7 +2550,8 @@ function rpress_get_service_context( $service_type_override = '' ): array
   );
 
   /* ---------------- Date Formatting ---------------- */
-  $raw = rp_row_date($context['service_date_raw'], $context['service_type']);
+  $raw = rpress_get_first_available_service_date( $context['service_type'], $context['service_date_raw'] );
+  $context['service_date_raw'] = $raw;
 
   if (!empty($raw)) {
     $date = DateTime::createFromFormat('Y-m-d', $raw);
@@ -2324,19 +2572,36 @@ function rpress_get_service_context( $service_type_override = '' ): array
     );
   }
 
-  $context['selected_time'] = $context['service_time']
-    ?: rpress_get_option('default_time');
-
   /* ---------------- Store Timings ---------------- */
-
-  $store_times = rp_get_store_timings(true, $context['service_type']);
-
-  $context['store_timings'] = apply_filters(
-    'rpress_store_timings',
-    $store_times,
+  $context['store_timings'] = rpress_get_available_service_slots(
     $context['service_type'],
-    $context['service_date']
+    $context['service_date_raw'],
+    true
   );
+
+  $service_time_hidden = function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $context['service_type'] );
+  if ( $service_time_hidden ) {
+    $context['selected_time'] = '';
+  } else {
+    $allow_asap = ! empty( rpress_get_option( 'enable_asap_option' ) );
+    $context['selected_time'] = rpress_match_service_time_to_slot(
+      $context['service_time'],
+      $context['store_timings'],
+      $allow_asap
+    );
+
+    if ( empty( $context['selected_time'] ) && ! empty( $context['store_timings'] ) ) {
+      $context['selected_time'] = rpress_get_next_available_service_time(
+        $context['service_date_raw'],
+        $context['store_timings'],
+        0
+      );
+    }
+
+    if ( empty( $context['selected_time'] ) ) {
+      $context['selected_time'] = rpress_get_option( 'default_time' );
+    }
+  }
   /* ---------------- Store Open Check ---------------- */
 
   $service_date_for_checks = !empty($context['service_date_raw'])

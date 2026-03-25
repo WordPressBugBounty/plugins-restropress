@@ -166,6 +166,119 @@ function isStoreOpen() {
 }
 /* RestroPress Frontend Functions */
 jQuery(function ($) {
+  function rp_has_rpress_interactive_ui() {
+    return $('#rpressDateTime, #rpressModal, #rpress_checkout_wrap, .rpress-section').length > 0;
+  }
+
+  function rp_has_visible_open_modal($modals) {
+    var hasVisible = false;
+    $modals.each(function () {
+      var $modal = $(this);
+      var isOpen = $modal.hasClass('is-open') || $modal.attr('aria-hidden') === 'false';
+      if (!isOpen) {
+        return;
+      }
+      if ($modal.find('.modal__container:visible').length > 0 || $modal.is(':visible')) {
+        hasVisible = true;
+      }
+    });
+    return hasVisible;
+  }
+
+  function rp_reset_stuck_modal_state() {
+    if (!rp_has_rpress_interactive_ui()) {
+      return;
+    }
+
+    var $serviceModal = $('#rpressDateTime');
+    var $itemModal = $('#rpressModal');
+    var $modals = $serviceModal.add($itemModal);
+    var $overlays = $('.modal__overlay, .micromodal-overlay, .modal-overlay');
+    var modalVisible = rp_has_visible_open_modal($modals);
+    var hasStaleOpenState = $modals.filter(function () {
+      var $modal = $(this);
+      return (
+        $modal.hasClass('is-open') ||
+        $modal.attr('aria-hidden') === 'false' ||
+        $modal.hasClass('show-service-options') ||
+        $modal.hasClass('show-order-details')
+      );
+    }).length > 0;
+    var bodyLocked = $('body').hasClass('modal-open') || $('body').css('overflow') === 'hidden' || $('html').css('overflow') === 'hidden';
+
+    // If no modal is actually visible, force-clear stale overlays/locks.
+    if (!modalVisible && (hasStaleOpenState || $overlays.length > 0 || bodyLocked)) {
+      $modals
+        .removeClass('is-open loading show-service-options show-order-details')
+        .attr('aria-hidden', 'true');
+
+      $('html, body')
+        .removeClass('modal-open')
+        .css('overflow', '');
+    }
+  }
+
+  rp_reset_stuck_modal_state();
+  setTimeout(rp_reset_stuck_modal_state, 200);
+  setTimeout(rp_reset_stuck_modal_state, 600);
+
+  $(document).on('rpress_checked_slots rp-checkout-update-service-option', function () {
+    setTimeout(rp_reset_stuck_modal_state, 100);
+  });
+
+  function rp_fix_footer_click_intercept() {
+    var footer = document.getElementById('site-footer');
+    if (!footer) {
+      return;
+    }
+
+    var selectors = [
+      '#editDateTime',
+      '.rpress-category-link',
+      '.rpress-checkout-cart',
+      '.rpress_go_to_checkout',
+      '.rpress-cart .rpress_checkout a',
+      '#rpress_purchase_form input[type="text"]',
+      '#rpress_checkout_wrap'
+    ];
+
+    var candidate = null;
+    for (var i = 0; i < selectors.length; i++) {
+      var node = document.querySelector(selectors[i]);
+      if (!node) {
+        continue;
+      }
+      var rect = node.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        candidate = node;
+        break;
+      }
+    }
+
+    if (!candidate) {
+      return;
+    }
+
+    var r = candidate.getBoundingClientRect();
+    var hit = document.elementFromPoint(r.left + (r.width / 2), r.top + (r.height / 2));
+    if (hit && (hit === footer || footer.contains(hit))) {
+      var main = document.querySelector('main, #content, .site-main');
+      if (main) {
+        main.style.position = 'relative';
+        main.style.zIndex = '3';
+      }
+      footer.style.position = 'relative';
+      footer.style.zIndex = '1';
+    }
+  }
+
+  rp_fix_footer_click_intercept();
+  setTimeout(rp_fix_footer_click_intercept, 120);
+  $(window).on('resize.rpFooterFix load.rpFooterFix', rp_fix_footer_click_intercept);
+  $(document).ajaxComplete(function () {
+    setTimeout(rp_fix_footer_click_intercept, 60);
+  });
+
   // Show order details on popup
   $(document)
     .on('click', '.rpress-view-order-btn', function (e) {
@@ -350,9 +463,23 @@ jQuery(function ($) {
     }
 
     if (!selectedValue) {
-      selectedValue = $select.find('option')
-        .first()
-        .val() || '';
+      var $firstSelectableOption = $select.find('option')
+        .filter(function () {
+          var optionValue = ($(this)
+            .val() || '')
+            .toString()
+            .trim();
+          return optionValue !== '' && !$(this)
+            .prop('disabled');
+        })
+        .first();
+
+      if (!$firstSelectableOption.length) {
+        $firstSelectableOption = $select.find('option')
+          .first();
+      }
+
+      selectedValue = $firstSelectableOption.val() || '';
     }
 
     if (selectedValue) {
@@ -360,6 +487,148 @@ jQuery(function ($) {
     }
 
     return selectedValue;
+  }
+  function rp_restore_service_date_select($select, serviceDate) {
+    if (!$select || !$select.length) {
+      return '';
+    }
+
+    var requestedDate = (serviceDate || '')
+      .toString()
+      .trim();
+    var selectedValue = '';
+
+    if (requestedDate && $select.find('option[value="' + requestedDate + '"]').length) {
+      selectedValue = requestedDate;
+    } else if (requestedDate) {
+      var $matchingOption = $select.find('option')
+        .filter(function () {
+          return ($(this)
+            .text() || '')
+            .toString()
+            .trim() === requestedDate;
+        })
+        .first();
+      if ($matchingOption.length) {
+        selectedValue = $matchingOption.val();
+      }
+    }
+
+    if (!selectedValue) {
+      var $firstSelectableOption = $select.find('option')
+        .filter(function () {
+          var optionValue = ($(this)
+            .val() || '')
+            .toString()
+            .trim();
+          return optionValue !== '' && !$(this)
+            .prop('disabled');
+        })
+        .first();
+
+      if (!$firstSelectableOption.length) {
+        $firstSelectableOption = $select.find('option')
+          .first();
+      }
+
+      selectedValue = ($firstSelectableOption.val() || '')
+        .toString()
+        .trim();
+    }
+
+    if (selectedValue) {
+      $select.val(selectedValue);
+    }
+
+    return selectedValue;
+  }
+  function rp_is_service_time_hidden(serviceType) {
+    var normalizedServiceType = String(serviceType || '')
+      .toLowerCase();
+    if (!window.rp_otil_vars) {
+      return false;
+    }
+
+    return (
+      (normalizedServiceType === 'pickup' && window.rp_otil_vars.disable_pickup_time === '1') ||
+      (normalizedServiceType === 'delivery' && window.rp_otil_vars.disable_delivery_time === '1')
+    );
+  }
+  function rp_get_asap_fallback_time(serviceType) {
+    var normalizedServiceType = String(serviceType || '')
+      .toLowerCase();
+    var fallbackTime = 'ASAP';
+
+    if (normalizedServiceType === 'pickup' && window.rp_otil_vars && window.rp_otil_vars.pickup_asap_text) {
+      fallbackTime += ' ' + window.rp_otil_vars.pickup_asap_text;
+    } else if (normalizedServiceType === 'delivery' && window.rp_otil_vars && window.rp_otil_vars.delivery_asap_text) {
+      fallbackTime += ' ' + window.rp_otil_vars.delivery_asap_text;
+    }
+
+    return fallbackTime;
+  }
+  function rp_apply_service_defaults($scope, preferredServiceType) {
+    var $root = ($scope && $scope.length) ? $scope : $(document);
+    var serviceType = rp_get_active_service_type($root, preferredServiceType);
+    serviceType = rp_sync_service_ui_state($root, serviceType) || serviceType;
+
+    var requestedServiceDate = (rp_getCookie('service_date') || rp_getCookie('delivery_date') || '')
+      .toString()
+      .trim();
+    var $activeDateSelect = rp_get_active_service_date_select($root, serviceType);
+    var serviceDate = '';
+    var serviceDateText = '';
+
+    if ($activeDateSelect.length) {
+      serviceDate = rp_restore_service_date_select($activeDateSelect, requestedServiceDate);
+      serviceDateText = ($activeDateSelect.find('option:selected')
+        .text() || '')
+        .toString()
+        .trim();
+    } else {
+      serviceDate = requestedServiceDate;
+      serviceDateText = requestedServiceDate;
+    }
+
+    if (serviceDate) {
+      rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
+      rp_setCookie('delivery_date', serviceDateText || serviceDate, rp_scripts.expire_cookie_time);
+    }
+
+    var requestedServiceTime = (rp_getCookie('service_time') || rp_getCookie('service_time_text') || '')
+      .toString()
+      .trim();
+    var $activeTimeSelect = rp_get_active_service_time_select($root, serviceType);
+    var serviceTime = '';
+    var serviceTimeText = '';
+    var isServiceTimeHidden = rp_is_service_time_hidden(serviceType);
+
+    if (isServiceTimeHidden) {
+      serviceTime = rp_get_asap_fallback_time(serviceType);
+      serviceTimeText = serviceTime;
+    } else if ($activeTimeSelect.length) {
+      serviceTime = rp_restore_service_time_select($activeTimeSelect, requestedServiceTime);
+      serviceTimeText = ($activeTimeSelect.find('option:selected')
+        .text() || '')
+        .toString()
+        .trim();
+    } else {
+      serviceTime = requestedServiceTime;
+      serviceTimeText = requestedServiceTime;
+    }
+
+    if (serviceTime) {
+      rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
+      rp_setCookie('service_time_text', serviceTimeText || serviceTime, rp_scripts.expire_cookie_time);
+    }
+
+    return {
+      serviceType: serviceType,
+      serviceDate: serviceDate,
+      serviceDateText: serviceDateText,
+      serviceTime: serviceTime,
+      serviceTimeText: serviceTimeText
+    };
   }
   function rp_get_active_service_type($scope, fallbackServiceType) {
     var $root = ($scope && $scope.length) ? $scope : $(document);
@@ -464,66 +733,19 @@ jQuery(function ($) {
     return normalizedServiceType;
   }
   function rp_sync_service_selection_cookies($scope, preferredServiceType) {
-    var $root = ($scope && $scope.length) ? $scope : $(document);
-    var serviceType = rp_get_active_service_type($root, preferredServiceType);
-
-    serviceType = rp_sync_service_ui_state($root, serviceType) || serviceType;
-
-    var $activeDateSelect = rp_get_active_service_date_select($root, serviceType);
-    var serviceDate = ($activeDateSelect.val() || '')
-      .toString()
-      .trim();
-    var serviceDateText = '';
-
-    if ($activeDateSelect.length) {
-      serviceDateText = ($activeDateSelect.find('option:selected').text() || '')
+    var defaults = rp_apply_service_defaults($scope, preferredServiceType);
+    if (!defaults.serviceTimeText) {
+      defaults.serviceTimeText = ($('#deliveryTime')
+        .first()
+        .text() || '')
         .toString()
         .trim();
+      if (defaults.serviceTimeText) {
+        rp_setCookie('service_time_text', defaults.serviceTimeText, rp_scripts.expire_cookie_time);
+      }
     }
 
-    if (serviceDate) {
-      rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
-    }
-    if (serviceDateText) {
-      rp_setCookie('delivery_date', serviceDateText, rp_scripts.expire_cookie_time);
-    }
-
-    var $activeTimeSelect = rp_get_active_service_time_select($root, serviceType);
-    var serviceTime = ($activeTimeSelect.val() || '')
-      .toString()
-      .trim();
-    var serviceTimeText = '';
-
-    if ($activeTimeSelect.length) {
-      serviceTimeText = ($activeTimeSelect.find('option:selected').text() || '')
-        .toString()
-        .trim();
-    }
-
-    if (!serviceTimeText) {
-      serviceTimeText = ($('#deliveryTime').first().text() || '')
-        .toString()
-        .trim();
-    }
-
-    if (!serviceTime && serviceTimeText) {
-      serviceTime = serviceTimeText;
-    }
-
-    if (serviceTime) {
-      rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
-    }
-    if (serviceTimeText) {
-      rp_setCookie('service_time_text', serviceTimeText, rp_scripts.expire_cookie_time);
-    }
-
-    return {
-      serviceType: serviceType,
-      serviceDate: serviceDate,
-      serviceDateText: serviceDateText,
-      serviceTime: serviceTime,
-      serviceTimeText: serviceTimeText
-    };
+    return defaults;
   }
   function rp_get_active_service_date_select($scope, preferredServiceType) {
     var $root = ($scope && $scope.length) ? $scope : $(document);
@@ -566,37 +788,30 @@ jQuery(function ($) {
   window.rp_sync_service_selection_cookies = rp_sync_service_selection_cookies;
   window.rp_get_active_service_time_select = rp_get_active_service_time_select;
   window.rp_restore_service_time_select = rp_restore_service_time_select;
+  window.rp_restore_service_date_select = rp_restore_service_date_select;
+  window.rp_apply_service_defaults = rp_apply_service_defaults;
   // Add to Cart
   $('.rpress-add-to-cart')
     .click(function (e) {
       e.preventDefault();
-      var delivery_zip = rp_getCookie('delivery_zip');
-      var delivery_location = rp_getCookie('delivery_location');
-      var delivery_address = rp_getCookie('delivery_address');
+      var $serviceTypeScope = $('.rpress-delivery-wrap .rpress-tabs-wrapper:visible').first();
+      var activeServiceTypeForValidation = rp_get_active_service_type(
+        $serviceTypeScope.length ? $serviceTypeScope : $(document),
+        rp_getCookie('service_type') || rp_scripts.default_service || 'delivery'
+      );
+      activeServiceTypeForValidation = rp_sync_service_ui_state($(document), activeServiceTypeForValidation) || activeServiceTypeForValidation;
 
-      if (!delivery_zip) {
-        var $rp_delivery_zone = $('input#rp_delivery_zone'); // adjust selector if needed
-        // Check if the delivery zone input exists and has a value
-        if ($rp_delivery_zone.length > 0 && !$rp_delivery_zone.val().trim()) {
-          // Show error
-          tata.error('Error', 'Please enter ZIP code', { position: "tr" });
+      if (activeServiceTypeForValidation === 'delivery') {
+        var delivery_zip = rp_getCookie('delivery_zip');
+        var delivery_location = rp_getCookie('delivery_location');
+        var delivery_address = rp_getCookie('delivery_address');
 
-          // Trigger Edit button click after 1 second
-          setTimeout(function () {
-            $('#editDateTime').trigger('click');
-          }, 500);
-
-          return; // stop further execution
-        }
-      }
-
-      if (!delivery_location) {
-        var $rp_delivery_location = $('input#rp_delivery_location'); // adjust selector if needed
-        if (!delivery_address) {
+        if (!delivery_zip) {
+          var $rp_delivery_zone = $('input#rp_delivery_zone'); // adjust selector if needed
           // Check if the delivery zone input exists and has a value
-          if ($rp_delivery_location.length > 0 && !$rp_delivery_location.val().trim()) {
+          if ($rp_delivery_zone.length > 0 && !$rp_delivery_zone.val().trim()) {
             // Show error
-            tata.error('Error', 'Please enter location', { position: "tr" });
+            tata.error('Error', 'Please enter ZIP code', { position: "tr" });
 
             // Trigger Edit button click after 1 second
             setTimeout(function () {
@@ -604,6 +819,24 @@ jQuery(function ($) {
             }, 500);
 
             return; // stop further execution
+          }
+        }
+
+        if (!delivery_location) {
+          var $rp_delivery_location = $('input#rp_delivery_location'); // adjust selector if needed
+          if (!delivery_address) {
+            // Check if the delivery zone input exists and has a value
+            if ($rp_delivery_location.length > 0 && !$rp_delivery_location.val().trim()) {
+              // Show error
+              tata.error('Error', 'Please enter location', { position: "tr" });
+
+              // Trigger Edit button click after 1 second
+              setTimeout(function () {
+                $('#editDateTime').trigger('click');
+              }, 500);
+
+              return; // stop further execution
+            }
           }
         }
       }
@@ -623,24 +856,14 @@ jQuery(function ($) {
         $serviceControlsScope = $(document);
       }
 
-      var $activeDateSelect = rp_get_active_service_date_select($serviceControlsScope, serviceType);
-      var serviceDate = ($activeDateSelect.val() || rp_getCookie('service_date') || rp_getCookie('delivery_date') || '')
+      var normalizedSelection = rp_apply_service_defaults($serviceControlsScope, serviceType);
+      serviceType = normalizedSelection.serviceType || serviceType;
+      var serviceDate = (normalizedSelection.serviceDate || '')
         .toString()
         .trim();
-      var serviceDateText = '';
-      if ($activeDateSelect.length) {
-        serviceDateText = ($activeDateSelect.find('option:selected').text() || '')
-          .toString()
-          .trim();
-      }
-      if (serviceDate) {
-        rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
-      }
-      if (serviceDateText) {
-        rp_setCookie('delivery_date', serviceDateText, rp_scripts.expire_cookie_time);
-      } else if (serviceDate && !rp_getCookie('delivery_date')) {
-        rp_setCookie('delivery_date', serviceDate, rp_scripts.expire_cookie_time);
-      }
+      var serviceTime = (normalizedSelection.serviceTime || '')
+        .toString()
+        .trim();
 
       var getClosedMessage = function () {
         var selectors = [
@@ -658,59 +881,33 @@ jQuery(function ($) {
             return message;
           }
         }
-        return rp_scripts.closed_message;
+        return '';
       };
 
-      var isServiceTimeDisabled = (
-        (serviceType === 'pickup' && window.rp_otil_vars && window.rp_otil_vars.disable_pickup_time === '1') ||
-        (serviceType === 'delivery' && window.rp_otil_vars && window.rp_otil_vars.disable_delivery_time === '1')
-      );
-
-      var $sel = rp_get_active_service_time_select($serviceControlsScope, serviceType);
-      if (!$sel.length) {
-        $sel = rp_get_active_service_time_select($(document), serviceType);
-      }
-
-      var serviceTime = ($sel.val() || rp_getCookie('service_time') || '')
-        .toString()
-        .trim();
-
-      if (!serviceTime) {
-        if (isServiceTimeDisabled) {
-          var fallbackTime = 'ASAP';
-          if (serviceType === 'pickup' && window.rp_otil_vars && window.rp_otil_vars.pickup_asap_text) {
-            fallbackTime += ' ' + window.rp_otil_vars.pickup_asap_text;
-          } else if (serviceType === 'delivery' && window.rp_otil_vars && window.rp_otil_vars.delivery_asap_text) {
-            fallbackTime += ' ' + window.rp_otil_vars.delivery_asap_text;
-          }
-
-          rp_setCookie('service_time', fallbackTime, rp_scripts.expire_cookie_time);
-          rp_setCookie('service_time_text', fallbackTime, rp_scripts.expire_cookie_time);
-          serviceTime = fallbackTime;
-        } else if ($sel.length) {
-          var $opt = $sel.find('option').first();
-          if ($opt.length) {
-            serviceTime = $opt.val();
-            rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
-          }
-        }
-      }
+      var isServiceTimeDisabled = rp_is_service_time_hidden(serviceType);
 
       if (!isServiceTimeDisabled && !serviceTime) {
-        tata.error('Error', getClosedMessage(), { position: "tr" });
-        return;
-      }
-
-      if (!isServiceTimeDisabled && serviceTime && $sel.length) {
-        if ($sel.find('option[value="' + serviceTime + '"]').length) {
-          // valid option exists -> keep it
+        var closedMessage = getClosedMessage();
+        if (closedMessage) {
+          tata.error('Error', closedMessage, { position: "tr" });
         } else {
-          var $firstOpt = $sel.find('option').first();
-          if ($firstOpt.length) {
-            serviceTime = $firstOpt.val();
-            rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
+          $('#editDateTime').trigger('click');
+          var $serviceDateModal = $('#rpressDateTime');
+          var isDateTimeModalVisible = $serviceDateModal.length &&
+            ($serviceDateModal.hasClass('is-open') || $serviceDateModal.attr('aria-hidden') === 'false') &&
+            $serviceDateModal.find('.modal__container:visible').length > 0;
+
+          if (!isDateTimeModalVisible) {
+            var $legacyServiceChange = $('.delivery-change:visible').first();
+            if (!$legacyServiceChange.length) {
+              $legacyServiceChange = $('.delivery-change').first();
+            }
+            if ($legacyServiceChange.length) {
+              $legacyServiceChange.trigger('click');
+            }
           }
         }
+        return;
       }
       var rp_get_delivery_data = rp_get_storage_data();
       $('#rpressModal')
@@ -929,7 +1126,7 @@ jQuery(function ($) {
                     if ($qtyInput.length) {
                       $qtyInput.val(qty);   // set correct quantity
 
-                      // ðŸ”¥ Optional: also mark its parent .food-item-list as "active" if your UI needs it
+                      // Ã°Å¸â€Â¥ Optional: also mark its parent .food-item-list as "active" if your UI needs it
                       $cb.closest('.food-item-list').addClass('active');
                     }
                   });
@@ -1310,32 +1507,42 @@ jQuery(function ($) {
       e.preventDefault();
       var _self = $(this);
       var foodItemId = _self.attr('data-food-id');
-      if ($('.rpress-tabs-wrapper')
-        .find('.nav-item.active a')
-        .length > 0) {
-        var serviceType = $('.rpress-tabs-wrapper')
-          .find('.nav-item.active a')
-          .attr('data-service-type');
-        var serviceLabel = $('.rpress-tabs-wrapper')
-          .find('.nav-item.active a')
-          .text()
+      var $updateScope = _self.parents('.rpress-tabs-wrapper')
+        .first();
+      if (!$updateScope.length) {
+        $updateScope = $('#rpressDateTime .rpress-tabs-wrapper')
+          .first();
+      }
+
+      var serviceType = '';
+      var serviceLabel = '';
+      var $activeServiceTab = $updateScope.find('.nav-item.active a, .single-service-selected.active')
+        .first();
+      if (!$activeServiceTab.length) {
+        $activeServiceTab = $('.rpress-tabs-wrapper')
+          .find('.nav-item.active a, .single-service-selected.active')
+          .first();
+      }
+      if ($activeServiceTab.length) {
+        serviceType = ($activeServiceTab.attr('data-service-type') || '')
+          .toString()
+          .toLowerCase();
+        serviceLabel = ($activeServiceTab.text() || '')
+          .toString()
           .trim();
-        //Store the service label for later use
         window.localStorage.setItem('serviceLabel', serviceLabel);
       }
-      var serviceTime = _self.parents('.rpress-tabs-wrapper')
-        .find('.delivery-settings-wrapper.active .rpress-hrs')
-        .val();
-      if (!serviceTime && rp_getCookie('service_time')) {
-        serviceTime = rp_getCookie('service_time');
-      }
-      var serviceTimeText = _self.parents('.rpress-tabs-wrapper')
-        .find('.delivery-settings-wrapper.active .rpress-hrs option:selected')
-        .text();
-      var serviceDate = _self.parents('.rpress-tabs-wrapper')
-        .find('.delivery-settings-wrapper.active .rpress_get_delivery_dates')
-        .val();
-      var sDate = serviceDate === undefined ? rpress_scripts.current_date : serviceDate;
+
+      var normalizedSelection = rp_apply_service_defaults(
+        $updateScope.length ? $updateScope : $(document),
+        serviceType
+      );
+
+      serviceType = normalizedSelection.serviceType || serviceType || rp_getCookie('service_type') || rp_scripts.default_service || 'delivery';
+      var serviceTime = normalizedSelection.serviceTime;
+      var serviceTimeText = normalizedSelection.serviceTimeText || serviceTime;
+      var serviceDate = normalizedSelection.serviceDate;
+      var sDate = serviceDate || rp_getCookie('service_date') || '';
       var action = 'rpress_check_service_slot';
       var data = {
         action: action,
@@ -1372,20 +1579,16 @@ jQuery(function ($) {
             return false;
           } else {
             rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
-            if (serviceDate === undefined) {
-              rp_setCookie('service_date', rpress_scripts.current_date, rp_scripts.expire_cookie_time);
-              rp_setCookie('delivery_date', rpress_scripts.display_date, rp_scripts.expire_cookie_time);
-            } else {
-              var delivery_date = $('.delivery-settings-wrapper.active .rpress_get_delivery_dates option:selected')
-                .text();
+            if (serviceDate) {
               rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
-              rp_setCookie('delivery_date', delivery_date, rp_scripts.expire_cookie_time);
+              rp_setCookie('delivery_date', normalizedSelection.serviceDateText || serviceDate, rp_scripts.expire_cookie_time);
             }
-            if (serviceTime === undefined) {
-              rp_setCookie('service_time', '', rp_scripts.expire_cookie_time);
-            } else {
+            if (serviceTime) {
               rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
               rp_setCookie('service_time_text', serviceTimeText, rp_scripts.expire_cookie_time);
+            } else {
+              rp_setCookie('service_time', '', rp_scripts.expire_cookie_time);
+              rp_setCookie('service_time_text', '', rp_scripts.expire_cookie_time);
             }
             $('#rpressModal')
               .removeClass('show-service-options');
@@ -1400,13 +1603,14 @@ jQuery(function ($) {
               if (jQuery('#rpressModal').length) {
                 MicroModal.close('rpressModal');
               }
-              if (typeof serviceType !== 'undefined' && typeof serviceTime !== 'undefined') {
+              var selectedDateLabel = normalizedSelection.serviceDateText || rp_getCookie('delivery_date') || serviceDate || '';
+              if (serviceType && serviceTime) {
                 $('.delivery-wrap .delivery-opts')
-                  .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + Cookies.get('delivery_date') + ', ' + serviceTimeText + '</span>');
-              } else if (typeof serviceTime == 'undefined') {
+                  .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + selectedDateLabel + ', ' + serviceTimeText + '</span>');
+              } else if (serviceType) {
                 $('.delivery-items-options')
                   .find('.delivery-opts')
-                  .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + Cookies.get('delivery_date') + '</span>');
+                  .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + selectedDateLabel + '</span>');
               }
             }
 
@@ -1426,29 +1630,41 @@ jQuery(function ($) {
       e.preventDefault();
       var _self = $(this);
       var foodItemId = _self.attr('data-food-id');
-      if ($('.rpress-tabs-wrapper')
-        .find('.nav-item.active a')
-        .length > 0) {
-        var serviceType = $('.rpress-tabs-wrapper')
-          .find('.nav-item.active a')
-          .attr('data-service-type');
-        var serviceLabel = $('.rpress-tabs-wrapper')
-          .find('.nav-item.active a')
-          .text()
+      var $updateScope = _self.parents('.rpress-tabs-wrapper')
+        .first();
+      if (!$updateScope.length) {
+        $updateScope = $('#rpressDateTime .rpress-tabs-wrapper')
+          .first();
+      }
+      var serviceType = '';
+      var serviceLabel = '';
+      var $activeServiceTab = $updateScope.find('.nav-item.active a, .single-service-selected.active')
+        .first();
+      if (!$activeServiceTab.length) {
+        $activeServiceTab = $('.rpress-tabs-wrapper')
+          .find('.nav-item.active a, .single-service-selected.active')
+          .first();
+      }
+      if ($activeServiceTab.length) {
+        serviceType = ($activeServiceTab.attr('data-service-type') || '')
+          .toString()
+          .toLowerCase();
+        serviceLabel = ($activeServiceTab.text() || '')
+          .toString()
           .trim();
-        //Store the service label for later use
         window.localStorage.setItem('serviceLabel', serviceLabel);
       }
-      var serviceTime = _self.parents('.rpress-tabs-wrapper')
-        .find('.delivery-settings-wrapper.active .rpress-hrs')
-        .val();
-      var serviceTimeText = _self.parents('.rpress-tabs-wrapper')
-        .find('.delivery-settings-wrapper.active .rpress-hrs option:selected')
-        .text();
-      var serviceDate = _self.parents('.rpress-tabs-wrapper')
-        .find('.delivery-settings-wrapper.active .rpress_get_delivery_dates')
-        .val();
-      var sDate = serviceDate === undefined ? rpress_scripts.current_date : serviceDate;
+
+      var normalizedSelection = rp_apply_service_defaults(
+        $updateScope.length ? $updateScope : $(document),
+        serviceType
+      );
+
+      serviceType = normalizedSelection.serviceType || serviceType || rp_getCookie('service_type') || rp_scripts.default_service || 'delivery';
+      var serviceTime = normalizedSelection.serviceTime;
+      var serviceTimeText = normalizedSelection.serviceTimeText || serviceTime;
+      var serviceDate = normalizedSelection.serviceDate;
+      var sDate = serviceDate || rp_getCookie('service_date') || '';
       var action = 'rpress_check_service_slot';
       var data = {
         action: action,
@@ -1484,6 +1700,18 @@ jQuery(function ($) {
             tata.error(rp_scripts.error, response.error_msg || response.msg || rp_scripts.closed_message);
             return false;
           } else {
+            rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
+            if (serviceDate) {
+              rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
+              rp_setCookie('delivery_date', normalizedSelection.serviceDateText || serviceDate, rp_scripts.expire_cookie_time);
+            }
+            if (serviceTime) {
+              rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
+              rp_setCookie('service_time_text', serviceTimeText || serviceTime, rp_scripts.expire_cookie_time);
+            } else {
+              rp_setCookie('service_time', '', rp_scripts.expire_cookie_time);
+              rp_setCookie('service_time_text', '', rp_scripts.expire_cookie_time);
+            }
             $('#rpressModal')
               .removeClass('show-service-options');
             if (foodItemId) {
@@ -1495,13 +1723,14 @@ jQuery(function ($) {
               MicroModal.close('rpressModal');
             } else {
               MicroModal.close('rpressModal');
-              if (typeof serviceType !== 'undefined' && typeof serviceTime !== 'undefined') {
+              var selectedDateLabel = normalizedSelection.serviceDateText || rp_getCookie('delivery_date') || serviceDate || '';
+              if (serviceType && serviceTime) {
                 $('.delivery-wrap .delivery-opts')
-                  .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + Cookies.get('delivery_date') + ', ' + serviceTimeText + '</span>');
-              } else if (typeof serviceTime == 'undefined') {
+                  .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + selectedDateLabel + ', ' + serviceTimeText + '</span>');
+              } else if (serviceType) {
                 $('.delivery-items-options')
                   .find('.delivery-opts')
-                  .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + Cookies.get('delivery_date') + '</span>');
+                  .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + selectedDateLabel + '</span>');
               }
             }
 
@@ -1524,35 +1753,60 @@ jQuery(function ($) {
     e.preventDefault();
     var self = $(this);
 
-    var serviceType = rp_getCookie('service_type');
-    if (!serviceType) {
-      serviceType = rp_scripts.default_service || 'delivery';
-      rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
-    }
-    var serviceTime = rp_getCookie('service_time');
-    var $sel = rp_get_active_service_time_select($('#rpressDateTime-content'), serviceType);
-    if (!$sel.length) {
-      $sel = rp_get_active_service_time_select($('#rpressDateTime'), serviceType);
-    }
-    if (!serviceTime) {
-
-      var $opt = $sel.find('option').first();
-      if ($opt.length) {
-        var val = $opt.val();
-        $sel.val(val);
+    var openLegacyServiceOptionsModal = function () {
+      var $serviceChange = $('.delivery-change:visible').first();
+      if (!$serviceChange.length) {
+        $serviceChange = $('.delivery-change').first();
       }
-    } else {
-      if ($sel.find('option[value="' + serviceTime + '"]').length) {
 
-        $sel.val(serviceTime);
-      } else {
+      if ($serviceChange.length) {
+        $serviceChange.trigger('click');
+        return true;
+      }
 
-        var $firstOpt = $sel.find('option').first();
-        if ($firstOpt.length) {
-          $sel.val($firstOpt.val());
+      if (!$('#rpressModal').length || !rp_scripts || !rp_scripts.ajaxurl || !rp_scripts.service_type_nonce) {
+        return false;
+      }
+
+      $('#rpressModal').addClass('show-service-options');
+      $.ajax({
+        type: "POST",
+        data: {
+          action: 'rpress_show_delivery_options',
+          security: rp_scripts.service_type_nonce
+        },
+        dataType: "json",
+        url: rp_scripts.ajaxurl,
+        success: function (response) {
+          if (!response || !response.data) {
+            return;
+          }
+          $('#rpressModal .modal-title').html(response.data.html_title || '');
+          $('#rpressModal .modal-body').html(response.data.html || '');
+          MicroModal.show('rpressModal', {
+            disableScroll: true
+          });
+          $(document.body).trigger('opened_service_options', [response.data]);
         }
+      });
+
+      return true;
+    };
+
+    var $dateTimeModal = $('#rpressDateTime');
+    var hasDateTimeMarkup = $dateTimeModal.length &&
+      $dateTimeModal.find('.modal__overlay').length > 0 &&
+      $dateTimeModal.find('.modal__container').length > 0;
+
+    if (!hasDateTimeMarkup) {
+      if (openLegacyServiceOptionsModal()) {
+        return;
       }
     }
+
+    var serviceType = rp_getCookie('service_type') || rp_scripts.default_service || 'delivery';
+    rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
+    rp_apply_service_defaults($('#rpressDateTime-content'), serviceType);
 
     $('.rpress-mobile-cart-icons').hide();
 
@@ -1561,72 +1815,26 @@ jQuery(function ($) {
     });
 
   });
-  // Get today's date in YYYY-MM-DD (WP-compatible)
-  function getTodayDate() {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  }
-
   $('body').on('click', '.rpress-editaddress-submit-btn', function (e) {
     e.preventDefault();
 
     var $modal = $('#rpressDateTime-content');
-    var activeServiceType = rp_getCookie('service_type');
-    var $activeTimeSelect = rp_get_active_service_time_select($modal, activeServiceType);
-    if (!$activeTimeSelect.length) {
-      $activeTimeSelect = rp_get_active_service_time_select($('#rpressDateTime'), activeServiceType);
+    if (!$modal.length) {
+      $modal = $('#rpressDateTime');
     }
-    var $activeDateSelect = $activeTimeSelect.closest('.delivery-settings-wrapper')
-      .find('.rpress_get_delivery_dates')
-      .first();
-    if (!$activeDateSelect.length) {
-      $activeDateSelect = $modal.find('.delivery-settings-wrapper.active .rpress_get_delivery_dates')
-        .first();
-    }
-    if (!$activeDateSelect.length) {
-      $activeDateSelect = $modal.find('.rpress_get_delivery_dates')
-        .first();
-    }
+    var activeServiceType = rp_getCookie('service_type') || rp_scripts.default_service || 'delivery';
+    var selection = rp_apply_service_defaults($modal.length ? $modal : $(document), activeServiceType);
+    var selectedDateText = (selection.serviceDateText || rp_getCookie('delivery_date') || '')
+      .toString()
+      .trim();
+    var selectedTimeText = (selection.serviceTimeText || selection.serviceTime || rp_getCookie('service_time_text') || '')
+      .toString()
+      .trim();
 
-    // Get selected time
-    var deliveryTime = $activeTimeSelect.val();
-
-    var deliveryTimeText = $activeTimeSelect.find('option:selected')
-      .text();
-
-    // Get selected date
-    var deliveryDate = $activeDateSelect.val();
-
-    // Update cookies
-    rp_setCookie('service_time', deliveryTime, rp_scripts.expire_cookie_time);
-    rp_setCookie('service_time_text', deliveryTimeText, rp_scripts.expire_cookie_time);
-
-    // If deliveryDate exists â†’ use it, else use today
-    if (!deliveryDate) {
-      deliveryDate = getTodayDate();
+    if (selectedDateText) {
+      $('#deliveryDate').text(selectedDateText);
     }
 
-    rp_setCookie('service_date', deliveryDate, rp_scripts.expire_cookie_time);
-    rp_setCookie('delivery_date', deliveryDate, rp_scripts.expire_cookie_time);
-
-    // Get the selected date and time
-    var selectedDate = deliveryDate;
-    var selectedTimeText = deliveryTimeText;
-
-    // Format the date to "Month Day"
-    var formattedDate = '';
-    if (selectedDate) {
-      var dateObj = new Date(selectedDate);
-      var options = { month: 'long', day: 'numeric' };
-      formattedDate = dateObj.toLocaleDateString('en-US', options);
-    }
-
-    // Update date span
-    if (formattedDate) {
-      $('#deliveryDate').text(formattedDate);
-    }
-
-    // Update time span
     if (selectedTimeText) {
       $('#deliveryTime').text(selectedTimeText);
     }
@@ -2278,8 +2486,15 @@ jQuery(function ($) {
     let current_category = rp_category_links.eq('0').attr('href').substr(1);
     function RpScrollingCategories() {
       rp_category_links.each(function () {
-        const section_id = $(this).attr('href').substr(1);
+        const href = $(this).attr('href');
+        if (!href || href.charAt(0) !== '#') {
+          return;
+        }
+        const section_id = href.substr(1);
         const section = document.querySelector(`.menu-category-wrap[data-cat-id="${section_id}"]`);
+        if (!section) {
+          return;
+        }
         if (section.getBoundingClientRect().top < header_height + 40) {
           current_category = section_id;
         }
@@ -2423,7 +2638,7 @@ jQuery(function ($) {
       return current;
     }
 
-    // On window scroll (content scroll, not nav scroll) â€” keep dropdown and indicator in sync
+    // On window scroll (content scroll, not nav scroll) Ã¢â‚¬â€ keep dropdown and indicator in sync
     $(window).on("scroll", function () {
       let current = getCurrentCategoryInView();
       if (!current) return;
@@ -2499,7 +2714,14 @@ jQuery(function ($) {
           }
 
           if (!selectedValue) {
-            selectedValue = $select.find('option').first().val() || '';
+            var $firstSelectableOption = $select.find('option').filter(function () {
+              var optionValue = ($(this).val() || '').toString().trim();
+              return optionValue !== '' && !$(this).prop('disabled');
+            }).first();
+            if (!$firstSelectableOption.length) {
+              $firstSelectableOption = $select.find('option').first();
+            }
+            selectedValue = $firstSelectableOption.val() || '';
           }
 
           if (selectedValue) {
@@ -2508,6 +2730,9 @@ jQuery(function ($) {
 
           return selectedValue;
         };
+      var applyServiceDefaults = (typeof window.rp_apply_service_defaults === 'function')
+        ? window.rp_apply_service_defaults
+        : null;
 
       var checkoutUpdateInFlight = false;
       var lastCheckoutServiceType = '';
@@ -2617,8 +2842,12 @@ jQuery(function ($) {
           var restoredServiceType = rp_getCookie('service_type') || lastCheckoutServiceType;
           syncCheckoutServiceTabs(restoredServiceType);
           var $checkoutScope = getCheckoutServiceScope();
-          var $activeTimeSelect = getActiveServiceTimeSelect($checkoutScope, restoredServiceType);
-          restoreServiceTimeSelect($activeTimeSelect, rp_getCookie('service_time'));
+          if (applyServiceDefaults) {
+            applyServiceDefaults($checkoutScope.length ? $checkoutScope : $(document), restoredServiceType);
+          } else {
+            var $activeTimeSelect = getActiveServiceTimeSelect($checkoutScope, restoredServiceType);
+            restoreServiceTimeSelect($activeTimeSelect, rp_getCookie('service_time'));
+          }
           $(document.body)
             .trigger('rp-checkout-update-service-option', [html]);
         } catch (e) {
@@ -2651,8 +2880,12 @@ jQuery(function ($) {
         lastCheckoutServiceType = chkServiceType;
         if ($serviceTab.length) {
           var $checkoutScope = getCheckoutServiceScope();
-          var $activeTimeSelect = getActiveServiceTimeSelect($checkoutScope, chkServiceType);
-          restoreServiceTimeSelect($activeTimeSelect, rp_getCookie('service_time'));
+          if (applyServiceDefaults) {
+            applyServiceDefaults($checkoutScope.length ? $checkoutScope : $(document), chkServiceType);
+          } else {
+            var $activeTimeSelect = getActiveServiceTimeSelect($checkoutScope, chkServiceType);
+            restoreServiceTimeSelect($activeTimeSelect, rp_getCookie('service_time'));
+          }
         }
       }
       $(document)
@@ -2680,17 +2913,21 @@ jQuery(function ($) {
           syncCheckoutServiceTabs(serviceType_);
           rp_setCookie('service_type', serviceType_, rp_scripts.expire_cookie_time);
           var $checkoutScope = getCheckoutServiceScope();
-          var $activeTimeSelect = getActiveServiceTimeSelect($checkoutScope, serviceType_);
-          if ($activeTimeSelect.length) {
-            var selectedTime = $activeTimeSelect.val() || '';
-            var selectedTimeText = $activeTimeSelect.find('option:selected')
-              .text()
-              .trim();
-            if (selectedTime) {
-              rp_setCookie('service_time', selectedTime, rp_scripts.expire_cookie_time);
-            }
-            if (selectedTimeText) {
-              rp_setCookie('service_time_text', selectedTimeText, rp_scripts.expire_cookie_time);
+          if (applyServiceDefaults) {
+            applyServiceDefaults($checkoutScope.length ? $checkoutScope : $(document), serviceType_);
+          } else {
+            var $activeTimeSelect = getActiveServiceTimeSelect($checkoutScope, serviceType_);
+            if ($activeTimeSelect.length) {
+              var selectedTime = $activeTimeSelect.val() || '';
+              var selectedTimeText = $activeTimeSelect.find('option:selected')
+                .text()
+                .trim();
+              if (selectedTime) {
+                rp_setCookie('service_time', selectedTime, rp_scripts.expire_cookie_time);
+              }
+              if (selectedTimeText) {
+                rp_setCookie('service_time_text', selectedTimeText, rp_scripts.expire_cookie_time);
+              }
             }
           }
           await refreshCheckoutServiceOption();
@@ -2721,12 +2958,16 @@ jQuery(function ($) {
         $('.delivery-settings-wrapper#nav-pickup .delivery-time-wrapper:eq(0)')
           .remove();
       }
-      var ServiceTime = rp_getCookie('service_time');
-      if (ServiceTime) {
-        var selectedServiceType = chkServiceType || rp_getCookie('service_type');
-        var $checkoutScope = getCheckoutServiceScope();
-        var $activeTimeSelect = getActiveServiceTimeSelect($checkoutScope, selectedServiceType);
-        restoreServiceTimeSelect($activeTimeSelect, ServiceTime);
+      var selectedServiceType = chkServiceType || rp_getCookie('service_type');
+      var $checkoutScope = getCheckoutServiceScope();
+      if (applyServiceDefaults) {
+        applyServiceDefaults($checkoutScope.length ? $checkoutScope : $(document), selectedServiceType);
+      } else {
+        var serviceTime = rp_getCookie('service_time');
+        if (serviceTime) {
+          var $activeTimeSelect = getActiveServiceTimeSelect($checkoutScope, selectedServiceType);
+          restoreServiceTimeSelect($activeTimeSelect, serviceTime);
+        }
       }
     })
 
@@ -2847,7 +3088,17 @@ jQuery(document).ready(function ($) {
       var serviceLabel = $this.text().trim();
       if (serviceType) {
         rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
-        updataModalOnServiceTypeChange(serviceType);
+        var $dateTimeModal = $('#rpressDateTime');
+        var isDateTimeModalOpen = $dateTimeModal.length &&
+          ($dateTimeModal.hasClass('is-open') || $dateTimeModal.attr('aria-hidden') === 'false');
+
+        // Avoid replacing modal HTML while it is open; this causes the popup to flash and close.
+        if (!isDateTimeModalOpen) {
+          updataModalOnServiceTypeChange(serviceType);
+        }
+        if (typeof window.rp_apply_service_defaults === 'function') {
+          window.rp_apply_service_defaults($wrapper.length ? $wrapper : $(document), serviceType);
+        }
       }
       if (typeof Cookies !== 'undefined') {
         Cookies.set('service_label', serviceLabel, { expires: 1 });
@@ -2863,22 +3114,57 @@ jQuery(document).ready(function ($) {
  * @author RestroPress
  * @param {string} service_type
  */
+  var rpModalSwitchRequestSeq = 0;
   const updataModalOnServiceTypeChange = function (service_type) {
+    var requestedServiceType = String(service_type || '')
+      .toLowerCase();
+    var requestSeq = ++rpModalSwitchRequestSeq;
+
     $.get(`${rp_scripts.ajaxurl}?action=rpress_update_modal_on_service_switch&service_type=${service_type}&security=${rp_scripts.service_type_nonce}`, function (res) {
+      // Ignore stale out-of-order responses from earlier service switches.
+      if (requestSeq !== rpModalSwitchRequestSeq) {
+        return;
+      }
+
+      var currentServiceType = String(rp_getCookie('service_type') || '')
+        .toLowerCase();
+      if (requestedServiceType && currentServiceType && requestedServiceType !== currentServiceType) {
+        return;
+      }
+
       if (res && res.success && res.data.modal_html && res.data.time_option_html) {
+        var $existingDateTimeModal = $("#rpressDateTime");
+        var wasDateTimeModalOpen = $existingDateTimeModal.length &&
+          ($existingDateTimeModal.hasClass('is-open') || $existingDateTimeModal.attr('aria-hidden') === 'false');
+
+        // Do not replace DOM while popup is open; that causes instant close/flicker.
+        if (wasDateTimeModalOpen) {
+          if (typeof window.rp_apply_service_defaults === 'function') {
+            var openSelection = window.rp_apply_service_defaults($('#rpressDateTime-content'), requestedServiceType || currentServiceType);
+            if (openSelection.serviceDateText) {
+              $("#deliveryDate").text(openSelection.serviceDateText);
+            }
+            if (openSelection.serviceTimeText) {
+              $("#deliveryTime").text(openSelection.serviceTimeText);
+            }
+          }
+          return;
+        }
+
         $("#rpressDateTime").replaceWith(res.data.modal_html);
-        $(".rpress-edit-address-wrap").html(
+        $(".rpress-option-col.rpress-edit-address-wrap").html(
           `<span class="left-brdr"></span>${res.data.time_option_html}`
         );
-        const $select = $(res.data.modal_html).find("#rpress-delivery-hours");
-        const serviceTime = Cookies.get('service_time');
-        let defaultTime = "";
-        if ($select.length) {
-          defaultTime = $select.find('option:first').val();
+        if (typeof window.rp_apply_service_defaults === 'function') {
+          var selection = window.rp_apply_service_defaults($('#rpressDateTime-content'), service_type);
+          if (selection.serviceDateText) {
+            $("#deliveryDate").text(selection.serviceDateText);
+          }
+          if (selection.serviceTimeText) {
+            $("#deliveryTime").text(selection.serviceTimeText);
+          }
         }
-        if (!serviceTime && defaultTime) {
-          $("#deliveryTime").text(defaultTime);
-        }
+
       }
     })
   }
@@ -3613,29 +3899,21 @@ jQuery(document).ready(function ($) {
 
 jQuery(document).ready(function ($) {
 
-  var serviceType = rp_getCookie('service_type');
-  if (!serviceType) {
-    if (rp_scripts.service_options == 'delivery' || rp_scripts.service_options == 'pickup') {
-      serviceType = rp_scripts.default_service || 'delivery';
-      rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
-    }
+  var serviceType = rp_getCookie('service_type') || rp_scripts.default_service || 'delivery';
+  rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
+  var selection = (typeof window.rp_apply_service_defaults === 'function')
+    ? window.rp_apply_service_defaults(
+      $('.rpress-delivery-wrap .rpress-tabs-wrapper:visible').first(),
+      serviceType
+    )
+    : null;
+
+  if (selection && selection.serviceDateText) {
+    $('#deliveryDate').text(selection.serviceDateText);
   }
-
-  var $select = $('#rpress-delivery-hours');
-  var serviceTime = rp_getCookie('service_time');
-
-  if ($select.length > 0) {
-    // Check if the select has an option matching the cookie value
-    if (!serviceTime || $select.find('option').filter(function () {
-      return $(this).text().trim() === serviceTime;
-    }).length === 0) {
-      // Cookie missing or not in options, fallback to first option
-      serviceTime = $select.find('option:first').text().trim();
-    }
+  if (selection && selection.serviceTimeText) {
+    $('#deliveryTime').text(selection.serviceTimeText);
   }
-
-  // Print the value in the span
-  $('#deliveryTime').text(serviceTime);
 
   function initStickyMenu() {
     var $menu = $('.desktop-scroll-menu .make-me-sticky');
