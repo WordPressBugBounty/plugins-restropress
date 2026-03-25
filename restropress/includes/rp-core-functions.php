@@ -1512,40 +1512,41 @@ function rpress_get_currencies()
     'AUD' => __('Australian Dollars (&#36;)', 'restropress'),
     'BRL' => __('Brazilian Real (R&#36;)', 'restropress'),
     'CAD' => __('Canadian Dollars (&#36;)', 'restropress'),
-    'CZK' => __('Czech Koruna (KÄ)', 'restropress'),
+    'CZK' => __('Czech Koruna (K&#269;)', 'restropress'),
     'DKK' => __('Danish Krone (kr)', 'restropress'),
     'HKD' => __('Hong Kong Dollar (&#36;)', 'restropress'),
     'HUF' => __('Hungarian Forint (Ft)', 'restropress'),
-    'ILS' => __('Israeli Shekel (â‚ª)', 'restropress'),
+    'ILS' => __('Israeli Shekel (&#8362;)', 'restropress'),
     'JPY' => __('Japanese Yen (&yen;)', 'restropress'),
     'MYR' => __('Malaysian Ringgits (RM)', 'restropress'),
     'MXN' => __('Mexican Peso (&#36;)', 'restropress'),
     'NZD' => __('New Zealand Dollar (&#36;)', 'restropress'),
     'NOK' => __('Norwegian Krone (kr)', 'restropress'),
     'PKR' => __('Pakistani Rupee (Rs)', 'restropress'),
-    'PHP' => __('Philippine Pesos (â‚±)', 'restropress'),
-    'PLN' => __('Polish Zloty (zÅ‚)', 'restropress'),
+    'PHP' => __('Philippine Pesos (&#8369;)', 'restropress'),
+    'PLN' => __('Polish Zloty (z&#322;)', 'restropress'),
     'SGD' => __('Singapore Dollar (&#36;)', 'restropress'),
     'SEK' => __('Swedish Krona (kr)', 'restropress'),
     'CHF' => __('Swiss Franc', 'restropress'),
     'TWD' => __('Taiwan New Dollars ($)', 'restropress'),
-    'THB' => __('Thai Baht (à¸¿)', 'restropress'),
-    'INR' => __('Indian Rupee (â‚¹)', 'restropress'),
-    'TRY' => __('Turkish Lira (â‚º)', 'restropress'),
-    'RIAL' => __('Iranian Rial (ï·¼)', 'restropress'),
-    'RUB' => __('Russian Rubles (â‚½)', 'restropress'),
+    'THB' => __('Thai Baht (&#3647;)', 'restropress'),
+    'INR' => __('Indian Rupee (&#8377;)', 'restropress'),
+    'TRY' => __('Turkish Lira (&#8378;)', 'restropress'),
+    'RIAL' => __('Iranian Rial (&#65020;)', 'restropress'),
+    'RUB' => __('Russian Rubles (&#8381;)', 'restropress'),
     'AOA' => __('Angolan Kwanza (Kz)', 'restropress'),
     'NGN' => __('Nigerian Naira (&#8358;)', 'restropress'),
-    'AED' => __('UAE Dirham (Ø¯.Ø¥)', 'restropress'),
-    'AFN' => __('Afghani (Ø‹)', 'restropress'),
-    'AMD' => __('Netherlands Antillean Guilder (Ö)', 'restropress'),
-    'VND' => __('Vietnamese dong (â‚«)', 'restropress'),
-    'CNY' => __('Renminbi (Â¥)', 'restropress'),
-    'KRW' => __('South Korean won (â‚©)', 'restropress'),
-    'BDT' => __('Bangladeshi taka (à§³)', 'restropress'),
+    'AED' => __('UAE Dirham (&#1583;.&#1573;)', 'restropress'),
+    'AFN' => __('Afghani (&#1547;)', 'restropress'),
+    'AMD' => __('Armenian Dram (&#1423;)', 'restropress'),
+    'VND' => __('Vietnamese dong (&#8363;)', 'restropress'),
+    'CNY' => __('Renminbi (&yen;)', 'restropress'),
+    'KRW' => __('South Korean won (&#8361;)', 'restropress'),
+    'BDT' => __('Bangladeshi taka (&#2547;)', 'restropress'),
     'NPR' => __('Nepalese rupee (Rs)', 'restropress'),
-    'AZN' => __('Azerbaijani manat (â‚½)', 'restropress'),
+    'AZN' => __('Azerbaijani manat (&#8380;)', 'restropress'),
   );
+
   return apply_filters('rpress_currencies', $currencies);
 }
 /**
@@ -1572,18 +1573,19 @@ function rpress_currency_symbol($currency = '')
   if (empty($currency)) {
     $currency = rpress_get_currency();
   }
+
   switch ($currency):
     case "GBP":
-      $symbol = 'Â£';
+      $symbol = html_entity_decode('&pound;', ENT_QUOTES, 'UTF-8');
       break;
     case "BRL":
       $symbol = 'R$';
       break;
     case "EUR":
-      $symbol = 'â‚¬';
+      $symbol = html_entity_decode('&euro;', ENT_QUOTES, 'UTF-8');
       break;
     case "INR":
-      $symbol = 'â‚¹';
+      $symbol = html_entity_decode('&#8377;', ENT_QUOTES, 'UTF-8');
       break;
     case "USD":
     case "AUD":
@@ -1597,22 +1599,22 @@ function rpress_currency_symbol($currency = '')
       break;
     case "JPY":
     case "CNY":
-      $symbol = 'Â¥';
+      $symbol = html_entity_decode('&yen;', ENT_QUOTES, 'UTF-8');
       break;
     case "AOA":
       $symbol = 'Kz';
       break;
     case "NGN":
-      $symbol = 'â‚¦';
+      $symbol = html_entity_decode('&#8358;', ENT_QUOTES, 'UTF-8');
       break;
     case "CZK":
-      $symbol = 'KÄ';
+      $symbol = html_entity_decode('K&#269;', ENT_QUOTES, 'UTF-8');
       break;
     case "HUF":
       $symbol = 'Ft';
       break;
     case "ILS":
-      $symbol = 'â‚ª';
+      $symbol = html_entity_decode('&#8362;', ENT_QUOTES, 'UTF-8');
       break;
     case "MYR":
       $symbol = 'RM';
@@ -1626,46 +1628,49 @@ function rpress_currency_symbol($currency = '')
       $symbol = 'Rs';
       break;
     case "PHP":
-      $symbol = 'â‚±';
+      $symbol = html_entity_decode('&#8369;', ENT_QUOTES, 'UTF-8');
       break;
     case "PLN":
-      $symbol = 'zÅ‚';
+      $symbol = html_entity_decode('z&#322;', ENT_QUOTES, 'UTF-8');
       break;
     case "THB":
-      $symbol = 'à¸¿';
+      $symbol = html_entity_decode('&#3647;', ENT_QUOTES, 'UTF-8');
       break;
     case "RIAL":
-      $symbol = 'ï·¼';
+      $symbol = html_entity_decode('&#65020;', ENT_QUOTES, 'UTF-8');
       break;
     case "RUB":
+      $symbol = html_entity_decode('&#8381;', ENT_QUOTES, 'UTF-8');
+      break;
     case "AZN":
-      $symbol = 'â‚½';
+      $symbol = html_entity_decode('&#8380;', ENT_QUOTES, 'UTF-8');
       break;
     case "AED":
-      $symbol = 'Ø¯.Ø¥';
+      $symbol = html_entity_decode('&#1583;.&#1573;', ENT_QUOTES, 'UTF-8');
       break;
     case "AFN":
-      $symbol = 'Ø‹';
+      $symbol = html_entity_decode('&#1547;', ENT_QUOTES, 'UTF-8');
       break;
     case "AMD":
-      $symbol = 'Ö';
+      $symbol = html_entity_decode('&#1423;', ENT_QUOTES, 'UTF-8');
       break;
     case "VND":
-      $symbol = 'â‚«';
+      $symbol = html_entity_decode('&#8363;', ENT_QUOTES, 'UTF-8');
       break;
     case "KRW":
-      $symbol = 'â‚©';
+      $symbol = html_entity_decode('&#8361;', ENT_QUOTES, 'UTF-8');
       break;
     case "BDT":
-      $symbol = 'à§³';
+      $symbol = html_entity_decode('&#2547;', ENT_QUOTES, 'UTF-8');
       break;
     case "TRY":
-      $symbol = 'â‚º';
+      $symbol = html_entity_decode('&#8378;', ENT_QUOTES, 'UTF-8');
       break;
     default:
       $symbol = $currency;
       break;
   endswitch;
+
   return apply_filters('rpress_currency_symbol', $symbol, $currency);
 }
 /**

@@ -1458,6 +1458,22 @@ div#rpressModal {
 	white-space: normal;
 	margin-bottom: 5px;
 }
+
+/* Grid view tablet fix (770px - 991px): avoid half-width cards in single-column wrapper */
+@media only screen and (min-width: 770px) and (max-width: 991px) {
+	.rpress_fooditems_grid .rpress-grid-main-wrap .food-group-wrap {
+		grid-template-columns: 1fr;
+	}
+
+	.rpress_fooditems_grid .rpress_fooditem.rpress-grid {
+		width: 100% !important;
+	}
+
+	.rpress_fooditems_grid .rpress_fooditem_inner .rpress_fooditem_excerpt p {
+		width: auto;
+		max-width: 100%;
+	}
+}
 .addon-popup-wrap header.modal__header {
 	padding-right: 15px;
 	padding-left: 15px;
