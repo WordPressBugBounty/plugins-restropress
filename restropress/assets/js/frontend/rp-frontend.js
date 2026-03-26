@@ -590,6 +590,16 @@ jQuery(function ($) {
       serviceDateText = requestedServiceDate;
     }
 
+    if (!$activeDateSelect.length) {
+      var fallbackDateText = ($('#deliveryDate').first().text() || '')
+        .toString()
+        .trim()
+        .replace(/,\s*$/, '');
+      if (fallbackDateText) {
+        serviceDateText = fallbackDateText;
+      }
+    }
+
     if (serviceDate) {
       rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
       rp_setCookie('delivery_date', serviceDateText || serviceDate, rp_scripts.expire_cookie_time);
@@ -615,6 +625,15 @@ jQuery(function ($) {
     } else {
       serviceTime = requestedServiceTime;
       serviceTimeText = requestedServiceTime;
+    }
+
+    if (!$activeTimeSelect.length) {
+      var fallbackTimeText = ($('#deliveryTime').first().text() || '')
+        .toString()
+        .trim();
+      if (fallbackTimeText) {
+        serviceTimeText = fallbackTimeText;
+      }
     }
 
     if (serviceTime) {
@@ -867,8 +886,12 @@ jQuery(function ($) {
 
       var getClosedMessage = function () {
         var selectors = [
+          '.rpress_order-address-wrap #deliveryDate.rp-store-timing-notice:visible',
+          '.rpress_order-address-wrap .rp-store-timing-notice:visible',
           '.delivery-settings-wrapper#nav-' + serviceType + ' .rpress-service-closed-message:visible',
           '#rpressDateTime .rpress-service-closed-message:visible',
+          '.rpress_order-address-wrap #deliveryDate.rp-store-timing-notice',
+          '.rpress_order-address-wrap .rp-store-timing-notice',
           '.delivery-settings-wrapper#nav-' + serviceType + ' .rpress-service-closed-message',
           '#rpressDateTime .rpress-service-closed-message'
         ];
@@ -884,10 +907,16 @@ jQuery(function ($) {
         return '';
       };
 
+      var serviceClosedMessage = getClosedMessage();
+      if (serviceClosedMessage) {
+        tata.error('Error', serviceClosedMessage, { position: "tr" });
+        return;
+      }
+
       var isServiceTimeDisabled = rp_is_service_time_hidden(serviceType);
 
       if (!isServiceTimeDisabled && !serviceTime) {
-        var closedMessage = getClosedMessage();
+        var closedMessage = serviceClosedMessage || getClosedMessage();
         if (closedMessage) {
           tata.error('Error', closedMessage, { position: "tr" });
         } else {
@@ -3901,9 +3930,17 @@ jQuery(document).ready(function ($) {
 
   var serviceType = rp_getCookie('service_type') || rp_scripts.default_service || 'delivery';
   rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
+  var $selectionScope = $('#rpressDateTime-content');
+  if (!$selectionScope.length) {
+    $selectionScope = $('#rpressDateTime');
+  }
+  if (!$selectionScope.length) {
+    $selectionScope = $('.rpress-delivery-wrap .rpress-tabs-wrapper:visible').first();
+  }
+
   var selection = (typeof window.rp_apply_service_defaults === 'function')
     ? window.rp_apply_service_defaults(
-      $('.rpress-delivery-wrap .rpress-tabs-wrapper:visible').first(),
+      $selectionScope.length ? $selectionScope : $(document),
       serviceType
     )
     : null;

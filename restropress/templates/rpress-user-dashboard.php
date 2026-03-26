@@ -514,8 +514,13 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['submit_profile_form
     if ( ! is_user_logged_in() ) {
         wp_die( esc_html__( 'You must be logged in to update your profile.', 'restropress' ) );
     }
-    $profile_nonce = isset( $_POST['rpress_user_profile_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_user_profile_nonce'] ) ) : '';
-    if ( ! wp_verify_nonce( $profile_nonce, 'rpress_user_profile_update' ) ) {
+    if (
+        ! isset( $_POST['rpress_user_profile_nonce'] ) ||
+        ! wp_verify_nonce(
+            sanitize_text_field( wp_unslash( $_POST['rpress_user_profile_nonce'] ) ),
+            'rpress_user_profile_update'
+        )
+    ) {
         wp_die( esc_html__( 'Security check failed. Please refresh and try again.', 'restropress' ) );
     }
     // Get submitted form data
@@ -543,9 +548,8 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['submit_profile_form
         update_user_meta($user_id, '_rpress_phone', $new_user_phone);
     }
     
-    // Output JavaScript to reload the page
-//     echo esc_js('<script>window.location.href = window.location.href;</script>');
-	echo '<script>window.location.href = "' . esc_url($_SERVER['REQUEST_URI']) . '";</script>';
+    $redirect_url = function_exists( 'rpress_get_current_page_url' ) ? rpress_get_current_page_url() : home_url( '/' );
+    wp_safe_redirect( esc_url_raw( $redirect_url ) );
     exit;
 }
 if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['submit_user_address'] ) ) {
@@ -641,8 +645,8 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['submit_user_address
         }
     }
     update_user_meta( $user_id, 'user_addresses', $existing_addresses);
-    // Output JavaScript to reload the page
-    echo '<script>window.location.href = window.location.href;</script>';
+    $redirect_url = function_exists( 'rpress_get_current_page_url' ) ? rpress_get_current_page_url() : home_url( '/' );
+    wp_safe_redirect( esc_url_raw( $redirect_url ) );
     exit;
 }
 ?>

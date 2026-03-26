@@ -531,8 +531,6 @@ function rp_get_store_timings($hide_past_time = true, $service_type = null)
     if ($hide_past_time) {
         if ($store_time > $current_time) {
             $store_timings[] = date_i18n($date_format, $store_time);
-        } elseif (!empty(rpress_get_option('enable_always_open')) && $current_time > $close_time) {
-            $store_timings[] = date_i18n($date_format, $store_time);
         }
     } else {
         $store_timings[] = date_i18n($date_format, $store_time);
@@ -581,6 +579,57 @@ function rpress_local_date($date)
   $timestamp = strtotime($date);
   $local_date = empty(get_option('timezone_string')) ? date_i18n($date_format, $timestamp) : wp_date($date_format, $timestamp);
   return apply_filters('rpress_local_date', $local_date, $date);
+}
+
+/**
+ * Format a service date using the WordPress date format.
+ *
+ * @since 3.2.8.4
+ * @param string $date Raw date string (Y-m-d).
+ * @return string
+ */
+function rpress_format_service_date($date)
+{
+  $date = trim((string) $date);
+  if ($date === '') {
+    return '';
+  }
+
+  $timestamp = strtotime($date);
+  if (!$timestamp) {
+    return $date;
+  }
+
+  $date_format = get_option('date_format');
+  return empty(get_option('timezone_string')) ? date_i18n($date_format, $timestamp) : wp_date($date_format, $timestamp);
+}
+
+/**
+ * Format a service time for display using WP time format.
+ *
+ * @since 3.2.8.3
+ * @param string $service_time Raw service time (may include ASAP label).
+ * @param string $service_date Optional service date (Y-m-d) for timezone-aware formatting.
+ * @return string
+ */
+function rpress_format_service_time($service_time, $service_date = '')
+{
+  $service_time = trim((string) $service_time);
+  if ($service_time === '') {
+    return '';
+  }
+
+  if (stripos($service_time, 'ASAP') !== false) {
+    return trim(str_ireplace('ASAP', __('ASAP', 'restropress'), $service_time));
+  }
+
+  $time_format = get_option('time_format');
+  $timestamp = $service_date ? strtotime($service_date . ' ' . $service_time) : strtotime($service_time);
+  if (!$timestamp) {
+    return $service_time;
+  }
+
+  return date_i18n($time_format, $timestamp);
 }
 /**
  * Get list of categories
@@ -853,6 +902,8 @@ function rpress_get_available_service_slots( $service_type, $service_date = '', 
   }
 
   $service_date = rp_row_date( $service_date, $service_type );
+  $today        = wp_date( 'Y-m-d' );
+  $hide_past_time = $hide_past_time && ( $service_date === $today );
   $store_times  = rp_get_store_timings( $hide_past_time, $service_type );
   $store_times  = apply_filters( 'rpress_store_timings', $store_times, $service_type, $service_date );
 

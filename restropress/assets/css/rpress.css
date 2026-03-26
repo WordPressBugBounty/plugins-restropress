@@ -1465,6 +1465,18 @@ div#rpressModal {
 		grid-template-columns: 1fr;
 	}
 
+	.rpress-section > .rpress_fooditems_grid {
+		width: 100%;
+		float: none;
+	}
+
+	.rpress-section > .rpress-sidebar-cart {
+		width: 100%;
+		float: none;
+		clear: both;
+		margin-top: 20px;
+	}
+
 	.rpress_fooditems_grid .rpress_fooditem.rpress-grid {
 		width: 100% !important;
 	}
@@ -1789,10 +1801,40 @@ div.rpress-popup-actions .btn-count .qtyminus-wrap{
 }
 .rpress-edit-address-popup .rpress-time-preference-wrap {
 	display: flex;
-	align-items: center;
+	align-items: stretch;
 	justify-content: space-between;
 	flex-direction: column-reverse;
 	padding: 30px 20px;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rp-col-lg-12,
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rp-col-md-12,
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rp-col-sm-12,
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rp-col-xs-12 {
+	padding-left: 0;
+	padding-right: 0;
+	width: 100%;
+}
+#rpress_checkout_wrap .rp-checkout-service-option .rp-col-lg-12,
+#rpress_checkout_wrap .rp-checkout-service-option .rp-col-md-12,
+#rpress_checkout_wrap .rp-checkout-service-option .rp-col-sm-12,
+#rpress_checkout_wrap .rp-checkout-service-option .rp-col-xs-12 {
+	padding-left: 0;
+	padding-right: 0;
+	width: 100%;
+}
+.rpress-edit-address-popup .rpress-time-preference-wrap .delivery-time-wrapper,
+.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-service-hours-row,
+.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-delivery-zone-wrapper {
+	width: 100%;
+}
+#rpress_checkout_wrap .rp-checkout-service-option .delivery-time-wrapper,
+#rpress_checkout_wrap .rp-checkout-service-option .pickup-time-wraper,
+#rpress_checkout_wrap .rp-checkout-service-option .rpress-service-hours-row,
+#rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-zone-wrapper {
+	width: 100%;
+}
+.rpress-edit-address-popup .rpress-delivery-zone-wrapper input[type=text] {
+	width: 100%;
 }
 .rpress-edit-address-popup label {
     color: #202427;
@@ -1919,12 +1961,62 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates:focus,
 }
 
 /* Refined service selection summary + datetime popup */
-.rpress-options-row p.rpress_order-address-wrap .rpress-location-pin {
-	display: block;
+.rpress-options-row p.rpress_order-address-wrap .rpress-location-pin-wrap {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
 	flex: 0 0 auto;
+	background: linear-gradient(140deg, #ed5575 0%, #ff7b5f 100%);
+	box-shadow: 0 0 0 2px rgba(237, 85, 117, 0.22), 0 6px 14px rgba(237, 85, 117, 0.28);
+	animation: rp-location-pin-blink 1.7s ease-in-out infinite;
 }
-.rpress-options-row p.rpress_order-address-wrap .rpress-location-pin path {
-	fill: #1f2937;
+.rpress-options-row p.rpress_order-address-wrap .rpress-location-pin-pulse {
+	position: absolute;
+	inset: -2px;
+	border: 2px solid rgba(237, 85, 117, 0.45);
+	border-radius: 999px;
+	animation: rp-location-pin-glow 1.7s ease-out infinite;
+}
+.rpress-options-row p.rpress_order-address-wrap .rpress-location-pin {
+	position: relative;
+	z-index: 1;
+	display: block;
+	width: 12px;
+	height: 12px;
+	color: #ffffff;
+	fill: currentColor;
+}
+@keyframes rp-location-pin-glow {
+	0% {
+		transform: scale(0.72);
+		opacity: 0.85;
+	}
+	70% {
+		transform: scale(1.5);
+		opacity: 0;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+@keyframes rp-location-pin-blink {
+	0%,
+	100% {
+		filter: brightness(1);
+	}
+	50% {
+		filter: brightness(1.22);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.rpress-options-row p.rpress_order-address-wrap .rpress-location-pin-wrap,
+	.rpress-options-row p.rpress_order-address-wrap .rpress-location-pin-pulse {
+		animation: none;
+	}
 }
 #rpressDateTime.rpress-edit-address-popup .modal__container {
 	width: min(92vw, 520px);
@@ -1964,6 +2056,33 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates:focus,
 	background: #f8fafc;
 	border-top: 1px solid #eceff3;
 	border-bottom: 1px solid #eceff3;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-delivery-zone-wrapper {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-delivery-zone-wrapper label {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-delivery-zone-wrapper input[type="text"],
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-delivery-zone-wrapper #rp_delivery_location,
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-delivery-zone-wrapper #rp_delivery_zone {
+	display: block;
+	width: 100% !important;
+	max-width: none !important;
+	min-width: 0;
+	box-sizing: border-box;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-service-hours-row select#rpress_get_delivery_dates,
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-service-hours-row select#rpress_get_pickup_dates,
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-service-hours-row select#rpress-delivery-hours {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
 }
 #rpressDateTime.rpress-edit-address-popup .rpress-service-type-message {
 	padding-bottom: 12px;
@@ -2234,6 +2353,17 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates:focus,
 }
 .rpress-options-row p.rpress_order-address-wrap .rpress-edit-datetime-link {
 	margin-left: auto;
+}
+.rpress-options-row p.rpress_order-address-wrap .rpress-change-location-link {
+	margin-left: auto;
+	color: #ed5575;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.rpress-options-row p.rpress_order-address-wrap .rpress-change-location-link:hover,
+.rpress-options-row p.rpress_order-address-wrap .rpress-change-location-link:focus {
+	color: #cf2e5d;
 }
 .rpress-options-row .left-brdr{
 	border-left: 3px solid #E7E7E7;

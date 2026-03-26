@@ -197,7 +197,7 @@ class RP_REST_Cart_V1_Controller extends WP_REST_Controller {
 			}
 			// Adding instruction
 			if ( ! empty( $schema_properties['instruction'] ) && isset( $cart_details[ $cart_key ]['instruction'] ) ) {
-				$prepared_post->instruction = $cart_value['instruction'];
+				$prepared_post->instruction = sanitize_text_field( $cart_value['instruction'] );
 			}
 			if ( ! empty( $schema_properties['price_id'] ) && isset( $cart_details[ $cart_key ]['price_id'] ) ) {
 				$prepared_post->price_id = $cart_value['price_id'];
@@ -220,7 +220,7 @@ class RP_REST_Cart_V1_Controller extends WP_REST_Controller {
 					$addon_item = array();
 					// Adding Addon Item Name
 					if ( ! empty( $schema_properties['addon_items']['items']['properties']['addon_item_name'] ) && isset( $addon_value['addon_item_name'] ) ) {
-						$addon_item['addon_item_name'] = $addon_value['addon_item_name'];
+						$addon_item['addon_item_name'] = sanitize_text_field( $addon_value['addon_item_name'] );
 					}
 					// Adding Addon Item ID
 					if ( ! empty( $schema_properties['addon_items']['items']['properties']['addon_id'] ) && isset( $addon_value['addon_id'] ) ) {

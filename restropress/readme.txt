@@ -4,8 +4,8 @@ Tags: Online ordering, Restaurant Ordering, Food Delivery, Takeaway, Restaurant 
 Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
-Tested up to: 6.9
-Stable tag: 3.2.8.2
+Tested up to: 6.9.4
+Stable tag: 3.2.8.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -120,6 +120,21 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 👉 [Explore Pro Features & Extensions](https://restropress.com/extension/)
 
 == Changelog ==
+
+= Version 3.2.8.3(2026-03-26) =
+* Updated: Plugin version bump to 3.2.8.3
+* Fixed: Delivery/Pickup summary date now always follows WordPress date format across listing, popup, and checkout.
+* Fixed: Summary date/time now syncs immediately from modal selection and keeps formatted output after refresh.
+* Fixed: Checkout and modal date/time/location fields now use full-width responsive controls.
+* Fixed: Closed-state summary now hides invalid date/time and prevents stale Edit exposure for invalid schedule states.
+* Fixed: Add-to-cart popup no longer opens when service is closed; close notice is shown instead.
+* Improved: Open-store flow now always exposes Edit so customers can update schedule quickly.
+* Improved: Summary location icon UI modernized with animated glow pulse for clearer branch indicator.
+* Added: "Change location" quick link in closed branch state to reopen schedule popup and switch branch directly.
+* Security: Hardened customer dashboard profile update with strict nonce presence and verification to mitigate CSRF account-update attempts.
+* Security: Replaced inline dashboard post-submit JavaScript redirects with `wp_safe_redirect` to prevent reflected redirect/XSS injection vectors.
+* Security: Sanitized REST order/cart text payloads and escaped admin delivery-address rendering to mitigate stored XSS vectors (CVE-2025-69017 path).
+* Code Cleanup
 
 = Version 3.2.8.2(2026-03-25) =
 * Updated: Plugin version bump to 3.2.8.2

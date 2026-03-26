@@ -891,26 +891,36 @@ if (strpos($service_time_str, 'ASAP') !== false) {
      * @param  RP_Payment $order Order object.
      * @return array
      */
-  	public static function order_preview_get_order_details( $payment ) {
+	public static function order_preview_get_order_details( $payment ) {
 	    if ( ! $payment ) {
 	      	return array();
 	    }
 	    $payment_via = $customer_name = $customer_email = $phone = $flat = $landmark = $customer_location = $order_fooditem = '';
+	    $customer_details = array(
+			'phone'   => '',
+			'flat'    => '',
+			'postcode'=> '',
+			'city'    => '',
+			'address' => '',
+	    );
 	    $gateway  = $payment->gateway;
 	    if ( $gateway ) {
-	      	$payment_via = rpress_get_gateway_admin_label( $gateway );
+	      	$payment_via = sanitize_text_field( rpress_get_gateway_admin_label( $gateway ) );
 	    }
 	    if ( ! empty( $payment->customer_id ) ) {
 	    	$customer    			= new RPRESS_Customer( $payment->customer_id );
 	    	$payment_meta 			= $payment->get_meta();
 	    	$customer_name 			= is_array( $payment_meta['user_info'] ) ? $payment_meta['user_info']['first_name'] . ' ' . $payment_meta['user_info']['last_name'] : $customer->name;
+	    	$customer_name 			= sanitize_text_field( $customer_name );
 	    	$customer_email 		= is_array( $payment_meta['user_info'] ) ? $payment_meta['user_info']['email'] : $customer->email;
+	    	$customer_email 		= sanitize_email( $customer_email );
 	    	$delivery_address_meta  = get_post_meta( $payment->ID, '_rpress_delivery_address', true );
-		    $phone  				= ! empty( $payment_meta['phone'] ) ? $payment_meta['phone'] : (!empty( $delivery_address_meta['phone'] ) ? $delivery_address_meta['phone'] :  '');
-		    $flat   				= ! empty( $delivery_address_meta['flat'] ) ? $delivery_address_meta['flat'] : '';
-		    $city 					= ! empty( $delivery_address_meta['city'] ) ? $delivery_address_meta['city'] : '';
-		    $postcode 				= ! empty( $delivery_address_meta['postcode'] ) ? $delivery_address_meta['postcode'] : '';
-		    $customer_address 		= ! empty( $delivery_address_meta['address'] ) ? $delivery_address_meta['address'] : '';
+		    $phone  				= ! empty( $payment_meta['phone'] ) ? $payment_meta['phone'] : ( ! empty( $delivery_address_meta['phone'] ) ? $delivery_address_meta['phone'] : '' );
+		    $phone  				= sanitize_text_field( $phone );
+		    $flat   				= ! empty( $delivery_address_meta['flat'] ) ? sanitize_text_field( $delivery_address_meta['flat'] ) : '';
+		    $city 					= ! empty( $delivery_address_meta['city'] ) ? sanitize_text_field( $delivery_address_meta['city'] ) : '';
+		    $postcode 				= ! empty( $delivery_address_meta['postcode'] ) ? sanitize_text_field( $delivery_address_meta['postcode'] ) : '';
+		    $customer_address 		= ! empty( $delivery_address_meta['address'] ) ? sanitize_text_field( $delivery_address_meta['address'] ) : '';
     		$customer_details = array(
 				'phone'      => $phone,
 				'flat'       => $flat,
@@ -921,19 +931,24 @@ if (strpos($service_time_str, 'ASAP') !== false) {
 	    }
 	    $user_info      	= $payment->user_info;
 	    $billing_address 	= isset( $user_info['address'] ) ? $user_info['address'] : '';
-	    $service_type 		= rpress_get_service_type( $payment->ID );
+	    if ( is_array( $billing_address ) ) {
+			$billing_address = implode( ', ', array_filter( array_map( 'sanitize_text_field', $billing_address ) ) );
+	    } else {
+			$billing_address = sanitize_text_field( (string) $billing_address );
+	    }
+	    $service_type 		= sanitize_key( rpress_get_service_type( $payment->ID ) );
   		$service_date 		= $payment->get_meta( '_rpress_delivery_date' );
-  		$service_date 		= !empty( $service_date ) ? rpress_local_date( $service_date ) : '';
-  		$service_time 		= $payment->get_meta( '_rpress_delivery_time' );
+  		$service_date 		= ! empty( $service_date ) ? sanitize_text_field( rpress_local_date( $service_date ) ) : '';
+  		$service_time 		= sanitize_text_field( (string) $payment->get_meta( '_rpress_delivery_time' ) );
 	    return apply_filters(
 	      	'rpress_admin_order_preview_get_order_details',
 	      	array(
 		        'id'                        => $payment->ID,
-		        'service_type'              => rpress_service_label($service_type),
+		        'service_type'              => sanitize_text_field( rpress_service_label( $service_type ) ),
 		        'service_type_slug'         => $service_type,
 		        'service_date'              => $service_date,
 		        'service_time'              => $service_time,
-		        'status'                    => rpress_get_order_status( $payment->ID ),
+		        'status'                    => sanitize_key( rpress_get_order_status( $payment->ID ) ),
 		        'payment_via'               => $payment_via,
 		        'customer_name'             => $customer_name,
 		        'customer_email'            => $customer_email,

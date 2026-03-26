@@ -47,12 +47,22 @@ $discount_id = !empty($discount_code) ? rpress_get_discount_id_by_code($discount
 
 $customer = new RPRESS_Customer($payment->customer_id);
 $order_status = rpress_get_order_status($payment_id);
-$phone = !empty($payment_meta['phone']) ? $payment_meta['phone'] : (!empty($address_info['phone']) ? $address_info['phone'] : '');
 $address_info = get_post_meta($payment_id, '_rpress_delivery_address', true);
-$user_address = !empty($address_info['address']) ? $address_info['address'] . ', ' : '';
-$user_address .= !empty($address_info['flat']) ? $address_info['flat'] . ', ' : '';
-$user_address .= !empty($address_info['city']) ? $address_info['city'] . ', ' : '';
-$user_address .= !empty($address_info['postcode']) ? $address_info['postcode'] : '';
+$phone = !empty($payment_meta['phone']) ? $payment_meta['phone'] : (!empty($address_info['phone']) ? $address_info['phone'] : '');
+$user_address_parts = array();
+if ( ! empty( $address_info['address'] ) ) {
+	$user_address_parts[] = sanitize_text_field( (string) $address_info['address'] );
+}
+if ( ! empty( $address_info['flat'] ) ) {
+	$user_address_parts[] = sanitize_text_field( (string) $address_info['flat'] );
+}
+if ( ! empty( $address_info['city'] ) ) {
+	$user_address_parts[] = sanitize_text_field( (string) $address_info['city'] );
+}
+if ( ! empty( $address_info['postcode'] ) ) {
+	$user_address_parts[] = sanitize_text_field( (string) $address_info['postcode'] );
+}
+$user_address = implode( ', ', $user_address_parts );
 $prefix = rpress_get_option('sequential_prefix');
 $postfix = rpress_get_option('sequential_postfix');
 $order_id = $prefix . $number . $postfix;
@@ -586,7 +596,7 @@ $customer_email = is_array(isset($payment_meta['user_info'])) ? $payment_meta['u
 													esc_html__('%s address:', 'restropress'),
 													esc_html(rpress_service_label($service_type))
 												); ?></h3>
-												<p><?php echo (apply_filters('rpress_admin_receipt_delivery_address', $user_address, $address_info)); ?>
+												<p><?php echo wp_kses_post( apply_filters('rpress_admin_receipt_delivery_address', $user_address, $address_info) ); ?>
 												</p>
 											</div>
 										</div>

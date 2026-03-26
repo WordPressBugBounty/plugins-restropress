@@ -501,23 +501,23 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			);
 		}
 		$json_params           = $request->get_json_params();
-		$cart_details          = $json_params['cart_details'];
-		$delivery_adrress_meta = $json_params['delivery_adrress_meta'];
-		$customer              = $json_params['customer'];
-		$status                = $json_params['status'];
-		$price                 = $json_params['price'];
-		$subtotal              = $json_params['subtotal'];
-		$order_status          = $json_params['order_status'];
-		$fees                  = $json_params['fees'];
-		$tax                   = $json_params['tax'];
-		$discount              = $json_params['discounts'];
-		$discount_amount       = $json_params['discount_amount'];
-		$gateway               = $json_params['gateway'];
-		$service_time          = $json_params['service_time'];
-		$service_date          = $json_params['service_date'];
-		$service_type          = $json_params['service_type'];
-		$order_note            = $json_params['order_note'];
-		$phone                 = $json_params['phone'];
+		$cart_details          = isset( $json_params['cart_details'] ) && is_array( $json_params['cart_details'] ) ? $json_params['cart_details'] : array();
+		$delivery_adrress_meta = isset( $json_params['delivery_adrress_meta'] ) && is_array( $json_params['delivery_adrress_meta'] ) ? $json_params['delivery_adrress_meta'] : array();
+		$customer              = isset( $json_params['customer'] ) && is_array( $json_params['customer'] ) ? $json_params['customer'] : array();
+		$status                = isset( $json_params['status'] ) ? sanitize_key( $json_params['status'] ) : '';
+		$price                 = isset( $json_params['price'] ) ? $json_params['price'] : 0;
+		$subtotal              = isset( $json_params['subtotal'] ) ? $json_params['subtotal'] : 0;
+		$order_status          = isset( $json_params['order_status'] ) ? sanitize_key( $json_params['order_status'] ) : '';
+		$fees                  = isset( $json_params['fees'] ) && is_array( $json_params['fees'] ) ? $json_params['fees'] : array();
+		$tax                   = isset( $json_params['tax'] ) ? $json_params['tax'] : 0;
+		$discount              = isset( $json_params['discounts'] ) ? $json_params['discounts'] : '';
+		$discount_amount       = isset( $json_params['discount_amount'] ) ? $json_params['discount_amount'] : 0;
+		$gateway               = isset( $json_params['gateway'] ) ? sanitize_text_field( (string) $json_params['gateway'] ) : '';
+		$service_time          = isset( $json_params['service_time'] ) ? sanitize_text_field( (string) $json_params['service_time'] ) : '';
+		$service_date          = isset( $json_params['service_date'] ) ? sanitize_text_field( (string) $json_params['service_date'] ) : '';
+		$service_type          = isset( $json_params['service_type'] ) ? sanitize_text_field( (string) $json_params['service_type'] ) : '';
+		$order_note            = isset( $json_params['order_note'] ) ? sanitize_text_field( (string) $json_params['order_note'] ) : '';
+		$phone                 = isset( $json_params['phone'] ) ? sanitize_text_field( (string) $json_params['phone'] ) : '';
 		$cart_data             = array();
 		if ( is_array( $cart_details ) && ! empty( $cart_details ) ) {
 			rpress_empty_cart();
@@ -543,13 +543,13 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			// if user is admin ...
 			if ( ! empty( $customer ) && is_array( $customer ) ) {
 					$user_info = array(
-						'id'         => isset( $customer['id'] ) ? $customer['id'] : '',
-						'email'      => isset( $customer['email'] ) ? $customer['email'] : '',
-						'first_name' => isset( $customer['first_name'] ) ? $customer['first_name'] : '',
-						'last_name'  => isset( $customer['last_name'] ) ? $customer['last_name'] : '',
-						'phone'      => isset( $customer['phone'] ) ? $customer['phone'] : '',
-						'discount'   => isset( $customer['discount'] ) ? $customer['discount'] : 0,
-						'address'    => isset( $customer['address'] ) && is_array( $customer['address'] ) ? $customer['address'] : array(),
+						'id'         => isset( $customer['id'] ) ? absint( $customer['id'] ) : 0,
+						'email'      => isset( $customer['email'] ) ? sanitize_email( $customer['email'] ) : '',
+						'first_name' => isset( $customer['first_name'] ) ? sanitize_text_field( $customer['first_name'] ) : '',
+						'last_name'  => isset( $customer['last_name'] ) ? sanitize_text_field( $customer['last_name'] ) : '',
+						'phone'      => isset( $customer['phone'] ) ? sanitize_text_field( $customer['phone'] ) : '',
+						'discount'   => isset( $customer['discount'] ) ? rpress_sanitize_amount( $customer['discount'] ) : 0,
+						'address'    => isset( $customer['address'] ) && is_array( $customer['address'] ) ? array_map( 'sanitize_text_field', $customer['address'] ) : array(),
 					);
 			} else {
 				$user_info = array(
@@ -624,11 +624,11 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			if ( ! empty( $delivery_adrress_meta ) && is_array( $delivery_adrress_meta ) ) {
 				// Assuming $delivery_adrress_meta is an associative array with keys like 'address', 'flat', 'postcode', 'city'.
 				$delivery_adrress = array(
-					'address'  => isset( $delivery_adrress_meta['address'] ) ? $delivery_adrress_meta['address'] : '',
-					'flat'     => isset( $delivery_adrress_meta['flat'] ) ? $delivery_adrress_meta['flat'] : '',
-					'postcode' => isset( $delivery_adrress_meta['postcode'] ) ? $delivery_adrress_meta['postcode'] : '',
-					'city'     => isset( $delivery_adrress_meta['city'] ) ? $delivery_adrress_meta['city'] : '',
-					'state'    => isset( $delivery_adrress_meta['state'] ) ? $delivery_adrress_meta['state'] : '',
+					'address'  => isset( $delivery_adrress_meta['address'] ) ? sanitize_text_field( $delivery_adrress_meta['address'] ) : '',
+					'flat'     => isset( $delivery_adrress_meta['flat'] ) ? sanitize_text_field( $delivery_adrress_meta['flat'] ) : '',
+					'postcode' => isset( $delivery_adrress_meta['postcode'] ) ? sanitize_text_field( $delivery_adrress_meta['postcode'] ) : '',
+					'city'     => isset( $delivery_adrress_meta['city'] ) ? sanitize_text_field( $delivery_adrress_meta['city'] ) : '',
+					'state'    => isset( $delivery_adrress_meta['state'] ) ? sanitize_text_field( $delivery_adrress_meta['state'] ) : '',
 				);
 				update_post_meta( $post_id, '_rpress_delivery_address', $delivery_adrress );
 			}
@@ -741,23 +741,23 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 		}
 		$json_params           = $request->get_json_params();
 		$post_id               = $request['id'];
-		$cart_details          = $json_params['cart_details'];
-		$delivery_adrress_meta = $json_params['delivery_adrress_meta'];
-		$customer              = $json_params['customer'];
-		$status                = $json_params['status'];
-		$price                 = $json_params['price'];
-		$subtotal              = $json_params['subtotal'];
-		$order_status          = $json_params['order_status'];
-		$fees                  = $json_params['fees'];
-		$tax                   = $json_params['tax'];
-		$discount              = $json_params['discounts'];
-		$discount_amount       = $json_params['discount_amount'];
-		$gateway               = $json_params['gateway'];
-		$service_time          = $json_params['service_time'];
-		$service_date          = $json_params['service_date'];
-		$service_type          = $json_params['service_type'];
-		$order_note            = $json_params['order_note'];
-		$phone                 = $json_params['phone'];
+		$cart_details          = isset( $json_params['cart_details'] ) && is_array( $json_params['cart_details'] ) ? $json_params['cart_details'] : array();
+		$delivery_adrress_meta = isset( $json_params['delivery_adrress_meta'] ) && is_array( $json_params['delivery_adrress_meta'] ) ? $json_params['delivery_adrress_meta'] : array();
+		$customer              = isset( $json_params['customer'] ) && is_array( $json_params['customer'] ) ? $json_params['customer'] : array();
+		$status                = isset( $json_params['status'] ) ? sanitize_key( $json_params['status'] ) : '';
+		$price                 = isset( $json_params['price'] ) ? $json_params['price'] : 0;
+		$subtotal              = isset( $json_params['subtotal'] ) ? $json_params['subtotal'] : 0;
+		$order_status          = isset( $json_params['order_status'] ) ? sanitize_key( $json_params['order_status'] ) : '';
+		$fees                  = isset( $json_params['fees'] ) && is_array( $json_params['fees'] ) ? $json_params['fees'] : array();
+		$tax                   = isset( $json_params['tax'] ) ? $json_params['tax'] : 0;
+		$discount              = isset( $json_params['discounts'] ) ? $json_params['discounts'] : '';
+		$discount_amount       = isset( $json_params['discount_amount'] ) ? $json_params['discount_amount'] : 0;
+		$gateway               = isset( $json_params['gateway'] ) ? sanitize_text_field( (string) $json_params['gateway'] ) : '';
+		$service_time          = isset( $json_params['service_time'] ) ? sanitize_text_field( (string) $json_params['service_time'] ) : '';
+		$service_date          = isset( $json_params['service_date'] ) ? sanitize_text_field( (string) $json_params['service_date'] ) : '';
+		$service_type          = isset( $json_params['service_type'] ) ? sanitize_text_field( (string) $json_params['service_type'] ) : '';
+		$order_note            = isset( $json_params['order_note'] ) ? sanitize_text_field( (string) $json_params['order_note'] ) : '';
+		$phone                 = isset( $json_params['phone'] ) ? sanitize_text_field( (string) $json_params['phone'] ) : '';
 		// // Instantiate payment .
 		$payment = new RPRESS_Payment( $post_id );
 		if ( ! empty( $order_status ) ) {
@@ -780,22 +780,22 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 		if ( ! empty( $delivery_adrress_meta ) && is_array( $delivery_adrress_meta ) ) {
 			// Assuming $delivery_adrress_meta is an associative array with keys like 'address', 'flat', 'postcode', 'city'.
 			$delivery_adrress = array(
-				'address'  => isset( $delivery_adrress_meta['address'] ) ? $delivery_adrress_meta['address'] : '',
-				'flat'     => isset( $delivery_adrress_meta['flat'] ) ? $delivery_adrress_meta['flat'] : '',
-				'postcode' => isset( $delivery_adrress_meta['postcode'] ) ? $delivery_adrress_meta['postcode'] : '',
-				'city'     => isset( $delivery_adrress_meta['city'] ) ? $delivery_adrress_meta['city'] : '',
+				'address'  => isset( $delivery_adrress_meta['address'] ) ? sanitize_text_field( $delivery_adrress_meta['address'] ) : '',
+				'flat'     => isset( $delivery_adrress_meta['flat'] ) ? sanitize_text_field( $delivery_adrress_meta['flat'] ) : '',
+				'postcode' => isset( $delivery_adrress_meta['postcode'] ) ? sanitize_text_field( $delivery_adrress_meta['postcode'] ) : '',
+				'city'     => isset( $delivery_adrress_meta['city'] ) ? sanitize_text_field( $delivery_adrress_meta['city'] ) : '',
 			);
 			$payment->update_meta( '_rpress_delivery_address', $delivery_adrress );
 		}
 		if ( current_user_can( 'manage_options' ) && ! empty( $customer ) && is_array( $customer ) ) {
 				$user_info                 = array(
-					'id'         => isset( $customer['id'] ) ? $customer['id'] : '',
-					'email'      => isset( $customer['email'] ) ? $customer['email'] : '',
-					'first_name' => isset( $customer['first_name'] ) ? $customer['first_name'] : '',
-					'last_name'  => isset( $customer['last_name'] ) ? $customer['last_name'] : '',
-					'phone'      => isset( $customer['phone'] ) ? $customer['phone'] : '',
-					'discount'   => isset( $customer['discount'] ) ? $customer['discount'] : 0,
-					'address'    => isset( $customer['address'] ) && is_array( $customer['address'] ) ? $customer['address'] : array(),
+					'id'         => isset( $customer['id'] ) ? absint( $customer['id'] ) : 0,
+					'email'      => isset( $customer['email'] ) ? sanitize_email( $customer['email'] ) : '',
+					'first_name' => isset( $customer['first_name'] ) ? sanitize_text_field( $customer['first_name'] ) : '',
+					'last_name'  => isset( $customer['last_name'] ) ? sanitize_text_field( $customer['last_name'] ) : '',
+					'phone'      => isset( $customer['phone'] ) ? sanitize_text_field( $customer['phone'] ) : '',
+					'discount'   => isset( $customer['discount'] ) ? rpress_sanitize_amount( $customer['discount'] ) : 0,
+					'address'    => isset( $customer['address'] ) && is_array( $customer['address'] ) ? array_map( 'sanitize_text_field', $customer['address'] ) : array(),
 				);
 				$payment_meta              = $payment->payment_meta;
 				$payment_meta['user_info'] = $user_info;
