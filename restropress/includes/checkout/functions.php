@@ -92,7 +92,7 @@ function rpress_send_to_success_page( $query_string = null ) {
 	if ( $query_string )
 		$redirect .= $query_string;
 	$gateway = isset( $_REQUEST['rpress-gateway'] ) ? sanitize_text_field( $_REQUEST['rpress-gateway'] ) : '';
-	wp_redirect( apply_filters('rpress_success_page_redirect', $redirect, $gateway, $query_string) );
+	wp_safe_redirect( apply_filters('rpress_success_page_redirect', $redirect, $gateway, $query_string) );
 	rpress_die();
 }
 /**
@@ -141,7 +141,7 @@ function rpress_send_back_to_checkout( $args = array() ) {
 		$args = wp_parse_args( $args );
 		$redirect = add_query_arg( $args, $redirect );
 	}
-	wp_redirect( apply_filters( 'rpress_send_back_to_checkout', $redirect, $args ) );
+	wp_safe_redirect( apply_filters( 'rpress_send_back_to_checkout', $redirect, $args ) );
 	rpress_die();
 }
 /**

@@ -870,7 +870,7 @@ function rpress_parse_report_dates($data)
 	$view = rpress_get_reporting_view();
 	$id = isset($_GET['fooditem-id']) ? sanitize_text_field(wp_unslash($_GET['fooditem-id'])) : null;
 	$exclude_taxes = isset($_GET['exclude_taxes']) ? sanitize_text_field(wp_unslash($_GET['exclude_taxes'])) : null;
-	wp_redirect(add_query_arg($dates, admin_url('admin.php?page=rpress-reports&view=' . esc_attr($view) . '&fooditem-id=' . absint($id) . '&exclude_taxes=' . absint($exclude_taxes))));
+	wp_safe_redirect(add_query_arg($dates, admin_url('admin.php?page=rpress-reports&view=' . esc_attr($view) . '&fooditem-id=' . absint($id) . '&exclude_taxes=' . absint($exclude_taxes))));
 	rpress_die();
 }
 add_action('rpress_filter_reports', 'rpress_parse_report_dates');

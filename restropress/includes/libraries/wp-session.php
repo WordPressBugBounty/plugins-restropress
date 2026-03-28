@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * WordPress session managment.
  *
@@ -110,7 +111,7 @@ function wp_session_cleanup() {
 		return;
 	}
 	if ( ! defined( 'WP_INSTALLING' ) ) {
-		$expiration_keys = $wpdb->get_results( "SELECT option_name, option_value FROM $wpdb->options WHERE option_name LIKE '_wp_session_expires_%'" );
+		$expiration_keys = $wpdb->get_results( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE '_wp_session_expires_%'" );
 		$now = current_time( 'timestamp' );
 		$expired_sessions = array();
 		foreach( $expiration_keys as $expiration ) {
@@ -127,8 +128,14 @@ function wp_session_cleanup() {
 		}
 		// Delete all expired sessions in a single query
 		if ( ! empty( $expired_sessions ) ) {
-			$option_names = implode( "','", $expired_sessions );
-			$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name IN ('$option_names')"  );
+			$expired_sessions = array_map( 'sanitize_text_field', (array) $expired_sessions );
+			$placeholders     = implode( ',', array_fill( 0, count( $expired_sessions ), '%s' ) );
+			$wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM {$wpdb->options} WHERE option_name IN ($placeholders)",
+					$expired_sessions
+				)
+			);
 		}
 	}
 	// Allow other plugins to hook in to the garbage collection process.

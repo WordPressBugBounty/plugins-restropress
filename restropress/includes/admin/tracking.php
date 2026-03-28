@@ -159,7 +159,7 @@ class RPRESS_Tracking {
 		}
 		rpress_delete_option( 'allow_tracking' );
 		update_option( 'rpress_tracking_notice', '1' );
-		wp_redirect( remove_query_arg( 'rpress_action' ) ); exit;
+		wp_safe_redirect( remove_query_arg( 'rpress_action' ) ); exit;
 	}
 	/**
 	 * Get the last time a checkin was sent

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Tax Functions
  *
@@ -122,10 +123,15 @@ function rpress_get_sales_tax_for_year( $year = null ) {
 			'fields'         => 'ids'
 		);
 		$payments    = get_posts( $args );
-		$payment_ids = implode( ',', $payments );
 		if ( count( $payments ) > 0 ) {
-			$sql = "SELECT SUM( meta_value ) FROM $wpdb->postmeta WHERE meta_key = '_rpress_payment_tax' AND post_id IN( $payment_ids )";
-			$tax = $wpdb->get_var( $sql );
+			$payment_ids  = array_filter( array_map( 'absint', (array) $payments ) );
+			$placeholders = implode( ',', array_fill( 0, count( $payment_ids ), '%d' ) );
+			$tax          = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT SUM( meta_value ) FROM {$wpdb->postmeta} WHERE meta_key = '_rpress_payment_tax' AND post_id IN ($placeholders)",
+					$payment_ids
+				)
+			);
 		}
 	}
 	return apply_filters( 'rpress_get_sales_tax_for_year', $tax, $year );

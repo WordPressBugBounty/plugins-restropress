@@ -1,3 +1,8 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	 exit;
+}
+?>
 <div class="rpress-title-holder">
   <?php $item_prop = rpress_add_schema_microdata() ? ' itemprop="name"' : ''; ?>
   <?php $image_placeholder = rpress_get_option( 'enable_image_placeholder', false ); ?>

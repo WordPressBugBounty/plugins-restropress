@@ -252,7 +252,7 @@ function rpress_trigger_purchase_delete( $data ) {
 			wp_die( esc_html__( 'You do not have permission to edit this payment record', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 		}
 		rpress_delete_purchase( $payment_id );
-		wp_redirect( admin_url( 'admin.php?page=rpress-payment-history&rpress-message=payment_deleted' ) );
+		wp_safe_redirect( admin_url( 'admin.php?page=rpress-payment-history&rpress-message=payment_deleted' ) );
 		rpress_die();
 	}
 }
@@ -363,7 +363,7 @@ function rpress_trigger_payment_note_deletion( $data ) {
 	}
 	$edit_order_url = admin_url( 'admin.php?page=rpress-payment-history&view=view-order-details&rpress-message=payment-note-deleted&id=' . absint( $data['payment_id'] ) );
 	rpress_delete_payment_note( $data['note_id'], $data['payment_id'] );
-	wp_redirect( $edit_order_url );
+	wp_safe_redirect( $edit_order_url );
 }
 add_action( 'rpress_delete_payment_note', 'rpress_trigger_payment_note_deletion' );
 /**

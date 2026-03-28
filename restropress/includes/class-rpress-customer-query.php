@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Customer query class
  *
@@ -376,6 +377,7 @@ class RPRESS_Customer_Query {
 			 * @param RPRESS_Customer_Query $customer_query        The `RPRESS_Customer_Query` instance.
 			 */
 			$found_items_query = apply_filters( 'rpress_found_customers_query', 'SELECT FOUND_ROWS()', $this );
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query is filterable for extensions and defaults to SELECT FOUND_ROWS().
 			$this->found_items = (int) $wpdb->get_var( $found_items_query );
 		}
 	}

@@ -133,6 +133,7 @@ window.RPRESS_Checkout = (function ($) {
 		var postData = {
 			action: 'rpress_apply_discount',
 			code: discount_code,
+			security: rpress_global_vars.checkout_nonce,
 			form: $('#rpress_purchase_form')
 				.serialize()
 		};
@@ -217,7 +218,8 @@ window.RPRESS_Checkout = (function ($) {
 		var $this = $(this),
 			postData = {
 				action: 'rpress_remove_discount',
-				code: $this.data('code')
+				code: $this.data('code'),
+				security: rpress_global_vars.checkout_nonce
 			};
 		$.ajax({
 			type: "POST",
@@ -287,7 +289,8 @@ function recalculate_taxes(state) {
 			.val(),
 		state: state,
 		card_zip: $rpress_cc_address.find('input[name=card_zip]')
-			.val()
+			.val(),
+		security: rpress_global_vars.checkout_nonce
 	};
 	var current_ajax_count = ++ajax_tax_count;
 	jQuery.ajax({

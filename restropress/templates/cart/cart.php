@@ -22,7 +22,7 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 			<!-- <span class="rp-cart-mb-icon">
 				<i class='fa fa-shopping-cart' aria-hidden='true'></i>
 			</span> -->
-			<div class='rpress-cart-badge rpress-cart-quantity'>
+			<div class='rpress-cart-badge'>
 				<div class="rpress-total-price-wrap">
 					<span>Total</span><span
 						class="rp-mb-price"><?php echo esc_html(rpress_currency_filter(rpress_format_amount(rpress_get_cart_total()))); ?></span>

@@ -1,5 +1,9 @@
-<?php 
-	$paged = ( isset( $_GET['paged'] ) && ! empty( $_GET['paged'] ) ) ? absint( wp_unslash( $_GET['paged'] ) ) : 1;
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$paged = ( isset( $_GET['paged'] ) && ! empty( $_GET['paged'] ) ) ? absint( wp_unslash( $_GET['paged'] ) ) : 1;
     $args = array(  
         'post_type'         => 'rpress_payment',
         'post_status'       => 'any',

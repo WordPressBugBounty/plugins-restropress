@@ -1,3 +1,8 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	 exit;
+}
+?>
 <div class="view-food-item-wrap">
 	<form id="fooditem-details">{fooditemslist}</form>
 	<div class="clear"></div>

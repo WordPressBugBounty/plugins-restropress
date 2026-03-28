@@ -29,13 +29,13 @@ function rpress_add_discount( $data ) {
 	// Setup the discount code details
 	$posted = array();
 	if ( empty( $data['name'] ) || empty( $data['code'] ) || empty( $data['type'] ) || empty( $data['amount'] ) ) {
-		wp_redirect( add_query_arg( 'rpress-message', 'discount_validation_failed' ) );
+		wp_safe_redirect( add_query_arg( 'rpress-message', 'discount_validation_failed' ) );
 		rpress_die();
 	}
 	// Verify only accepted characters
 	$sanitized = preg_replace('/[^a-zA-Z0-9-_]+/', '', $data['code'] );
 	if ( strtoupper( $data['code'] ) !== strtoupper( $sanitized ) ) {
-		wp_redirect( add_query_arg( 'rpress-message', 'discount_invalid_code' ) );
+		wp_safe_redirect( add_query_arg( 'rpress-message', 'discount_invalid_code' ) );
 		rpress_die();
 	}
 	foreach ( $data as $key => $value ) {
@@ -71,12 +71,12 @@ function rpress_add_discount( $data ) {
 		// Set the discount code's default status to active
 		$posted['status'] = 'active';
 		if ( rpress_store_discount( $posted ) ) {
-			wp_redirect( add_query_arg( 'rpress_discount_added', '1', $data['rpress-redirect'] ) ); rpress_die();
+			wp_safe_redirect( add_query_arg( 'rpress_discount_added', '1', $data['rpress-redirect'] ) ); rpress_die();
 		} else {
-			wp_redirect( add_query_arg( 'rpress-message', 'discount_add_failed', $data['rpress-redirect'] ) ); rpress_die();
+			wp_safe_redirect( add_query_arg( 'rpress-message', 'discount_add_failed', $data['rpress-redirect'] ) ); rpress_die();
 		}
 	} else {
-		wp_redirect( add_query_arg( 'rpress-message', 'discount_exists', $data['rpress-redirect'] ) ); rpress_die();
+		wp_safe_redirect( add_query_arg( 'rpress-message', 'discount_exists', $data['rpress-redirect'] ) ); rpress_die();
 	}
 }
 add_action( 'rpress_add_discount', 'rpress_add_discount' );
@@ -127,9 +127,9 @@ function rpress_edit_discount( $data ) {
 	$old_discount     = new RPRESS_Discount( ( int ) $data['discount-id'] );
 	$discount['uses'] = rpress_get_discount_uses( $old_discount->ID );
 	if ( rpress_store_discount( $discount, $data['discount-id'] ) ) {
-		wp_redirect( add_query_arg( 'rpress_discount_updated', '1', $data['rpress-redirect'] ) ); rpress_die();
+		wp_safe_redirect( add_query_arg( 'rpress_discount_updated', '1', $data['rpress-redirect'] ) ); rpress_die();
 	} else {
-		wp_redirect( add_query_arg( 'rpress-message', 'discount_update_failed', $data['rpress-redirect'] ) ); rpress_die();
+		wp_safe_redirect( add_query_arg( 'rpress-message', 'discount_update_failed', $data['rpress-redirect'] ) ); rpress_die();
 	}
 }
 add_action( 'rpress_edit_discount', 'rpress_edit_discount' );

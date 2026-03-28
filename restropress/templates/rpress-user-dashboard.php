@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 $current_user = wp_get_current_user();
 $username = esc_html( $current_user->user_login );
 $useremail = esc_html( $current_user->user_email );

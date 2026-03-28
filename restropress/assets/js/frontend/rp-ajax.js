@@ -23,7 +23,8 @@ jQuery(document)
         payment_form = $('#rpress_payment_mode_select_wrap,#rpress_purchase_form_wrap');
         ajax_loader = '<span class="rpress-loading-ajax rpress-loading"></span>';
         data = {
-          action: $this.data('action')
+          action: $this.data('action'),
+          security: rpress_scripts.checkout_nonce
         };
         payment_form.hide();
         $.post(rpress_scripts.ajaxurl, data, function (checkout_response) {
@@ -56,6 +57,7 @@ jQuery(document)
         var data = {
           action: 'rpress_process_checkout_login',
           rpress_ajax: 1,
+          security: (typeof rpress_global_vars !== 'undefined' ? rpress_global_vars.checkout_nonce : rpress_scripts.checkout_nonce),
           rpress_user_login: $('#rpress_login_fields #rpress_user_login')
             .val(),
           rpress_user_pass: $('#rpress_login_fields #rpress_user_pass')
@@ -178,6 +180,7 @@ jQuery(document)
         $(this).parents('body').append('<div class="blur-content"><p class="blur-txt">'+rpress_scripts.blurtxt+'</p><span class="blur-loader"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin: auto; background: rgb(255, 255, 255); display: block; shape-rendering: auto;" width="200px" height="200px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" r="32" stroke-width="8" stroke="#fe718d" stroke-dasharray="50.26548245743669 50.26548245743669" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" keyTimes="0;1" values="0 50 50;360 50 50"></animateTransform></circle></svg></span></div>');
         var requestData = $('#rpress_purchase_form')
           .serialize() + '&action=rpress_process_checkout&rpress_ajax=true';
+        requestData += '&security=' + encodeURIComponent((typeof rpress_global_vars !== 'undefined' ? rpress_global_vars.checkout_nonce : rpress_scripts.checkout_nonce));
         if (selectedServiceType) {
           requestData += '&rpress_service_type=' + encodeURIComponent(selectedServiceType);
         }
@@ -238,6 +241,7 @@ jQuery(document)
           action: 'rpress_get_states',
           country: $this.val(),
           field_name: field_name,
+          security: (typeof rpress_global_vars !== 'undefined' ? rpress_global_vars.checkout_nonce : rpress_scripts.checkout_nonce),
         };
         $.ajax({
           type: "POST",
@@ -304,7 +308,8 @@ function rpress_load_gateway(payment_mode) {
   rp_setCookie('payment_mode', payment_mode, rp_scripts.expire_cookie_time);
   jQuery.post(url, {
     action: 'rpress_load_gateway',
-    rpress_payment_mode: payment_mode
+    rpress_payment_mode: payment_mode,
+    security: rpress_scripts.load_gateway_nonce
   },
     function (response) {
       jQuery('#rpress_purchase_form_wrap')

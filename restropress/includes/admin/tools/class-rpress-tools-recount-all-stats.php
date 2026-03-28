@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Recount fooditem earnings and stats AND store earnings
  *
@@ -70,12 +71,36 @@ class RPRESS_Tools_Recount_All_Stats extends RPRESS_Batch_Export {
 		) );
 		$log_ids = $rpress_logs->get_connected_logs( $args, 'sale' );
 		if ( $log_ids ) {
-			$log_ids     = implode( ',', $log_ids );
-			$payment_ids = $wpdb->get_col( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key='_rpress_log_payment_id' AND post_id IN ($log_ids)" );
-			unset( $log_ids );
-			$payment_ids = implode( ',', $payment_ids );
-			$payments = $wpdb->get_results( "SELECT ID, post_status FROM $wpdb->posts WHERE ID IN (" . $payment_ids . ")" );
-			unset( $payment_ids );
+			$log_ids = array_filter( array_map( 'absint', (array) $log_ids ) );
+			if ( empty( $log_ids ) ) {
+				return false;
+			}
+			$log_placeholders = implode( ',', array_fill( 0, count( $log_ids ), '%d' ) );
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is fully prepared via call_user_func_array.
+			$payment_ids      = $wpdb->get_col(
+				call_user_func_array(
+					array( $wpdb, 'prepare' ),
+					array_merge(
+						array( "SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_rpress_log_payment_id' AND post_id IN ($log_placeholders)" ),
+						$log_ids
+					)
+				)
+			);
+			$payment_ids = array_filter( array_map( 'absint', (array) $payment_ids ) );
+			if ( empty( $payment_ids ) ) {
+				return true;
+			}
+			$payment_placeholders = implode( ',', array_fill( 0, count( $payment_ids ), '%d' ) );
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is fully prepared via call_user_func_array.
+			$payments             = $wpdb->get_results(
+				call_user_func_array(
+					array( $wpdb, 'prepare' ),
+					array_merge(
+						array( "SELECT ID, post_status FROM {$wpdb->posts} WHERE ID IN ($payment_placeholders)" ),
+						$payment_ids
+					)
+				)
+			);
 			foreach ( $payments as $payment ) {
 				// Prevent payments that have all ready been retrieved from a previous sales log from counting again.
 				if ( in_array( $payment->ID, $processed_payments ) ) {
@@ -238,12 +263,35 @@ class RPRESS_Tools_Recount_All_Stats extends RPRESS_Batch_Export {
 			) );
 			$all_logs = $rpress_logs->get_connected_logs( $args, 'sale' );
 			if ( $all_logs ) {
-				$log_ids     = implode( ',', $all_logs );
-				$payment_ids = $wpdb->get_col( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key='_rpress_log_payment_id' AND post_id IN ($log_ids)" );
-				unset( $log_ids );
-				$payment_ids = implode( ',', $payment_ids );
-				$payments = $wpdb->get_results( "SELECT ID, post_status FROM $wpdb->posts WHERE ID IN (" . $payment_ids . ")" );
-				unset( $payment_ids );
+				$log_ids = array_filter( array_map( 'absint', (array) $all_logs ) );
+				$payments = array();
+				if ( ! empty( $log_ids ) ) {
+					$log_placeholders = implode( ',', array_fill( 0, count( $log_ids ), '%d' ) );
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is fully prepared via call_user_func_array.
+					$payment_ids      = $wpdb->get_col(
+						call_user_func_array(
+							array( $wpdb, 'prepare' ),
+							array_merge(
+								array( "SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_rpress_log_payment_id' AND post_id IN ($log_placeholders)" ),
+								$log_ids
+							)
+						)
+					);
+					$payment_ids = array_filter( array_map( 'absint', (array) $payment_ids ) );
+					if ( ! empty( $payment_ids ) ) {
+						$payment_placeholders = implode( ',', array_fill( 0, count( $payment_ids ), '%d' ) );
+						// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is fully prepared via call_user_func_array.
+						$payments             = $wpdb->get_results(
+							call_user_func_array(
+								array( $wpdb, 'prepare' ),
+								array_merge(
+									array( "SELECT ID, post_status FROM {$wpdb->posts} WHERE ID IN ($payment_placeholders)" ),
+									$payment_ids
+								)
+							)
+						);
+					}
+				}
 				foreach ( $payments as $payment ) {
 					if ( ! in_array( $payment->post_status, $accepted_statuses ) ) {
 						continue;

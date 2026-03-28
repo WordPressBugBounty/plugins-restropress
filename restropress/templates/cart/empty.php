@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 $cart_quantity = rpress_get_cart_quantity();
 $display       = $cart_quantity > 0 ? '' : ' style="display:none;"';
 ?>

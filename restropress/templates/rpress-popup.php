@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 $button_style = rpress_get_option('button_style', 'button');
 ?>
 <div class="modal micromodal-slide addon-popup-wrap" id="rpressModal" aria-hidden="true">

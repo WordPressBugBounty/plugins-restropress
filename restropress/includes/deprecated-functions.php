@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Deprecated Functions
  *
@@ -371,11 +372,22 @@ function rpress_get_earnings_by_date( $day = null, $month_num = null, $year = nu
 		$sales = get_posts( $args );
 		$earnings = 0;
 		if ( $sales ) {
-			$sales = implode( ',', $sales );
-			$total_earnings = $wpdb->get_var( "SELECT SUM(meta_value) FROM $wpdb->postmeta WHERE meta_key = '_rpress_payment_total' AND post_id IN ({$sales})" );
+			$sales        = array_filter( array_map( 'absint', (array) $sales ) );
+			$placeholders = implode( ',', array_fill( 0, count( $sales ), '%d' ) );
+			$total_earnings = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT SUM(meta_value) FROM {$wpdb->postmeta} WHERE meta_key = '_rpress_payment_total' AND post_id IN ($placeholders)",
+					$sales
+				)
+			);
 			$total_tax      = 0;
 			if ( ! $include_taxes ) {
-				$total_tax = $wpdb->get_var( "SELECT SUM(meta_value) FROM $wpdb->postmeta WHERE meta_key = '_rpress_payment_tax' AND post_id IN ({$sales})" );
+				$total_tax = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT SUM(meta_value) FROM {$wpdb->postmeta} WHERE meta_key = '_rpress_payment_tax' AND post_id IN ($placeholders)",
+						$sales
+					)
+				);
 			}
 			$earnings += ( $total_earnings - $total_tax );
 		}

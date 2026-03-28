@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /*
 * Sidebar category template with dynamic dropdown and nav
 */

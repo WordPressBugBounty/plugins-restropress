@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 function rpress_process_gateway_select( $data ) {
 	if( isset( $_POST['gateway_submit'] ) ) {
-		wp_redirect( add_query_arg( 'payment-mode', sanitize_text_field( $_POST['payment-mode'] ) ) ); exit;
+		wp_safe_redirect( add_query_arg( 'payment-mode', sanitize_text_field( $_POST['payment-mode'] ) ) ); exit;
 	}
 }
 add_action( 'rpress_gateway_select', 'rpress_process_gateway_select' );
@@ -30,6 +30,10 @@ add_action( 'rpress_gateway_select', 'rpress_process_gateway_select' );
  * @return void
  */
 function rpress_load_ajax_gateway() {
+	if ( ! check_ajax_referer( 'rpress_load_gateway', 'security', false ) ) {
+		rpress_die();
+	}
+
 	if ( isset( $_POST['rpress_payment_mode'] ) ) {
 		rpress_show_cc_form();
 		exit();

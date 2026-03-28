@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 /**
  * Food Item Object
  *
@@ -587,13 +588,24 @@ class RPRESS_Fooditem {
 		}
 		// Make sure if it needs to be serialized, we do
 		$meta_value = maybe_serialize( $meta_value );
-		if ( is_numeric( $meta_value ) ) {
-			$value_type = is_float( $meta_value ) ? '%f' : '%d';
-		} else {
-			$value_type = "'%s'";
-		}
-		$sql = $wpdb->prepare( "UPDATE $wpdb->postmeta SET meta_value = $value_type WHERE post_id = $this->ID AND meta_key = '%s'", $meta_value, $meta_key );
-		if ( $wpdb->query( $sql ) ) {
+		$updated = $wpdb->update(
+			$wpdb->postmeta,
+			array(
+				'meta_value' => $meta_value,
+			),
+			array(
+				'post_id'  => (int) $this->ID,
+				'meta_key' => $meta_key,
+			),
+			array(
+				'%s',
+			),
+			array(
+				'%d',
+				'%s',
+			)
+		);
+		if ( false !== $updated ) {
 			clean_post_cache( $this->ID );
 			return true;
 		}

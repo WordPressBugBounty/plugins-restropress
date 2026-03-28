@@ -84,7 +84,7 @@ function rpress_process_profile_editor_updates( $data ) {
   $errors = rpress_get_errors();
   if( $errors ) {
     // Send back to the profile editor if there are errors
-    wp_redirect( $data['rpress_redirect'] );
+    wp_safe_redirect( $data['rpress_redirect'] );
     rpress_die();
   }
   // Update the user
@@ -103,7 +103,7 @@ function rpress_process_profile_editor_updates( $data ) {
   }
   if ( $updated ) {
     do_action( 'rpress_user_profile_updated', $user_id, $userdata );
-    wp_redirect( add_query_arg( 'updated', 'true', $data['rpress_redirect'] ) );
+    wp_safe_redirect( add_query_arg( 'updated', 'true', $data['rpress_redirect'] ) );
     rpress_die();
   }
 }

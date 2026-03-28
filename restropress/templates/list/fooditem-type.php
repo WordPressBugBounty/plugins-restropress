@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 $id = get_the_id();
 $food_type = get_post_meta($id, 'rpress_food_type', true);
 

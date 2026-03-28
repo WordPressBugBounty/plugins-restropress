@@ -703,7 +703,7 @@ function rpress_handle_paypal_connect_request()
         trailingslashit(rpress_get_paypal_oauth_web_base_url($oauth_mode)) . 'signin/authorize'
     );
 
-    wp_redirect($authorize_url);
+    wp_safe_redirect($authorize_url);
     exit;
 }
 
@@ -1416,7 +1416,7 @@ function rpress_process_paypal_purchase($purchase_data)
         // Fix for some sites that encode the entities
         $paypal_redirect = str_replace('&amp;', '&', $paypal_redirect);
         // Redirect to PayPal
-        wp_redirect($paypal_redirect);
+        wp_safe_redirect($paypal_redirect);
         exit;
     }
 }
@@ -1696,7 +1696,7 @@ function rpress_process_paypal_web_accept_and_cart($data, $payment_id)
             $sucess_url = add_query_arg(array(
                 'payment_key' => $purchase_key,
             ), get_permalink(rpress_get_option('success_page', false)));
-            wp_redirect($sucess_url);
+            wp_safe_redirect($sucess_url);
         } else if ('pending' == $payment_status && isset($data['pending_reason'])) {
             // Look for possible pending reasons, such as an echeck
             $note = '';

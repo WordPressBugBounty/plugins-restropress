@@ -1,4 +1,9 @@
-<?php if ( ! empty( $_GET['rpress-verify-request'] ) ) : ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! empty( $_GET['rpress-verify-request'] ) ) : ?>
     <p class="rpress-account-pending rpress_success">
         <?php esc_html_e( 'An email with an activation link has been sent.', 'restropress' ); ?>
     </p>

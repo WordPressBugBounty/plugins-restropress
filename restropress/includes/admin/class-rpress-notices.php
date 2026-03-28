@@ -271,7 +271,7 @@ class RPRESS_Notices {
 
 		$notice_key = sanitize_text_field( wp_unslash( $_GET['rpress_notice'] ) );
 		update_user_meta( get_current_user_id(), '_rpress_' . $notice_key . '_dismissed', 1 );
-		wp_redirect( remove_query_arg( array( 'rpress_action', 'rpress_notice', '_wpnonce' ) ) );
+		wp_safe_redirect( remove_query_arg( array( 'rpress_action', 'rpress_notice', '_wpnonce' ) ) );
 		exit;
 	}
 }

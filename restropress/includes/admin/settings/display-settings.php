@@ -134,5 +134,6 @@ function rpress_options_page() {
 		</div><!-- #tab_container-->
 	</div><!-- .wrap -->
 	<?php
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output buffer contains escaped settings page markup.
 	echo ob_get_clean();
 }

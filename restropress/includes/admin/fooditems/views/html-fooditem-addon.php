@@ -168,10 +168,10 @@ if (is_array($addons) && !empty($addons)):
 
                       ?>
                       <?php if ($count == 1): ?>
-                        <tr class="rp-child-addon addon-root-row" id="tag-<?php echo $addon_item_id; ?>"
-                          data-term="<?php echo $addon_item_id; ?>">
+                        <tr class="rp-child-addon addon-root-row" id="tag-<?php echo esc_attr( $addon_item_id ); ?>"
+                          data-term="<?php echo esc_attr( $addon_item_id ); ?>">
                         <?php else: ?>
-                        <tr class="rp-child-addon addon-child-row" data-term="<?php echo $addon_item_id; ?>">
+                        <tr class="rp-child-addon addon-child-row" data-term="<?php echo esc_attr( $addon_item_id ); ?>">
                         <?php endif; ?>
 
                         <?php if ($count == 1) { ?>

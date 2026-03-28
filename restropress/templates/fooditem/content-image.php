@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 $fooditems_overlay = rpress_get_option( 'enable_food_image_popup', false );
 $image_placeholder = rpress_get_option( 'enable_image_placeholder', false );
 if ( has_post_thumbnail( $post->ID ) ):

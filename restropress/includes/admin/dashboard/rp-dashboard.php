@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 $dashboard_today      = gmdate( 'Y-m-d' );
 $dashboard_yesterday  = gmdate( 'Y-m-d', strtotime( '-1 day' ) );
 $dashboard_totals     = array(

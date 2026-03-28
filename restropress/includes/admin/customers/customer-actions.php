@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 /**
@@ -370,14 +371,14 @@ function rpress_customer_delete( $args ) {
 		rpress_set_error( 'customer-delete-no-confirm', esc_html__( 'Please confirm you want to delete this customer', 'restropress' ) );
 	}
 	if ( rpress_get_errors() ) {
-		wp_redirect( admin_url( 'admin.php?page=rpress-customers&view=overview&id=' . $customer_id ) );
+		wp_safe_redirect( admin_url( 'admin.php?page=rpress-customers&view=overview&id=' . $customer_id ) );
 		exit;
 	}
 	$customer = new RPRESS_Customer( $customer_id );
 	do_action( 'rpress_pre_delete_customer', $customer_id, $confirm, $remove_data );
 	$success = false;
 	if ( $customer->id > 0 ) {
-		$payments_array = explode( ',', $customer->payment_ids );
+		$payments_array = array_filter( array_map( 'absint', explode( ',', (string) $customer->payment_ids ) ) );
 		$success        = RPRESS()->customers->delete( $customer->id );
 		if ( $success ) {
 			if ( $remove_data ) {
@@ -400,7 +401,7 @@ function rpress_customer_delete( $args ) {
 		rpress_set_error( 'rpress-customer-delete-invalid-id', esc_html__( 'Invalid Customer ID', 'restropress' ) );
 		$redirect = admin_url( 'admin.php?page=rpress-customers' );
 	}
-	wp_redirect( $redirect );
+	wp_safe_redirect( $redirect );
 	exit;
 }
 add_action( 'rpress_delete-customer', 'rpress_customer_delete', 10, 1 );
@@ -432,8 +433,15 @@ function rpress_disconnect_customer_user_id( $args ) {
 	$customer_args = array( 'user_id' => 0 );
 	if ( $customer->update( $customer_args ) ) {
 		global $wpdb;
-		if ( ! empty( $customer->payment_ids ) ) {
-			$wpdb->query( "UPDATE $wpdb->postmeta SET meta_value = 0 WHERE meta_key = '_rpress_payment_user_id' AND post_id IN ( $customer->payment_ids )" );
+		$payment_ids = array_filter( array_map( 'absint', explode( ',', (string) $customer->payment_ids ) ) );
+		if ( ! empty( $payment_ids ) ) {
+			$placeholders = implode( ',', array_fill( 0, count( $payment_ids ), '%d' ) );
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->postmeta} SET meta_value = 0 WHERE meta_key = '_rpress_payment_user_id' AND post_id IN ($placeholders)",
+					$payment_ids
+				)
+			);
 		}
 		$output['success'] = true;
 	} else {

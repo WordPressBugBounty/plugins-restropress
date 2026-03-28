@@ -30,7 +30,7 @@ class ArrayToXML
 	{
 		if (!is_array($data)) {
 			$err = 'Invalid variable type supplied, expected array not found on line ' . __LINE__ . ' in Class: ' . __CLASS__ . ' Method: ' . __METHOD__;
-			trigger_error($err);
+			trigger_error( esc_html( $err ) );
 			return false; //return false error occurred
 		}
 		$xml = new XmlWriter();

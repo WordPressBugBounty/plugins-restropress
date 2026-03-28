@@ -71,7 +71,7 @@ function rpress_refresh_permalinks_on_bad_404() {
 		}
 		flush_rewrite_rules( false );
 		set_transient( 'rpress_refresh_404_permalinks', 1, HOUR_IN_SECONDS * 12 );
-		wp_redirect( home_url( add_query_arg( array( 'rpress-flush' => 1 ), $wp->request ) ) ); exit;
+		wp_safe_redirect( home_url( add_query_arg( array( 'rpress-flush' => 1 ), $wp->request ) ) ); exit;
 	}
 }
 add_action( 'template_redirect', 'rpress_refresh_permalinks_on_bad_404' );

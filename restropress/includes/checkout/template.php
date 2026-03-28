@@ -985,6 +985,7 @@ function rpress_checkout_hidden_fields() {
 	<?php if ( is_user_logged_in() ) { ?>
 	<input type="hidden" name="rpress-user-id" value="<?php echo esc_attr(get_current_user_id()); ?>"/>
 	<?php } ?>
+	<input type="hidden" name="rpress_checkout_nonce" value="<?php echo esc_attr( wp_create_nonce( 'rpress_checkout_nonce' ) ); ?>" />
 	<input type="hidden" name="rpress_action" value="purchase"/>
 	<input type="hidden" name="rpress-gateway" value="<?php echo esc_attr(rpress_get_chosen_gateway()); ?>" />
 <?php

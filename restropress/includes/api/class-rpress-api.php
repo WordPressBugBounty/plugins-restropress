@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * RestroPress API
  *
@@ -1598,20 +1599,20 @@ class RPRESS_API {
 			case 'generate':
 				if( $this->generate_api_key( $user_id ) ) {
 					delete_transient( 'rpress-total-api-keys' );
-					wp_redirect( add_query_arg( 'rpress-message', 'api-key-generated', 'admin.php?page=rpress-tools&tab=api_keys' ) ); exit();
+					wp_safe_redirect( add_query_arg( 'rpress-message', 'api-key-generated', 'admin.php?page=rpress-tools&tab=api_keys' ) ); exit();
 				} else {
-					wp_redirect( add_query_arg( 'rpress-message', 'api-key-failed', 'admin.php?page=rpress-tools&tab=api_keys' ) ); exit();
+					wp_safe_redirect( add_query_arg( 'rpress-message', 'api-key-failed', 'admin.php?page=rpress-tools&tab=api_keys' ) ); exit();
 				}
 				break;
 			case 'regenerate':
 				$this->generate_api_key( $user_id, true );
 				delete_transient( 'rpress-total-api-keys' );
-				wp_redirect( add_query_arg( 'rpress-message', 'api-key-regenerated', 'admin.php?page=rpress-tools&tab=api_keys' ) ); exit();
+				wp_safe_redirect( add_query_arg( 'rpress-message', 'api-key-regenerated', 'admin.php?page=rpress-tools&tab=api_keys' ) ); exit();
 				break;
 			case 'revoke':
 				$this->revoke_api_key( $user_id );
 				delete_transient( 'rpress-total-api-keys' );
-				wp_redirect( add_query_arg( 'rpress-message', 'api-key-revoked', 'admin.php?page=rpress-tools&tab=api_keys' ) ); exit();
+				wp_safe_redirect( add_query_arg( 'rpress-message', 'api-key-revoked', 'admin.php?page=rpress-tools&tab=api_keys' ) ); exit();
 				break;
 			default;
 				break;

@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Service Tabs Wrapper (Delivery / Pickup)
  * Context-driven, no cookie or logic duplication

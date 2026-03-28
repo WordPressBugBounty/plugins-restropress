@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * RestroPress RP_AJAX. AJAX Event Handlers.
  *
@@ -1147,8 +1148,18 @@ class RP_AJAX {
    * @return void
    */
   public static function apply_discount() {
+    if ( ! check_ajax_referer( 'rpress_checkout_nonce', 'security', false ) ) {
+      echo wp_json_encode(
+        array(
+          'msg'  => esc_html__( 'Security check failed. Please refresh and try again.', 'restropress' ),
+          'code' => '',
+        )
+      );
+      rpress_die();
+    }
+
     if ( isset( $_POST['code'] ) ) {
-      $discount_code = sanitize_text_field( $_POST['code'] );
+      $discount_code = sanitize_text_field( wp_unslash( $_POST['code'] ) );
       $return = array(
         'msg'  => '',
         'code' => $discount_code
@@ -1157,7 +1168,7 @@ class RP_AJAX {
       if ( is_user_logged_in() ) {
         $user = get_current_user_id();
       } else {
-        parse_str( sanitize_text_field( $_POST['form'] ) , $form );
+        parse_str( sanitize_text_field( wp_unslash( $_POST['form'] ) ), $form );
         if ( ! empty( $form['rpress_email'] ) ) {
           $user = urldecode( $form['rpress_email'] );
         }
@@ -1195,12 +1206,16 @@ class RP_AJAX {
    * @return void
    */
   public static function remove_discount() {
+    if ( ! check_ajax_referer( 'rpress_checkout_nonce', 'security', false ) ) {
+      rpress_die();
+    }
+
     if ( isset( $_POST['code'] ) ) {
-      rpress_unset_cart_discount( urldecode( $_POST['code'] ) );
+      rpress_unset_cart_discount( urldecode( sanitize_text_field( wp_unslash( $_POST['code'] ) ) ) );
       $total = rpress_get_cart_total();
       $return = array(
         'total'     => html_entity_decode( rpress_currency_filter( rpress_format_amount( $total ) ), ENT_COMPAT, 'UTF-8' ),
-        'code'      => sanitize_text_field( $_POST['code'] ),
+        'code'      => sanitize_text_field( wp_unslash( $_POST['code'] ) ),
         'discounts' => rpress_get_cart_discounts(),
         'html'      => rpress_get_cart_discounts_html()
       );
@@ -1215,6 +1230,10 @@ class RP_AJAX {
    * @return void
    */
   public static function checkout_login() {
+    if ( ! check_ajax_referer( 'rpress_checkout_nonce', 'security', false ) ) {
+      rpress_die();
+    }
+
     do_action( 'rpress_purchase_form_login_fields' );
     rpress_die();
   }
@@ -1225,6 +1244,10 @@ class RP_AJAX {
    * @return void
   */
   public static function checkout_register() {
+    if ( ! check_ajax_referer( 'rpress_checkout_nonce', 'security', false ) ) {
+      rpress_die();
+    }
+
     do_action( 'rpress_purchase_form_register_fields' );
     rpress_die();
   }
@@ -1235,6 +1258,10 @@ class RP_AJAX {
    * @return void
    */
   public static function recalculate_taxes() {
+    if ( ! check_ajax_referer( 'rpress_checkout_nonce', 'security', false ) ) {
+      rpress_die();
+    }
+
     if ( ! rpress_get_cart_contents() ) {
       return false;
     }
@@ -1263,15 +1290,21 @@ class RP_AJAX {
    * @return void
    */
   public static function get_states() {
+    $security = isset( $_REQUEST['security'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['security'] ) ) : '';
+
+    if ( empty( $security ) || ! ( wp_verify_nonce( $security, 'rpress_checkout_nonce' ) || wp_verify_nonce( $security, 'rpress_get_states_nonce' ) ) ) {
+      rpress_die();
+    }
+
     if ( empty( $_POST['country'] ) ) {
         $_POST['country'] = rpress_get_shop_country();
     }
 
-    $country = sanitize_text_field( $_POST['country'] );
+    $country = sanitize_text_field( wp_unslash( $_POST['country'] ) );
     $states  = rpress_get_states( $country );
 
     if ( ! empty( $states ) ) {
-        $field_name = sanitize_text_field( $_POST['field_name'] );
+        $field_name = isset( $_POST['field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['field_name'] ) ) : '';
 
         $args = array(
             'name'             => $field_name,
@@ -1306,33 +1339,43 @@ class RP_AJAX {
     $search   = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
     $excludes = ( isset( $_GET['current_id'] ) ? (array) $_GET['current_id'] : array() );
     $excludes = array_unique( array_map( 'absint', $excludes ) );
-    $exclude  = implode( ",", $excludes );
     $variations = isset( $_GET['variations'] ) ? filter_var( $_GET['variations'], FILTER_VALIDATE_BOOLEAN ) : false;
     $results = array();
-    // Setup the SELECT statement
-    $select = "SELECT ID,post_title FROM $wpdb->posts ";
-    // Setup the WHERE clause
-    $where = "WHERE `post_type` = 'fooditem' and `post_title` LIKE '%s' ";
-    // If we have items to exclude, exclude them
-    if( ! empty( $exclude ) ) {
-      $where .= "AND `ID` NOT IN (" . $exclude . ") ";
+    $sql      = "SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'fooditem' AND post_title LIKE %s";
+    $params   = array( '%' . $wpdb->esc_like( $search ) . '%' );
+
+    if ( ! empty( $excludes ) ) {
+      $exclude_placeholders = implode( ',', array_fill( 0, count( $excludes ), '%d' ) );
+      $sql                 .= " AND ID NOT IN ($exclude_placeholders)";
+      $params               = array_merge( $params, $excludes );
     }
+
     if ( ! current_user_can( 'edit_products' ) ) {
       $status = apply_filters( 'rpress_product_dropdown_status_nopriv', array( 'publish' ) );
     } else {
       $status = apply_filters( 'rpress_product_dropdown_status', array( 'publish', 'draft', 'private', 'future' ) );
     }
     if ( is_array( $status ) && ! empty( $status ) ) {
-      $status     = array_map( 'sanitize_text_field', $status );
-      $status_in  = "'" . join( "', '", $status ) . "'";
-      $where     .= "AND `post_status` IN ({$status_in}) ";
+      $status               = array_values( array_filter( array_map( 'sanitize_key', $status ) ) );
+      if ( ! empty( $status ) ) {
+        $status_placeholders  = implode( ',', array_fill( 0, count( $status ), '%s' ) );
+        $sql                 .= " AND post_status IN ($status_placeholders)";
+        $params               = array_merge( $params, $status );
+      } else {
+        $sql      .= ' AND post_status = %s';
+        $params[]  = 'publish';
+      }
     } else {
-      $where .= "AND `post_status` = `publish` ";
+      $sql      .= ' AND post_status = %s';
+      $params[]  = 'publish';
     }
-    // Limit the result sets
-    $limit = "LIMIT 50";
-    $sql = $select . $where . $limit;
-    $prepared_statement = $wpdb->prepare( $sql, '%' . $search . '%' );
+
+    $sql               .= ' LIMIT 50';
+    $prepared_statement = call_user_func_array(
+      array( $wpdb, 'prepare' ),
+      array_merge( array( $sql ), $params )
+    );
+    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Statement is prepared above.
     $items = $wpdb->get_results( $prepared_statement );
     if( $items ) {
       foreach( $items as $item ) {
@@ -1372,20 +1415,32 @@ class RP_AJAX {
    */
   public static function customer_search() {
     global $wpdb;
-    $search  = isset( $_GET['s'] ) ? esc_sql( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : '';
+    $search  = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
     $results = array();
     $customer_view_role = apply_filters( 'rpress_view_customers_role', 'view_shop_reports' );
     if ( ! current_user_can( $customer_view_role ) ) {
       $customers = array();
     } else {
-      $select = "SELECT id, name, email FROM {$wpdb->prefix}rpress_customers ";
+      $table_name = esc_sql( $wpdb->prefix . 'rpress_customers' );
       if ( is_numeric( $search ) ) {
-        $where = "WHERE `id` LIKE '%$search%' OR `user_id` LIKE '%$search%' ";
+        $like_value = '%' . $wpdb->esc_like( $search ) . '%';
+        $customers  = $wpdb->get_results(
+          $wpdb->prepare(
+            "SELECT id, name, email FROM {$table_name} WHERE id LIKE %s OR user_id LIKE %s LIMIT 50",
+            $like_value,
+            $like_value
+          )
+        );
       } else {
-        $where = "WHERE `name` LIKE '%$search%' OR `email` LIKE '%$search%' ";
+        $like_value = '%' . $wpdb->esc_like( $search ) . '%';
+        $customers  = $wpdb->get_results(
+          $wpdb->prepare(
+            "SELECT id, name, email FROM {$table_name} WHERE name LIKE %s OR email LIKE %s LIMIT 50",
+            $like_value,
+            $like_value
+          )
+        );
       }
-      $limit = "LIMIT 50";
-      $customers = $wpdb->get_results( $select . $where . $limit );
     }
     if( $customers ) {
       foreach( $customers as $customer ) {

@@ -1,3 +1,8 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	 exit;
+}
+?>
 <style>
 #rpress-email-food-list, #rpress-email-food-list td, #rpress-email-food-list th {
   border: 1px solid #ddd;

@@ -237,7 +237,7 @@ class IpnHandler implements IpnHandlerInterface
             }
         } catch (\Exception $ex) {
             // Exception chaining - not direct output, safe to pass $ex.
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw new \Exception("Unable to verify certificate - error with the certificate subject", null, $ex);
         }
         if (strcmp($certSubject["CN"], $this->expectedCnName)) {
@@ -248,7 +248,7 @@ class IpnHandler implements IpnHandlerInterface
             $result = openssl_verify($this->signatureFields, $signature, $certKey, OPENSSL_ALGO_SHA1);
         } catch (\Exception $ex) {
             // Exception chaining - not direct output, safe to pass $ex.
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw new \Exception("Unable to verify signature - error with the verification algorithm", null, $ex);
         }
         return ($result > 0);

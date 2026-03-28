@@ -344,6 +344,8 @@ class RP_Frontend_Scripts
 
     $ajax_params = array(
       'ajaxurl' => rpress_get_ajax_url(),
+      'checkout_nonce' => wp_create_nonce('rpress_checkout_nonce'),
+      'load_gateway_nonce' => wp_create_nonce('rpress_load_gateway'),
       'post_id' => isset($post->ID) ? $post->ID : '',
       'position_in_cart' => isset($position) ? $position : -1,
       'has_purchase_links' => $has_purchase_links,

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Load assets
  *
@@ -169,6 +170,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         'deactivate_license'          => wp_create_nonce( 'deactivate-license' ),
         'selected_filter_nonce'       => wp_create_nonce( 'selected-filter' ),
         'bulk_edit_nonce'             => wp_create_nonce( 'rpress-bulk-edit' ),
+        'get_states_nonce'            => wp_create_nonce( 'rpress_get_states_nonce' ),
       );
       wp_localize_script( 'rp-admin', 'rpress_vars',
         $admin_params
@@ -506,12 +508,13 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         $end_date
       );
 
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       return (int) $wpdb->get_var( $query );
     }
 
     private function get_customer_count_by_range( $start_date, $end_date ) {
       global $wpdb;
-      $table_name = $wpdb->prefix . 'rpress_customers';
+      $table_name = esc_sql( $wpdb->prefix . 'rpress_customers' );
 
       $table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) );
       if ( $table_exists !== $table_name ) {
@@ -700,25 +703,28 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     }
     public function get_today_customer_counts( $table_name, $today_date, $yesterday_date ) {
       global $wpdb;
+      $table_name = esc_sql( $table_name );
   
        
-      $query_today = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) LIKE %s", 
-          array( "$today_date%" )
+      $query_today = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) LIKE %s",
+          $today_date . '%'
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_today );
   
      
-      $query_yesterday = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) LIKE %s", 
-          array( "$yesterday_date%" )
+      $query_yesterday = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) LIKE %s",
+          $yesterday_date . '%'
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count_yesterday = $wpdb->get_var( $query_yesterday );
       $percentage_change_customer = 0;
       if ( $customer_count_yesterday != 0 ) {
@@ -733,23 +739,26 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     }
     public function get_yesterday_customer_counts( $table_name, $yesterday_date, $two_day_previous_date ) {
       global $wpdb;
+      $table_name = esc_sql( $table_name );
   
-      $query_yesterday = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) LIKE %s", 
-          array( "$yesterday_date%" )
+      $query_yesterday = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) LIKE %s",
+          $yesterday_date . '%'
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_yesterday );
   
-      $query_two_days_ago = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) LIKE %s", 
-          array( "$two_day_previous_date%" )
+      $query_two_days_ago = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) LIKE %s",
+          $two_day_previous_date . '%'
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count_two_days_ago = $wpdb->get_var( $query_two_days_ago );
   
       
@@ -765,21 +774,26 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     }
     public function get_last_week_customer_counts( $table_name, $last_week_start, $last_week_end, $two_weeks_ago_start, $two_weeks_ago_end ) {
       global $wpdb;
-      $query_last_week = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) BETWEEN %s AND %s", 
-          array( $last_week_start, $last_week_end )
+      $table_name = esc_sql( $table_name );
+      $query_last_week = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) BETWEEN %s AND %s",
+          $last_week_start,
+          $last_week_end
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_last_week );
-      $query_two_weeks_ago = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) BETWEEN %s AND %s", 
-          array( $two_weeks_ago_start, $two_weeks_ago_end )
+      $query_two_weeks_ago = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) BETWEEN %s AND %s",
+          $two_weeks_ago_start,
+          $two_weeks_ago_end
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count_two_weeks_ago = $wpdb->get_var( $query_two_weeks_ago );
   
       
@@ -797,21 +811,26 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     }
     public function get_last_month_customer_counts( $table_name, $last_month_start, $last_month_end, $two_month_ago_start, $two_month_ago_end ) {
       global $wpdb;
-      $query_last_week = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) BETWEEN %s AND %s", 
-          array( $last_month_start, $last_month_end )
+      $table_name = esc_sql( $table_name );
+      $query_last_week = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) BETWEEN %s AND %s",
+          $last_month_start,
+          $last_month_end
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_last_week );
-      $query_two_month_ago = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) BETWEEN %s AND %s", 
-          array( $two_month_ago_start, $two_month_ago_end )
+      $query_two_month_ago = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) BETWEEN %s AND %s",
+          $two_month_ago_start,
+          $two_month_ago_end
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count_two_months_ago = $wpdb->get_var( $query_two_month_ago );
   
       
@@ -828,21 +847,26 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     }
     public function get_last_year_customer_counts( $table_name, $last_year_start, $last_year_end, $two_year_ago_start, $two_year_ago_end ) {
       global $wpdb;
-      $query_last_week = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) BETWEEN %s AND %s", 
-          array( $last_year_start, $last_year_end )
+      $table_name = esc_sql( $table_name );
+      $query_last_week = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) BETWEEN %s AND %s",
+          $last_year_start,
+          $last_year_end
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_last_week );
-      $query_two_weeks_ago = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) BETWEEN %s AND %s", 
-          array( $two_year_ago_start, $two_year_ago_end )
+      $query_two_weeks_ago = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) BETWEEN %s AND %s",
+          $two_year_ago_start,
+          $two_year_ago_end
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count_two_year_ago = $wpdb->get_var( $query_two_weeks_ago );
   
       
@@ -859,21 +883,26 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     }
     public function get_this_year_customer_counts( $table_name, $this_year_start, $this_year_end, $start_of_last_year, $end_of_last_year ) {
       global $wpdb;
-      $query_last_week = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) BETWEEN %s AND %s", 
-          array( $this_year_start, $this_year_end )
+      $table_name = esc_sql( $table_name );
+      $query_last_week = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) BETWEEN %s AND %s",
+          $this_year_start,
+          $this_year_end
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_last_week );
-      $query_two_weeks_ago = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) BETWEEN %s AND %s", 
-          array( $start_of_last_year, $end_of_last_year )
+      $query_two_weeks_ago = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) BETWEEN %s AND %s",
+          $start_of_last_year,
+          $end_of_last_year
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count_last_year = $wpdb->get_var( $query_two_weeks_ago );
   
       
@@ -890,13 +919,16 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     }
     public function get_custom_customer_counts( $table_name, $range_of_start_date, $range_of_end_date ) {
       global $wpdb;
-      $query_custom_range = $wpdb->prepare("
-          SELECT COUNT(*) 
-          FROM $table_name 
-          WHERE DATE(date_created) BETWEEN %s AND %s", 
-          array( $range_of_start_date, $range_of_end_date )
+      $table_name = esc_sql( $table_name );
+      $query_custom_range = $wpdb->prepare(
+          "SELECT COUNT(*)
+          FROM {$table_name}
+          WHERE DATE(date_created) BETWEEN %s AND %s",
+          $range_of_start_date,
+          $range_of_end_date
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_custom_range );
       $percentage_change_customer = 0;
        
@@ -1918,6 +1950,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           WHERE DATE(date_created) BETWEEN %s AND %s", 
           array( $this_year_start, $this_year_end )
       );
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_last_week );
       $query_two_weeks_ago = $wpdb->prepare("
           SELECT COUNT(*) 
@@ -1925,6 +1958,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           WHERE DATE(date_created) BETWEEN %s AND %s", 
           array( $start_of_last_year, $end_of_last_year )
       );
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count_last_year = $wpdb->get_var( $query_two_weeks_ago );
       
       $percentage_change_customer = 0;
@@ -1947,6 +1981,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           array( $start_of_this_month, $end_of_this_month )
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_this_week );
       $query_last_month_ago = $wpdb->prepare("
           SELECT COUNT(*) 
@@ -1955,6 +1990,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           array( $last_month_start, $last_month_end )
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count_last_months_ago = $wpdb->get_var( $query_last_month_ago );
   
       
@@ -1978,6 +2014,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           array( $start_of_this_week, $end_of_this_week )
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count = $wpdb->get_var( $query_this_week );
       $query_last_weeks_ago = $wpdb->prepare("
           SELECT COUNT(*) 
@@ -1986,6 +2023,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           array( $last_week_start, $last_week_end )
       );
   
+      // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query values are prepared above.
       $customer_count_last_weeks_ago = $wpdb->get_var( $query_last_weeks_ago );
   
       

@@ -233,6 +233,7 @@ class RPRESS_Batch_Export extends RPRESS_Export {
 		$this->headers();
 		$file = $this->get_file();
 		@unlink( $this->file );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSV payload must be streamed as-is.
 		echo $file;
 		rpress_die();
 	}

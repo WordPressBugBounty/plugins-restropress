@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Install Function
  *
@@ -308,7 +309,7 @@ function rpress_maybe_redirect_to_setup_wizard() {
 		delete_option( 'rpress_show_setup_wizard' );
 
 		// Redirect to your wizard page
-		wp_redirect( admin_url( 'admin.php?page=rpress-setup' ) );
+		wp_safe_redirect( admin_url( 'admin.php?page=rpress-setup' ) );
 		exit;
 	}
 }

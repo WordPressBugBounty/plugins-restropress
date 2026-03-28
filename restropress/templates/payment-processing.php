@@ -1,3 +1,8 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	 exit;
+}
+?>
 <div id="rpress-payment-processing">
 	<p>
 		<?php

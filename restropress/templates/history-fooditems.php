@@ -1,4 +1,9 @@
-<?php if( ! empty( $_GET['rpress-verify-success'] ) ) : ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if( ! empty( $_GET['rpress-verify-success'] ) ) : ?>
 	<p class="rpress-account-verified rpress_success">
 	<?php esc_html_e( 'Your account has been successfully verified!', 'restropress' ); ?>
 	</p>

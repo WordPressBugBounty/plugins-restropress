@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 /**
  * Description of class-rp-rest-reports-v1-controller
  */
@@ -126,8 +127,9 @@ class RP_REST_Reports_v1_Controller extends WP_REST_Controller
 	{
 		global $wpdb;
 		$select = 'SELECT g.meta_value,count( * ) AS num_posts';
-		$join = "LEFT JOIN $wpdb->postmeta g ON (p.ID = g.post_id)";
+		$join = "LEFT JOIN {$wpdb->postmeta} g ON (p.ID = g.post_id)";
 		$where = "WHERE p.post_type = 'rpress_payment' AND g.meta_key = '_order_status'";
+		$query_params = array();
 		$arg = array();
 		$post_count_start_date = "";
 		$post_count_end_date = "";
@@ -137,21 +139,30 @@ class RP_REST_Reports_v1_Controller extends WP_REST_Controller
 			$post_count_end_date = isset($request['end_date']) && !empty($request['end_date']) ? sanitize_text_field($request['end_date']) : $post_count_start_date;
 			$arg['start-date'] = date('m/d/Y', strtotime($post_count_start_date));
 			$post_count_end_date = date('Y-m-d', strtotime("$post_count_end_date +1 day"));
-			$where .= " AND ( p.post_date BETWEEN CAST( '$post_count_start_date' AS DATE ) AND CAST( '$post_count_end_date' AS DATE ) )";
+			$where .= ' AND ( p.post_date BETWEEN CAST( %s AS DATE ) AND CAST( %s AS DATE ) )';
+			$query_params[] = $post_count_start_date;
+			$query_params[] = $post_count_end_date;
 			$arg['end-date'] = date('m/d/Y', strtotime("$post_count_end_date +1 day"));
 		}
 		$cache_key = '';
 		$query = "$select
-			FROM $wpdb->posts p
+			FROM {$wpdb->posts} p
 			$join
 			$where
 			GROUP BY g.meta_value
 			";
+		if ( ! empty( $query_params ) ) {
+			$query = call_user_func_array(
+				array( $wpdb, 'prepare' ),
+				array_merge( array( $query ), $query_params )
+			);
+		}
 		$cache_key = md5($query);
 		$count = wp_cache_get($cache_key, 'counts');
 		if (false !== $count) {
 			return $count;
 		}
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query is prepared above when dynamic values exist.
 		$count = $wpdb->get_results($query, ARRAY_A);
 		$stats = array();
 		$statuses = get_post_stati();

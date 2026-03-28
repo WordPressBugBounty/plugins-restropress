@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
 Tested up to: 6.9.4
-Stable tag: 3.2.8.3
+Stable tag: 3.2.8.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -120,6 +120,29 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 👉 [Explore Pro Features & Extensions](https://restropress.com/extension/)
 
 == Changelog ==
+
+= Version 3.2.8.4(2026-03-28) =
+* Updated: Plugin version bump to 3.2.8.4
+* Fixed: Hardened direct DB query paths with prepared/typed placeholders in customer, discount, session, payment, tax, and stats handlers.
+* Fixed: Reworked dynamic `IN (...)` query construction to sanitized array + placeholder flow for scanner-safe SQL execution.
+* Fixed: Removed unescaped `payment_ids` usage in customer-user disconnect flow and enforced integer-only payment IDs before update query.
+* Fixed: Replaced transient/session batch delete raw SQL assembly with prepared option-name placeholder queries.
+* Fixed: Updated legacy earnings/tax aggregation queries to prepared statements for safer post ID handling.
+* Fixed: Updated discount status cleanup bulk updates to prepared integer placeholder queries for posts/postmeta.
+* Fixed: Updated yearly tax/earnings aggregate query paths to prepared statements in tax and payment stats/functions.
+* Security: Addressed latest PluginCheck `DirectDB.UnescapedDBParameter` findings reported in March 28 security scan.
+* Security: Continued hardening for redirect and DB static-analysis warnings without changing frontend UX/UI behavior.
+* Maintenance: Synced release notes with internal `CHANGELOG_DEV.md` tracked fixes for faster future follow-up.
+* Fixed: Mobile and tablet food listing layout now keeps cart access visible and usable without scrolling to page bottom.
+* Fixed: Sticky mobile cart summary now updates quantity/total reliably on add, update, remove, and clear-cart AJAX actions.
+* Fixed: Checkout page responsive structure now stacks service/cart/form sections correctly across tablet and mobile widths.
+* Fixed: Checkout mobile/tablet flow now keeps the cart/service panel above the form section for quicker cart visibility.
+* Fixed: Category strip now renders in a stable single-row pattern with horizontal overflow handling in both list and grid modes.
+* Fixed: Grid view category-strip wrappers now follow the same inline/scroll behavior as list view.
+* Fixed: Category popup trigger layering conflict introduced by one-line strip styling, so menu popup opens reliably again.
+* Fixed: Category strip now remains sticky while scrolling and respects WordPress admin-bar offsets.
+* Improved: Mobile/tablet category and sticky-cart spacing/position tuning for cleaner ordering UX.
+* Code Cleanup
 
 = Version 3.2.8.3(2026-03-26) =
 * Updated: Plugin version bump to 3.2.8.3
@@ -922,7 +945,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.2.8 =
+= 3.2.8.4 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

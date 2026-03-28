@@ -42,11 +42,11 @@ function rpress_extensions_page() {
 			<div class="rpress-plugin-filter">
 				<div>
 				<?php 
-					$base  = admin_url('admin.php?page=rpress-extensions'); 
-					$current        = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ): '';
-					echo sprintf( '<a href="%s"%s>%s</a>', remove_query_arg( 'status', $base ), $current === 'all' || $current == '' ? ' class="current"' : '', esc_html__('All', 'restropress') );
-					echo sprintf( '<a href="%s"%s>%s</a>', add_query_arg( 'status', 'active', $base ), $current === 'active' ? ' class="current"' : '', esc_html__('active', 'restropress')  );
-					echo sprintf( '<a href="%s"%s>%s</a>', add_query_arg( 'status', 'inactive', $base ), $current === 'inactive' ? ' class="current"' : '', esc_html__('Inactive', 'restropress')  );
+					$base    = admin_url( 'admin.php?page=rpress-extensions' );
+					$current = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
+					echo sprintf( '<a href="%s"%s>%s</a>', esc_url( remove_query_arg( 'status', $base ) ), $current === 'all' || $current === '' ? ' class="current"' : '', esc_html__( 'All', 'restropress' ) );
+					echo sprintf( '<a href="%s"%s>%s</a>', esc_url( add_query_arg( 'status', 'active', $base ) ), $current === 'active' ? ' class="current"' : '', esc_html__( 'active', 'restropress' ) );
+					echo sprintf( '<a href="%s"%s>%s</a>', esc_url( add_query_arg( 'status', 'inactive', $base ) ), $current === 'inactive' ? ' class="current"' : '', esc_html__( 'Inactive', 'restropress' ) );
 					?> 
 				</div>
 			</div>
@@ -61,10 +61,11 @@ function rpress_extensions_page() {
 		</div>
 		<!-- RestroPress Addons Ends Here -->
 		<div class="rpress-add-ons-view-wrapper">
-			<?php echo rpress_add_ons_get_feed(); ?>
+			<?php rpress_add_ons_get_feed(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Function prints fully escaped admin markup. ?>
 		</div>
 	</div>
 	<?php
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output assembled with escaped values and trusted admin markup.
 	echo ob_get_clean();
 }
 /**
@@ -105,6 +106,7 @@ function rpress_add_ons_get_feed() {
 			$data .= '<img src="' . esc_url( $image_url ) . '" alt="No Addons" style="max-width:150px; margin-bottom: 10px;" />';
 			$data .= '<p class="no-addons-message">' . esc_html__('No active extensions found.', 'restropress') . '</p>';
 			$data .= '</div>';
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $data is assembled from escaped strings above.
 			echo $data;
 			return;
 		}
@@ -193,7 +195,7 @@ function rpress_add_ons_get_feed() {
 								<div class="restropress-btn-group rpress-addon-details-section pull-left">
 								<a class="button button-medium button-primary " target="_blank" href="<?php echo esc_attr( $item_link . '?utm_source=plugin&utm_medium=addon_page&utm_campaign=promote_addon' ); ?>" ><?php esc_html_e('View Details', 'restropress')?></a>
 								<small class="rpress-addon-item-pricing">
-									<?php echo esc_html__('From ', 'restropress') . rpress_currency_filter( rpress_format_amount( $item->price_range ) ); ?>
+									<?php echo esc_html__( 'From ', 'restropress' ) . wp_kses_post( rpress_currency_filter( rpress_format_amount( $item->price_range ) ) ); ?>
 								</small>
 								</div>
 							</div>
@@ -211,6 +213,7 @@ function rpress_add_ons_get_feed() {
 			</span>
 		</div>
 	<?php }
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output assembled with escaped values and trusted admin markup.
 	echo ob_get_clean();
 }
 function rpress_fetch_items() {

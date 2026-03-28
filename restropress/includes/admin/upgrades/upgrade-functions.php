@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Upgrade Functions
  *
@@ -306,12 +307,12 @@ function rpress_v20_upgrade_sequential_payment_numbers() {
 			'custom'      => $number,
 			'total'       => $total
 		), admin_url( 'index.php' ) );
-		wp_redirect( $redirect ); exit;
+		wp_safe_redirect( $redirect ); exit;
 	} else {
 		// No more payments found, finish up
 		RPRESS()->session->set( 'upgrade_sequential', null );
 		delete_option( 'rpress_doing_upgrade' );
-		wp_redirect( admin_url() ); exit;
+		wp_safe_redirect( admin_url() ); exit;
 	}
 }
 add_action( 'rpress_upgrade_sequential_payment_numbers', 'rpress_v20_upgrade_sequential_payment_numbers' );
@@ -386,12 +387,12 @@ function rpress_v21_upgrade_customers_db() {
 			'rpress-upgrade' => 'upgrade_customers_db',
 			'step'        => $step
 		), admin_url( 'index.php' ) );
-		wp_redirect( $redirect ); exit;
+		wp_safe_redirect( $redirect ); exit;
 	} else {
 		// No more customers found, finish up
 		update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 		delete_option( 'rpress_doing_upgrade' );
-		wp_redirect( admin_url() ); exit;
+		wp_safe_redirect( admin_url() ); exit;
 	}
 }
 add_action( 'rpress_upgrade_customers_db', 'rpress_v21_upgrade_customers_db' );
@@ -421,7 +422,7 @@ function rpress_v226_upgrade_payments_price_logs_db() {
 			// We had no variable priced products, so go ahead and just complete
 			update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 			delete_option( 'rpress_doing_upgrade' );
-			wp_redirect( admin_url() ); exit;
+			wp_safe_redirect( admin_url() ); exit;
 		}
 	}
 	$payment_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_type = 'rpress_payment' ORDER BY post_date DESC LIMIT %d,%d;", $offset, $number ) );
@@ -439,13 +440,31 @@ function rpress_v226_upgrade_payments_price_logs_db() {
 				}
 				$variable_fooditems[] = array( 'id' => $fooditem['id'], 'price_id' => $fooditem['options']['price_id'] );
 			}
-			$variable_fooditem_ids = array_unique( wp_list_pluck( $variable_fooditems, 'id' ) );
-			$unique_fooditem_ids   = implode( ',', $variable_fooditem_ids );
-			if ( empty( $unique_fooditem_ids ) ) {
+			$variable_fooditem_ids = array_unique( array_map( 'absint', wp_list_pluck( $variable_fooditems, 'id' ) ) );
+			if ( empty( $variable_fooditem_ids ) ) {
 				continue; // If there were no food addons, just fees, move along
 			}
 			// Get all Log Ids where the post parent is in the set of fooditem IDs we found in the cart meta
-			$logs = $wpdb->get_results( "SELECT m.post_id AS log_id, p.post_parent AS fooditem_id FROM $wpdb->postmeta m LEFT JOIN $wpdb->posts p ON m.post_id = p.ID WHERE meta_key = '_rpress_log_payment_id' AND meta_value = $payment_id AND p.post_parent IN ($unique_fooditem_ids)", ARRAY_A );
+			$fooditem_placeholders = implode( ',', array_fill( 0, count( $variable_fooditem_ids ), '%d' ) );
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is fully prepared via call_user_func_array.
+			$logs                  = $wpdb->get_results(
+				call_user_func_array(
+					array( $wpdb, 'prepare' ),
+					array_merge(
+						array(
+							"SELECT m.post_id AS log_id, p.post_parent AS fooditem_id
+							FROM {$wpdb->postmeta} m
+							LEFT JOIN {$wpdb->posts} p ON m.post_id = p.ID
+							WHERE m.meta_key = '_rpress_log_payment_id'
+							AND m.meta_value = %d
+							AND p.post_parent IN ($fooditem_placeholders)"
+						),
+						array( absint( $payment_id ) ),
+						$variable_fooditem_ids
+					)
+				),
+				ARRAY_A
+			);
 			$mapped_logs = array();
 			// Go through each cart item
 			foreach( $variable_fooditems as $cart_item ) {
@@ -462,17 +481,9 @@ function rpress_v226_upgrade_payments_price_logs_db() {
 				}
 			}
 			if ( ! empty( $mapped_logs ) ) {
-				$update  = "UPDATE $wpdb->postmeta SET meta_value = ";
-				$case    = "CASE post_id ";
 				foreach ( $mapped_logs as $post_id => $value ) {
-					$case .= "WHEN $post_id THEN $value ";
+					update_post_meta( absint( $post_id ), '_rpress_log_price_id', absint( $value ) );
 				}
-				$case   .= "END ";
-				$log_ids = implode( ',', array_keys( $mapped_logs ) );
-				$where   = "WHERE post_id IN ($log_ids) AND meta_key = '_rpress_log_price_id'";
-				$sql     = $update . $case . $where;
-				// Execute our query to update this payment
-				$wpdb->query( $sql );
 			}
 		}
 		// More Payments found so upgrade them
@@ -482,12 +493,12 @@ function rpress_v226_upgrade_payments_price_logs_db() {
 			'rpress-upgrade' => 'upgrade_payments_price_logs_db',
 			'step'        => $step
 		), admin_url( 'index.php' ) );
-		wp_redirect( $redirect ); exit;
+		wp_safe_redirect( $redirect ); exit;
 	} else {
 		// No more payments found, finish up
 		update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 		delete_option( 'rpress_doing_upgrade' );
-		wp_redirect( admin_url() ); exit;
+		wp_safe_redirect( admin_url() ); exit;
 	}
 }
 /**
@@ -517,7 +528,7 @@ function rpress_v23_upgrade_payment_taxes() {
 			update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 			rpress_set_upgrade_complete( 'upgrade_payment_taxes' );
 			delete_option( 'rpress_doing_upgrade' );
-			wp_redirect( admin_url() ); exit;
+			wp_safe_redirect( admin_url() ); exit;
 		}
 	}
 	$total = isset( $_GET['total'] ) ? absint( $_GET['total'] ): false;
@@ -542,13 +553,13 @@ function rpress_v23_upgrade_payment_taxes() {
 			'number'      => $number,
 			'total'       => $total
 		), admin_url( 'index.php' ) );
-		wp_redirect( $redirect ); exit;
+		wp_safe_redirect( $redirect ); exit;
 	} else {
 		// No more payments found, finish up
 		update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 		rpress_set_upgrade_complete( 'upgrade_payment_taxes' );
 		delete_option( 'rpress_doing_upgrade' );
-		wp_redirect( admin_url() ); exit;
+		wp_safe_redirect( admin_url() ); exit;
 	}
 }
 add_action( 'rpress_upgrade_payment_taxes', 'rpress_v23_upgrade_payment_taxes' );
@@ -579,7 +590,7 @@ function rpress_v23_upgrade_customer_purchases() {
 			update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 			rpress_set_upgrade_complete( 'upgrade_customer_payments_association' );
 			delete_option( 'rpress_doing_upgrade' );
-			wp_redirect( admin_url() ); exit;
+			wp_safe_redirect( admin_url() ); exit;
 		}
 	}
 	$total = isset( $_GET['total'] ) ? absint( $_GET['total'] ) : false;
@@ -590,24 +601,84 @@ function rpress_v23_upgrade_customer_purchases() {
 	if( ! empty( $customers ) ) {
 		foreach( $customers as $customer ) {
 			// Get payments by email and user ID
-			$select = "SELECT ID FROM $wpdb->posts p ";
-			$join   = "LEFT JOIN $wpdb->postmeta m ON p.ID = m.post_id ";
-			$where  = "WHERE p.post_type = 'rpress_payment' ";
-			if ( ! empty( $customer->user_id ) && intval( $customer->user_id ) > 0 ) {
-				$where .= "AND ( ( m.meta_key = '_rpress_payment_user_email' AND m.meta_value = '$customer->email' ) OR ( m.meta_key = '_rpress_payment_customer_id' AND m.meta_value = '$customer->id' ) OR ( m.meta_key = '_rpress_payment_user_id' AND m.meta_value = '$customer->user_id' ) )";
-			} else {
-				$where .= "AND ( ( m.meta_key = '_rpress_payment_user_email' AND m.meta_value = '$customer->email' ) OR ( m.meta_key = '_rpress_payment_customer_id' AND m.meta_value = '$customer->id' ) ) ";
+			$customer_email      = sanitize_email( $customer->email );
+			$customer_id         = absint( $customer->id );
+			$customer_user_id    = absint( $customer->user_id );
+			$sql                 = "
+				SELECT DISTINCT p.ID
+				FROM {$wpdb->posts} p
+				LEFT JOIN {$wpdb->postmeta} m ON p.ID = m.post_id
+				WHERE p.post_type = %s
+				AND (
+					( m.meta_key = %s AND m.meta_value = %s )
+					OR ( m.meta_key = %s AND m.meta_value = %s )";
+			$sql_params          = array(
+				'rpress_payment',
+				'_rpress_payment_user_email',
+				$customer_email,
+				'_rpress_payment_customer_id',
+				(string) $customer_id,
+			);
+			if ( $customer_user_id > 0 ) {
+				$sql        .= ' OR ( m.meta_key = %s AND m.meta_value = %s )';
+				$sql_params = array_merge(
+					$sql_params,
+					array(
+						'_rpress_payment_user_id',
+						(string) $customer_user_id,
+					)
+				);
 			}
-			$sql            = $select . $join . $where;
-			$found_payments = $wpdb->get_col( $sql );
-			$unique_payment_ids  = array_unique( array_filter( $found_payments ) );
+			$sql            .= '
+				)';
+			$found_payments  = $wpdb->get_col(
+				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is fully prepared via call_user_func_array.
+				call_user_func_array(
+					array( $wpdb, 'prepare' ),
+					array_merge( array( $sql ), $sql_params )
+				)
+			);
+			$unique_payment_ids = array_unique( array_filter( array_map( 'absint', (array) $found_payments ) ) );
 			if ( ! empty( $unique_payment_ids ) ) {
 				$unique_ids_string = implode( ',', $unique_payment_ids );
 				$customer_data = array( 'payment_ids' => $unique_ids_string );
-				$purchase_value_sql = "SELECT SUM( m.meta_value ) FROM $wpdb->postmeta m LEFT JOIN $wpdb->posts p ON m.post_id = p.ID WHERE m.post_id IN ( $unique_ids_string ) AND p.post_status IN ( 'publish', 'revoked' ) AND m.meta_key = '_rpress_payment_total'";
-				$purchase_value     = $wpdb->get_col( $purchase_value_sql );
-				$purchase_count_sql = "SELECT COUNT( m.post_id ) FROM $wpdb->postmeta m LEFT JOIN $wpdb->posts p ON m.post_id = p.ID WHERE m.post_id IN ( $unique_ids_string ) AND p.post_status IN ( 'publish', 'revoked' ) AND m.meta_key = '_rpress_payment_total'";
-				$purchase_count     = $wpdb->get_col( $purchase_count_sql );
+				$id_placeholders    = implode( ',', array_fill( 0, count( $unique_payment_ids ), '%d' ) );
+				$purchase_value     = $wpdb->get_col(
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is fully prepared via call_user_func_array.
+					call_user_func_array(
+						array( $wpdb, 'prepare' ),
+						array_merge(
+							array(
+								"SELECT SUM( m.meta_value )
+								FROM {$wpdb->postmeta} m
+								LEFT JOIN {$wpdb->posts} p ON m.post_id = p.ID
+								WHERE m.post_id IN ($id_placeholders)
+								AND p.post_status IN ( 'publish', 'revoked' )
+								AND m.meta_key = %s"
+							),
+							$unique_payment_ids,
+							array( '_rpress_payment_total' )
+						)
+					)
+				);
+				$purchase_count     = $wpdb->get_col(
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is fully prepared via call_user_func_array.
+					call_user_func_array(
+						array( $wpdb, 'prepare' ),
+						array_merge(
+							array(
+								"SELECT COUNT( m.post_id )
+								FROM {$wpdb->postmeta} m
+								LEFT JOIN {$wpdb->posts} p ON m.post_id = p.ID
+								WHERE m.post_id IN ($id_placeholders)
+								AND p.post_status IN ( 'publish', 'revoked' )
+								AND m.meta_key = %s"
+							),
+							$unique_payment_ids,
+							array( '_rpress_payment_total' )
+						)
+					)
+				);
 				if ( ! empty( $purchase_value ) && ! empty( $purchase_count ) ) {
 					$purchase_value = $purchase_value[0];
 					$purchase_count = $purchase_count[0];
@@ -633,13 +704,13 @@ function rpress_v23_upgrade_customer_purchases() {
 			'number'      => $number,
 			'total'       => $total
 		), admin_url( 'index.php' ) );
-		wp_redirect( $redirect ); exit;
+		wp_safe_redirect( $redirect ); exit;
 	} else {
 		// No more customers found, finish up
 		update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 		rpress_set_upgrade_complete( 'upgrade_customer_payments_association' );
 		delete_option( 'rpress_doing_upgrade' );
-		wp_redirect( admin_url() ); exit;
+		wp_safe_redirect( admin_url() ); exit;
 	}
 }
 add_action( 'rpress_upgrade_customer_payments_association', 'rpress_v23_upgrade_customer_purchases' );
@@ -670,7 +741,7 @@ function rpress_upgrade_user_api_keys() {
 			update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 			rpress_set_upgrade_complete( 'upgrade_user_api_keys' );
 			delete_option( 'rpress_doing_upgrade' );
-			wp_redirect( admin_url() ); exit;
+			wp_safe_redirect( admin_url() ); exit;
 		}
 	}
 	$total = isset( $_GET['total'] ) ? absint( $_GET['total'] ) : false;
@@ -698,13 +769,13 @@ function rpress_upgrade_user_api_keys() {
 			'number'      => $number,
 			'total'       => $total
 		), admin_url( 'index.php' ) );
-		wp_redirect( $redirect ); exit;
+		wp_safe_redirect( $redirect ); exit;
 	} else {
 		// No more customers found, finish up
 		update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 		rpress_set_upgrade_complete( 'upgrade_user_api_keys' );
 		delete_option( 'rpress_doing_upgrade' );
-		wp_redirect( admin_url() ); exit;
+		wp_safe_redirect( admin_url() ); exit;
 	}
 }
 add_action( 'rpress_upgrade_user_api_keys', 'rpress_upgrade_user_api_keys' );
@@ -751,13 +822,13 @@ function rpress_remove_refunded_sale_logs() {
 			'step'        => $step,
 			'total'       => $total
 		), admin_url( 'index.php' ) );
-		wp_redirect( $redirect ); exit;
+		wp_safe_redirect( $redirect ); exit;
 	} else {
 		// No more refunded payments found, finish up
 		update_option( 'rpress_version', preg_replace( '/[^0-9.].*/', '', RP_VERSION ) );
 		rpress_set_upgrade_complete( 'remove_refunded_sale_logs' );
 		delete_option( 'rpress_doing_upgrade' );
-		wp_redirect( admin_url() ); exit;
+		wp_safe_redirect( admin_url() ); exit;
 	}
 }
 add_action( 'rpress_remove_refunded_sale_logs', 'rpress_remove_refunded_sale_logs' );

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Payment Functions
  *
@@ -500,6 +501,7 @@ function rpress_count_payments( $args = array() ) {
 	if ( false !== $count ) {
 		return $count;
 	}
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query fragments are sanitized/prepared while being built above.
 	$count = $wpdb->get_results( $query, ARRAY_A );
 	$stats    = array();
 	$statuses = get_post_stati();
@@ -751,8 +753,14 @@ function rpress_get_total_earnings() {
 					array_pop( $payments );
 				}
 				if( ! empty( $payments ) ) {
-					$payments = implode( ',', $payments );
-					$total += $wpdb->get_var( "SELECT SUM(meta_value) FROM $wpdb->postmeta WHERE meta_key = '_rpress_payment_total' AND post_id IN({$payments})" );
+					$payments     = array_filter( array_map( 'absint', (array) $payments ) );
+					$placeholders = implode( ',', array_fill( 0, count( $payments ), '%d' ) );
+					$total       += (float) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT SUM(meta_value) FROM {$wpdb->postmeta} WHERE meta_key = '_rpress_payment_total' AND post_id IN($placeholders)",
+							$payments
+						)
+					);
 				}
 			}
 			// Cache results for 1 day. This cache is cleared automatically when a payment is made

@@ -100,10 +100,10 @@ class IpnListener {
         $this->response_status = strval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
         
         if ($this->response === false || $this->response_status == '0') {
-            $errno = curl_errno($ch);
-            $errstr = curl_error($ch);
-            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionMessage
-            throw new Exception("cURL error: [$errno] $errstr");
+            $errno  = absint( curl_errno( $ch ) );
+            $errstr = sanitize_text_field( curl_error( $ch ) );
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message uses sanitized values for logging/debugging only.
+            throw new Exception( sprintf( 'cURL error: [%d] %s', $errno, $errstr ) );
         }
     }
     
@@ -132,8 +132,14 @@ class IpnListener {
         
         if (!$fp) { 
             // fsockopen error
-            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionMessage
-            throw new Exception("fsockopen error: [$errno] $errstr");
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message uses sanitized values for logging/debugging only.
+            throw new Exception(
+                sprintf(
+                    'fsockopen error: [%d] %s',
+                    absint( $errno ),
+                    sanitize_text_field( $errstr )
+                )
+            );
         } 
         $header .= "POST /cgi-bin/webscr HTTP/1.0\r\n";
         $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
@@ -267,8 +273,13 @@ class IpnListener {
         else $this->fsockPost($encoded_data);
         
         if (strpos($this->response_status, '200') === false) {
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            throw new Exception("Invalid response status: ".$this->response_status);
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message uses sanitized values for logging/debugging only.
+            throw new Exception(
+                sprintf(
+                    'Invalid response status: %s',
+                    sanitize_text_field( (string) $this->response_status )
+                )
+            );
         }
         
         if (strpos($this->response, "VERIFIED") !== false) {

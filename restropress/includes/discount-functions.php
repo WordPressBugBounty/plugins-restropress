@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Discount Functions
  *
@@ -850,7 +851,7 @@ function rpress_remove_cart_discount() {
 	do_action( 'rpress_pre_remove_cart_discount', absint( $_GET['discount_id'] ) );
 	rpress_unset_cart_discount( urldecode( sanitize_text_field( $_GET['discount_code'] ) ) );
 	do_action( 'rpress_post_remove_cart_discount', absint( $_GET['discount_id'] ) );
-	wp_redirect( rpress_get_checkout_uri() ); rpress_die();
+	wp_safe_redirect( rpress_get_checkout_uri() ); rpress_die();
 }
 add_action( 'rpress_remove_cart_discount', 'rpress_remove_cart_discount' );
 /**
@@ -995,21 +996,36 @@ function rpress_discount_status_cleanup() {
 	}
 	$discount_ids_to_update = array_unique( $discount_ids_to_update );
 	if ( ! empty ( $discount_ids_to_update ) ) {
-		$discount_ids_string = "'" . implode( "','", $discount_ids_to_update ) . "'";
-		$sql                 = "UPDATE $wpdb->posts SET post_status = 'inactive' WHERE ID IN ($discount_ids_string)";
-		$wpdb->query( $sql );
+		$discount_ids_to_update = array_filter( array_map( 'absint', (array) $discount_ids_to_update ) );
+		$discount_placeholders  = implode( ',', array_fill( 0, count( $discount_ids_to_update ), '%d' ) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->posts} SET post_status = 'inactive' WHERE ID IN ($discount_placeholders)",
+				$discount_ids_to_update
+			)
+		);
 	}
 	$needs_inactive_meta = array_unique( $needs_inactive_meta );
 	if ( ! empty( $needs_inactive_meta ) ) {
-		$inactive_ids = "'" . implode( "','", $needs_inactive_meta ) . "'";
-		$sql          = "UPDATE $wpdb->postmeta SET meta_value = 'inactive' WHERE meta_key = '_rpress_discount_status' AND post_id IN ($inactive_ids)";
-		$wpdb->query( $sql );
+		$needs_inactive_meta   = array_filter( array_map( 'absint', (array) $needs_inactive_meta ) );
+		$inactive_placeholders = implode( ',', array_fill( 0, count( $needs_inactive_meta ), '%d' ) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->postmeta} SET meta_value = 'inactive' WHERE meta_key = '_rpress_discount_status' AND post_id IN ($inactive_placeholders)",
+				$needs_inactive_meta
+			)
+		);
 	}
 	$needs_expired_meta = array_unique( $needs_expired_meta );
 	if ( ! empty( $needs_expired_meta ) ) {
-		$expired_ids = "'" . implode( "','", $needs_expired_meta ) . "'";
-		$sql         = "UPDATE $wpdb->postmeta SET meta_value = 'inactive' WHERE meta_key = '_rpress_discount_status' AND post_id IN ($expired_ids)";
-		$wpdb->query( $sql );
+		$needs_expired_meta    = array_filter( array_map( 'absint', (array) $needs_expired_meta ) );
+		$expired_placeholders  = implode( ',', array_fill( 0, count( $needs_expired_meta ), '%d' ) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->postmeta} SET meta_value = 'inactive' WHERE meta_key = '_rpress_discount_status' AND post_id IN ($expired_placeholders)",
+				$needs_expired_meta
+			)
+		);
 	}
 }
 /**

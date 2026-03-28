@@ -1740,7 +1740,7 @@ function rpress_get_pages($force = false)
  */
 function rpress_header_callback($args)
 {
-	echo apply_filters('rpress_after_setting_output', '', $args);
+	echo wp_kses_post( apply_filters( 'rpress_after_setting_output', '', $args ) );
 }
 /**
  * Checkbox Callback

@@ -279,6 +279,31 @@ jQuery(function ($) {
     setTimeout(rp_fix_footer_click_intercept, 60);
   });
 
+  function rp_update_mobile_cart_summary(total, quantity) {
+    var parsedQty = parseInt(quantity, 10);
+    if (isNaN(parsedQty) || parsedQty < 0) {
+      parsedQty = 0;
+    }
+
+    var formattedTotal = (typeof total === 'string' && total.length)
+      ? total
+      : (rp_scripts.currency_sign + '0.00');
+
+    $('.rp-mb-price').text(formattedTotal);
+    $('.rp-mb-quantity').text(parsedQty);
+    $('span.rpress-cart-quantity').text(parsedQty);
+
+    var hasItems = parsedQty > 0;
+    if (hasItems) {
+      $('.rpress-mobile-cart-icons').css('display', 'flex');
+      $('.rpress.item-order').show();
+    } else {
+      $('.rpress-mobile-cart-icons').hide();
+    }
+
+    $('.container-actionmenu').toggleClass('cart-has-items', hasItems);
+  }
+
   // Show order details on popup
   $(document)
     .on('click', '.rpress-view-order-btn', function (e) {
@@ -1326,15 +1351,7 @@ jQuery(function ($) {
                 $(this)
                   .hide();
               }
-              $('.rpress-cart-quantity')
-                .show();
-              $('.rp-mb-price')
-                .text(response.total);
-              $('.rp-mb-quantity, .rpress-cart-quantity')
-                .text(response.cart_quantity);
-              if( response.cart_quantity > 0 ){
-                $(".rpress.item-order").show();
-              }
+              rp_update_mobile_cart_summary(response.total, response.cart_quantity);
               $('.cart_item.rpress-cart-meta.rpress_total')
                 .find('.cart-total')
                 .text(response.total);
@@ -1377,18 +1394,9 @@ jQuery(function ($) {
                 var cartLastChild = $('ul.rpress-cart>li.rpress-cart-item:last');
                 $(subTotal).insertAfter(cartLastChild);
               }
-              var newCartKey = $('ul.rpress-cart li.rpress-cart-item').last().attr('data-cart-key');
-              if (newCartKey) {
-                let carttotal = parseInt(newCartKey) + 1;
-                $('.cart_item.rpress-cart-meta.rpress_total')
-                  .find('.rpress-cart-quantity')
-                  .text(carttotal);
-              } else {
-                let carttotal = 1;
-                $('.cart_item.rpress-cart-meta.rpress_total')
-                  .find('.rpress-cart-quantity')
-                  .text(carttotal);
-              }
+              $('.cart_item.rpress-cart-meta.rpress_total')
+                .find('.rpress-cart-quantity')
+                .text(response.cart_quantity);
               if (response.taxes) {
                 var taxHtml = '<li class="cart_item rpress-cart-meta rpress_cart_tax">' + rp_scripts.estimated_tax + '<span class="cart-tax">' + response.taxes + '</span></li>';
                 $(taxHtml)
@@ -1521,6 +1529,7 @@ jQuery(function ($) {
               $('ul.rpress-cart')
                 .find('.cart-tax')
                 .html(response.tax);
+              rp_update_mobile_cart_summary(response.total, response.cart_quantity);
               $(document.body)
                 .trigger('rpress_items_updated', [response]);
               MicroModal.close('rpressModal');
@@ -1971,12 +1980,7 @@ jQuery(function ($) {
                   .show();
               }
             }
-            $('span.rpress-cart-quantity')
-              .html(`${response.cart_quantity}`);
-            $('.rp-mb-price')
-              .text(response.total);
-            $('.rp-mb-quantity')
-              .text(response.cart_quantity);
+            rp_update_mobile_cart_summary(response.total, response.cart_quantity);
             $(document.body)
               .trigger('rpress_quantity_updated', [response.cart_quantity]);
             if (rpress_scripts.taxes_enabled) {
@@ -2065,10 +2069,7 @@ jQuery(function ($) {
           },
           success: function (response) {
             if (response.status == 'success') {
-              $('span.rpress-cart-quantity')
-                .html(`${0}<span> Items</span>`);
-              $('.rp-mb-price')
-                .text(`${rp_scripts.currency_sign}0.00`);
+              rp_update_mobile_cart_summary(`${rp_scripts.currency_sign}0.00`, 0);
               $(document.body)
                 .trigger('rpress_quantity_updated', [0]);
               $(".rpress-sidebar-main-wrap")
@@ -2100,8 +2101,6 @@ jQuery(function ($) {
                 .css('display', 'none');
               $('.delivery-items-options')
                 .css('display', 'none');
-              $('.rpress-mobile-cart-icons')
-                .hide();
               self.hide();
               tata.success(window.rp_scripts.success, window.rp_scripts.success_empty_cart, {
                 position: "tr"

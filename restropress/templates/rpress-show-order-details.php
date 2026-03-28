@@ -1,5 +1,9 @@
-<?php 
-  $order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : ''; 
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : ''; 
   $payment = get_post( $order_id );
   if( empty( $payment ) ) return;
   $meta           = rpress_get_payment_meta( $payment->ID );

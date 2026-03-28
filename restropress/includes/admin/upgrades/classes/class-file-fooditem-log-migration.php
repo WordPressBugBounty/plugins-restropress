@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Migrate File Download Logs
  *
@@ -153,9 +154,28 @@ class RPRESS_File_Download_Log_Migration extends RPRESS_Batch_Export {
 		// Get all the file fooditem logs
 		if ( $this->step == 1 ) {
 			$this->delete_data( 'rpress_file_fooditem_log_ids' );
-			$term_id     = $wpdb->get_var( "SELECT term_id FROM {$wpdb->terms} WHERE name = 'file_fooditem'" );
-			$term_tax_id = $wpdb->get_var( "SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE term_id = {$term_id} AND taxonomy = 'rpress_log_type'" );
-			$log_ids     = $wpdb->get_results( "SELECT object_id FROM {$wpdb->term_relationships} WHERE term_taxonomy_id = {$term_tax_id}" );
+			$term_id     = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT term_id FROM {$wpdb->terms} WHERE name = %s",
+					'file_fooditem'
+				)
+			);
+			$term_tax_id = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE term_id = %d AND taxonomy = %s",
+					$term_id,
+					'rpress_log_type'
+				)
+			);
+			$log_ids     = array();
+			if ( $term_tax_id > 0 ) {
+				$log_ids = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT object_id FROM {$wpdb->term_relationships} WHERE term_taxonomy_id = %d",
+						$term_tax_id
+					)
+				);
+			}
 			$this->store_data( 'rpress_file_fooditem_log_ids', $log_ids );
 		}
 	}

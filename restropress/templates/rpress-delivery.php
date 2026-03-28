@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Delivery tab – time selection
  * Context-driven (no cookies, no recomputation)

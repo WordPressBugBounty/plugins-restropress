@@ -79,7 +79,7 @@ function rpress_process_login_form( $data ) {
 		$errors = rpress_get_errors();
 		if ( ! $errors ) {
 			$redirect = apply_filters( 'rpress_login_redirect', $data['rpress_redirect'], $user_ID );
-			wp_redirect( $redirect );
+			wp_safe_redirect( $redirect );
 			rpress_die();
 		}
 	}
@@ -154,7 +154,7 @@ function rpress_process_register_form( $data ) {
 			'user_registered' => gmdate( 'Y-m-d H:i:s' ),
 			'role'            => get_option( 'default_role' )
 		) );
-		wp_redirect( esc_url( $redirect ) );
+		wp_safe_redirect( esc_url( $redirect ) );
 		rpress_die();
 	}
 }

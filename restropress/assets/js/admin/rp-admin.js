@@ -597,7 +597,8 @@ jQuery(document)
             var data = {
               action: 'rpress_get_states',
               country: $this.val(),
-              field_name: 'rpress-payment-address[0][state]'
+              field_name: 'rpress-payment-address[0][state]',
+              security: rpress_vars.get_states_nonce
             };
             $.post(ajaxurl, data, function (response) {
               var state_wrapper = $('#rpress-order-address-state-wrap select, #rpress-order-address-state-wrap input');
@@ -1313,7 +1314,8 @@ jQuery(document)
               action: 'rpress_get_states',
               country: $(this)
                 .val(),
-              field_name: 'rpress_settings[base_state]'
+              field_name: 'rpress_settings[base_state]',
+              security: rpress_vars.get_states_nonce
             };
             $.post(ajaxurl, data, function (response) {
               if ('nostates' == response) {
@@ -1338,7 +1340,8 @@ jQuery(document)
               country: $(this)
                 .val(),
               field_name: $this.attr('name')
-                .replace('country', 'state')
+                .replace('country', 'state'),
+              security: rpress_vars.get_states_nonce
             };
             $.post(ajaxurl, data, function (response) {
               if ('nostates' == response) {
@@ -2123,7 +2126,8 @@ jQuery(document)
             var data = {
               action: 'rpress_get_states',
               country: $this.val(),
-              field_name: 'customerinfo[state]'
+              field_name: 'customerinfo[state]',
+              security: rpress_vars.get_states_nonce
             };
             $.post(ajaxurl, data, function (response) {
               if ('nostates' == response) {

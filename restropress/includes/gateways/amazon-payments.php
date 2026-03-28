@@ -506,7 +506,7 @@ final class RPRESS_Amazon_Payments {
 			}
 			RPRESS()->session->set( 'customer', $customer );
 		}
-		wp_redirect( rpress_get_checkout_uri( array( 'payment-mode' => 'amazon', 'state' => 'authorized', 'amazon_reference_id' => $reference ) ) ); exit;
+		wp_safe_redirect( rpress_get_checkout_uri( array( 'payment-mode' => 'amazon', 'state' => 'authorized', 'amazon_reference_id' => $reference ) ) ); exit;
 	}
 	/**
 	 * Display the log in button

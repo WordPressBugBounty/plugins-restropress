@@ -10,6 +10,44 @@
  */
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
+
+/**
+ * Get checkout nonce from request.
+ *
+ * @since 3.2.8.5
+ * @return string
+ */
+function rpress_get_checkout_request_nonce() {
+	if ( isset( $_POST['security'] ) ) {
+		return sanitize_text_field( wp_unslash( $_POST['security'] ) );
+	}
+
+	if ( isset( $_POST['rpress_checkout_nonce'] ) ) {
+		return sanitize_text_field( wp_unslash( $_POST['rpress_checkout_nonce'] ) );
+	}
+
+	if ( isset( $_REQUEST['security'] ) ) {
+		return sanitize_text_field( wp_unslash( $_REQUEST['security'] ) );
+	}
+
+	return '';
+}
+
+/**
+ * Validate checkout nonce.
+ *
+ * @since 3.2.8.5
+ * @return bool
+ */
+function rpress_is_checkout_request_nonce_valid() {
+	$nonce = rpress_get_checkout_request_nonce();
+
+	if ( empty( $nonce ) ) {
+		return false;
+	}
+
+	return (bool) wp_verify_nonce( $nonce, 'rpress_checkout_nonce' );
+}
 /**
  * Process Purchase Form
  *
@@ -21,6 +59,22 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 function rpress_process_purchase_form() {
 	do_action( 'rpress_pre_process_purchase' );
+
+	$is_ajax = isset( $_POST['rpress_ajax'] ) && ! empty( $_POST['rpress_ajax'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_ajax'] ) ) : null;
+
+	if ( ! rpress_is_checkout_request_nonce_valid() ) {
+		rpress_set_error( 'invalid_checkout_request', __( 'Security check failed. Please refresh and try again.', 'restropress' ) );
+
+		if ( $is_ajax ) {
+			do_action( 'rpress_ajax_checkout_errors' );
+			rpress_die();
+		}
+
+		$redirect_url = wp_get_referer() ? wp_get_referer() : rpress_get_checkout_uri();
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
+
 	$data = rpress_sanitize_array( $_POST );
 	// Make sure the cart isn't empty
 	if ( ! rpress_get_cart_contents() && ! rpress_cart_has_fees() ) {
@@ -73,7 +127,6 @@ function rpress_process_purchase_form() {
 		// Allow themes and plugins to hook to errors
 		do_action( 'rpress_checkout_error_checks', $valid_data, $data );
 	}
-	$is_ajax = isset( $_POST['rpress_ajax'] ) && ! empty( $_POST['rpress_ajax'] ) ? sanitize_text_field( $_POST['rpress_ajax'] ) : null;
 	// Process the login form
 	if ( isset( $_POST['rpress_login_submit'] ) ) {
 		rpress_process_purchase_login();
@@ -221,7 +274,21 @@ add_action( 'rpress_checkout_error_checks', 'rpress_checkout_check_existing_emai
  * @return      void
  */
 function rpress_process_purchase_login() {
-	$is_ajax = isset( $_POST['rpress_ajax'] ) ? sanitize_text_field( $_POST['rpress_ajax'] ) : null;
+	$is_ajax = isset( $_POST['rpress_ajax'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_ajax'] ) ) : null;
+
+	if ( ! rpress_is_checkout_request_nonce_valid() ) {
+		rpress_set_error( 'invalid_checkout_request', __( 'Security check failed. Please refresh and try again.', 'restropress' ) );
+
+		if ( $is_ajax ) {
+			do_action( 'rpress_ajax_checkout_errors' );
+			rpress_die();
+		}
+
+		$redirect_url = wp_get_referer() ? wp_get_referer() : rpress_get_checkout_uri();
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
+
 	$user_data = rpress_purchase_form_validate_user_login();
 	if ( rpress_get_errors() || $user_data['user_id'] < 1 ) {
 		if ( $is_ajax ) {
@@ -1149,7 +1216,7 @@ function rpress_process_straight_to_gateway( $data ) {
 			rpress_add_to_cart( $fooditem['id'], $options );
 		}
 		rpress_set_error( 'rpress-straight-to-gateway-error', __( 'There was an error completing your order. Please try again.', 'restropress' ) );
-		wp_redirect( rpress_get_checkout_uri() );
+		wp_safe_redirect( rpress_get_checkout_uri() );
 		exit;
 	}
 	rpress_set_purchase_session( $purchase_data );

@@ -1,3 +1,8 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	 exit;
+}
+?>
   
   <div class="rpress_fooditem_buy_button">
     <?php

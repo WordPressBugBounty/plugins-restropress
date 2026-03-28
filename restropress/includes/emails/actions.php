@@ -60,7 +60,7 @@ function rpress_resend_purchase_receipt( $data ) {
 	// Grab all fooditems of the purchase and update their file fooditem limits, if needed
 	// This allows admins to resend purchase receipts to grant additional file fooditems
 	$fooditems = rpress_get_payment_meta_cart_details( $purchase_id, true );
-	wp_redirect( add_query_arg( array( 'rpress-message' => 'email_sent', 'rpress-action' => false, 'purchase_id' => false ) ) );
+	wp_safe_redirect( add_query_arg( array( 'rpress-message' => 'email_sent', 'rpress-action' => false, 'purchase_id' => false ) ) );
 	exit;
 }
 add_action( 'rpress_email_links', 'rpress_resend_purchase_receipt' );
@@ -78,7 +78,7 @@ function rpress_send_test_email( $data ) {
 	// Send a test email
 	rpress_email_test_purchase_receipt();
 	// Remove the test email query arg
-	wp_redirect( remove_query_arg( 'rpress_action' ) ); exit;
+	wp_safe_redirect( remove_query_arg( 'rpress_action' ) ); exit;
 }
 add_action( 'rpress_send_test_email', 'rpress_send_test_email' );
 //Send notification to customer

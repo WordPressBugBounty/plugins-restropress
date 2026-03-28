@@ -1,3 +1,8 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	 exit;
+}
+?>
 <div class="rpress-thumbnail-holder rpress-default-bg rpress-icon-bg">
   <?php
   $fooditems_overlay = rpress_get_option('enable_food_image_popup', false);

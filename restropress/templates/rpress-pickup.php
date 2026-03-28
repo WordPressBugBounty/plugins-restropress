@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Pickup tab – time selection
  * Context-driven (no cookies, no recomputation)

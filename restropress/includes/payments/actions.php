@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Payment Actions
  *
@@ -341,7 +342,16 @@ function rpress_cleanup_stats_transients() {
 		return;
 	}
 	$now        = current_time( 'timestamp' );
-	$transients = $wpdb->get_results( "SELECT option_name, option_value FROM $wpdb->options WHERE option_name LIKE '%\_transient_timeout\_rpress\_stats\_%' AND option_value+0 < $now LIMIT 0, 200;" );
+	$transients = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT option_name, option_value
+			FROM {$wpdb->options}
+			WHERE option_name LIKE '%\\_transient_timeout\\_rpress\\_stats\\_%'
+			AND option_value+0 < %d
+			LIMIT 0, 200;",
+			$now
+		)
+	);
 	$to_delete  = array();
 	if( ! empty( $transients ) ) {
 		foreach( $transients as $transient ) {
@@ -350,8 +360,14 @@ function rpress_cleanup_stats_transients() {
 		}
 	}
 	if ( ! empty( $to_delete ) ) {
-		$option_names = implode( "','", $to_delete );
-		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name IN ('$option_names')"  );
+		$to_delete     = array_map( 'sanitize_text_field', (array) $to_delete );
+		$placeholders  = implode( ',', array_fill( 0, count( $to_delete ), '%s' ) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name IN ($placeholders)",
+				$to_delete
+			)
+		);
 	}
 }
 add_action( 'rpress_daily_scheduled_events', 'rpress_cleanup_stats_transients' );
@@ -382,7 +398,7 @@ function rpress_recover_payment() {
 	) {
 		$redirect = get_permalink( rpress_get_option( 'order_history_page' ) );
 		rpress_set_error( 'rpress-payment-recovery-user-mismatch', __( 'Error resuming payment.', 'restropress' ) );
-		wp_redirect( $redirect );
+		wp_safe_redirect( $redirect );
 	}
 	$payment->add_note( __( 'Payment recovery triggered URL', 'restropress' ) );
 	// Empty out the cart.
@@ -413,7 +429,7 @@ function rpress_recover_payment() {
 	RPRESS()->session->set( 'rpress_resume_payment', $payment->ID );
 	$redirect_args = array( 'payment-mode' => $payment->gateway );
 	$redirect      = add_query_arg( $redirect_args, rpress_get_checkout_uri() );
-	wp_redirect( $redirect );
+	wp_safe_redirect( $redirect );
 	exit;
 }
 add_action( 'rpress_recover_payment', 'rpress_recover_payment' );
@@ -433,7 +449,7 @@ function rpress_recovery_user_mismatch() {
 		if ( is_user_logged_in() && $payment->user_id != get_current_user_id() ) {
 			rpress_empty_cart();
 			rpress_set_error( 'rpress-payment-recovery-user-mismatch', __( 'Error resuming payment.', 'restropress' ) );
-			wp_redirect( get_permalink( rpress_get_option( 'purchase_page' ) ) );
+			wp_safe_redirect( get_permalink( rpress_get_option( 'purchase_page' ) ) );
 			exit;
 		}
 	}

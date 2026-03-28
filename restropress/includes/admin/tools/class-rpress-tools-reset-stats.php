@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * Recount store earnings and stats
  *
@@ -76,31 +77,72 @@ class RPRESS_Tools_Reset_Stats extends RPRESS_Batch_Export {
 				if ( empty( $ids ) ) {
 					continue;
 				}
-				$ids = implode( ',', $ids );
+				$ids = array_filter( array_map( 'absint', (array) $ids ) );
+				if ( empty( $ids ) ) {
+					continue;
+				}
+				$id_placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 				switch( $type ) {
 					case 'customers':
 						$table_name = $wpdb->prefix . 'rpress_customers';
-						$sql[] = "DELETE FROM $table_name WHERE id IN ($ids)";
+						$sql[] = call_user_func_array(
+							array( $wpdb, 'prepare' ),
+							array_merge(
+								array( "DELETE FROM {$table_name} WHERE id IN ($id_placeholders)" ),
+								$ids
+							)
+						);
 						break;
 					case 'fooditems':
-						$sql[] = "UPDATE $wpdb->postmeta SET meta_value = 0 WHERE meta_key = '_rpress_fooditem_sales' AND post_id IN ($ids)";
-						$sql[] = "UPDATE $wpdb->postmeta SET meta_value = 0.00 WHERE meta_key = '_rpress_fooditem_earnings' AND post_id IN ($ids)";
+						$sql[] = call_user_func_array(
+							array( $wpdb, 'prepare' ),
+							array_merge(
+								array( "UPDATE {$wpdb->postmeta} SET meta_value = 0 WHERE meta_key = '_rpress_fooditem_sales' AND post_id IN ($id_placeholders)" ),
+								$ids
+							)
+						);
+						$sql[] = call_user_func_array(
+							array( $wpdb, 'prepare' ),
+							array_merge(
+								array( "UPDATE {$wpdb->postmeta} SET meta_value = 0.00 WHERE meta_key = '_rpress_fooditem_earnings' AND post_id IN ($id_placeholders)" ),
+								$ids
+							)
+						);
 						break;
 					case 'other':
-						$sql[] = "DELETE FROM $wpdb->posts WHERE id IN ($ids)";
-						$sql[] = "DELETE FROM $wpdb->postmeta WHERE post_id IN ($ids)";
-						$sql[] = "DELETE FROM $wpdb->comments WHERE comment_post_ID IN ($ids)";
+						$sql[] = call_user_func_array(
+							array( $wpdb, 'prepare' ),
+							array_merge(
+								array( "DELETE FROM {$wpdb->posts} WHERE id IN ($id_placeholders)" ),
+								$ids
+							)
+						);
+						$sql[] = call_user_func_array(
+							array( $wpdb, 'prepare' ),
+							array_merge(
+								array( "DELETE FROM {$wpdb->postmeta} WHERE post_id IN ($id_placeholders)" ),
+								$ids
+							)
+						);
+						$sql[] = call_user_func_array(
+							array( $wpdb, 'prepare' ),
+							array_merge(
+								array( "DELETE FROM {$wpdb->comments} WHERE comment_post_ID IN ($id_placeholders)" ),
+								$ids
+							)
+						);
 						$sql[] = "DELETE FROM $wpdb->commentmeta WHERE comment_id NOT IN (SELECT comment_ID FROM $wpdb->comments)";
 						break;
 				}
 				if ( ! in_array( $type, array( 'customers', 'fooditems', 'other' ) ) ) {
 					// Allows other types of custom post types to filter on their own post_type
 					// and add items to the query list, for the IDs found in their post type.
-					$sql = apply_filters( 'rpress_reset_add_queries_' . $type, $sql, $ids );
+					$sql = apply_filters( 'rpress_reset_add_queries_' . $type, $sql, implode( ',', $ids ) );
 				}
 			}
 			if ( ! empty( $sql ) ) {
 				foreach ( $sql as $query ) {
+					// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Queries in $sql are prepared in this method or intentionally filter-provided.
 					$wpdb->query( $query );
 				}
 			}
