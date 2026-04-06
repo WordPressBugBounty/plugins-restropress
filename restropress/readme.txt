@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
 Tested up to: 6.9.4
-Stable tag: 3.2.8.4
+Stable tag: 3.2.8.4.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -121,8 +121,14 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Changelog ==
 
+= Version 3.2.8.4.1(2026-04-06) =
+
+* Fixed: PayPal checkout/connect redirects now allow PayPal hosts in WordPress safe redirects to prevent fallback redirect to wp-admin.
+
 = Version 3.2.8.4(2026-03-28) =
 * Updated: Plugin version bump to 3.2.8.4
+* Fixed: PayPal checkout/connect redirects now allow PayPal hosts in WordPress safe redirects to prevent fallback redirect to wp-admin.
+* Fixed: Checkout gateway state now keeps hidden `rpress-gateway` synced with selected payment mode during gateway switch and final submit.
 * Fixed: Hardened direct DB query paths with prepared/typed placeholders in customer, discount, session, payment, tax, and stats handlers.
 * Fixed: Reworked dynamic `IN (...)` query construction to sanitized array + placeholder flow for scanner-safe SQL execution.
 * Fixed: Removed unescaped `payment_ids` usage in customer-user disconnect flow and enforced integer-only payment IDs before update query.
@@ -945,7 +951,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.2.8.4 =
+= 3.2.8.4.1 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

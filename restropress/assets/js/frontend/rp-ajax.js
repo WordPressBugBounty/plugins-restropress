@@ -88,6 +88,8 @@ jQuery(document)
         if (payment_mode == '0') {
           return false;
         }
+        $('#rpress_purchase_form input[name="rpress-gateway"]')
+          .val(payment_mode);
         rpress_load_gateway(payment_mode);
         return false;
       });
@@ -103,6 +105,10 @@ jQuery(document)
       }
       if (!chosen_gateway) {
         chosen_gateway = rpress_scripts.default_gateway;
+      }
+      if (chosen_gateway) {
+        $('#rpress_purchase_form input[name="rpress-gateway"]')
+          .val(chosen_gateway);
       }
       if (ajax_needed) {
         // If we need to ajax in a gateway form, send the requests for the POST.
@@ -169,6 +175,12 @@ jQuery(document)
           rp_setCookie('service_date', selectedServiceDate, rp_scripts.expire_cookie_time);
           rp_setCookie('delivery_date', selectedServiceDate, rp_scripts.expire_cookie_time);
         }
+        var selectedGateway = $('#rpress-gateway option:selected, input.rpress-gateway:checked')
+          .val();
+        if (selectedGateway && selectedGateway !== '0') {
+          $('#rpress_purchase_form input[name="rpress-gateway"]')
+            .val(selectedGateway);
+        }
         var complete_purchase_val = $(this)
           .val();
         $(this)
@@ -180,6 +192,9 @@ jQuery(document)
         $(this).parents('body').append('<div class="blur-content"><p class="blur-txt">'+rpress_scripts.blurtxt+'</p><span class="blur-loader"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin: auto; background: rgb(255, 255, 255); display: block; shape-rendering: auto;" width="200px" height="200px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" r="32" stroke-width="8" stroke="#fe718d" stroke-dasharray="50.26548245743669 50.26548245743669" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" keyTimes="0;1" values="0 50 50;360 50 50"></animateTransform></circle></svg></span></div>');
         var requestData = $('#rpress_purchase_form')
           .serialize() + '&action=rpress_process_checkout&rpress_ajax=true';
+        if (selectedGateway && selectedGateway !== '0') {
+          requestData += '&rpress-gateway=' + encodeURIComponent(selectedGateway);
+        }
         requestData += '&security=' + encodeURIComponent((typeof rpress_global_vars !== 'undefined' ? rpress_global_vars.checkout_nonce : rpress_scripts.checkout_nonce));
         if (selectedServiceType) {
           requestData += '&rpress_service_type=' + encodeURIComponent(selectedServiceType);
@@ -305,6 +320,8 @@ function rpress_load_gateway(payment_mode) {
     url = url + '?';
   }
   url = url + 'payment-mode=' + payment_mode;
+  jQuery('#rpress_purchase_form input[name="rpress-gateway"]')
+    .val(payment_mode);
   rp_setCookie('payment_mode', payment_mode, rp_scripts.expire_cookie_time);
   jQuery.post(url, {
     action: 'rpress_load_gateway',

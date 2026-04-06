@@ -271,6 +271,57 @@ function rpress_get_paypal_oauth_web_base_url($mode = '')
 }
 
 /**
+ * Get list of PayPal hosts allowed for safe redirects.
+ *
+ * @since 3.2.8.8
+ * @return array
+ */
+function rpress_get_paypal_allowed_redirect_hosts()
+{
+    $hosts = array(
+        'www.paypal.com',
+        'paypal.com',
+        'www.sandbox.paypal.com',
+        'sandbox.paypal.com',
+        'ipnpb.paypal.com',
+        'ipnpb.sandbox.paypal.com',
+    );
+
+    return (array) apply_filters('rpress_paypal_allowed_redirect_hosts', $hosts);
+}
+
+/**
+ * Allow PayPal hosts in wp_safe_redirect().
+ *
+ * Prevents checkout/connect redirects from falling back to wp-admin when
+ * redirecting buyers to PayPal.
+ *
+ * @since 3.2.8.8
+ * @param array $hosts Allowed redirect hosts.
+ * @return array
+ */
+function rpress_allow_paypal_redirect_hosts($hosts)
+{
+    if (! is_array($hosts)) {
+        $hosts = array();
+    }
+
+    foreach (rpress_get_paypal_allowed_redirect_hosts() as $host) {
+        $host = strtolower(trim((string) $host));
+        if (empty($host)) {
+            continue;
+        }
+
+        if (! in_array($host, $hosts, true)) {
+            $hosts[] = $host;
+        }
+    }
+
+    return $hosts;
+}
+add_filter('allowed_redirect_hosts', 'rpress_allow_paypal_redirect_hosts', 10, 1);
+
+/**
  * Validate PayPal client credentials against the given API base URL.
  *
  * @since 3.2.6
