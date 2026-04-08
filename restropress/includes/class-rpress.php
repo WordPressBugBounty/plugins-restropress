@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.2.8.4.1';
+	public $version = '3.2.8.5';
 	/**
 	 * The single instance of the class.
 	 *
@@ -359,26 +359,28 @@ final class RestroPress
 	}
 
 	/**
-	 * Handle service cookie for delivery and pickup
+	 * Handle the service cookie for the enabled services list.
 	 */
 	public function rpress_handle_service_cookie()
 	{
+		$old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
+		if ( $old_ui_ux_enabled ) {
+			return;
+		}
+
 		$service_type = rpress_get_option('enable_service', 'delivery_and_pickup');
 		$cookie_service = isset($_COOKIE['service_type'])
 			? sanitize_text_field(wp_unslash($_COOKIE['service_type']))
 			: '';
 		// Determine valid services
-		$services = $service_type === 'delivery_and_pickup'
-			? ['delivery', 'pickup']
-			: [$service_type];
+		$services = rpress_get_enabled_services();
 		$services = apply_filters('rpress_handle_service_cookie', $services);
 		// If cookie missing or invalid
 		if (empty($cookie_service) || !in_array($cookie_service, $services, true)) {
-			if ($service_type === 'delivery_and_pickup') {
-				$cookie_service = rpress_get_option('default_service') ?: 'delivery';
-			} else {
-				$cookie_service = $service_type;
-			}
+			$default_service = rpress_get_default_enabled_service();
+			$cookie_service = in_array($default_service, $services, true)
+				? $default_service
+				: (!empty($services) ? (string) reset($services) : sanitize_key((string) $service_type));
 			// Set cookie safely before any HTML output
 			if ( ! headers_sent() ) {
 				setcookie('service_type', $cookie_service, time() + (86400 * 30), '/');

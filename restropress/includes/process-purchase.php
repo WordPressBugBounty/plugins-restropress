@@ -97,9 +97,7 @@ function rpress_process_purchase_form() {
 		if ( empty( $service_date ) ) {
 			$service_date = isset( $_COOKIE['service_date'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_date'] ) ) : '';
 		}
-		$enabled_service = rpress_get_option( 'enable_service', 'delivery_and_pickup' );
-		$allowed_services = ( 'delivery_and_pickup' === $enabled_service ) ? array( 'delivery', 'pickup' ) : array( $enabled_service );
-		$allowed_services = array_map( 'sanitize_key', $allowed_services );
+		$allowed_services = rpress_get_enabled_services();
 
 		if ( empty( $service_type ) || ! in_array( $service_type, $allowed_services, true ) ) {
 			$valid_data = false;

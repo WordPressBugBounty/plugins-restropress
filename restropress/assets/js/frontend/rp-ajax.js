@@ -195,7 +195,6 @@ jQuery(document)
         if (selectedGateway && selectedGateway !== '0') {
           requestData += '&rpress-gateway=' + encodeURIComponent(selectedGateway);
         }
-        requestData += '&security=' + encodeURIComponent((typeof rpress_global_vars !== 'undefined' ? rpress_global_vars.checkout_nonce : rpress_scripts.checkout_nonce));
         if (selectedServiceType) {
           requestData += '&rpress_service_type=' + encodeURIComponent(selectedServiceType);
         }

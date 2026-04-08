@@ -10,6 +10,7 @@
 defined('ABSPATH') || exit;
 // Get selected template from settings (default to 'list')
 $template = rpress_get_option('template', 'list');
+$is_old_ui_ux = ! empty( rpress_get_option( 'old_ui_ux' ) );
 ?>
 <div class="rpress-section rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
 	<?php
@@ -51,13 +52,15 @@ $template = rpress_get_option('template', 'list');
 			<?php rpress_get_template_part($template . '/scrollable-categories-mobile'); ?>
 		</div>
 		<div class="rpress-options-row">
-			<div class="rpress-option-col">
-				<?php rpress_get_template_part($template . '/delivery-option'); ?>
-			</div>
-			<div class="rpress-option-col rpress-edit-address-wrap">
-				<span class="left-brdr"></span>
-				<?php rpress_get_template_part($template . '/time-option'); ?>
-			</div>
+			<?php if ( ! $is_old_ui_ux ) : ?>
+				<div class="rpress-option-col">
+					<?php rpress_get_template_part($template . '/delivery-option'); ?>
+				</div>
+				<div class="rpress-option-col rpress-edit-address-wrap">
+					<span class="left-brdr"></span>
+					<?php rpress_get_template_part($template . '/time-option'); ?>
+				</div>
+			<?php endif; ?>
 			<div class="rpress-option-col rpress-search-wrap">
 				<?php do_action('before_fooditems_list'); ?>
 			</div>

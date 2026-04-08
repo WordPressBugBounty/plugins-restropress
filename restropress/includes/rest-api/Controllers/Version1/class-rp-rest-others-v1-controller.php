@@ -151,7 +151,7 @@ class RP_REST_Others_V1_Controller extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function rpress_services_callback( WP_REST_Request $request ) {
-		$statuses = rpress_get_service_types();
+		$statuses = rpress_get_enabled_service_types();
 		$response_array = array(
 			'services' => $statuses,
 		);

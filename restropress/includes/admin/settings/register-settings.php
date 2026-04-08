@@ -865,6 +865,12 @@ function rpress_get_registered_settings()
 						'desc' => esc_html__('Disable Category Menu In Food Item Page', 'restropress'),
 						'type' => 'checkbox',
 					),
+					'old_ui_ux' => array(
+						'id' => 'old_ui_ux',
+						'name' => esc_html__('Old RestroPress UI/UX', 'restropress'),
+						'desc' => esc_html__('Enable legacy service-selection modal flow on food listing pages before adding items to cart.', 'restropress'),
+						'type' => 'checkbox',
+					),
 					'button_header' => array(
 						'id' => 'button_header',
 						'name' => '<strong>' . esc_html__('Buttons', 'restropress') . '</strong>',

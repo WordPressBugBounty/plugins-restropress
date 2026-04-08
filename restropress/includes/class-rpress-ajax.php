@@ -545,18 +545,9 @@ class RP_AJAX {
         )
       );
     }
-    $enabled_service = rpress_get_option( 'enable_service', 'delivery_and_pickup' );
-    $allowed_services = ( 'delivery_and_pickup' === $enabled_service ) ? array( 'delivery', 'pickup' ) : array( $enabled_service );
-    $allowed_services = array_map( 'sanitize_key', $allowed_services );
+    $allowed_services = rpress_get_enabled_services();
     if ( empty( $service_type ) || ! in_array( $service_type, $allowed_services, true ) ) {
-      if ( 'delivery_and_pickup' === $enabled_service ) {
-        $configured_default = sanitize_key( (string) rpress_get_option( 'default_service', 'delivery' ) );
-        $service_type = in_array( $configured_default, $allowed_services, true )
-          ? $configured_default
-          : ( ! empty( $allowed_services ) ? (string) reset( $allowed_services ) : 'delivery' );
-      } else {
-        $service_type = sanitize_key( (string) $enabled_service );
-      }
+      $service_type = rpress_get_default_enabled_service();
 
       if ( empty( $service_type ) || ! in_array( $service_type, $allowed_services, true ) ) {
         wp_send_json_error(

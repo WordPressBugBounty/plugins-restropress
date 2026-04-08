@@ -168,6 +168,23 @@ li.cart_item.rpress_checkout .rp-loading:after {
 	padding: 7px;
 	line-height: 29px;
 }
+/* Checkout: if only one service type is available, make it full width. */
+#rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li:only-child,
+#rpress_checkout_order_details .rpress-delivery-options ul#rpressdeliveryTab.nav > li:only-child {
+	width: 100%;
+	float: none;
+}
+#rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li:only-child > a,
+#rpress_checkout_order_details .rpress-delivery-options ul#rpressdeliveryTab.nav > li:only-child > a {
+	display: block;
+	width: 100%;
+	float: none;
+}
+#rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li:only-child.active > a,
+#rpress_checkout_order_details .rpress-delivery-options ul#rpressdeliveryTab.nav > li:only-child.active > a {
+	background-color: #ED5575;
+	color: #fff;
+}
 
 #rpress_checkout_wrap .nav#rpressdeliveryTab > li.active > a, 
 #rpress_checkout_wrap .nav#rpressdeliveryTab > li.active > a:hover, 
@@ -2089,6 +2106,49 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates:focus,
 	border-bottom: 1px solid #e6e9ef;
 	margin-bottom: 2px;
 }
+#rpressDateTime.rpress-edit-address-popup .rpress-service-type-message .rpress-delivery-options ul#rpressdeliveryTab {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid #ebebeb;
+	background-color: #ebebeb;
+	list-style: none;
+	border-radius: 50px;
+	padding: 4px 5px 5px;
+	margin: 0;
+	min-height: 36px;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-service-type-message .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item {
+	list-style: none;
+	flex: 1 1 0;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-service-type-message .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item:before,
+#rpressDateTime.rpress-edit-address-popup .rpress-service-type-message .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item.active + li.nav-item:before {
+	content: none;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-service-type-message .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item > a.nav-link {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 30px;
+	padding: 0 14px;
+	line-height: 1.2;
+	border-radius: 999px;
+	font-weight: 500;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-service-type-message .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item.active > a.nav-link {
+	background-color: #ffffff;
+	color: #1f1f1f;
+	box-shadow: 0 0 0 1px rgba(237, 85, 117, 0.35), 0 4px 10px rgba(0, 0, 0, 0.10);
+	font-weight: 700;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-popup-service-content > .delivery-settings-wrapper {
+	display: none;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-popup-service-content > .delivery-settings-wrapper.active.show {
+	display: block;
+}
 #rpressDateTime.rpress-edit-address-popup .rpress-service-type-message p.rpress_order-address-wrap {
 	background: #fff;
 	border: 1px solid #e5e7eb;
@@ -2121,6 +2181,13 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates:focus,
 	background: linear-gradient(135deg, #f34776 0%, #ed5575 100%);
 	border: 1px solid #ed5575;
 	color: #fff;
+}
+body:not(.rp-old-ui-ux-enabled) #rpressDateTime.rpress-edit-address-popup button.rpress-editaddress-submit-btn {
+	background: var(--rpress-theme-primary, #ed5575);
+	border-color: var(--rpress-theme-primary, #ed5575);
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-service-type-message:empty {
+	display: none;
 }
 #rpressDateTime.rpress-edit-address-popup button.rpress-editaddress-submit-btn:disabled {
 	opacity: 0.55;
@@ -2188,8 +2255,178 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates:focus,
 	will-change: transform;
 }
 /* Special Conditions */
-.show-service-options .modal__container {
+body.rp-old-ui-ux-enabled .show-service-options .modal__container {
 	width: 415px;
+	--rp-old-ui-service-active-bg: var(--rpress-theme-primary, #ed5575);
+	--rp-old-ui-service-active-text: #ffffff;
+	--rp-old-ui-service-inactive-bg: #f1f1f1;
+	--rp-old-ui-service-inactive-text: var(--rpress-theme-primary, #ed5575);
+	--rp-old-ui-service-hover-bg: rgba(var(--rpress-theme-primary-rgb, 237,85,117), 0.18);
+	--rp-old-ui-service-hover-text: var(--rpress-theme-primary, #ed5575);
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .modal__footer {
+	display: none;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab {
+	display: flex;
+	align-items: stretch;
+	justify-content: space-between;
+	list-style: none;
+	border: 1px solid #e6e6e6;
+	background-color: #efefef;
+	border-radius: 6px;
+	padding: 4px;
+	margin: 0 0 12px;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item {
+	list-style: none;
+	flex: 1 1 50%;
+	margin: 0;
+	padding: 0;
+	border-radius: 6px;
+	overflow: hidden;
+	background-color: var(--rp-old-ui-service-inactive-bg);
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item:before,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item.active + li.nav-item:before {
+	content: none !important;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item > a.nav-link {
+	display: block;
+	width: 100%;
+	text-align: center;
+	padding: 10px 12px;
+	border-radius: 0;
+	line-height: 1.2;
+	color: var(--rp-old-ui-service-inactive-text);
+	font-weight: 500;
+	position: relative;
+	z-index: 2;
+	background-color: transparent;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item.active {
+	background-color: var(--rp-old-ui-service-active-bg);
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item.active > a.nav-link {
+	color: var(--rp-old-ui-service-active-text);
+	font-weight: 700;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item:not(.active):hover {
+	background-color: var(--rp-old-ui-service-hover-bg);
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item:not(.active):hover > a.nav-link {
+	color: var(--rp-old-ui-service-hover-text);
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item > a.nav-link:hover,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item > a.nav-link:focus {
+	background-color: transparent;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .delivery-time-text,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .pickup-time-text,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup .delivery-time-text,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup .pickup-time-text {
+	text-align: left !important;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options label,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup label {
+	text-align: left;
+	display: block;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options select#rpress-delivery-hours,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options select#rpress-pickup-hours,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options select.rpress-pickup,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup select#rpress-delivery-hours,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup select#rpress-pickup-hours,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup select.rpress-pickup {
+	background-image: url(../../assets/svg/time.svg), url("data:image/svg+xml,%3Csvg class='ast-arrow-svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='26px' height='16.043px' fill='%23334155' viewBox='57 35.171 26 16.043' enable-background='new 57 35.171 26 16.043' xml:space='preserve' %3E%3Cpath d='M57.5,38.193l12.5,12.5l12.5-12.5l-2.5-2.5l-10,10l-10-10L57.5,38.193z'%3E%3C/path%3E%3C/svg%3E");
+	background-position: 12px 12px, 96% 50%;
+	background-size: 16px, 12px;
+	background-repeat: no-repeat;
+	padding-left: 40px;
+	-webkit-appearance: none;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="time"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="time"] {
+	background-image: url(../../assets/svg/time.svg);
+	background-position: 12px 50%;
+	background-size: 16px;
+	background-repeat: no-repeat;
+	padding-left: 40px;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="date"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="date"] {
+	background-image: url(../../assets/svg/date.svg);
+	background-position: 12px 50%;
+	background-size: 16px;
+	background-repeat: no-repeat;
+	padding-left: 40px;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options select#rpress_get_pickup_dates,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options select#rpress_get_delivery_dates,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options select.rpress_get_pickup_dates,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options select.rpress_get_delivery_dates,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup select#rpress_get_pickup_dates,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup select#rpress_get_delivery_dates,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup select.rpress_get_pickup_dates,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup select.rpress_get_delivery_dates {
+	background-image: url(../../assets/svg/date.svg), url("data:image/svg+xml,%3Csvg class='ast-arrow-svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='26px' height='16.043px' fill='%23334155' viewBox='57 35.171 26 16.043' enable-background='new 57 35.171 26 16.043' xml:space='preserve' %3E%3Cpath d='M57.5,38.193l12.5,12.5l12.5-12.5l-2.5-2.5l-10,10l-10-10L57.5,38.193z'%3E%3C/path%3E%3C/svg%3E");
+	background-position: 12px 12px, 96% 50%;
+	background-size: 16px, 12px;
+	background-repeat: no-repeat;
+	padding-left: 40px;
+	-webkit-appearance: none;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update {
+	display: block;
+	width: 100%;
+	margin-top: 12px;
+	padding: 10px 14px;
+	border-radius: 6px;
+	text-align: center;
+	background: var(--rpress-theme-primary, #ed5575);
+	border-color: var(--rpress-theme-primary, #ed5575);
+	color: #fff;
+}
+/* Old UI/UX: keep modal controls rectangular and consistent. */
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup {
+	--rp-old-ui-modal-rect-radius: 6px;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-tabs-wrapper #rpress-tab-content {
+	width: 100%;
+	margin: 0;
+}
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab > li.nav-item > a.nav-link,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="text"],
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="date"],
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="time"],
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="email"],
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="tel"],
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="number"],
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="button"],
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="submit"],
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options input[type="reset"],
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options select,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options textarea,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options button,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options .btn,
+body.rp-old-ui-ux-enabled #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="text"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="date"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="time"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="email"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="tel"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="number"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="button"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="submit"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup input[type="reset"],
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup select,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup textarea,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup button,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup .btn,
+body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup .single-service-selected {
+	border-radius: var(--rp-old-ui-modal-rect-radius) !important;
 }
 .loading .modal__container {
 	width: 350px;

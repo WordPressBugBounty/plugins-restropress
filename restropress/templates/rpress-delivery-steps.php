@@ -19,6 +19,14 @@ $context = rpress_get_service_context();
     'service_enabled' => $enabled_service,
 ] = $context;
 
+$old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
+if ( $old_ui_ux_enabled && 'delivery_and_pickup' === $enabled_service ) {
+    $services = array( 'delivery', 'pickup' );
+}
+if ( empty( $services ) || ! in_array( $current_service, $services, true ) ) {
+    $current_service = ! empty( $services ) ? $services[0] : 'delivery';
+}
+
 $preorder_enabled      = false;
 $show_service_tabs      = false;
 $closed_message_display = '';

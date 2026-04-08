@@ -252,16 +252,7 @@ class RP_Frontend_Scripts
     $please_wait_text = esc_html__('Please Wait...', 'restropress');
     $color = rpress_get_option('primary_color', '#ED5575');
     $service_options = !empty(rpress_get_option('enable_service')) ? rpress_get_option('enable_service') : 'delivery_and_pickup';
-    if ($service_options === 'delivery_and_pickup') {
-      $configured_default_service = sanitize_key((string) rpress_get_option('default_service', 'delivery'));
-      $default_service = in_array($configured_default_service, array('delivery', 'pickup'), true)
-        ? $configured_default_service
-        : 'delivery';
-    } else {
-      $default_service = in_array($service_options, array('delivery', 'pickup'), true)
-        ? $service_options
-        : 'delivery';
-    }
+    $default_service = rpress_get_default_enabled_service();
     $minimum_order_error_title = !empty(rpress_get_option('minimum_order_error_title')) ? rpress_get_option('minimum_order_error_title') : __('Minimum Order Error', 'restropress');
     $expire_cookie_time = !empty(rpress_get_option('expire_service_cookie')) ? rpress_get_option('expire_service_cookie') : 90;
     $cart_quantity = rpress_get_cart_quantity();
@@ -307,6 +298,7 @@ class RP_Frontend_Scripts
       'open_hours' => (rpress_get_option('enable_always_open')) ? '12:00am' : rpress_get_option('open_time'),
       'close_hours' => (rpress_get_option('enable_always_open')) ? '11:59pm' : rpress_get_option('close_time'),
       'closed_message' => $closed_message,
+      'old_ui_ux' => !empty(rpress_get_option('old_ui_ux')) ? '1' : '0',
     );
     $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) : $default_service;
     $cookie_service = apply_filters('rpress_current_service_type', $cookie_service);
@@ -533,6 +525,15 @@ class RP_Frontend_Scripts
     }
     ?>
     <style type="text/css">
+      :root {
+        --rpress-theme-primary:
+          <?php echo sanitize_hex_color($primary_color); ?>
+        ;
+        --rpress-theme-primary-rgb:
+          <?php echo esc_attr($rgba); ?>
+        ;
+      }
+
       .rp-loading:after {
         content: " ";
         display: block;

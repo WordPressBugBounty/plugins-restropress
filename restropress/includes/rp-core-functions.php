@@ -665,6 +665,81 @@ function rpress_get_service_types()
   return apply_filters('rpress_service_type', $service_types);
 }
 /**
+ * Get enabled service slugs based on the stored service setting.
+ *
+ * @since 3.0.0
+ * @return array
+ */
+function rpress_get_enabled_services()
+{
+  $enabled_service = sanitize_key((string) rpress_get_option('enable_service', 'delivery_and_pickup'));
+  $enabled_services = 'delivery_and_pickup' === $enabled_service
+    ? array('delivery', 'pickup')
+    : array($enabled_service);
+
+  $enabled_services = apply_filters('rpress_enable_services', $enabled_services);
+  $enabled_services = array_filter(array_map('sanitize_key', (array) $enabled_services));
+  $enabled_services = array_values(array_unique($enabled_services));
+
+  if (empty($enabled_services)) {
+    $enabled_services = 'delivery_and_pickup' === $enabled_service
+      ? array('delivery', 'pickup')
+      : array($enabled_service);
+  }
+
+  return $enabled_services;
+}
+/**
+ * Get the default service slug from the active services list.
+ *
+ * @since 3.0.0
+ * @return string
+ */
+function rpress_get_default_enabled_service()
+{
+  $enabled_service  = sanitize_key((string) rpress_get_option('enable_service', 'delivery_and_pickup'));
+  $enabled_services = rpress_get_enabled_services();
+
+  if ('delivery_and_pickup' === $enabled_service) {
+    $configured_default = sanitize_key((string) rpress_get_option('default_service', 'delivery'));
+
+    if (!empty($configured_default) && in_array($configured_default, $enabled_services, true)) {
+      return $configured_default;
+    }
+  } elseif (!empty($enabled_service) && in_array($enabled_service, $enabled_services, true)) {
+    return $enabled_service;
+  }
+
+  return !empty($enabled_services) ? (string) reset($enabled_services) : 'delivery';
+}
+/**
+ * Get enabled service types based on the stored service setting.
+ *
+ * @since 3.0.0
+ * @return array
+ */
+function rpress_get_enabled_service_types()
+{
+  $service_types         = rpress_get_service_types();
+  $enabled_service       = sanitize_key((string) rpress_get_option('enable_service', 'delivery_and_pickup'));
+  $enabled_services      = rpress_get_enabled_services();
+  $enabled_service_types = array();
+
+  foreach ($enabled_services as $enabled_service_slug) {
+    if (isset($service_types[$enabled_service_slug])) {
+      $enabled_service_types[$enabled_service_slug] = $service_types[$enabled_service_slug];
+      continue;
+    }
+
+    $service_label = rpress_service_label($enabled_service_slug);
+    $enabled_service_types[$enabled_service_slug] = $service_label !== $enabled_service_slug
+      ? $service_label
+      : ucwords(str_replace(array('-', '_'), ' ', $enabled_service_slug));
+  }
+
+  return apply_filters('rpress_enabled_service_types', $enabled_service_types, $enabled_service, $service_types, $enabled_services);
+}
+/**
  * Get Store service hours
  * @since 3.0
  * @param string $service_type Select service type
@@ -1069,19 +1144,10 @@ function rpress_pre_validate_order() {
         : '';
 
     $normalized_service_type = sanitize_key( $service_type );
-    $enabled_service = rpress_get_option( 'enable_service', 'delivery_and_pickup' );
-    $allowed_services = ( 'delivery_and_pickup' === $enabled_service ) ? array( 'delivery', 'pickup' ) : array( $enabled_service );
-    $allowed_services = array_map( 'sanitize_key', $allowed_services );
+    $allowed_services = rpress_get_enabled_services();
 
     if ( empty( $normalized_service_type ) || ! in_array( $normalized_service_type, $allowed_services, true ) ) {
-        if ( 'delivery_and_pickup' === $enabled_service ) {
-            $configured_default = sanitize_key( (string) rpress_get_option( 'default_service', 'delivery' ) );
-            $normalized_service_type = in_array( $configured_default, $allowed_services, true )
-                ? $configured_default
-                : ( ! empty( $allowed_services ) ? (string) reset( $allowed_services ) : 'delivery' );
-        } else {
-            $normalized_service_type = sanitize_key( (string) $enabled_service );
-        }
+        $normalized_service_type = rpress_get_default_enabled_service();
     }
 
     if ( empty( $normalized_service_type ) || ! in_array( $normalized_service_type, $allowed_services, true ) ) {
@@ -2293,7 +2359,11 @@ function rp_help_tip($tip, $allow_html = false)
  */
 function rpress_is_service_enabled($service)
 {
-  return (bool) apply_filters('rpress_is_service_enabled', true, $service);
+  $service               = sanitize_key((string) $service);
+  $enabled_service_types = rpress_get_enabled_service_types();
+  $is_enabled            = !empty($service) && isset($enabled_service_types[$service]);
+
+  return (bool) apply_filters('rpress_is_service_enabled', $is_enabled, $service, $enabled_service_types);
 }
 function rpress_fooditem_available($fooditem_id)
 {
@@ -2577,23 +2647,13 @@ function rpress_get_service_context( $service_type_override = '' ): array
 
   $enabled = rpress_get_option('enable_service', 'delivery_and_pickup');
   $context["service_enabled"] = $enabled;
-  $context['services'] = apply_filters(
-    'rpress_enable_services',
-    $enabled === 'delivery_and_pickup'
-    ? ['delivery', 'pickup']
-    : [$enabled]
-  );
+  $context['services'] = rpress_get_enabled_services();
 
   if (!in_array($context['service_type'], $context['services'], true)) {
-    if ('delivery_and_pickup' === $enabled) {
-      $configured_default = sanitize_key((string) rpress_get_option('default_service', 'delivery'));
-      $context['service_type'] = in_array($configured_default, $context['services'], true)
-        ? $configured_default
-        : 'delivery';
-    } else {
-      // In single-service mode, always force the enabled service.
-      $context['service_type'] = $enabled;
-    }
+    $default_service = rpress_get_default_enabled_service();
+    $context['service_type'] = in_array($default_service, $context['services'], true)
+      ? $default_service
+      : (!empty($context['services']) ? (string) reset($context['services']) : '');
   }
 
   $service_type_override = strtolower( sanitize_text_field( (string) $service_type_override ) );
