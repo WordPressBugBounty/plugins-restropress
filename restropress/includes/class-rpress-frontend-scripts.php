@@ -126,6 +126,12 @@ class RP_Frontend_Scripts
   private static function register_scripts()
   {
     $suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
+    $frontend_script_version = RP_VERSION;
+    $frontend_script_path = trailingslashit(RP_PLUGIN_DIR) . 'assets/js/frontend/rp-frontend.js';
+    if (file_exists($frontend_script_path)) {
+      $frontend_script_version = RP_VERSION . '.' . filemtime($frontend_script_path);
+    }
+
     $register_scripts = array(
       'jquery-cookies' => array(
         'src' => self::get_asset_url('assets/js/jquery.cookies.min.js'),
@@ -175,7 +181,7 @@ class RP_Frontend_Scripts
       'rp-frontend' => array(
         'src' => self::get_asset_url('assets/js/frontend/rp-frontend.js'),
         'deps' => array('jquery'),
-        'version' => RP_VERSION,
+        'version' => $frontend_script_version,
       ),
       'rp-ajax' => array(
         'src' => self::get_asset_url('assets/js/frontend/rp-ajax.js'),
@@ -511,6 +517,11 @@ class RP_Frontend_Scripts
     $primary_color = esc_html(rpress_get_option('primary_color', '#ED5575'));
     $add_button_bg_color = esc_html(rpress_get_option('add_button_background_color', '#FEE2E8'));
     $add_button_text_color = esc_html(rpress_get_option('add_button_text_color', '#000000'));
+    $button_style = sanitize_key((string) rpress_get_option('button_style', 'th-rounded'));
+    $default_control_radius = '100px';
+    if ('th-rectangle' === $button_style || 'th-plain' === $button_style) {
+      $default_control_radius = '0px';
+    }
     $rgb = sscanf($primary_color, "#%02x%02x%02x");
 
     // Validate and escape
@@ -532,6 +543,61 @@ class RP_Frontend_Scripts
         --rpress-theme-primary-rgb:
           <?php echo esc_attr($rgba); ?>
         ;
+        --rpress-default-control-radius:
+          <?php echo esc_attr($default_control_radius); ?>
+        ;
+        --rp-old-ui-modal-rect-radius:
+          <?php echo esc_attr($default_control_radius); ?>
+        ;
+      }
+
+      body.rp-old-ui-ux-enabled #rpressModal.show-service-options,
+      body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup {
+        --rp-old-ui-modal-rect-radius: var(--rpress-default-control-radius);
+      }
+
+      /* Sync frontend button/select shapes with "Default Button Style" (excluding item add buttons). */
+      .rpress-checkout a.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+      .rpress-checkout button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+      .rpress-checkout input[type="submit"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+      .rpress-checkout input[type="button"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+      .rpress-checkout a.rpress-checkout-cart.rpress-submit,
+      #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit,
+      #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button,
+      #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit,
+      #rpress_checkout_wrap .rpress-delivery-options ul#rpressdeliveryTab.nav>li>a,
+      #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
+      #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn,
+      #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn,
+      #rpressDateTime.rpress-edit-address-popup .rpress-delivery-options ul#rpressdeliveryTab,
+      #rpressDateTime.rpress-edit-address-popup .rpress-delivery-options ul#rpressdeliveryTab>li.nav-item,
+      #rpressDateTime.rpress-edit-address-popup .rpress-delivery-options ul#rpressdeliveryTab>li.nav-item>a.nav-link,
+      #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab,
+      #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab>li.nav-item,
+      #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab>li.nav-item>a.nav-link,
+      #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
+      #rpressModal .rpress-popup-actions .submit-fooditem-button,
+      #rpress_purchase_form #rpress-purchase-button,
+      #rpress_purchase_form #rpress-user-login-submit input,
+      #rpress_login_submit .rpress-submit,
+      #rpress_register_submit .rpress-submit {
+        border-radius: var(--rpress-default-control-radius) !important;
+      }
+
+      .rpress-section .rpress-delivery-options select,
+      #rpress_checkout_wrap select,
+      #rpressDateTime.rpress-edit-address-popup select,
+      #rpressModal.show-service-options select {
+        border-radius: var(--rpress-default-control-radius) !important;
+      }
+
+      /* Keep old UI modal labels aligned with normal modal wording/formatting. */
+      body.rp-old-ui-ux-enabled #rpressModal.show-service-options .delivery-time-text,
+      body.rp-old-ui-ux-enabled #rpressModal.show-service-options .pickup-time-text,
+      body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup .delivery-time-text,
+      body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup .pickup-time-text {
+        text-transform: none;
+        letter-spacing: normal;
       }
 
       .rp-loading:after {
@@ -823,6 +889,13 @@ class RP_Frontend_Scripts
         background-color:
           <?php echo sanitize_hex_color($primary_color) ?>
        }
+
+      @media only screen and (max-width: 768px) {
+        #rpress_checkout_wrap #rpress_purchase_submit #rpress-purchase-button,
+        #rpress_checkout_wrap #rpress_checkout_form_wrap .rpress-checkout-button-actions a.rpress-submit.button {
+          padding: 12px 16px;
+        }
+      }
     </style>
     <?php
   }

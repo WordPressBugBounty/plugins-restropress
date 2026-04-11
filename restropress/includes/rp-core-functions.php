@@ -2500,12 +2500,22 @@ function rp_get_order_count($status = 'pending')
 {
   global $wpdb;
 
-  $query = $wpdb->prepare("SELECT count(*) as count
-  FROM {$wpdb->postmeta}
-  WHERE `meta_key` = '_order_status'
-  AND `meta_value` = '%s'
-  GROUP BY meta_value", $status);
-  $order_count = $wpdb->get_var($query);
+  $query = $wpdb->prepare(
+    "SELECT COUNT(DISTINCT pm.post_id) AS count
+    FROM {$wpdb->postmeta} pm
+    INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+    WHERE pm.meta_key = %s
+      AND pm.meta_value = %s
+      AND p.post_type = %s
+      AND p.post_status <> %s",
+    '_order_status',
+    $status,
+    'rpress_payment',
+    'trash'
+  );
+
+  $order_count = (int) $wpdb->get_var($query);
+
   return apply_filters('rpress_order_count', $order_count, $status);
 }
 

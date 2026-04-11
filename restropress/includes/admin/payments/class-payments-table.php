@@ -324,7 +324,7 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 		$views = array(
 			'all'        => sprintf( '<a href="%s"%s>%s</a>', remove_query_arg( array( 'status', 'paged','service-type' ) ), $current === 'all' || $current == '' ? ' class="current"' : '', __( 'All','restropress' ) . $total_count ),
 			'pending'    => sprintf( '<a href="%s"%s>%s</a>', add_query_arg( array( 'status' => 'pending', 'paged' => FALSE ) ), $current === 'pending' ? ' class="current"' : '', __( 'Pending','restropress' ) . $pending_count ),
-			'paid'       => sprintf('<a href="%s"%s>%s</a>', add_query_arg( array( 'status' => 'publish', 'paged' => FALSE ) ), $current === 'paid' ? ' class="current"' : '', __( 'Paid','restropress' ) . $paid_count ),
+			'paid'       => sprintf('<a href="%s"%s>%s</a>', add_query_arg( array( 'status' => 'publish', 'paged' => FALSE ) ), ( 'paid' === $current || 'publish' === $current ) ? ' class="current"' : '', __( 'Paid','restropress' ) . $paid_count ),
 			'processing' => sprintf('<a href="%s"%s>%s</a>', add_query_arg( array( 'status' => 'processing', 'paged' => FALSE ) ), $current === 'processing' ? ' class="current"' : '', __( 'Processing','restropress' ) . $out_for_deliver_count ),
 			'Trash'		 =>  sprintf('<a href="%s"%s>%s</a>', add_query_arg( array( 'status' => 'trash', 'paged' => FALSE ) ), $current === 'trash' ? ' class="current"' : '', __( 'Trash','restropress' ) . $trash_count),
 		
@@ -653,7 +653,6 @@ if (strpos($service_time_str, 'ASAP') !== false) {
 	 * @return void
 	 */
 	public function get_payment_counts() {
-		global $wp_query;
 		$args = array();
 		if ( isset( $_GET['user'] ) ) {
 			$args['user'] = urldecode( sanitize_text_field( $_GET['user'] ) );
@@ -683,32 +682,66 @@ if (strpos($service_time_str, 'ASAP') !== false) {
 		if ( ! empty( $_GET['service-type'] ) ) {
 			$args['service-type'] = urldecode( sanitize_text_field( $_GET['service-type'] ) );
 		}
+		if ( ! empty( $_GET['order_status'] ) && 'all' !== sanitize_text_field( $_GET['order_status'] ) ) {
+			$args['order_status'] = sanitize_text_field( $_GET['order_status'] );
+		}
 		$payment_count          		= rpress_count_payments( $args );
 		$this->completed_count   		=  isset( $payment_count->completed ) ? $payment_count->completed : 0;
 		$this->pending_count    		=  isset( $payment_count->pending ) ? $payment_count->pending : 0 ;
 		$this->paid_count 				=  isset( $payment_count->publish ) ? $payment_count->publish : 0 ;
 		$this->trash_count  			= $this->count_trash_order();
-		$this->delivery_count 			=  isset( $this->count_service_type()['delivery'] ) ? $this->count_service_type()['delivery'] : 0;
-		$this->pickup_count 			=  isset( $this->count_service_type()['pickup'] ) ? $this->count_service_type()['pickup'] : 0;
-		$this->dinein_count 			=  isset( $this->count_service_type()['dinein'] ) ? $this->count_service_type()['dinein'] : 0;
 		$this->out_for_deliver_count   	=  isset( $payment_count->processing ) ? $payment_count->processing : 0 ;
-		$this->total_count = intval( $this->completed_count ) + intval( $this->pending_count ) + intval( $this->paid_count ) + intval( $this->out_for_deliver_count );
+
+		$service_count_args = $args;
+		unset( $service_count_args['service-type'] );
+
+		$current_status = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
+		if ( ! empty( $current_status ) && 'all' !== $current_status ) {
+			$service_count_args['status'] = ( 'paid' === $current_status ) ? 'publish' : $current_status;
+		}
+
+		$this->delivery_count = $this->count_service_type( $service_count_args, 'delivery' );
+		$this->pickup_count   = $this->count_service_type( $service_count_args, 'pickup' );
+		$this->dinein_count   = $this->count_service_type( $service_count_args, 'dinein' );
+		$this->total_count    = $this->sum_payment_count_totals( $payment_count );
 	}
-	public function count_service_type() {
-		global $wpdb;
-		$query = "SELECT g.meta_value,count( * ) AS num_posts FROM $wpdb->posts p LEFT JOIN $wpdb->postmeta g ON (p.ID = g.post_id) WHERE p.post_type = 'rpress_payment' AND g.meta_key = '_rpress_delivery_type' GROUP BY g.meta_value";
-		$cache_key = md5( $query );
-		$count = wp_cache_get( $cache_key, 'counts' );
-		if ( false !== $count ) {
-			return $count;
+	public function count_service_type( $args = array(), $service_type = '' ) {
+		if ( empty( $service_type ) ) {
+			return 0;
 		}
-		$rows = $wpdb->get_results( $query, ARRAY_A );
-		$return_array = array();
-		foreach ( $rows as  $row ) {
-			$return_array[$row['meta_value'] ] =  $row['num_posts'] ;
+
+		$args['service-type'] = $service_type;
+		$service_counts       = rpress_count_payments( $args );
+
+		return $this->sum_payment_count_totals( $service_counts );
+	}
+
+	private function sum_payment_count_totals( $counts ) {
+		if ( ! is_object( $counts ) ) {
+			return 0;
 		}
-		
-		return $return_array ;
+
+		$excluded_statuses = array(
+			'trash',
+			'auto-draft',
+			'inherit',
+			'future',
+			'draft',
+			'private',
+			'new',
+		);
+
+		$total = 0;
+
+		foreach ( (array) $counts as $status => $count ) {
+			if ( in_array( $status, $excluded_statuses, true ) ) {
+				continue;
+			}
+
+			$total += absint( $count );
+		}
+
+		return $total;
 	}
 	public function count_trash_order() {
 		global $wpdb;
@@ -735,7 +768,14 @@ if (strpos($service_time_str, 'ASAP') !== false) {
 		$order      	 = isset( $_GET['order'] )        ? sanitize_text_field( $_GET['order'] ) : 'DESC';
 		$user       	 = isset( $_GET['user'] )         ? sanitize_text_field( $_GET['user'] ) : null;
 		$customer   	 = isset( $_GET['customer'] )     ? sanitize_text_field( $_GET['customer'] ) : null;
-		$status     	 = isset( $_GET['status'] )       ? sanitize_text_field( $_GET['status'] ) : rpress_get_payment_status_keys();
+		$status_filter    = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
+		if ( empty( $status_filter ) || 'all' === $status_filter || 'any' === $status_filter ) {
+			$status = rpress_get_payment_status_keys();
+		} elseif ( 'paid' === $status_filter ) {
+			$status = 'publish';
+		} else {
+			$status = $status_filter;
+		}
 		$meta_key   	 = isset( $_GET['meta_key'] )     ? sanitize_text_field( $_GET['meta_key'] ) : null;
 		$year       	 = isset( $_GET['year'] )         ? sanitize_text_field( $_GET['year'] ) : null;
 		$month      	 = isset( $_GET['m'] )            ? sanitize_text_field( $_GET['m'] ) : null;
@@ -787,23 +827,29 @@ if (strpos($service_time_str, 'ASAP') !== false) {
 			$args['search_in_notes'] = true;
 			$args['s'] = trim( str_replace( 'txn:', '', $args['s'] ) );
 		}
-		if( ! is_null( $service_type ) ) {
-			$args['meta_query'] = [
-			[
-				'key' => '_rpress_delivery_type',
-				'value' => $service_type,
-				'compare' => '='
-			]
-		];
+		$meta_query = array();
+
+		if ( ! empty( $service_type ) ) {
+			$meta_query[] = array(
+				'key'     => '_rpress_delivery_type',
+				'value'   => $service_type,
+				'compare' => '=',
+			);
 		}
-		if( ! empty( $selected_orders ) && $selected_orders != 'all' ) {
-			$args['meta_query'] = [
-				[ 
-			       'key' => '_order_status',
-				'value' => $selected_orders,
-				'compare' => '='   
-			]
-		];
+
+		if ( ! empty( $selected_orders ) && 'all' !== $selected_orders ) {
+			$meta_query[] = array(
+				'key'     => '_order_status',
+				'value'   => $selected_orders,
+				'compare' => '=',
+			);
+		}
+
+		if ( ! empty( $meta_query ) ) {
+			if ( count( $meta_query ) > 1 ) {
+				$meta_query['relation'] = 'AND';
+			}
+			$args['meta_query'] = $meta_query;
 		}
 		$p_query  = new RPRESS_Payments_Query( $args );
 		return $p_query->get_payments();
@@ -835,6 +881,7 @@ if (strpos($service_time_str, 'ASAP') !== false) {
 				$total_items = $this->pending_count;
 				break;
 			case 'paid':
+			case 'publish':
 				$total_items = $this->paid_count;
 			break;
 			case 'any':

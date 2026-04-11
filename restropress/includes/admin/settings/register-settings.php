@@ -631,6 +631,12 @@ function rpress_get_registered_settings()
 						'desc' => esc_html__('Enable this option to reorder.', 'restropress'),
 						'type' => 'checkbox',
 					),
+					'order_auto_accepted' => array(
+						'id'   => 'order_auto_accepted',
+						'name' => esc_html__( 'Order Auto Accepted', 'restropress' ),
+						'desc' => esc_html__( 'Automatically update new orders to Accepted after 2 seconds.', 'restropress' ),
+						'type' => 'checkbox',
+					),
 				),
 				//Checkout Options
 				'checkout_options' => array(

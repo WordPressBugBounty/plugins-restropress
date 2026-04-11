@@ -11,6 +11,9 @@
  */
 // Exit if accessed directly
 if ( !defined( 'ABSPATH' ) ) exit;
+
+add_action( 'rpress_insert_payment', 'rpress_maybe_schedule_order_auto_accept', 20, 2 );
+add_action( 'rpress_order_auto_accept_scheduled', 'rpress_run_order_auto_accept', 10, 1 );
 /**
  * Retrieves an instance of RPRESS_Payment for a specified ID.
  *
@@ -218,6 +221,79 @@ function rpress_insert_payment( $payment_data = array() ) {
 	// Return false if no payment was inserted
 	return false;
 }
+
+/**
+ * Schedule automatic order acceptance for newly inserted orders.
+ *
+ * @since 3.2.8.6
+ *
+ * @param int   $payment_id   Payment ID.
+ * @param array $payment_data Payment data.
+ * @return void
+ */
+function rpress_maybe_schedule_order_auto_accept( $payment_id = 0, $payment_data = array() ) {
+	$payment_id = absint( $payment_id );
+	if ( empty( $payment_id ) ) {
+		return;
+	}
+
+	if ( ! rpress_get_option( 'order_auto_accepted', false ) ) {
+		return;
+	}
+
+	$payment_status = ! empty( $payment_data['status'] ) ? sanitize_key( $payment_data['status'] ) : 'pending';
+	$disallowed_statuses = array( 'failed', 'abandoned', 'refunded', 'revoked', 'trash' );
+	if ( in_array( $payment_status, $disallowed_statuses, true ) ) {
+		return;
+	}
+
+	$next_scheduled = wp_next_scheduled( 'rpress_order_auto_accept_scheduled', array( $payment_id ) );
+	if ( false !== $next_scheduled ) {
+		return;
+	}
+
+	$delay = (int) apply_filters( 'rpress_order_auto_accept_delay', 2, $payment_id, $payment_data );
+	$delay = max( 0, $delay );
+
+	wp_schedule_single_event( time() + $delay, 'rpress_order_auto_accept_scheduled', array( $payment_id ) );
+}
+
+/**
+ * Auto-accept a pending order when the scheduled event fires.
+ *
+ * @since 3.2.8.6
+ *
+ * @param int $payment_id Payment ID.
+ * @return void
+ */
+function rpress_run_order_auto_accept( $payment_id = 0 ) {
+	$payment_id = absint( $payment_id );
+	if ( empty( $payment_id ) ) {
+		return;
+	}
+
+	if ( ! rpress_get_option( 'order_auto_accepted', false ) ) {
+		return;
+	}
+
+	$current_status = rpress_get_order_status( $payment_id );
+	if ( 'pending' !== sanitize_key( $current_status ) ) {
+		return;
+	}
+
+	$payment = rpress_get_payment( $payment_id );
+	if ( empty( $payment->ID ) ) {
+		return;
+	}
+
+	$payment_status = sanitize_key( $payment->status );
+	$disallowed_statuses = array( 'failed', 'abandoned', 'refunded', 'revoked', 'trash' );
+	if ( in_array( $payment_status, $disallowed_statuses, true ) ) {
+		return;
+	}
+
+	rpress_update_order_status( $payment_id, 'accepted' );
+}
 /**
  * Updates a payment status.
  *
@@ -379,7 +455,12 @@ function rpress_count_payments( $args = array() ) {
 		'end-date'   => null,
 		'fooditem'   => null,
 		'gateway'    => null,
-	'service-type'   =>null
+		'service-type' => null,
+		'service_type' => null,
+		'service-date' => null,
+		'service_date' => null,
+		'order_status' => null,
+		'status'       => null,
 	);
 	$args = wp_parse_args( $args, $defaults );
 	$select = "SELECT p.post_status,count( * ) AS num_posts";
@@ -453,11 +534,43 @@ function rpress_count_payments( $args = array() ) {
 	}
 	// Limit payments count by gateway
 	if ( ! empty( $args['gateway'] ) ) {
-		$join .= "LEFT JOIN $wpdb->postmeta g ON (p.ID = g.post_id)";
+		$join .= " LEFT JOIN $wpdb->postmeta g ON (p.ID = g.post_id)";
 		$where .= $wpdb->prepare( "
 			AND g.meta_key = '_rpress_payment_gateway'
 			AND g.meta_value = %s",
 			$args['gateway']
+		);
+	}
+
+	$service_type = ! empty( $args['service-type'] ) ? $args['service-type'] : $args['service_type'];
+	if ( ! empty( $service_type ) ) {
+		$join .= " LEFT JOIN $wpdb->postmeta st ON (p.ID = st.post_id)";
+		$where .= $wpdb->prepare(
+			" AND st.meta_key = %s AND st.meta_value = %s",
+			'_rpress_delivery_type',
+			$service_type
+		);
+	}
+
+	$order_status = isset( $args['order_status'] ) ? sanitize_text_field( $args['order_status'] ) : '';
+	if ( ! empty( $order_status ) && 'all' !== $order_status ) {
+		$join .= " LEFT JOIN $wpdb->postmeta os ON (p.ID = os.post_id)";
+		$where .= $wpdb->prepare(
+			" AND os.meta_key = %s AND os.meta_value = %s",
+			'_order_status',
+			$order_status
+		);
+	}
+
+	$service_date = ! empty( $args['service-date'] ) ? $args['service-date'] : $args['service_date'];
+	if ( ! empty( $service_date ) ) {
+		$service_timestamp = strtotime( $service_date );
+		$service_date      = false !== $service_timestamp ? date_i18n( 'Y-m-d', $service_timestamp ) : sanitize_text_field( $service_date );
+		$join             .= " LEFT JOIN $wpdb->postmeta sd ON (p.ID = sd.post_id)";
+		$where            .= $wpdb->prepare(
+			" AND sd.meta_key = %s AND sd.meta_value = %s",
+			'_rpress_delivery_date',
+			$service_date
 		);
 	}
 	
@@ -486,6 +599,37 @@ function rpress_count_payments( $args = array() ) {
 		if ( false !== $is_date ) {
 			$date = gmdate( 'Y-m-d', strtotime( '+1 day', mktime( 0, 0, 0, $month, $day, $year ) ) );
 			$where .= $wpdb->prepare( " AND p.post_date < '%s'", $date );
+		}
+	}
+
+	if ( ! empty( $args['status'] ) ) {
+		$statuses = $args['status'];
+		if ( ! is_array( $statuses ) ) {
+			$statuses = array( $statuses );
+		}
+
+		$sanitized_statuses = array();
+		foreach ( $statuses as $status ) {
+			$status = sanitize_key( $status );
+			$status = ( 'paid' === $status ) ? 'publish' : $status;
+
+			if ( '' === $status || 'all' === $status || 'any' === $status ) {
+				continue;
+			}
+
+			$sanitized_statuses[] = $status;
+		}
+
+		$statuses = array_values( array_unique( $sanitized_statuses ) );
+
+		if ( ! empty( $statuses ) ) {
+			if ( 1 === count( $statuses ) ) {
+				$where .= $wpdb->prepare( " AND p.post_status = %s", $statuses[0] );
+			} else {
+				$status_placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+				$status_query        = array_merge( array( " AND p.post_status IN ($status_placeholders)" ), $statuses );
+				$where              .= call_user_func_array( array( $wpdb, 'prepare' ), $status_query );
+			}
 		}
 	}
 	$where = apply_filters( 'rpress_count_payments_where', $where );
