@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
 Tested up to: 6.9.4
-Stable tag: 3.2.8.6
+Stable tag: 3.2.8.6.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -120,6 +120,12 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 👉 [Explore Pro Features & Extensions](https://restropress.com/extension/)
 
 == Changelog ==
+
+= Version 3.2.8.6.1(2026-04-14) =
+* Updated: Plugin version bump to 3.2.8.6.1
+* Security: Escaped `rpress_receipt` shortcode `error` output to prevent stored XSS payload execution.
+* Security: Escaped Orders admin payment-history links generated from query arguments to prevent reflected admin XSS via crafted URLs.
+* Code Cleanup
 
 = 3.2.8.6 (2026-04-11) =
 * Updated: Version bump

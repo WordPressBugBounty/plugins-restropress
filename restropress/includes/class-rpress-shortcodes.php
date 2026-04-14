@@ -143,7 +143,7 @@ class RP_Shortcodes {
 
     // No key found
     if ( empty( $payment_key ) ) {
-      return '<p class="rpress-alert rpress-alert-error">' . $rpress_receipt_args['error'] . '</p>';
+      return '<p class="rpress-alert rpress-alert-error">' . esc_html( $rpress_receipt_args['error'] ) . '</p>';
     }
 
     $payment_id    = rpress_get_purchase_id_by_key( $payment_key );
@@ -175,7 +175,7 @@ class RP_Shortcodes {
      *
      */
     if ( ! $user_can_view ) {
-      return '<p class="rpress-alert rpress-alert-error">' . $rpress_receipt_args['error'] . '</p>';
+      return '<p class="rpress-alert rpress-alert-error">' . esc_html( $rpress_receipt_args['error'] ) . '</p>';
     }
     ob_start();
     rpress_get_template_part( 'shortcode', 'receipt' );

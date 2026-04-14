@@ -322,35 +322,35 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 		$out_for_deliver_count = '&nbsp;<span class="count">(' . $this->out_for_deliver_count . ')</span>';
 		$trash_count = '&nbsp;<span class="count">(' . $this->trash_count . ')</span>';
 		$views = array(
-			'all'        => sprintf( '<a href="%s"%s>%s</a>', remove_query_arg( array( 'status', 'paged','service-type' ) ), $current === 'all' || $current == '' ? ' class="current"' : '', __( 'All','restropress' ) . $total_count ),
-			'pending'    => sprintf( '<a href="%s"%s>%s</a>', add_query_arg( array( 'status' => 'pending', 'paged' => FALSE ) ), $current === 'pending' ? ' class="current"' : '', __( 'Pending','restropress' ) . $pending_count ),
-			'paid'       => sprintf('<a href="%s"%s>%s</a>', add_query_arg( array( 'status' => 'publish', 'paged' => FALSE ) ), ( 'paid' === $current || 'publish' === $current ) ? ' class="current"' : '', __( 'Paid','restropress' ) . $paid_count ),
-			'processing' => sprintf('<a href="%s"%s>%s</a>', add_query_arg( array( 'status' => 'processing', 'paged' => FALSE ) ), $current === 'processing' ? ' class="current"' : '', __( 'Processing','restropress' ) . $out_for_deliver_count ),
-			'Trash'		 =>  sprintf('<a href="%s"%s>%s</a>', add_query_arg( array( 'status' => 'trash', 'paged' => FALSE ) ), $current === 'trash' ? ' class="current"' : '', __( 'Trash','restropress' ) . $trash_count),
+			'all'        => sprintf( '<a href="%s"%s>%s</a>', esc_url( remove_query_arg( array( 'status', 'paged','service-type' ) ) ), $current === 'all' || $current == '' ? ' class="current"' : '', __( 'All','restropress' ) . $total_count ),
+			'pending'    => sprintf( '<a href="%s"%s>%s</a>', esc_url( add_query_arg( array( 'status' => 'pending', 'paged' => FALSE ) ) ), $current === 'pending' ? ' class="current"' : '', __( 'Pending','restropress' ) . $pending_count ),
+			'paid'       => sprintf('<a href="%s"%s>%s</a>', esc_url( add_query_arg( array( 'status' => 'publish', 'paged' => FALSE ) ) ), ( 'paid' === $current || 'publish' === $current ) ? ' class="current"' : '', __( 'Paid','restropress' ) . $paid_count ),
+			'processing' => sprintf('<a href="%s"%s>%s</a>', esc_url( add_query_arg( array( 'status' => 'processing', 'paged' => FALSE ) ) ), $current === 'processing' ? ' class="current"' : '', __( 'Processing','restropress' ) . $out_for_deliver_count ),
+			'Trash'		 =>  sprintf('<a href="%s"%s>%s</a>', esc_url( add_query_arg( array( 'status' => 'trash', 'paged' => FALSE ) ) ), $current === 'trash' ? ' class="current"' : '', __( 'Trash','restropress' ) . $trash_count),
 		
 		);
 		$dinein_views = array();
 		if( is_plugin_active( 'restropress-dinein/restropress-dinein.php' ) ) {
   				$dinein_views = array(
-  					'dinein' => sprintf( '<a href="%s"%s>%s</a>', add_query_arg( array( 'service-type' => 'dinein', 'paged' => FALSE ) ), $get_services === 'dinein' ? ' class="current"' : '', __( 'Dinein','restropress' ) . $dinein_count ),
+  					'dinein' => sprintf( '<a href="%s"%s>%s</a>', esc_url( add_query_arg( array( 'service-type' => 'dinein', 'paged' => FALSE ) ) ), $get_services === 'dinein' ? ' class="current"' : '', __( 'Dinein','restropress' ) . $dinein_count ),
   				);
   		}
   		
 		if( $service_options === 'delivery_and_pickup' ) {
 			
 		$args =  array(
-					'delivery' => sprintf( '<a href="%s"%s>%s</a>', add_query_arg( array( 'service-type' => 'delivery', 'paged' => FALSE ) ), $get_services === 'delivery' ? ' class="current"' : '', __( 'Delivery','restropress' ) . $delivery_count ),
-					'pickup'   => sprintf( '<a href="%s"%s>%s</a>', add_query_arg( array( 'service-type' => 'pickup', 'paged' => FALSE ) ), $get_services === 'pickup' ? ' class="current"' : '', __( 'Pickup','restropress' ) . $pickup_count ),
+					'delivery' => sprintf( '<a href="%s"%s>%s</a>', esc_url( add_query_arg( array( 'service-type' => 'delivery', 'paged' => FALSE ) ) ), $get_services === 'delivery' ? ' class="current"' : '', __( 'Delivery','restropress' ) . $delivery_count ),
+					'pickup'   => sprintf( '<a href="%s"%s>%s</a>', esc_url( add_query_arg( array( 'service-type' => 'pickup', 'paged' => FALSE ) ) ), $get_services === 'pickup' ? ' class="current"' : '', __( 'Pickup','restropress' ) . $pickup_count ),
 			);
 		}
   		elseif ( $service_options === 'delivery' ) {
   		$args =  array(
-  					'delivery' => sprintf( '<a href="%s"%s>%s</a>', add_query_arg( array( 'service-type' => 'delivery', 'paged' => FALSE ) ), $get_services === 'delivery' ? ' class="current"' : '', __( 'Delivery','restropress' ) . $delivery_count ),
+  					'delivery' => sprintf( '<a href="%s"%s>%s</a>', esc_url( add_query_arg( array( 'service-type' => 'delivery', 'paged' => FALSE ) ) ), $get_services === 'delivery' ? ' class="current"' : '', __( 'Delivery','restropress' ) . $delivery_count ),
   			);
   		}
   		elseif ( $service_options === 'pickup' ) {
   		$args =  array(
-  					'pickup' => sprintf( '<a href="%s"%s>%s</a>', add_query_arg( array( 'service-type' => 'pickup', 'paged' => FALSE ) ), $get_services === 'pickup' ? ' class="current"' : '', __( 'Pickup','restropress' ) . $pickup_count ),
+  					'pickup' => sprintf( '<a href="%s"%s>%s</a>', esc_url( add_query_arg( array( 'service-type' => 'pickup', 'paged' => FALSE ) ) ), $get_services === 'pickup' ? ' class="current"' : '', __( 'Pickup','restropress' ) . $pickup_count ),
   			);
   		}
   		
@@ -503,9 +503,9 @@ if (strpos($service_time_str, 'ASAP') !== false) {
 			$this->base_url = add_query_arg( 's', $search_terms, $this->base_url );
 		}
 		if ( rpress_is_payment_complete( $payment->ID ) && ! empty( $email ) ) {
-			$row_actions['email_links'] = '<a href="' . add_query_arg( array( 'rpress-action' => 'email_links', 'purchase_id' => $payment->ID ), $this->base_url ) . '">' . __( 'Resend Purchase Receipt', 'restropress' ) . '</a>';
+			$row_actions['email_links'] = '<a href="' . esc_url( add_query_arg( array( 'rpress-action' => 'email_links', 'purchase_id' => $payment->ID ), $this->base_url ) ) . '">' . __( 'Resend Purchase Receipt', 'restropress' ) . '</a>';
 		}
-		$row_actions['delete'] = '<a href="' . wp_nonce_url( add_query_arg( array( 'rpress-action' => 'delete_payment', 'purchase_id' => $payment->ID ), $this->base_url ), 'rpress_payment_nonce' ) . '">' . __( 'Delete', 'restropress' ) . '</a>';
+		$row_actions['delete'] = '<a href="' . esc_url( wp_nonce_url( add_query_arg( array( 'rpress-action' => 'delete_payment', 'purchase_id' => $payment->ID ), $this->base_url ), 'rpress_payment_nonce' ) ) . '">' . __( 'Delete', 'restropress' ) . '</a>';
 		$row_actions = apply_filters( 'rpress_payment_row_actions', $row_actions, $payment );
 		if ( empty( $email ) ) {
 			$email = esc_html__( '( unknown )', 'restropress' );
@@ -576,11 +576,11 @@ if (strpos($service_time_str, 'ASAP') !== false) {
 	    if ( rpress_get_option( 'enable_sequential' ) ) {
 	    	$alter_id = ( $rpress_number ) ? $rpress_number :  $payment->ID ;
 	    	$order_preview = '<a href="#" class="order-preview" data-order-id="' . absint( $payment->ID ) . '" title="' . esc_attr( __( 'Preview', 'restropress' ) ) . '"><span>' . esc_html( __( 'Preview', 'restropress' ) ) . '</span></a>
-	      <a class="" href="' . add_query_arg( 'id', $payment->ID, admin_url( 'admin.php?page=rpress-payment-history&view=view-order-details' ) ) . '">#' . $alter_id . ' ' . $customer_name . '</a><span class="rp-service-type badge-' . $service_type . ' ">' . rpress_service_label( $service_type ) . '</span>';
+	      <a class="" href="' . esc_url( add_query_arg( 'id', $payment->ID, admin_url( 'admin.php?page=rpress-payment-history&view=view-order-details' ) ) ) . '">#' . $alter_id . ' ' . $customer_name . '</a><span class="rp-service-type badge-' . $service_type . ' ">' . rpress_service_label( $service_type ) . '</span>';
 	    	return $order_preview . $actions ;
 	    } else {
 		    $order_preview = '<a href="#" class="order-preview" data-order-id="' . absint( $payment->ID ) . '" title="' . esc_attr( __( 'Preview', 'restropress' ) ) . '"><span>' . esc_html( __( 'Preview', 'restropress' ) ) . '</span></a>
-		    <a class="" href="' . add_query_arg( 'id', $payment->ID, admin_url( 'admin.php?page=rpress-payment-history&view=view-order-details' ) ) . '">#' . $prefix . $payment->ID . $postfix .' ' . $customer_name . '</a><span class="rp-service-type badge-' . $service_type . ' ">' . rpress_service_label( $service_type ) . '</span>';
+		    <a class="" href="' . esc_url( add_query_arg( 'id', $payment->ID, admin_url( 'admin.php?page=rpress-payment-history&view=view-order-details' ) ) ) . '">#' . $prefix . $payment->ID . $postfix .' ' . $customer_name . '</a><span class="rp-service-type badge-' . $service_type . ' ">' . rpress_service_label( $service_type ) . '</span>';
 		
 		}
 		    return $order_preview . $actions ;
