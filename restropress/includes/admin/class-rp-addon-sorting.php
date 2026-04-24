@@ -36,23 +36,29 @@ class RP_Addon_Sorting
             return;
         }
 
-        // Load on post screen, term edit screen, and taxonomy list screen
-        $allowed_screens = array('post', 'edit-tags', 'term');
-
-        if (in_array($screen->base, $allowed_screens, true)) {
-
-            if (taxonomy_exists('addon_category')) {
-
-                // Load CSS + JS on all addon_category screens
-                $this->enqueue_assets();
-
-                // Ensure order meta exists
-                $this->set_default_term_order('addon_category');
-
-                // Apply sorting
-                add_filter('terms_clauses', array($this, 'set_tax_order'), 10, 3);
-            }
+        if (!taxonomy_exists('addon_category')) {
+            return;
         }
+
+        $should_load = false;
+
+        // Addon taxonomy list + edit term screens.
+        if (in_array($screen->base, array('edit-tags', 'term'), true)) {
+            $should_load = isset($screen->taxonomy) && 'addon_category' === $screen->taxonomy;
+        }
+
+        // Food item edit screens where addon groups are sortable.
+        if ('post' === $screen->base) {
+            $should_load = isset($screen->post_type) && 'fooditem' === $screen->post_type;
+        }
+
+        if (!$should_load) {
+            return;
+        }
+
+        $this->enqueue_assets();
+        $this->set_default_term_order('addon_category');
+        add_filter('terms_clauses', array($this, 'set_tax_order'), 10, 3);
     }
 
 
@@ -78,7 +84,8 @@ class RP_Addon_Sorting
                 'paged' => isset($_GET['paged']) ? absint(wp_unslash($_GET['paged'])) : 0,
                 'per_page_id' => "edit_addon_category_per_page",
                 'fooditem_id' => $food_item_id,
-                'is_variable_fooditem' => rpress_has_variable_prices($food_item_id)
+                'is_variable_fooditem' => rpress_has_variable_prices($food_item_id),
+                'screen_taxonomy' => isset($_GET['taxonomy']) ? sanitize_key(wp_unslash($_GET['taxonomy'])) : '',
             )
         );
     }

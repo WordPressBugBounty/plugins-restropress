@@ -49,7 +49,7 @@ function rpress_fooditems_contextual_help() {
 				<li><strong>color</strong> - <em>' . implode( '</em> | <em>', $colors ) . '</em></li>
 				<li><strong>class</strong> - ' . esc_html__( 'One or more custom CSS classes you want applied to the button.', 'restropress' ) . '</li>
 			</ul>' .
-			'<p>' . sprintf( esc_html__( 'For more information, see <a href="%s">using Shortcodes</a> on the WordPress.org Codex or <a href="%s">RestroPress Documentation</a>', 'restropress' ), 'https://codex.wordpress.org/Shortcode', 'http://docs.restropress.com/article/229-purchaselink' ) . '</p>'
+			'<p>' . sprintf( esc_html__( 'For more information, see <a href="%s">using Shortcodes</a> on the WordPress.org Codex or <a href="%s">RestroPress Documentation</a>', 'restropress' ), 'https://codex.wordpress.org/Shortcode', 'https://docs.restropress.com/docs/shortcodes/purchase-link/' ) . '</p>'
 	) );
 	/**
 	 * Fires off in the RPRESS RestroPress Contextual Help Screen

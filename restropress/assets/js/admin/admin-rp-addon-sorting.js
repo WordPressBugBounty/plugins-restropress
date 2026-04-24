@@ -1,7 +1,12 @@
 (function ($) {
     $(document).ready(function () {
+        if (typeof rp_addon_sorting_data === 'undefined') {
+            return;
+        }
+
+        const isAddonTaxonomyScreen = rp_addon_sorting_data.screen_taxonomy === 'addon_category';
         const base_index = parseInt(rp_addon_sorting_data.paged) > 0 ? (parseInt(rp_addon_sorting_data.paged) - 1) * parseInt($('#' + rp_addon_sorting_data.per_page_id).val()) : 0;
-        const tax_table = $('#rp-addon-item-list').length ? $('#rp-addon-item-list') : $('#the-list');
+        const tax_table = $('#rp-addon-item-list').length ? $('#rp-addon-item-list') : (isAddonTaxonomyScreen ? $('#the-list') : $());
 
         const fooditem_id = rp_addon_sorting_data.fooditem_id;
         // Get initial category order

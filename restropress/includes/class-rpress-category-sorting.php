@@ -12,7 +12,8 @@ class RP_Food_Category_Sorting {
     public function __construct() {
         
         add_action( 'init', array( $this, 'front_end_order_terms' ), 20 );
-        add_action( 'admin_head', array( $this, 'admin_sort_categories' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'admin_sort_categories' ) );
+        add_action( 'pre_get_terms', array( $this, 'maybe_force_food_category_order' ) );
         add_action( 'wp_ajax_rp_update_category_order', array( $this, 'update_category_order' ) );
         add_action( 'wp_ajax_rp_get_category_order', array( $this, 'rp_get_category_order' ) );
     }
@@ -25,7 +26,7 @@ class RP_Food_Category_Sorting {
      */
     public function admin_sort_categories() {
         $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : '';
-        if ( ! isset( $_GET['orderby'] ) && ! empty( $screen ) && ! empty( $screen->base ) && $screen->base === 'edit-tags' && $screen->taxonomy ==='food-category' ) {
+        if ( ! empty( $screen ) && ! empty( $screen->base ) && $screen->base === 'edit-tags' && $screen->taxonomy === 'food-category' ) {
             $this->enqueue_assets();
             $this->set_default_term_order( 'food-category' );
             $this->custom_help_tab();
@@ -39,8 +40,14 @@ class RP_Food_Category_Sorting {
      * @return void
      */
     public function enqueue_assets() {
-        wp_enqueue_style( 'rp-category-drag-drop', RP_PLUGIN_URL . "assets/css/rp-category-sorting.css", array(), '', 'all' );
-        wp_enqueue_script( 'rp-category-drag-drop', RP_PLUGIN_URL . "assets/js/rp-category-sorting.js", array( 'jquery-ui-core', 'jquery-ui-sortable' ), '', true );
+        $css_file = RP_PLUGIN_DIR . 'assets/css/rp-category-sorting.css';
+        $js_file  = RP_PLUGIN_DIR . 'assets/js/rp-category-sorting.js';
+
+        $css_version = file_exists( $css_file ) ? (string) filemtime( $css_file ) : RP_VERSION;
+        $js_version  = file_exists( $js_file ) ? (string) filemtime( $js_file ) : RP_VERSION;
+
+        wp_enqueue_style( 'rp-category-drag-drop', RP_PLUGIN_URL . 'assets/css/rp-category-sorting.css', array(), $css_version, 'all' );
+        wp_enqueue_script( 'rp-category-drag-drop', RP_PLUGIN_URL . 'assets/js/rp-category-sorting.js', array( 'jquery', 'jquery-ui-core', 'jquery-ui-sortable' ), $js_version, true );
         
         wp_localize_script(
             'rp-category-drag-drop',
@@ -77,15 +84,59 @@ class RP_Food_Category_Sorting {
      * @author 
      **/
     function rp_get_category_order() {
-       $food_cat_terms =  get_terms( ['taxonomy' => 'food-category',
-            'orderby' => 'name',
-            'order' => 'ASC' ] );
+       if ( ! check_ajax_referer( 'term_order_nonce', 'term_order_nonce', false ) ) {
+            wp_send_json_error();
+       }
+
+       $food_cat_terms =  get_terms( array(
+            'taxonomy'   => 'food-category',
+            'meta_key'   => 'tax_position',
+            'orderby'    => 'meta_value_num',
+            'order'      => 'ASC',
+            'hide_empty' => false,
+       ) );
+
+       if ( is_wp_error( $food_cat_terms ) ) {
+            wp_send_json_error();
+       }
+
        $return_array = [];
        foreach ( $food_cat_terms as $term_key => $food_cat_term ) {
           $return_array[$food_cat_term->term_id] = (int) get_term_meta( $food_cat_term->term_id, 'tax_position', true  );
        }
-       wp_send_json_success( $return_array );
-       wp_die();
+        wp_send_json_success( $return_array );
+        wp_die();
+    }
+
+    /**
+     * Force admin taxonomy list queries to respect custom category order.
+     *
+     * @param WP_Term_Query $term_query Term query object.
+     * @return void
+     */
+    public function maybe_force_food_category_order( $term_query ) {
+        if ( ! is_admin() || ! $term_query instanceof WP_Term_Query ) {
+            return;
+        }
+
+        if ( ! function_exists( 'get_current_screen' ) ) {
+            return;
+        }
+
+        $screen = get_current_screen();
+        if ( empty( $screen ) || 'edit-tags' !== $screen->base || 'food-category' !== $screen->taxonomy ) {
+            return;
+        }
+
+        $taxonomies = isset( $term_query->query_vars['taxonomy'] ) ? (array) $term_query->query_vars['taxonomy'] : array();
+        if ( ! in_array( 'food-category', $taxonomies, true ) ) {
+            return;
+        }
+
+        $term_query->query_vars['meta_key']   = 'tax_position';
+        $term_query->query_vars['orderby']    = 'meta_value_num';
+        $term_query->query_vars['order']      = 'ASC';
+        $term_query->query_vars['hide_empty'] = false;
     }
     /**
      * Get the maximum tax_position for categories.
@@ -134,6 +185,10 @@ class RP_Food_Category_Sorting {
      */
     public function set_tax_order( $pieces, $taxonomies, $args ) {
         foreach ( $taxonomies as $taxonomy ) {
+            if ( 'food-category' !== $taxonomy ) {
+                continue;
+            }
+
             global $wpdb;
             $join_statement = " LEFT JOIN $wpdb->termmeta AS term_meta ON t.term_id = term_meta.term_id AND term_meta.meta_key = 'tax_position'";
             if ( ! $this->does_substring_exist( $pieces['join'], $join_statement ) ) {
@@ -163,20 +218,59 @@ class RP_Food_Category_Sorting {
         if ( ! check_ajax_referer( 'term_order_nonce', 'term_order_nonce', false ) ) {
             wp_send_json_error();
         }
-        $taxonomy_ordering_data = filter_var_array( wp_unslash( $_POST['taxonomy_ordering_data'] ), FILTER_SANITIZE_NUMBER_INT );
-        $base_index = filter_var( wp_unslash( $_POST['base_index'] ), FILTER_SANITIZE_NUMBER_INT ) ;
+        $taxonomy_ordering_data = isset( $_POST['taxonomy_ordering_data'] ) ? wp_unslash( $_POST['taxonomy_ordering_data'] ) : array();
+        $base_index             = isset( $_POST['base_index'] ) ? absint( wp_unslash( $_POST['base_index'] ) ) : 0;
+
+        if ( ! is_array( $taxonomy_ordering_data ) ) {
+            wp_send_json_error();
+        }
+
+        $updated = 0;
         foreach ( $taxonomy_ordering_data as $order_data ) {
+            if ( ! is_array( $order_data ) ) {
+                continue;
+            }
+
+            $term_id = isset( $order_data['term_id'] ) ? absint( $order_data['term_id'] ) : 0;
+            $order   = isset( $order_data['order'] ) ? absint( $order_data['order'] ) : 0;
+
+            if ( $term_id <= 0 || $order <= 0 ) {
+                continue;
+            }
+
             // Due to the way WordPress shows parent categories on multiple pages, we need to check if the parent category's position should be updated.
             // If the category's current position is less than the base index (i.e. the category shouldn't be on this page), then don't update it.
             if ( $base_index > 0 ) {
-                $current_position = get_term_meta( $order_data['term_id'], 'tax_position', true );
+                $current_position = get_term_meta( $term_id, 'tax_position', true );
                 if ( (int) $current_position < (int) $base_index ) {
                     continue;
                 }
             }
-            update_term_meta( $order_data['term_id'], 'tax_position', ( (int) $order_data['order'] + (int) $base_index ) );
+
+            update_term_meta( $term_id, 'tax_position', ( $order + $base_index ) );
+            global $wpdb;
+            $wpdb->update(
+                $wpdb->term_taxonomy,
+                array( 'term_order' => ( $order + $base_index ) ),
+                array(
+                    'term_id'  => $term_id,
+                    'taxonomy' => 'food-category',
+                ),
+                array( '%d' ),
+                array( '%d', '%s' )
+            );
+            $updated++;
         }
-        wp_send_json_success();
+
+        if ( 0 === $updated ) {
+            wp_send_json_error();
+        }
+
+        wp_send_json_success(
+            array(
+                'updated' => $updated,
+            )
+        );
     }
     /**
      * Sort categories on Frontend as per new sorting order
