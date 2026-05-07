@@ -68,11 +68,27 @@ class RP_Food_Category_Sorting {
      * @return void
      */
     public function set_default_term_order( $tax_slug ) {
-        $terms = get_terms( $tax_slug, array( 'hide_empty' => false ) );
+        $terms = get_terms(
+            array(
+                'taxonomy'   => $tax_slug,
+                'hide_empty' => false,
+                'fields'     => 'ids',
+            )
+        );
+
+        if ( is_wp_error( $terms ) || empty( $terms ) ) {
+            return;
+        }
+
         $order = $this->get_max_taxonomy_order( $tax_slug );
         foreach ( $terms as $term ) {
-            if ( ! get_term_meta( $term->term_id, 'tax_position', true ) ) {
-                update_term_meta( $term->term_id, 'tax_position', $order );
+            $term_id = absint( $term );
+            if ( $term_id <= 0 ) {
+                continue;
+            }
+
+            if ( ! get_term_meta( $term_id, 'tax_position', true ) ) {
+                update_term_meta( $term_id, 'tax_position', $order );
                 $order++;
             }
         }
@@ -133,9 +149,13 @@ class RP_Food_Category_Sorting {
             return;
         }
 
-        $term_query->query_vars['meta_key']   = 'tax_position';
-        $term_query->query_vars['orderby']    = 'meta_value_num';
-        $term_query->query_vars['order']      = 'ASC';
+        /**
+         * Keep empty categories visible in admin list.
+         *
+         * Do not force `meta_key=tax_position` here, because terms without that meta
+         * are excluded by WP_Term_Query and appear as if they were removed.
+         * Ordering is handled separately via `terms_clauses` using a LEFT JOIN.
+         */
         $term_query->query_vars['hide_empty'] = false;
     }
     /**
