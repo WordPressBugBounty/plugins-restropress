@@ -391,7 +391,13 @@ class RPRESS_Customer_Query {
 	 */
 	protected function construct_request_fields() {
 		if ( $this->query_vars['count'] ) {
-			return "COUNT($this->primary_key) AS count";
+			$has_meta_join = ! empty( $this->meta_query_clauses['join'] ) || ( ! empty( $this->query_vars['email'] ) && ! is_array( $this->query_vars['email'] ) );
+
+			if ( $has_meta_join ) {
+				return "COUNT(DISTINCT $this->table_name.$this->primary_key) AS count";
+			}
+
+			return "COUNT($this->table_name.$this->primary_key) AS count";
 		}
 		return "$this->table_name.*";
 	}
@@ -527,6 +533,10 @@ class RPRESS_Customer_Query {
 	 * @return string SQL groupby segment.
 	 */
 	protected function construct_request_groupby() {
+		if ( $this->query_vars['count'] ) {
+			return '';
+		}
+
 		if ( ! empty( $this->meta_query_clauses['join'] ) || ( ! empty( $this->query_vars['email'] ) && ! is_array( $this->query_vars['email'] ) ) ) {
 			return "$this->table_name.$this->primary_key";
 		}

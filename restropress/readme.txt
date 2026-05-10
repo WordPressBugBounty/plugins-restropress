@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
 Tested up to: 6.9.4
-Stable tag: 3.2.8.6.2.1
+Stable tag: 3.2.8.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -121,7 +121,31 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Changelog ==
 
-= = Version 3.2.8.6.2.1(2026-05-07) =
+= Version 3.2.8.7(2026-05-09) =
+* Updated: Plugin version bump to 3.2.8.7
+* Fixed: Cart summary totals and fees now refresh reliably after AJAX cart, service, and gateway changes.
+* Improved: Mobile cart, service modal, add-button, food-card, and customer-dashboard layouts across responsive breakpoints.
+* Added: Frontend setting support to show or hide add buttons and trigger add flow from food-card clicks.
+* Fixed: Food categories without `tax_position` metadata now stay visible in the admin category list.
+* Added: Currency setting `Currency Value Type` with Round/Float options, defaulting to Float, and applied the selected value format across backend and frontend currency output.
+* Added: Default Button Style now supports the new `Border Radius` option for frontend submit buttons.
+* Fixed: `Plain Text` Default Button Style now makes frontend submit buttons behave like links with no background or border.
+* Fixed: Frontend submit buttons now inherit the configured dynamic theme color and default button style, excluding food item Add buttons.
+* Fixed: Checkout cart remove button now uses the configured dynamic color and displays a matching cross icon.
+* Fixed: Checkout Place Order loader now centers inside the button while submitting.
+* Improved: `[order_history]` shortcode output with a modernized order-history design, better load-more rows, and mobile responsive fixes.
+* Improved: Customer dashboard profile, order list, saved-address, and account sections now stack and scale cleanly on mobile.
+* Fixed: Confirmation page live order statuses now use the updated GIF set for accepted, pending, preparing food, delivered, delivery boy, cancelled, and ready statuses.
+* Improved: Frontend section backgrounds, labels, links, dashboard controls, checkout panels, order-history cards, and receipt surfaces now inherit dynamic Theme Color tones.
+* Fixed: Dynamic Theme Color CSS is now scoped to RestroPress frontend elements only, preventing WordPress theme, WordPress element, and third-party plugin color overrides.
+* Added: Customer table now includes bulk actions to move customers to trash, restore trashed customers, or delete permanently.
+* Added: Customer list now shows `All` and `Trash` views with status-aware row actions.
+* Fixed: Deleting a customer now moves the customer to trash instead of permanently deleting by default.
+* Improved: Customer notices now include move-to-trash and restore confirmations.
+* Improved: Existing customer records with matching email are automatically restored when new orders are created for that email.
+* Code Cleanup
+
+= Version 3.2.8.6.2.1(2026-05-07) =
 * Fixed: Food category remove issue fixed for admin dashboard
 
 = Version 3.2.8.6.2(2026-04-24) =
@@ -213,7 +237,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.2.8.6.2.1 =
+= 3.2.8.7 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

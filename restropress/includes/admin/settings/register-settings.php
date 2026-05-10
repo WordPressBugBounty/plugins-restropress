@@ -406,6 +406,17 @@ function rpress_get_registered_settings()
 							'after' => esc_html__('After - 10$', 'restropress'),
 						),
 					),
+					'currency_value_type' => array(
+						'id' => 'currency_value_type',
+						'name' => esc_html__('Currency Value Type', 'restropress'),
+						'desc' => esc_html__('Choose whether currency values display as decimal amounts or rounded whole amounts.', 'restropress'),
+						'type' => 'select',
+						'options' => array(
+							'float' => esc_html__('Float', 'restropress'),
+							'round' => esc_html__('Round', 'restropress'),
+						),
+						'std' => 'float',
+					),
 					'thousands_separator' => array(
 						'id' => 'thousands_separator',
 						'name' => esc_html__('Thousands Separator', 'restropress'),
@@ -902,6 +913,17 @@ function rpress_get_registered_settings()
 						'desc' => esc_html__('Choose the style you want to use for the Add Buttons.', 'restropress'),
 						'type' => 'select',
 						'options' => rpress_get_add_button_styles(),
+					),
+					'add_button_visibility' => array(
+						'id' => 'add_button_visibility',
+						'name' => esc_html__('Add Button', 'restropress'),
+						'desc' => esc_html__('Choose whether to show or hide the add button on frontend food items.', 'restropress'),
+						'type' => 'select',
+						'options' => array(
+							'show' => esc_html__('Show', 'restropress'),
+							'hide' => esc_html__('Hide', 'restropress'),
+						),
+						'std' => 'show',
 					),
 					'add_button_background_color' => array(
 						'id' => 'add_button_background_color',

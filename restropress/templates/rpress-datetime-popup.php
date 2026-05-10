@@ -81,6 +81,17 @@ foreach ( $popup_services as $popup_service ) {
                                     <ul class="nav nav-pills order-online-servicetabs" id="rpressdeliveryTab" role="tablist">
 										<?php foreach ( $popup_services as $popup_service ) : ?>
                                             <?php $is_active = ( $popup_service === $service_type ); ?>
+                                            <?php
+                                            $popup_service_label = apply_filters(
+                                                'rpress_modify_service_label',
+                                                rpress_service_label( $popup_service )
+                                            );
+                                            $popup_service_text = trim( wp_strip_all_tags( (string) $popup_service_label ) );
+                                            if ( '' === $popup_service_text ) {
+                                                $popup_service_text = ucfirst( (string) $popup_service );
+                                            }
+                                            $popup_service_icon_class = ( 'pickup' === $popup_service ) ? 'fa fa-shopping-bag' : 'fa fa-truck';
+                                            ?>
                                             <li class="nav-item <?php echo $is_active ? 'active' : ''; ?>" role="presentation">
                                                 <a
                                                     class="nav-link single-service-selected <?php echo $is_active ? 'active' : ''; ?>"
@@ -92,26 +103,10 @@ foreach ( $popup_services as $popup_service ) {
                                                     aria-controls="nav-<?php echo esc_attr( $popup_service ); ?>"
                                                     aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>"
                                                 >
-													<?php
-													$popup_service_label = apply_filters(
-														'rpress_modify_service_label',
-														rpress_service_label( $popup_service )
-													);
-													echo wp_kses(
-														$popup_service_label,
-														array(
-															'i' => array(
-																'class' => true,
-																'style' => true,
-															),
-															'br'   => array(),
-															'span' => array(
-																'class' => true,
-																'style' => true,
-															),
-														)
-													);
-													?>
+                                                    <span class="rpress-service-tab-inner">
+                                                        <i class="rpress-service-tab-icon <?php echo esc_attr( $popup_service_icon_class ); ?>" aria-hidden="true"></i>
+                                                        <span class="rpress-service-tab-label"><?php echo esc_html( $popup_service_text ); ?></span>
+                                                    </span>
                                                 </a>
                                             </li>
 										<?php endforeach; ?>

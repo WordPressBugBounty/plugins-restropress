@@ -28,8 +28,6 @@ function rpress_checkout_cart()
 		add_action('rpress_cart_footer_buttons', 'rpress_save_cart_button');
 	}
 	do_action('rpress_before_checkout_cart');
-
-	do_action('rpress_checkout_service_options');
 	echo '<div id="rpress_checkout_cart_wrap">';
 	do_action('rpress_checkout_cart_top');
 	rpress_get_template_part('checkout_cart');
@@ -48,6 +46,24 @@ function rpress_checkout_cart()
 function rpress_shopping_cart($echo = false)
 {
 	rpress_get_template_part('cart/cart');
+}
+
+/**
+ * Retrieve sidebar cart summary HTML (totals/charges/checkout row).
+ *
+ * @since 3.2.8.6.4
+ * @return string
+ */
+function rpress_get_cart_sidebar_summary_html() {
+	if ( ! rpress_get_cart_contents() && ! rpress_cart_has_fees() ) {
+		return '';
+	}
+
+	ob_start();
+	rpress_get_template_part( 'cart/checkout' );
+	$html = ob_get_clean();
+
+	return (string) apply_filters( 'rpress_cart_sidebar_summary_html', $html );
 }
 /**
  * Get Cart Item Template
@@ -72,6 +88,22 @@ function rpress_get_cart_item_template($cart_key, $item, $ajax = false, $data_ke
 	$item_subtotal = isset($item['price']) ? $item['price'] : '';
 	$price = rpress_get_cart_item_price($id, $item, array(), $price_id, false, $item_subtotal);
 	$addon_itm = get_addon_item_formatted($item);
+	$item_thumbnail = '';
+	$image_placeholder = rpress_get_option( 'enable_image_placeholder', false );
+	if ( has_post_thumbnail( $id ) ) {
+		$item_thumbnail = '<span class="rpress-cart-item-thumb">' . get_the_post_thumbnail(
+			$id,
+			'thumbnail',
+			array(
+				'class'    => 'rpress-cart-item-thumb-img',
+				'loading'  => 'lazy',
+				'decoding' => 'async',
+			)
+		) . '</span>';
+	} elseif ( $image_placeholder == 1 ) {
+		$image_src = RP_PLUGIN_URL . 'assets/images/no-image.png';
+		$item_thumbnail = '<span class="rpress-cart-item-thumb"><img class="rpress-cart-item-thumb-img rpress-cart-item-thumb-placeholder" src="' . esc_url( $image_src ) . '" alt="" loading="lazy" decoding="async" /></span>';
+	}
 	$instruction = get_special_instruction($item);
 	$item_qty = rpress_get_item_qty_by_key($cart_key);
 	ob_start();
@@ -82,6 +114,7 @@ function rpress_get_cart_item_template($cart_key, $item, $ajax = false, $data_ke
 	$item = str_replace('{item_amount}', $price, $item);
 	$item = str_replace('{item_formated_amount}', rpress_currency_filter(rpress_format_amount($price)), $item);
 	$item = str_replace('{addon_items}', $addon_itm, $item);
+	$item = str_replace('{item_thumbnail}', $item_thumbnail, $item);
 	$item = str_replace('{cart_item_id}', absint($cart_key), $item);
 	$item = str_replace('{item_id}', absint($id), $item);
 	$item = str_replace('{remove_url}', $remove_url, $item);

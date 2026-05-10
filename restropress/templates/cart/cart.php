@@ -48,20 +48,17 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 		</div>
 	</div>
 	<div class="rpress-sidebar-main-wrap">
-		<i class="fa fa-times close-cart-ic" aria-hidden="true"></i>
 		<div class="rpress-sidebar-cart-wrap <?php echo empty($cart_items) ? 'empty-cart' : ''; ?>">
-			<?php if ($cart_items): ?>
-				<div class="rpress item-order">
-					<h4><?php echo esc_html(apply_filters('rpress_cart_title', __('Your Order', 'restropress'))); ?>
-					</h4>
-					<span>
-						<span class="rpress-cart-quantity">
-							<?php echo esc_html(rpress_get_cart_quantity()); ?>
-						</span>
+			<div class="rpress item-order">
+				<h4><?php echo esc_html(apply_filters('rpress_cart_title', __('Your Order', 'restropress'))); ?></h4>
+				<div class="rpress-cart-head-right">
+					<span class="rpress-cart-head-count" <?php echo wp_kses_post($display); ?>>
+						<span class="rpress-cart-quantity"><?php echo esc_html(rpress_get_cart_quantity()); ?></span>
 						<?php esc_html_e('items', 'restropress'); ?>
 					</span>
+					<i class="fa fa-times close-cart-ic" aria-hidden="true"></i>
 				</div>
-			<?php endif; ?>
+			</div>
 			<ul class="rpress-cart">
 				<?php if ($cart_items): ?>
 					<?php foreach ($cart_items as $key => $item): ?>
@@ -85,11 +82,18 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 						echo wp_kses(rpress_get_cart_item_template($key, $item, false, $data_key = ''), $allowed_html);
 						?>
 					<?php endforeach; ?>
-					<?php rpress_get_template_part('cart/checkout'); ?>
 				<?php else: ?>
 					<?php rpress_get_template_part('cart/empty'); ?>
 				<?php endif; ?>
 			</ul>
+			<div class="rpress-cart-summary-area">
+				<?php
+				$summary_html = function_exists( 'rpress_get_cart_sidebar_summary_html' ) ? rpress_get_cart_sidebar_summary_html() : '';
+				if ( ! empty( $summary_html ) ) {
+					echo wp_kses_post( $summary_html );
+				}
+				?>
+			</div>
 		</div>
 	</div>
 </div>

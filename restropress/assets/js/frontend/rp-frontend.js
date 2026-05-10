@@ -37,6 +37,40 @@ function rp_clearCookie(cname) {
 function rp_is_old_ui_ux_enabled() {
   return (typeof rp_scripts !== 'undefined') && String(rp_scripts.old_ui_ux || '') === '1';
 }
+function rp_format_currency_value(value) {
+  var numeric = parseFloat(value);
+  if (isNaN(numeric)) {
+    numeric = 0;
+  }
+
+  var decimalPlaces = parseInt(rp_scripts.currency_decimals, 10);
+  if (isNaN(decimalPlaces)) {
+    decimalPlaces = 2;
+  }
+
+  if (String(rp_scripts.currency_value_type || 'float') === 'round') {
+    decimalPlaces = 0;
+    numeric = Math.round(numeric);
+  }
+
+  var amount = numeric.toFixed(decimalPlaces);
+  var decimalSeparator = rp_scripts.decimal_separator || '.';
+  var thousandsSeparator = rp_scripts.thousands_separator || ',';
+
+  if (decimalSeparator !== '.') {
+    amount = amount.split('.').join(decimalSeparator);
+  }
+
+  var amountParts = amount.split(decimalSeparator);
+  amountParts[0] = amountParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSeparator);
+  amount = amountParts.join(decimalSeparator);
+
+  if (rp_scripts.currency_pos === 'before') {
+    return rp_scripts.currency_sign + amount;
+  }
+
+  return amount + rp_scripts.currency_sign;
+}
 function rp_clear_old_ui_service_cookies() {
   var cookieKeys = [
     'service_type',
@@ -201,21 +235,9 @@ function update_modal_live_price(fooditem_container) {
   /* Updating as per current quantity */
   total_price = single_price * quantity;
   /* Update the price in Submit Button */
-  if (rp_scripts.decimal_separator == ',') {
-    total_price_v = total_price.toFixed(2)
-      .split('.')
-      .join(',');
-  } else {
-    total_price_v = total_price.toFixed(2);
-  }
-  if (rp_scripts.currency_pos === 'before') {
-    jQuery('#rpressModal .cart-item-price')
-      .html(rp_scripts.currency_sign + total_price_v);
-  }
-  else {
-    jQuery('#rpressModal .cart-item-price')
-      .html(total_price_v + rp_scripts.currency_sign);
-  }
+  total_price_v = rp_format_currency_value(total_price);
+  jQuery('#rpressModal .cart-item-price')
+    .html(total_price_v);
 
   jQuery('#rpressModal .cart-item-price')
     .attr('data-current', single_price.toFixed(2));
@@ -324,7 +346,7 @@ jQuery(function ($) {
     // If no modal is actually visible, force-clear stale overlays/locks.
     if (!modalVisible && (hasStaleOpenState || $overlays.length > 0 || bodyLocked)) {
       $modals
-        .removeClass('is-open loading show-service-options show-order-details')
+        .removeClass('is-open loading show-service-options show-order-details rpress-order-details-context')
         .attr('aria-hidden', 'true');
 
       $('html, body')
@@ -402,7 +424,7 @@ jQuery(function ($) {
 
     var formattedTotal = (typeof total === 'string' && total.length)
       ? total
-      : (rp_scripts.currency_sign + '0.00');
+      : rp_format_currency_value(0);
 
     $('.rp-mb-price').text(formattedTotal);
     $('.rp-mb-quantity').text(parsedQty);
@@ -419,11 +441,60 @@ jQuery(function ($) {
     $('.container-actionmenu').toggleClass('cart-has-items', hasItems);
   }
 
+  function rp_refresh_sidebar_cart_summary(summaryHtml) {
+    var $summaryTarget = $('.rpress-cart-summary-area').first();
+    if ($summaryTarget.length) {
+      $summaryTarget.html((typeof summaryHtml === 'string') ? summaryHtml : '');
+      return;
+    }
+
+    var $cart = $('ul.rpress-cart');
+    if (!$cart.length) {
+      return;
+    }
+
+    $cart.find('div.rpress-cart-total-wrap, li.cart_item.rpress_checkout, li.cart_item.rpress_subtotal, li.cart_item.rpress_cart_tax, li.cart_item.rpress_user_discount, li.cart_item.rpress_cart_fee, li.cart_item.rpress_total, li.rpress-delivery-fee')
+      .remove();
+
+    if (typeof summaryHtml === 'string' && summaryHtml.length) {
+      $cart.append(summaryHtml);
+    }
+  }
+
+  function rp_ensure_order_details_modal() {
+    var $modal = $('#rpressModal').first();
+    if ($modal.length) {
+      return $modal;
+    }
+
+    var modalHtml = [
+      '<div class="modal micromodal-slide" id="rpressModal" aria-hidden="true">',
+      '  <div class="modal__overlay" tabindex="-1" data-micromodal-close>',
+      '    <div class="modal__container modal-content" role="dialog" aria-modal="true">',
+      '      <header class="modal__header modal-header">',
+      '        <h2 class="modal__title modal-title"></h2>',
+      '        <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>',
+      '      </header>',
+      '      <main class="modal__content modal-body"></main>',
+      '    </div>',
+      '  </div>',
+      '</div>'
+    ].join('');
+
+    $('body').append(modalHtml);
+    return $('#rpressModal').first();
+  }
+
   // Show order details on popup
   $(document)
     .on('click', '.rpress-view-order-btn', function (e) {
       e.preventDefault();
       var self = $(this);
+      var $modal = rp_ensure_order_details_modal();
+      if (!$modal.length) {
+        return;
+      }
+      var isDashboardOrHistory = self.closest('.user-dashboard-wrapper, #rpress_user_history').length > 0;
       var action = 'rpress_show_order_details';
       var order_id = self.attr('data-order-id');
       var data = {
@@ -431,8 +502,13 @@ jQuery(function ($) {
         order_id: order_id,
         security: rp_scripts.order_details_nonce
       };
-      $('#rpressModal')
+      $modal
         .addClass('show-order-details');
+      if (isDashboardOrHistory) {
+        $modal.addClass('rpress-order-details-context');
+      } else {
+        $modal.removeClass('rpress-order-details-context');
+      }
       $.ajax({
         type: "POST",
         data: data,
@@ -449,14 +525,42 @@ jQuery(function ($) {
             .removeClass('rp-text-visibility');
         },
         success: function (response) {
-          $('#rpressModal .modal__container')
+          if (!response || response.success !== true || !response.data || typeof response.data.html !== 'string') {
+            return;
+          }
+          $modal.find('.modal__container')
             .html(response.data.html);
-          MicroModal.show('rpressModal', {
-            disableScroll: true
-          });
+          if (typeof MicroModal !== 'undefined' && typeof MicroModal.show === 'function') {
+            MicroModal.show('rpressModal', {
+              disableScroll: true
+            });
+          } else {
+            $modal
+              .addClass('is-open')
+              .attr('aria-hidden', 'false');
+            $('html, body')
+              .addClass('modal-open')
+              .css('overflow', 'hidden');
+          }
+        },
+        error: function () {
+          $modal.removeClass('show-order-details rpress-order-details-context');
         }
       })
     });
+  $(document).on('click', '#rpressModal.show-order-details .modal__close', function (e) {
+    e.preventDefault();
+    if (typeof MicroModal !== 'undefined' && typeof MicroModal.close === 'function') {
+      MicroModal.close('rpressModal');
+    } else {
+      $('#rpressModal')
+        .removeClass('is-open show-order-details rpress-order-details-context')
+        .attr('aria-hidden', 'true');
+      $('html, body')
+        .removeClass('modal-open')
+        .css('overflow', '');
+    }
+  });
   // Sticky category menu on mobile
   $(window)
     .resize(function () {
@@ -756,7 +860,19 @@ jQuery(function ($) {
       var $dateSelect = $(this);
       rp_ensure_select_placeholder($dateSelect, 'Select a date');
       if (!selectedServiceDate) {
-        $dateSelect.val('');
+        var $selectableDateOptions = $dateSelect.find('option')
+          .filter(function () {
+            var optionValue = ($(this).val() || '').toString().trim();
+            return optionValue !== '' && !$(this).prop('disabled');
+          });
+
+        // When preorder is not enabled, date select typically has one valid option (today).
+        // In that case auto-select it instead of keeping the placeholder selected.
+        if ($selectableDateOptions.length === 1) {
+          $dateSelect.val($selectableDateOptions.first().val());
+        } else {
+          $dateSelect.val('');
+        }
       }
     });
 
@@ -1003,6 +1119,20 @@ jQuery(function ($) {
           $wrapper.find('.delivery-settings-wrapper').removeClass('active show');
           $wrapper.find(targetPane).addClass('active show');
         }
+
+        var serviceHeadingLabel = ($serviceTab.find('.rpress-service-tab-label').first().text() || $serviceTab.text() || '')
+          .toString()
+          .trim();
+        var $serviceHeading = $wrapper.find('.rpress-checkout-service-heading').first();
+        if ($serviceHeading.length) {
+          $serviceHeading
+            .removeClass('is-service-delivery is-service-pickup')
+            .addClass('is-service-' + normalizedServiceType);
+          if (serviceHeadingLabel) {
+            $serviceHeading.find('.rpress-checkout-service-heading-text')
+              .text(serviceHeadingLabel);
+          }
+        }
       }
     });
 
@@ -1074,6 +1204,30 @@ jQuery(function ($) {
   window.rp_is_old_ui_ux_enabled = rp_is_old_ui_ux_enabled;
   window.rp_clear_old_ui_service_cookies = rp_clear_old_ui_service_cookies;
   window.rp_prepare_old_ui_modal_selection = rp_prepare_old_ui_modal_selection;
+
+  // When add button is hidden, clicking a food card should behave like clicking add button.
+  $(document).on('click', 'body.rpress-add-button-hidden .rpress-section .rpress_fooditem', function (e) {
+    var $target = $(e.target);
+    if ($target.closest('a, button, input, select, textarea, label, .rpress_fooditem_buy_button, .rpress_purchase_submit_wrapper, .rpress_fooditem_quantity_wrapper, .rpress-thumbnail-popup').length) {
+      return;
+    }
+
+    var $card = $(this);
+    if ($card.hasClass('product_not_available')) {
+      return;
+    }
+
+    var $addButton = $card.find('.rpress-add-to-cart')
+      .first();
+
+    if (!$addButton.length || $addButton.hasClass('rp-loading') || $addButton.prop('disabled')) {
+      return;
+    }
+
+    e.preventDefault();
+    $addButton.trigger('click');
+  });
+
   // Add to Cart
   $('.rpress-add-to-cart')
     .click(function (e) {
@@ -1111,10 +1265,14 @@ jQuery(function ($) {
             if (!response || !response.data) {
               return;
             }
-            $('#rpressModal .modal-title').html(response.data.html_title || '');
-            $('#rpressModal .modal-body').html(response.data.html || '');
+            var $modal = $('#rpressModal');
+            $modal
+              .attr('data-pending-fooditem-id', fooditem_id || '')
+              .attr('data-service-modal-context', 'add-to-cart');
+            $modal.find('.modal-title').html(response.data.html_title || '');
+            $modal.find('.modal-body').html(response.data.html || '');
             if (typeof window.rp_prepare_old_ui_modal_selection === 'function') {
-              window.rp_prepare_old_ui_modal_selection($('#rpressModal .modal-body'));
+              window.rp_prepare_old_ui_modal_selection($modal.find('.modal-body'));
             }
             MicroModal.show('rpressModal', {
               disableScroll: true
@@ -1619,38 +1777,12 @@ jQuery(function ($) {
               $('ul.rpress-cart')
                 .find('li.cart_item.rpress-cart-meta.rpress_subtotal')
                 .remove();
-              var $target = $('ul.rpress-cart div.rpress-cart-total-wrap');
-
-              if ($target.length) {
-                $(response.cart_item).insertBefore($target);
-              } else {
-                $(response.cart_item).insertBefore('ul.rpress-cart li.cart_item.rpress_total');
-              }
+              $('ul.rpress-cart').append(response.cart_item);
               if (float_menu.length > 0) {
                 float_menu.addClass("cart-has-items");
               }
 
-              if ($('.rpress-cart')
-                .find('.rpress-cart-meta.rpress_subtotal')
-                .is(':first-child')) {
-                $(this)
-                  .hide();
-              }
               rp_update_mobile_cart_summary(response.total, response.cart_quantity);
-              $('.cart_item.rpress-cart-meta.rpress_total')
-                .find('.cart-total')
-                .text(response.total);
-              $('.cart_item.rpress-cart-meta.rpress_subtotal')
-                .find('.subtotal')
-                .text(response.total);
-              $('.cart_item.rpress-cart-meta.rpress_total')
-                .css('display', 'block');
-              $('.cart_item.rpress-cart-meta.rpress_subtotal')
-                .css('display', 'block');
-              $('.cart_item.rpress_checkout')
-                .addClass(rp_scripts.button_color);
-              $('.cart_item.rpress_checkout')
-                .css('display', 'block');
               if (serviceType !== undefined) {
                 serviceLabel = window.localStorage.getItem('serviceLabel');
                 var orderInfo = '<span class="delMethod">' + serviceLabel + ', ' + serviceDate + '</span>';
@@ -1674,39 +1806,11 @@ jQuery(function ($) {
               }
               $('.delivery-items-options')
                 .css('display', 'block');
-              var subTotal = '<li class="cart_item rpress-cart-meta rpress_subtotal">' + rp_scripts.total_text + '<span class="cart-subtotal">' + response.subtotal + '</span></li>';
-              if (response.subtotal) {
-                var cartLastChild = $('ul.rpress-cart>li.rpress-cart-item:last');
-                $(subTotal).insertAfter(cartLastChild);
-              }
-              $('.cart_item.rpress-cart-meta.rpress_total')
-                .find('.rpress-cart-quantity')
-                .text(response.cart_quantity);
-              if (response.taxes) {
-                var taxHtml = '<li class="cart_item rpress-cart-meta rpress_cart_tax">' + rp_scripts.estimated_tax + '<span class="cart-tax">' + response.taxes + '</span></li>';
-                $(taxHtml)
-                  .insertBefore('ul.rpress-cart li.cart_item.rpress_total');
-              }
-              if (response.taxes === undefined) {
-                $('ul.rpress-cart')
-                  .find('.cart_item.rpress-cart-meta.rpress_subtotal')
-                  .remove();
-                var cartLastChild = $('ul.rpress-cart>li.rpress-cart-item:last');
-                $(subTotal).insertAfter(cartLastChild);
-              }
               if ($('div.rpress.item-order').length == 0) {
                 var orderitems = $('<div class="rpress item-order"><h4>Ordered menu</h4><span>1 items</span></div>');
                 $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').removeClass('empty-cart');
                 $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').prepend(orderitems);
               }
-              $(document.body)
-                .trigger('rpress_added_to_cart', [response]);
-              $('ul.rpress-cart')
-                .find('.cart-total')
-                .html(response.total);
-              $('ul.rpress-cart')
-                .find('.cart-subtotal')
-                .html(response.subtotal);
               if ($('li.rpress-cart-item')
                 .length > 0) {
                 $('a.rpress-clear-cart')
@@ -1715,17 +1819,8 @@ jQuery(function ($) {
                 $('a.rpress-clear-cart')
                   .hide();
               }
-              // Target subtotal and total li elements
-              var $subtotal = $('.rpress-cart .rpress_subtotal');
-              var $tax = $('ul.rpress-cart li.rpress_cart_tax');
-              var $total = $('.rpress-cart .rpress_total');
-
-              // Remove any previously added wrapper
-              $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').find('.rpress-cart-total-wrap').children().unwrap();
-
-              // Wrap them together only if they exist
-              if ($subtotal.length && $total.length) {
-                $subtotal.add($tax).add($total).wrapAll('<div class="rpress-cart-total-wrap"></div>');
+              if (typeof response.cart_summary === 'string') {
+                rp_refresh_sidebar_cart_summary(response.cart_summary);
               }
               $(document.body)
                 .trigger('rpress_added_to_cart', [response]);
@@ -1815,6 +1910,9 @@ jQuery(function ($) {
                 .find('.cart-tax')
                 .html(response.tax);
               rp_update_mobile_cart_summary(response.total, response.cart_quantity);
+              if (typeof response.cart_summary === 'string') {
+                rp_refresh_sidebar_cart_summary(response.cart_summary);
+              }
               $(document.body)
                 .trigger('rpress_items_updated', [response]);
               MicroModal.close('rpressModal');
@@ -1829,7 +1927,14 @@ jQuery(function ($) {
     .on('click', '.rpress-delivery-opt-update', function (e) {
       e.preventDefault();
       var _self = $(this);
-      var foodItemId = _self.attr('data-food-id');
+      var foodItemId = (_self.attr('data-food-id') || '')
+        .toString()
+        .trim();
+      if (!foodItemId) {
+        foodItemId = ($('#rpressModal').attr('data-pending-fooditem-id') || '')
+          .toString()
+          .trim();
+      }
       var $updateScope = _self.parents('.rpress-tabs-wrapper')
         .first();
       if (!$updateScope.length) {
@@ -1947,8 +2052,12 @@ jQuery(function ($) {
               $('#rpress_fooditem_' + foodItemId)
                 .find('.rpress-add-to-cart')
                 .trigger('click');
+              $('#rpressModal')
+                .removeAttr('data-pending-fooditem-id data-service-modal-context');
               MicroModal.close('rpressModal');
             } else {
+              $('#rpressModal')
+                .removeAttr('data-pending-fooditem-id data-service-modal-context');
               if (jQuery('#rpressModal').length) {
                 MicroModal.close('rpressModal');
               }
@@ -1964,6 +2073,12 @@ jQuery(function ($) {
             }
 
             //Trigger checked slot event so that it can be used by theme/plugins
+            if (typeof response.total !== 'undefined') {
+              rp_update_mobile_cart_summary(response.total, response.cart_quantity);
+            }
+            if (typeof response.cart_summary === 'string') {
+              rp_refresh_sidebar_cart_summary(response.cart_summary);
+            }
             $(document.body)
               .trigger('rpress_checked_slots', [response]);
             // Refresh checkout fragments without forcing a full page reload loop.
@@ -2110,6 +2225,12 @@ jQuery(function ($) {
             }
 
             //Trigger checked slot event so that it can be used by theme/plugins
+            if (typeof response.total !== 'undefined') {
+              rp_update_mobile_cart_summary(response.total, response.cart_quantity);
+            }
+            if (typeof response.cart_summary === 'string') {
+              rp_refresh_sidebar_cart_summary(response.cart_summary);
+            }
             $(document.body)
               .trigger('rpress_checked_slots', [response]);
             // Refresh checkout fragments without forcing a full page reload loop.
@@ -2354,6 +2475,9 @@ jQuery(function ($) {
               .html(response.cart_quantity);
             $('.cart_item.rpress_total span.cart-total')
               .html(response.total);
+            if (typeof response.cart_summary === 'string') {
+              rp_refresh_sidebar_cart_summary(response.cart_summary);
+            }
             if (response.cart_quantity == 0) {
               $('li.rpress-cart-meta, .cart_item.rpress_subtotal, .rpress-cart-number-of-items, .cart_item.rpress_checkout, .cart_item.rpress_cart_tax, .cart_item.rpress_total')
                 .hide();
@@ -2430,11 +2554,13 @@ jQuery(function ($) {
           },
           success: function (response) {
             if (response.status == 'success') {
-              rp_update_mobile_cart_summary(`${rp_scripts.currency_sign}0.00`, 0);
+              rp_update_mobile_cart_summary(rp_format_currency_value(0), 0);
               $(document.body)
                 .trigger('rpress_quantity_updated', [0]);
               $(".rpress-sidebar-main-wrap")
-                .css("left", "100%");
+                .css("left", "100%")
+                .removeClass('rp-cart-drawer-open');
+              $('body').removeClass('rp-mobile-cart-open');
               $('ul.rpress-cart')
                 .find('li.cart_item.rpress_total')
                 .css('display', 'none');
@@ -2456,6 +2582,7 @@ jQuery(function ($) {
               $('ul.rpress-cart')
                 .find('li.rpress-delivery-fee')
                 .remove();
+              rp_refresh_sidebar_cart_summary('');
               $('ul.rpress-cart')
                 .append(response.response);
               $('.rpress-cart-number-of-items')
@@ -2528,10 +2655,41 @@ jQuery(function ($) {
       $('div.rpress-filter-wrapper')
         .toggleClass('active');
     });
+  function rp_get_mobile_cart_quantity_value() {
+    var quantityText = $('.rp-mb-quantity').first().text();
+    var quantity = parseInt(quantityText, 10);
+
+    if (isNaN(quantity) || quantity < 0) {
+      quantity = 0;
+    }
+
+    return quantity;
+  }
+
+  function rp_open_mobile_cart_drawer() {
+    $(".rpress-sidebar-main-wrap")
+      .css("left", "0%")
+      .addClass('rp-cart-drawer-open');
+    $('body').addClass('rp-mobile-cart-open');
+    $('.rpress-mobile-cart-icons').hide();
+  }
+
+  function rp_close_mobile_cart_drawer() {
+    $(".rpress-sidebar-main-wrap")
+      .css("left", "100%")
+      .removeClass('rp-cart-drawer-open');
+    $('body').removeClass('rp-mobile-cart-open');
+
+    if (rp_get_mobile_cart_quantity_value() > 0) {
+      $('.rpress-mobile-cart-icons').css('display', 'flex');
+    } else {
+      $('.rpress-mobile-cart-icons').hide();
+    }
+  }
+
   $(".rp-cart-left-wrap")
     .click(function () {
-      $(".rpress-sidebar-main-wrap")
-        .css("left", "0%");
+      rp_open_mobile_cart_drawer();
     });
   //Triggering cart
   $(".rp-cart-right-wrap")
@@ -2541,20 +2699,21 @@ jQuery(function ($) {
     });
   $(".close-cart-ic")
     .click(function () {
-      $(".rpress-sidebar-main-wrap")
-        .css("left", "100%");
+      rp_close_mobile_cart_drawer();
     });
   // Show Image on Modal
-  $(".rpress-thumbnail-popup")
-    .fancybox({
-      openEffect: 'elastic',
-      closeEffect: 'elastic',
-      helpers: {
-        title: {
-          type: 'inside'
+  if ($.fn.fancybox) {
+    $(".rpress-thumbnail-popup")
+      .fancybox({
+        openEffect: 'elastic',
+        closeEffect: 'elastic',
+        helpers: {
+          title: {
+            type: 'inside'
+          }
         }
-      }
-    });
+      });
+  }
   if ($(window)
     .width() > 991) {
     var totalHeight = $('header:eq(0)')
@@ -2975,7 +3134,6 @@ jQuery(function ($) {
         jQuery('input[name=' + fieldName + ']')
           .val(1);
         jQuery('.qtyminus')
-          .css('color', '#aaa')
           .css('cursor', 'not-allowed');
         liveQtyVal = 1;
       }
@@ -2993,15 +3151,9 @@ jQuery(function ($) {
       var total_price = parseFloat(jQuery('#rpressModal .cart-item-price')
         .attr('data-current'));
       var new_price = parseFloat(total_price * liveQtyVal);
-      if (rp_scripts.decimal_separator == ',') {
-        new_price_v = new_price.toFixed(2)
-          .split('.')
-          .join(',');
-      } else {
-        new_price_v = new_price.toFixed(2);
-      }
+      new_price_v = rp_format_currency_value(new_price);
       jQuery('#rpressModal .cart-item-price')
-        .html(rp_scripts.currency_sign + new_price_v);
+        .html(new_price_v);
     });
   jQuery(document)
     .on('click', '.qtyplus', function (e) {
@@ -3036,15 +3188,9 @@ jQuery(function ($) {
       var total_price = parseFloat(jQuery('#rpressModal .cart-item-price')
         .attr('data-current'));
       var new_price = parseFloat(total_price * liveQtyVal);
-      if (rp_scripts.decimal_separator == ',') {
-        new_price_v = new_price.toFixed(2)
-          .split('.')
-          .join(',');
-      } else {
-        new_price_v = new_price.toFixed(2);
-      }
+      new_price_v = rp_format_currency_value(new_price);
       jQuery('#rpressModal .cart-item-price')
-        .html(rp_scripts.currency_sign + new_price_v);
+        .html(new_price_v);
     });
   jQuery(document)
     .on("input", ".qty", function () {
@@ -3058,15 +3204,9 @@ jQuery(function ($) {
       var total_price = parseFloat(jQuery('#rpressModal .cart-item-price')
         .attr('data-current'));
       var new_price = parseFloat(total_price * liveQtyVal);
-      if (rp_scripts.decimal_separator == ',') {
-        new_price_v = new_price.toFixed(2)
-          .split('.')
-          .join(',');
-      } else {
-        new_price_v = new_price.toFixed(2);
-      }
+      new_price_v = rp_format_currency_value(new_price);
       jQuery('#rpressModal .cart-item-price')
-        .html(rp_scripts.currency_sign + new_price_v);
+        .html(new_price_v);
     });
 });
 jQuery(function ($) {
@@ -3503,6 +3643,20 @@ jQuery(function ($) {
           $wrapper.find('.delivery-settings-wrapper').removeClass('active show');
           $wrapper.find(targetTab).addClass('active show');
         }
+
+        var checkoutServiceLabel = ($activeServiceTab.find('.rpress-service-tab-label').first().text() || $activeServiceTab.text() || '')
+          .toString()
+          .trim();
+        var $checkoutServiceHeading = $wrapper.find('.rpress-checkout-service-heading').first();
+        if ($checkoutServiceHeading.length) {
+          $checkoutServiceHeading
+            .removeClass('is-service-delivery is-service-pickup')
+            .addClass('is-service-' + serviceType);
+          if (checkoutServiceLabel) {
+            $checkoutServiceHeading.find('.rpress-checkout-service-heading-text')
+              .text(checkoutServiceLabel);
+          }
+        }
       };
 
       var refreshCheckoutServiceOption = async function () {
@@ -3711,20 +3865,39 @@ jQuery(function ($) {
   // 
 });
 let page = 1;
+let rpressOrderHistoryLoading = false;
 const infinateCallback = async function (entries, observer) {
   for (var i = 0; i < entries.length; i++) {
     let cahnge = entries[i];
-    if (cahnge.isIntersecting) {
-      jQuery('#rp-order-history-infi-load-container')
+    if (cahnge.isIntersecting && !rpressOrderHistoryLoading) {
+      rpressOrderHistoryLoading = true;
+      const $loadContainer = jQuery('#rp-order-history-infi-load-container');
+      $loadContainer
         .html('<h2 class="rp-infi-load"><div class="rp-infi-loading">Loading...</div></h2>');
       page = page + 1;
-      const data = await fetch(`${rp_scripts.ajaxurl}?action=rpress_more_order_history&security=${rp_scripts.order_details_nonce}&paged=${page}`);
-      const html = await data.json();
-      jQuery('#rpress_user_history .repress-history-inner')
-        .append(html.data['html']);
-      if (html.data['found_post'] == '0') {
-        jQuery('#rp-order-history-infi-load-container')
-          .hide();
+      try {
+        const data = await fetch(`${rp_scripts.ajaxurl}?action=rpress_more_order_history&security=${rp_scripts.order_details_nonce}&paged=${page}`);
+        const html = await data.json();
+        const responseData = html && html.data ? html.data : {};
+        const $historyGrid = jQuery('#rpress_user_history .rpress-order-history-grid, #rpress_user_history .repress-history-inner')
+          .first();
+        if (responseData.html && $historyGrid.length) {
+          $historyGrid.append(responseData.html);
+        }
+        if (String(responseData.found_post || '0') === '0') {
+          $loadContainer.hide();
+          observer.unobserve(cahnge.target);
+        } else {
+          $loadContainer.empty();
+        }
+      } catch (error) {
+        page = Math.max(1, page - 1);
+        $loadContainer.empty();
+        if (window.console && window.console.log) {
+          console.log(error);
+        }
+      } finally {
+        rpressOrderHistoryLoading = false;
       }
     }
   }
@@ -3760,10 +3933,67 @@ jQuery(document).ready(function ($) {
 });
 
 jQuery(document).ready(function ($) {
-  const float_menu = $(".container-actionmenu");
-  if ($('.rpress-mobile-cart-icons').is(':visible')) {
-    float_menu.addClass("cart-has-items");
+  function rp_get_mobile_cart_quantity_from_dom() {
+    var selectors = [
+      '.rp-mb-quantity',
+      '.rpress-cart-head-count .rpress-cart-quantity',
+      'span.rpress-cart-quantity'
+    ];
+
+    for (var i = 0; i < selectors.length; i++) {
+      var rawValue = $(selectors[i]).first().text();
+      if (!rawValue) {
+        continue;
+      }
+
+      var parsedValue = parseInt(String(rawValue).replace(/[^0-9-]/g, ''), 10);
+      if (!isNaN(parsedValue) && parsedValue >= 0) {
+        return parsedValue;
+      }
+    }
+
+    var cartItemCount = $('ul.rpress-cart > li.rpress-cart-item').length;
+    return cartItemCount > 0 ? cartItemCount : 0;
   }
+
+  function rp_sync_mobile_cart_bar_state() {
+    var $mobileCartBar = $('.rpress-mobile-cart-icons');
+    var $actionMenuContainer = $('.container-actionmenu');
+    var $mobileCartDrawer = $('.rpress-sidebar-main-wrap');
+
+    if (!$mobileCartBar.length && !$actionMenuContainer.length) {
+      return;
+    }
+
+    var quantity = rp_get_mobile_cart_quantity_from_dom();
+    var hasItems = quantity > 0;
+    var isTransientlyHidden = $('body').hasClass('rp-mobile-cart-open') ||
+      $('body').hasClass('cd-overlay-open') ||
+      $('.cd-dropdown').hasClass('dropdown-is-active') ||
+      $('#rpressDateTime.is-open, #rpressModal.is-open, #rpressDateTime[aria-hidden="false"], #rpressModal[aria-hidden="false"]').length > 0;
+
+    if ($mobileCartBar.length) {
+      if (!hasItems) {
+        $mobileCartDrawer
+          .css('left', '100%')
+          .removeClass('rp-cart-drawer-open');
+        $('body').removeClass('rp-mobile-cart-open');
+        $mobileCartBar.hide();
+      } else if (!isTransientlyHidden) {
+        $mobileCartBar.css('display', 'flex');
+      }
+    }
+
+    $actionMenuContainer.toggleClass('cart-has-items', hasItems);
+  }
+
+  rp_sync_mobile_cart_bar_state();
+  setTimeout(rp_sync_mobile_cart_bar_state, 120);
+  $(window).on('load pageshow resize', rp_sync_mobile_cart_bar_state);
+  $(document.body).on('rpress_items_updated rpress_quantity_updated rpress_cart_item_removed rpress_checked_slots', function () {
+    setTimeout(rp_sync_mobile_cart_bar_state, 20);
+  });
+
   // Handle tab switching and cookie update on service tab click
   $(document)
     .off('click.rpressServiceTabs', '.rpress-tabs-wrapper .nav-link')
@@ -4514,6 +4744,37 @@ jQuery(function ($) {
     }
   }
 
+  function rp_sync_checkout_service_heading($scope, serviceType) {
+    var $root = ($scope && $scope.length) ? $scope : $(document);
+    var $wrapper = $root.closest('.rpress-tabs-wrapper');
+    if (!$wrapper.length) {
+      $wrapper = $root.find('.rpress-tabs-wrapper').first();
+    }
+    if (!$wrapper.length) {
+      return;
+    }
+
+    var normalizedServiceType = String(serviceType || '')
+      .toLowerCase();
+    if (normalizedServiceType !== 'delivery' && normalizedServiceType !== 'pickup') {
+      normalizedServiceType = window.rp_get_active_service_type($wrapper, 'delivery');
+    }
+
+    var $heading = $wrapper.find('.rpress-checkout-service-heading').first();
+    if (!$heading.length) {
+      return;
+    }
+
+    var $activeTab = $wrapper.find('#rpressdeliveryTab .single-service-selected[data-service-type="' + normalizedServiceType + '"]').first();
+    var label = $activeTab.find('.rpress-service-tab-label').first().text().trim();
+    if (!label) {
+      label = normalizedServiceType.charAt(0).toUpperCase() + normalizedServiceType.slice(1);
+    }
+
+    $heading.find('.rpress-checkout-service-heading-text').text(label);
+    $heading.removeClass('is-service-delivery is-service-pickup').addClass('is-service-' + normalizedServiceType);
+  }
+
   var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
   if (oldUiUxEnabled && String(rp_scripts.cart_quantity || '0') === '0') {
     rp_clear_old_ui_service_cookies();
@@ -4534,6 +4795,10 @@ jQuery(function ($) {
     $initialOrderServiceScope.length ? $initialOrderServiceScope : $(document),
     initialServiceType,
     !oldUiUxEnabled
+  );
+  rp_sync_checkout_service_heading(
+    $initialOrderServiceScope.length ? $initialOrderServiceScope : $(document),
+    initialServiceType
   );
   if (!oldUiUxEnabled) {
     window.rp_sync_service_selection_cookies(
@@ -4557,6 +4822,10 @@ jQuery(function ($) {
         $serviceScope.length ? $serviceScope : $(document),
         selectedServiceType,
         !oldUiUxEnabled
+      );
+      rp_sync_checkout_service_heading(
+        $serviceScope.length ? $serviceScope : $(document),
+        selectedServiceType
       );
       if (!oldUiUxEnabled) {
         window.rp_sync_service_selection_cookies($serviceScope.length ? $serviceScope : $(document), selectedServiceType);

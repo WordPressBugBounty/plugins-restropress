@@ -1614,6 +1614,7 @@ function rpress_tools_sysinfo_get()
 	$return .= 'Download Method:          ' . ucfirst(rpress_get_file_fooditem_method()) . "\n";
 	$return .= 'Currency Code:            ' . rpress_get_currency() . "\n";
 	$return .= 'Currency Position:        ' . rpress_get_option('currency_position', 'before') . "\n";
+	$return .= 'Currency Value Type:      ' . rpress_get_currency_value_type() . "\n";
 	$return .= 'Decimal Separator:        ' . rpress_get_option('decimal_separator', '.') . "\n";
 	$return .= 'Thousands Separator:      ' . rpress_get_option('thousands_separator', ',') . "\n";
 	$return .= 'Upgrades Completed:       ' . implode(',', rpress_get_completed_upgrades()) . "\n";

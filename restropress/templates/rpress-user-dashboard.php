@@ -4,12 +4,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $current_user = wp_get_current_user();
-$username = esc_html( $current_user->user_login );
-$useremail = esc_html( $current_user->user_email );
-$userfname = esc_html( $current_user->user_firstname );
-$userlname = esc_html( $current_user->user_lastname );
-$userdname = esc_html( $current_user->display_name );
-$userid = esc_html( $current_user->ID );
+$username = $current_user->user_login;
+$useremail = $current_user->user_email;
+$userfname = $current_user->user_firstname;
+$userlname = $current_user->user_lastname;
+$userdname = $current_user->display_name;
+$userid = $current_user->ID;
 $useravatar = get_avatar( $current_user->ID, 96 ); // 96 is the size in pixels
 $user_phone = get_user_meta( $current_user->ID, '_rpress_phone', true );
 $paged = '';
@@ -21,6 +21,97 @@ $args = array(
     'order'             => 'DSC', 
     'author'            => get_current_user_id()
 );
+
+if ( ! function_exists( 'rpress_dashboard_normalize_status' ) ) {
+    /**
+     * Normalize dashboard order status into a safe status key.
+     *
+     * @param mixed $status Raw order status meta value.
+     * @return string
+     */
+    function rpress_dashboard_normalize_status( $status ) {
+        if ( is_array( $status ) ) {
+            $status = reset( $status );
+        }
+
+        if ( ! is_scalar( $status ) ) {
+            return '';
+        }
+
+        return sanitize_key( (string) $status );
+    }
+}
+
+if ( ! function_exists( 'rpress_dashboard_status_meta' ) ) {
+    /**
+     * Map status key to icon class and translated label for dashboard rows.
+     *
+     * @param string $status_key Sanitized status key.
+     * @return array{icon:string,label:string}
+     */
+    function rpress_dashboard_status_meta( $status_key ) {
+        $map = array(
+            'completed'  => array( 'icon' => 'order-status-completed',  'label' => __( 'Completed', 'restropress' ) ),
+            'accepted'   => array( 'icon' => 'order-status-accepted',   'label' => __( 'Accepted', 'restropress' ) ),
+            'cancelled'  => array( 'icon' => 'order-status-cancelled',  'label' => __( 'Cancelled', 'restropress' ) ),
+            'processing' => array( 'icon' => 'order-status-processing', 'label' => __( 'Processing', 'restropress' ) ),
+            'transit'    => array( 'icon' => 'order-status-transit',    'label' => __( 'In Transit', 'restropress' ) ),
+            'ready'      => array( 'icon' => 'order-status-ready',      'label' => __( 'Ready', 'restropress' ) ),
+        );
+
+        if ( isset( $map[ $status_key ] ) ) {
+            return $map[ $status_key ];
+        }
+
+        return array(
+            'icon'  => 'order-status-pending',
+            'label' => __( 'Pending', 'restropress' ),
+        );
+    }
+}
+
+if ( ! function_exists( 'rpress_dashboard_safe_text' ) ) {
+    /**
+     * Normalize potentially array-based dashboard values into a safe string.
+     *
+     * @param mixed $value Raw value.
+     * @return string
+     */
+    function rpress_dashboard_safe_text( $value ) {
+        if ( is_array( $value ) ) {
+            $flattened = array();
+
+            array_walk_recursive(
+                $value,
+                static function ( $item ) use ( &$flattened ) {
+                    if ( is_scalar( $item ) ) {
+                        $text = trim( (string) $item );
+                        if ( '' !== $text ) {
+                            $flattened[] = $text;
+                        }
+                    }
+                }
+            );
+
+            return implode( ', ', $flattened );
+        }
+
+        if ( is_scalar( $value ) ) {
+            return trim( (string) $value );
+        }
+
+        return '';
+    }
+}
+
+$username   = rpress_dashboard_safe_text( $username );
+$useremail  = rpress_dashboard_safe_text( $useremail );
+$userfname  = rpress_dashboard_safe_text( $userfname );
+$userlname  = rpress_dashboard_safe_text( $userlname );
+$userdname  = rpress_dashboard_safe_text( $userdname );
+$userid     = rpress_dashboard_safe_text( $userid );
+$user_phone = rpress_dashboard_safe_text( $user_phone );
+
 if ( ! is_user_logged_in() ) {
     // Set the redirect URL
     $redirect_url = wp_login_url();
@@ -41,8 +132,6 @@ if ( ! is_user_logged_in() ) {
     ?>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.css" />
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
-    <script src="https://unpkg.com/micromodal/dist/micromodal.min.js
-"></script>
   
     <div class="user-dashboard-wrapper user-profile">
         <div class="row">
@@ -162,7 +251,7 @@ if ( ! is_user_logged_in() ) {
                                 <thead>
                                     <tr>
                                         <th class="text-align-left"><?php echo esc_html(__( 'ORDER ID', 'restropress' ) ); ?></th>
-                                        <th class="text-', 'restropress' ); ?>align-right"><?php echo esc_html(__( 'DATE', 'restropress' ) ); ?></th>
+                                        <th class="text-align-right"><?php echo esc_html(__( 'DATE', 'restropress' ) ); ?></th>
                                         <th class="text-align-right"><?php echo esc_html(__( 'PRICE', 'restropress' ) ); ?></th>
                                         <th class="text-align-right"><?php echo esc_html(__( 'STATUS', 'restropress' ) ); ?></th>
                                         <th class="text-align-right"><?php echo esc_html(__( 'ACTION', 'restropress' ) ); ?></th>
@@ -172,9 +261,8 @@ if ( ! is_user_logged_in() ) {
                                     <?php
                                     $loop = new WP_Query( $args );
                                     if ( $loop->have_posts() ) :
-                                        $sequential_prefix = esc_attr( rpress_get_option( 'sequential_prefix' ) );
-                                        
-                                        $sequential_postfix = esc_attr(rpress_get_option( 'sequential_postfix' ) );
+                                        $sequential_prefix  = rpress_dashboard_safe_text( rpress_get_option( 'sequential_prefix' ) );
+                                        $sequential_postfix = rpress_dashboard_safe_text( rpress_get_option( 'sequential_postfix' ) );
                                         while ( $loop->have_posts() ) : $loop->the_post(); 
                                             $payment = new RPRESS_Payment( get_the_ID() );
                                             $billing_name = array();
@@ -195,6 +283,7 @@ if ( ! is_user_logged_in() ) {
                                     
                                             $service_type = get_post_meta( $payment->ID, '_rpress_delivery_type', true );
                                             $order_status = get_post_meta( $payment->ID, '_order_status', true );
+                                            $order_status_meta = rpress_dashboard_status_meta( rpress_dashboard_normalize_status( $order_status ) );
                                     
                                             $order_items = array();
                                             foreach ( $payment->fooditems as $cart_item ) {
@@ -214,53 +303,18 @@ if ( ! is_user_logged_in() ) {
                                             $items_purchased = implode( ', ', $order_items );
                                             ?>
                                                 <tr>
-                                                    <td>#<?php echo esc_html($sequential_prefix. $payment->number.$sequential_postfix ); ?></td>        
-                                                    <td><?php echo esc_html( date_i18n( get_option('date_format'), strtotime( $payment->date ) ) ); ?></td>   
-                                                    <td><?php echo wp_kses_post( rpress_currency_filter( rpress_format_amount( $payment->total ) ) ) ; ?></td>                                   
-                                                     <td>
-                                                        <?php 
-                                                        if( esc_html( $order_status ) == "completed" ) {
-                                                            ?>
-                                                            <i class="fa-solid fa-circle order-status order-status-completed"></i>
-                                                            <?php echo esc_html(__( 'Completed' , 'restropress' ) ); ?>
-                                                            <?php
-                                                        } elseif( esc_html( $order_status ) == "accepted" ) {
-                                                            ?>
-                                                            <i class="fa-solid fa-circle order-status order-status-accepted"></i>
-                                                            <?php echo esc_html(__( 'Accepted' , 'restropress' ) ); ?>
-                                                            <?php
-                                                        }elseif( esc_html( $order_status ) == "cancelled" ) {
-                                                            ?>
-                                                            <i class="fa-solid fa-circle order-status order-status-cancelled"></i>
-                                                            <?php echo esc_html(__( 'Cancelled' , 'restropress' ) ); ?>
-                                                            <?php
-                                                        }elseif( esc_html( $order_status ) == "processing" ) {
-                                                            ?>
-                                                            <i class="fa-solid fa-circle order-status order-status-processing"></i>
-                                                            <?php echo esc_html(__( 'Processing' , 'restropress' ) ); ?>
-                                                            <?php
-                                                        }elseif( esc_html( $order_status ) == "transit" ) {
-                                                            ?>
-                                                            <i class="fa-solid fa-circle order-status order-status-transit"></i>
-                                                            <?php echo esc_html(__( 'In Transit' , 'restropress' ) ); ?> 
-                                                            <?php
-                                                        }elseif( esc_html( $order_status ) == "ready" ) {
-                                                            ?>
-                                                            <i class="fa-solid fa-circle order-status order-status-ready"></i>
-                                                            <?php echo esc_html(__( 'Ready' , 'restropress' ) ); ?> 
-                                                            <?php
-                                                        }else{
-                                                            ?>
-                                                            <i class="fa-solid fa-circle order-status order-status-pending"></i>
-                                                            <?php echo esc_html(__( 'Pending' , 'restropress' )); ?> 
-                                                            <?php
-                                                        }
-                                                        ?>
-                                                        
+                                                    <td data-label="<?php esc_attr_e( 'Order ID', 'restropress' ); ?>">#<?php echo esc_html($sequential_prefix. $payment->number.$sequential_postfix ); ?></td>
+                                                    <td data-label="<?php esc_attr_e( 'Date', 'restropress' ); ?>"><?php echo esc_html( date_i18n( get_option('date_format'), strtotime( $payment->date ) ) ); ?></td>
+                                                    <td data-label="<?php esc_attr_e( 'Price', 'restropress' ); ?>"><?php echo wp_kses_post( rpress_currency_filter( rpress_format_amount( $payment->total ), rpress_get_payment_currency_code( $payment->ID ) ) ) ; ?></td>
+                                                     <td data-label="<?php esc_attr_e( 'Status', 'restropress' ); ?>">
+                                                        <span class="order-status-wrap">
+                                                            <i class="fa-solid fa-circle order-status <?php echo esc_attr( $order_status_meta['icon'] ); ?>"></i>
+                                                            <span class="order-status-label"><?php echo esc_html( rpress_dashboard_safe_text( isset( $order_status_meta['label'] ) ? $order_status_meta['label'] : '' ) ); ?></span>
+                                                        </span>
                                                     </td>
-                                                    <td>
+                                                    <td data-label="<?php esc_attr_e( 'Action', 'restropress' ); ?>">
                                                         <div class="viewbg">
-                                                            <a href="#" class="rpress-view-order-btn"data-order-id="<?php echo esc_html( $payment->ID ); ?>">
+                                                            <a href="#" class="rpress-view-order-btn" data-order-id="<?php echo esc_attr( $payment->ID ); ?>">
                                                             <span class="rp-ajax-toggle-text"></span>                                                                                         
                                                                 <svg width="15" height="9" viewBox="0 0 15 9" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                                     <path d="M7.04315 0.0860729C4.56496 0.229609 2.22737 1.55658 0.364333 3.87659C-0.121932 4.48296 -0.121932 4.59134 0.367262 5.20357C2.22737 7.52651 4.57374 8.85055 7.06365 8.98823C9.87872 9.14056 12.5415 7.81065 14.6359 5.20064C15.1222 4.59427 15.1222 4.48589 14.633 3.87366C13.2738 2.1776 11.6568 1.01173 9.86993 0.440518C9.31336 0.261831 8.64255 0.132941 8.11528 0.100719C7.54113 0.0684967 7.4181 0.065568 7.04315 0.0860729ZM8.12113 1.45113C8.96184 1.60931 9.77033 2.18346 10.2097 2.93043C10.737 3.83265 10.7927 4.92236 10.3591 5.84509C10.1892 6.20539 10.0252 6.43974 9.7469 6.72681C8.17972 8.34086 5.51112 7.84873 4.60304 5.77771C4.27496 5.03074 4.2691 4.1168 4.58839 3.3376C4.89597 2.57891 5.56678 1.91689 6.33133 1.61517C6.91133 1.38668 7.49133 1.33396 8.12113 1.45113Z" fill="#9F9F9F"></path>
@@ -305,22 +359,22 @@ if ( ! is_user_logged_in() ) {
                                     <div class="col-lg-4 col-xs-12">
                                         <div class="address-wrap <?php if( $index == $user_default_addresses ) echo 'default';?>">
                                             <div class="flex justify-content-space-between items-center">
-                                                <div class="type-of-address"><?php echo esc_html($address['address_type']); ?></div>
+                                                <div class="type-of-address"><?php echo esc_html( rpress_dashboard_safe_text( isset( $address['address_type'] ) ? $address['address_type'] : '' ) ); ?></div>
                                                 <div class="rp-order-dropdown">
                                                     <input type="checkbox" id="dropdown">
                                                     <label class="dropdown__face" for="dropdown">
                                                         <i class="fa-solid fa-ellipsis-vertical"></i>
                                                     </label>
                                                     <ul class="dropdown__items">
-                                                        <li><a class="btn btn-primary default-address" data-index="<?php echo esc_html( $index ); ?>">
+                                                        <li><a class="btn btn-primary default-address" data-index="<?php echo esc_attr( $index ); ?>">
                                                         <svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                             <path d="M8.40027 0.208473C7.98814 0.298342 7.58306 0.539186 7.31183 0.859114C7.22377 0.96336 6.91027 1.56727 6.39247 2.63849C5.54003 4.40348 5.49776 4.46459 5.16665 4.55446C5.08563 4.57603 4.2966 4.69825 3.41599 4.82766C2.25358 4.99661 1.74634 5.08647 1.57374 5.15118C0.432468 5.56816 -0.0324963 6.98807 0.626203 8.03412C0.686085 8.13118 1.30252 8.77463 1.99292 9.46481C3.30327 10.7733 3.37724 10.8667 3.38076 11.1543C3.38076 11.2334 3.25396 12.053 3.09897 12.9732C2.94398 13.8971 2.81717 14.7382 2.81717 14.8425C2.82069 15.6729 3.3702 16.4134 4.19093 16.6937C4.47273 16.7872 5.01871 16.7836 5.30403 16.6794C5.42379 16.6362 6.07545 16.3055 6.75528 15.9389C8.60105 14.9431 8.54469 14.9719 8.77365 14.9719C8.99556 14.9719 8.91102 14.9288 10.7674 15.9245C12.1693 16.6794 12.2186 16.7009 12.5849 16.7513C13.684 16.9022 14.7196 15.9748 14.7231 14.8389C14.7231 14.731 14.5963 13.8899 14.4413 12.9696C14.2863 12.0494 14.1595 11.2334 14.1595 11.1543C14.163 10.8667 14.237 10.7769 15.5332 9.48279C16.8366 8.1851 16.981 8.00896 17.1254 7.58479C17.2381 7.24329 17.2381 6.68971 17.1219 6.3554C16.8964 5.70836 16.3786 5.23026 15.7375 5.08288C15.6143 5.05412 14.8428 4.9319 14.0186 4.81328C13.1943 4.69106 12.4546 4.57603 12.3736 4.55446C12.0425 4.46459 12.0037 4.40348 11.1478 2.63849C10.3059 0.902249 10.239 0.790814 9.85152 0.517618C9.56268 0.312719 9.23157 0.20488 8.85819 0.1905C8.68559 0.183311 8.47776 0.1905 8.40027 0.208473ZM9.1893 1.45583C9.34781 1.55648 9.3619 1.57805 10.1615 3.19926C10.6088 4.10153 11.028 4.91752 11.0949 5.00739C11.2535 5.22307 11.5176 5.42797 11.8135 5.56457C12.0707 5.68319 12.1024 5.69038 14.318 6.0175C14.9203 6.10377 15.4734 6.19364 15.5509 6.21521C15.7481 6.26913 16.0053 6.54233 16.0616 6.75082C16.1109 6.94134 16.0863 7.1678 15.9982 7.34754C15.963 7.41943 15.3853 8.01975 14.7196 8.68117C14.0468 9.34978 13.4409 9.97886 13.3599 10.1011C13.1697 10.3779 13.0675 10.687 13.0429 11.0501C13.0253 11.3053 13.057 11.5497 13.3141 13.0703C13.6382 14.9899 13.6382 15.015 13.4409 15.281C13.2753 15.5039 13.064 15.6117 12.8033 15.6081C12.5955 15.6081 12.5532 15.5866 11.0421 14.7778C10.1897 14.3177 9.39712 13.9186 9.28088 13.8827C9.00261 13.8 8.53764 13.8 8.25937 13.8827C8.14313 13.9186 7.35057 14.3212 6.49814 14.7778C4.98701 15.5866 4.94474 15.6081 4.73691 15.6081C4.47625 15.6117 4.2649 15.5039 4.09935 15.281C3.90209 15.015 3.90209 14.9863 4.22615 13.0667C4.5467 11.1615 4.55727 10.9926 4.4058 10.5432C4.26842 10.1478 4.06764 9.91056 2.81365 8.67398C2.12677 7.99458 1.58431 7.43022 1.54556 7.35473C1.45398 7.1714 1.42932 6.94493 1.47864 6.75082C1.535 6.53873 1.79214 6.26913 1.98939 6.2188C2.06689 6.19724 2.8524 6.07142 3.73301 5.94201C4.61363 5.8126 5.39913 5.68679 5.47663 5.66881C5.86762 5.56457 6.36781 5.18353 6.56507 4.83844C6.61086 4.75217 6.97015 4.02963 7.36114 3.22802C7.75213 2.4264 8.10438 1.72184 8.13961 1.65714C8.21358 1.53851 8.38618 1.4091 8.55173 1.35518C8.72081 1.30126 9.01318 1.3444 9.1893 1.45583Z" fill="#959595"/>
                                                         </svg><?php echo esc_html(__( 'Default', 'restropress' ) ); ?></a></li>
-                                                        <li><a onclick="editaddress(event)">
+                                                        <li><a href="javascript:void(0);" class="btn btn-primary edit-address" onclick="editaddress(this);">
                                                         <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                             <path d="M12.7766 0.679296C12.0579 0.873714 12.4735 0.484879 6.04375 7.05976C2.81371 10.3693 0.129226 13.1486 0.0815978 13.2414C-0.00499847 13.4005 -0.00499847 13.4712 0.00366116 15.9633C0.0166506 18.473 0.0166506 18.526 0.107577 18.6453C0.155205 18.7116 0.25046 18.8088 0.315408 18.8574C0.432312 18.9502 0.48427 18.9502 2.9436 18.9635C5.38562 18.9723 5.45489 18.9723 5.61077 18.884C5.70169 18.8353 8.42514 16.0958 11.6682 12.7995C17.4052 6.95814 17.5654 6.79023 17.7212 6.46767C18.0027 5.87558 18.072 5.28348 17.9248 4.69139C17.7429 3.97116 17.5654 3.73255 16.0932 2.24348C14.9761 1.1079 14.6861 0.878134 14.2011 0.719063C13.7854 0.582087 13.1793 0.564413 12.7766 0.679296ZM13.9153 2.1286C14.0149 2.18162 14.6038 2.7472 15.2836 3.44976C16.3833 4.57651 16.4873 4.69581 16.5565 4.91674C16.6475 5.20837 16.6258 5.53535 16.4916 5.8093C16.3963 6.00372 14.4393 8.05837 14.3483 8.05837C14.292 8.05837 10.6896 4.38209 10.6896 4.32465C10.6896 4.24511 12.6943 2.23907 12.8545 2.15953C12.9368 2.11534 13.0537 2.06232 13.1143 2.04465C13.2919 1.98279 13.7292 2.03139 13.9153 2.1286ZM11.5339 7.21883L13.3525 9.07465L9.19585 13.3165L5.03923 17.5584H3.21205H1.38054V15.6937V13.8246L5.52417 9.59604C7.80598 7.26744 9.68079 5.36302 9.69378 5.36302C9.70677 5.36302 10.5338 6.19814 11.5339 7.21883Z" fill="#959595"/>
                                                         </svg><?php echo esc_html(__( 'Edit', 'restropress' ) ); ?></a></li>
-                                                        <li><a class="btn btn-primary delete-address" data-index="<?php echo esc_html( $index ); ?>">
+                                                        <li><a class="btn btn-primary delete-address" data-index="<?php echo esc_attr( $index ); ?>">
                                                         <svg width="19" height="20" viewBox="0 0 19 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                             <path d="M7.80363 0.754601C6.79659 0.963877 5.91406 1.55433 5.3611 2.38396C5.15603 2.69413 4.91068 3.23227 4.81913 3.57981C4.72759 3.91241 4.67266 4.45428 4.66899 4.98495V5.36613L2.61098 5.37734L0.549293 5.38855L0.37352 5.49319C0.278309 5.54924 0.153802 5.66883 0.0988728 5.75104C0.0109859 5.88558 0 5.94163 0 6.19575C0 6.45735 0.0109859 6.49845 0.109859 6.64794C0.172112 6.73389 0.296618 6.84974 0.384505 6.90206C0.549293 6.99548 0.552955 6.99548 1.64056 7.00669L2.72816 7.01791V11.6593C2.72816 14.5256 2.74281 16.3979 2.76478 16.5586C2.94788 17.8404 3.94759 18.8644 5.20364 19.0475C5.40871 19.0774 6.60617 19.0849 9.33799 19.0774C12.9487 19.0662 13.1977 19.0587 13.4211 18.9952C14.2706 18.7485 14.9444 18.1768 15.3033 17.4032C15.5816 16.7978 15.5597 17.2313 15.5743 11.8424L15.5816 7.01417H16.6143C17.7275 7.01417 17.8374 6.99922 18.0534 6.81984C18.5441 6.40503 18.372 5.56793 17.7568 5.41097C17.6543 5.38481 16.9256 5.36986 15.6256 5.36986H13.6518L13.6298 4.68598C13.6152 4.12169 13.5968 3.94605 13.5199 3.64708C13.2123 2.45122 12.3701 1.45343 11.2788 0.990036C10.6856 0.739653 10.5904 0.724705 9.26475 0.713493C8.33461 0.70602 7.99771 0.713493 7.80363 0.754601ZM10.4732 2.4288C11.0701 2.6306 11.5645 3.07531 11.8208 3.65082C11.9929 4.032 12.0295 4.24127 12.0295 4.84668V5.36986H9.15123H6.26927L6.28758 4.76072C6.30589 4.21138 6.31687 4.12542 6.41209 3.85636C6.60983 3.30327 6.99067 2.85483 7.48138 2.59323C7.97574 2.33164 8.13687 2.30922 9.28306 2.32043C10.14 2.33164 10.1949 2.33537 10.4732 2.4288ZM13.963 11.7677L13.9521 16.525L13.8495 16.723C13.714 16.9846 13.4943 17.2014 13.2416 17.3247L13.0366 17.4219H9.15489H5.27322L5.10111 17.3397C4.85942 17.2275 4.57745 16.9473 4.46026 16.6969L4.35773 16.4876L4.34674 11.749L4.33942 7.01417H9.15489H13.9704L13.963 11.7677Z" fill="#959595"/>
                                                             <path d="M7.54736 8.67716C7.47046 8.70332 7.34229 8.78927 7.26539 8.86775C7.00539 9.12934 7.01272 9.01723 7.01272 12.1676C7.01272 14.0959 7.02736 15.0414 7.053 15.1423C7.21046 15.7252 7.89525 15.9345 8.34201 15.5309C8.63496 15.2693 8.62398 15.4151 8.62398 12.1937C8.62398 10.228 8.60933 9.30499 8.5837 9.20035C8.55806 9.10692 8.4775 8.9836 8.3713 8.87896C8.13327 8.63232 7.85497 8.56505 7.54736 8.67716Z" fill="#959595"/>
@@ -329,15 +383,15 @@ if ( ! is_user_logged_in() ) {
                                                     </ul>
                                                 </div>
                                             </div>
-                                            <div class="pt-1 user-firstname"><?php echo esc_html($address['first_name']); ?></div>
-                                            <div class="pt-1 user-lastname"><?php echo esc_html($address['last_name']); ?></div>
-                                            <div class="pt-1 user-street-address"><?php echo esc_html($address['address']); ?></div>
-                                            <div class="pt-1 user-apt-suite"><?php echo esc_html($address['apt_suite']); ?></div>
-                                            <div class="pt-1 user-city"><?php echo esc_html($address['city']); ?></div>
-                                            <div class="pt-1 user-contact"><?php echo esc_html($address['phone']); ?></div>
-                                            <div class="pt-1 user-pin"><?php echo esc_html($address['pincode']); ?></div>
-                                            <div class="pt-1 user-default-address" style="display:none;"><?php echo esc_html( $address['default_address']); ?></div>
-                                            <div class="pt-1 user-address-index" style="display:none;"><?php echo esc_html($index); ?></div>
+                                            <div class="pt-1 user-firstname"><?php echo esc_html( rpress_dashboard_safe_text( isset( $address['first_name'] ) ? $address['first_name'] : '' ) ); ?></div>
+                                            <div class="pt-1 user-lastname"><?php echo esc_html( rpress_dashboard_safe_text( isset( $address['last_name'] ) ? $address['last_name'] : '' ) ); ?></div>
+                                            <div class="pt-1 user-street-address"><?php echo esc_html( rpress_dashboard_safe_text( isset( $address['address'] ) ? $address['address'] : '' ) ); ?></div>
+                                            <div class="pt-1 user-apt-suite"><?php echo esc_html( rpress_dashboard_safe_text( isset( $address['apt_suite'] ) ? $address['apt_suite'] : '' ) ); ?></div>
+                                            <div class="pt-1 user-city"><?php echo esc_html( rpress_dashboard_safe_text( isset( $address['city'] ) ? $address['city'] : '' ) ); ?></div>
+                                            <div class="pt-1 user-contact"><?php echo esc_html( rpress_dashboard_safe_text( isset( $address['phone'] ) ? $address['phone'] : '' ) ); ?></div>
+                                            <div class="pt-1 user-pin"><?php echo esc_html( rpress_dashboard_safe_text( isset( $address['pincode'] ) ? $address['pincode'] : '' ) ); ?></div>
+                                            <div class="pt-1 user-default-address" style="display:none;"><?php echo esc_html( rpress_dashboard_safe_text( isset( $address['default_address'] ) ? $address['default_address'] : '' ) ); ?></div>
+                                            <div class="pt-1 user-address-index" style="display:none;"><?php echo esc_html( rpress_dashboard_safe_text( $index ) ); ?></div>
                                             <div class="pt-2">
                                                 <button type="submit" class="btn btn-primary"><?php echo esc_html(__( 'DELIVER HERE', 'restropress' )); ?></button>
                                             </div>

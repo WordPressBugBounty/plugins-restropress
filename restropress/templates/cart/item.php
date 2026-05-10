@@ -15,7 +15,10 @@ if (!defined('ABSPATH')) {
 ?>
 <li class="rpress-cart-item" data-cart-key="{cart_item_id}">
 	<div class="rpress-cart-item-list">
-		<span class="rpress-cart-item-title">{item_title}</span>
+		<div class="rpress-cart-item-main">
+			{item_thumbnail}
+			<span class="rpress-cart-item-title">{item_title}</span>
+		</div>
 		<div class="rpress-cart-item-price">
 			<div>
 				<span class="separator">x</span>
@@ -29,9 +32,6 @@ if (!defined('ABSPATH')) {
 	<span class="rpress-special-instruction">{special_instruction}</span>
 	<div>
 		<span class="cart-action-wrap">
-			<a class="rpress-addon-text-cart">
-				<span>Addons</span>
-			</a>
 			<a class="rpress-edit-from-cart" data-cart-item="{cart_item_id}" data-item-name="{item_title}"
 				data-item-id="{item_id}" data-item-price="{item_amount}" data-remove-item="{edit_food_item}">
 				<svg width="11" height="10" viewBox="0 0 11 10" fill="none" xmlns="http://www.w3.org/2000/svg">

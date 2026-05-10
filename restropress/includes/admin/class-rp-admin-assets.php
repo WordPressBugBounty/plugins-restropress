@@ -143,6 +143,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         'currency'                    => rpress_get_currency(),
         'currency_sign'               => rpress_currency_filter( '' ),
         'currency_pos'                => rpress_get_option( 'currency_position', 'before' ),
+        'currency_value_type'         => rpress_get_currency_value_type(),
         'currency_decimals'           => rpress_currency_decimal_filter(),
         'decimal_separator'           => esc_attr( rpress_get_option( 'decimal_separator', '.' )),
         'thousands_separator'         => esc_attr( rpress_get_option( 'thousands_separator', ',' )),

@@ -60,6 +60,40 @@ function rpress_sanitize_amount( $amount ) {
 	 */
 	return apply_filters( 'rpress_sanitize_amount', $amount );
 }
+
+/**
+ * Get the configured currency display value type.
+ *
+ * @since 3.2.6
+ * @return string Currency value type. Accepts float or round.
+ */
+function rpress_get_currency_value_type() {
+	$value_type = sanitize_key( (string) rpress_get_option( 'currency_value_type', 'float' ) );
+
+	if ( ! in_array( $value_type, array( 'float', 'round' ), true ) ) {
+		$value_type = 'float';
+	}
+
+	return apply_filters( 'rpress_currency_value_type', $value_type );
+}
+
+/**
+ * Get decimal places used when displaying currency values.
+ *
+ * @since 3.2.6
+ * @param int $decimals Number of decimal places.
+ * @return int Number of display decimals.
+ */
+function rpress_get_currency_display_decimals( $decimals = 2 ) {
+	$decimals = absint( $decimals );
+
+	if ( 'round' === rpress_get_currency_value_type() ) {
+		$decimals = 0;
+	}
+
+	return apply_filters( 'rpress_currency_display_decimals', $decimals );
+}
+
 /**
  * Returns a nicely formatted amount.
  *
@@ -93,9 +127,13 @@ function rpress_format_amount( $amount, $decimals = true ) {
 	}
 	$amount = rpress_sanitize_amount( $amount );
 
-	// ✅ Dynamically decide decimals
 	if ( $decimals ) {
-		$decimals = ( floor( $amount ) == $amount ) ? 0 : 2;
+		$decimals = apply_filters( 'rpress_format_amount_decimals', 2, $amount );
+		$decimals = rpress_get_currency_display_decimals( $decimals );
+
+		if ( 0 === $decimals ) {
+			$amount = round( (float) $amount );
+		}
 	} else {
 		$decimals = 0;
 	}
@@ -115,7 +153,13 @@ function rpress_currency_filter( $price = '', $currency = '' ) {
 		$currency = rpress_get_currency();
 	}
 	$position = rpress_get_option( 'currency_position', 'before' );
-	$negative = $price < 0;
+	$is_numeric_price = is_numeric( $price ) || ( is_string( $price ) && preg_match( '/^-?[\d\s,.]+$/', $price ) );
+
+	if ( '' !== $price && $is_numeric_price ) {
+		$price = rpress_format_amount( $price );
+	}
+
+	$negative = is_string( $price ) ? 0 === strpos( $price, '-' ) : ( is_numeric( $price ) && $price < 0 );
 	if( $negative ) {
 		$price = substr( $price, 1 ); // Remove proceeding "-" -
 	}

@@ -28,6 +28,7 @@ function rpress_checkout_form() {
 			$login_class = is_user_logged_in() || $login_method == 'guest_only' ? 'rpress-logged-in' : 'rpress-logged-out';
 			?>
 			<div id="rpress_checkout_form_wrap" class="rp-col-lg-8 rp-col-md-8 rp-col-sm-12 rp-col-xs-12 <?php echo esc_attr( $login_class ); ?>">
+				<?php do_action( 'rpress_checkout_service_options' ); ?>
 				<?php do_action( 'rpress_before_purchase_form' ); ?>
 				<form id="rpress_purchase_form" class="rpress_form" action="<?php echo esc_attr( $form_action ); ?>" method="POST">
 					<?php
@@ -224,13 +225,27 @@ function rpress_user_info_fields() {
 add_action( 'rpress_purchase_form_after_user_info', 'rpress_user_info_fields', 10 );
 add_action( 'rpress_register_fields_before', 'rpress_user_info_fields' );
 function rpress_order_details_fields(){
+	$selected_service_type = sanitize_key( rpress_selected_service() );
+	if ( empty( $selected_service_type ) && function_exists( 'rpress_get_default_enabled_service' ) ) {
+		$selected_service_type = sanitize_key( rpress_get_default_enabled_service() );
+	}
+
+	$selected_service_label = rpress_service_label( $selected_service_type );
+	$instruction_icon_class = 'fa fa-sticky-note-o';
+	if ( 'delivery' === $selected_service_type ) {
+		$instruction_icon_class = 'fa fa-truck';
+	} elseif ( 'pickup' === $selected_service_type ) {
+		$instruction_icon_class = 'fa fa-shopping-bag';
+	} elseif ( 'dinein' === $selected_service_type ) {
+		$instruction_icon_class = 'fa fa-cutlery';
+	}
 ?>
 <!-- Order details fields -->
 <fieldset id="rpress_checkout_order_details">
 	<legend><?php echo esc_html(apply_filters( 'rpress_checkout_order_details_text', esc_html__( 'Order Details', 'restropress' ) )); ?></legend>
 	<?php do_action( 'rpress_purchase_form_before_order_details' ); ?>
 	<?php
-		if( rpress_selected_service() == 'delivery' ) :
+		if( 'delivery' === $selected_service_type ) :
 			$checkout_fields = rp_get_checkout_fields();
 			foreach ( $checkout_fields as $key => $checkout_field ) {
 				$hidden = $checkout_field['is_hidden'] ? 'hidden' : '';
@@ -251,8 +266,11 @@ function rpress_order_details_fields(){
 		endif;
 	?>
 	<p id="rpress-order-note-wrap" class="rp-col-sm-12">
-    <label class="rpress-order-note" for="rpress-order-note"><?php echo sprintf( esc_html__('%s Instructions', 'restropress'), esc_html(rpress_selected_service( 'label' )) ); ?></label>
-    <textarea id="rpress-order-note" name="rpress_order_note" class="rpress-input" rows="5" cols="8" placeholder="<?php echo sprintf( esc_html__('Add %s instructions (optional)', 'restropress'), esc_html(strtolower( rpress_selected_service( 'label' ) )) ); ?>"></textarea>
+    <label class="rpress-order-note rpress-service-instruction-label is-service-<?php echo esc_attr( $selected_service_type ); ?>" for="rpress-order-note">
+      <i class="rpress-service-instruction-icon <?php echo esc_attr( $instruction_icon_class ); ?>" aria-hidden="true"></i>
+      <span class="rpress-service-instruction-text"><?php echo sprintf( esc_html__('%s Instructions', 'restropress'), esc_html( $selected_service_label ) ); ?></span>
+    </label>
+    <textarea id="rpress-order-note" name="rpress_order_note" class="rpress-input" rows="5" cols="8" placeholder="<?php echo sprintf( esc_html__('Add %s instructions (optional)', 'restropress'), esc_html( strtolower( $selected_service_label ) ) ); ?>"></textarea>
   </p>
 	<?php do_action( 'rpress_purchase_form_order_details' ); ?>
 	<?php do_action( 'rpress_purchase_form_order_details_fields' ); ?>
@@ -687,7 +705,7 @@ function rpress_payment_mode_select() {
 		<form id="rpress_payment_mode" action="<?php echo esc_url( $page_URL ); ?>" method="GET">
 		<?php } ?>
 			<fieldset id="rpress_payment_mode_select">
-				<legend><?php esc_html_e( 'Select Payment Method', 'restropress' ); ?></legend>
+				<legend><?php esc_html_e( 'Payment', 'restropress' ); ?></legend>
 				<?php do_action( 'rpress_payment_mode_before_gateways_wrap' ); ?>
 				<div id="rpress-payment-mode-wrap">
 					<?php

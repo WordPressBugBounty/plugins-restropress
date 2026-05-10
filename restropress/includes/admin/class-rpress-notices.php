@@ -213,6 +213,12 @@ class RPRESS_Notices {
 			// Customer Notices
 			if ( current_user_can( 'edit_shop_payments' ) ) {
 				switch( $message ) {
+					case 'customer-trashed' :
+						$notices['updated']['rpress-customer-trashed'] = esc_html__( 'Customer moved to trash', 'restropress' );
+						break;
+					case 'customer-restored' :
+						$notices['updated']['rpress-customer-restored'] = esc_html__( 'Customer restored from trash', 'restropress' );
+						break;
 					case 'customer-deleted' :
 						$notices['updated']['rpress-customer-deleted'] = esc_html__( 'Customer successfully deleted', 'restropress' );
 						break;

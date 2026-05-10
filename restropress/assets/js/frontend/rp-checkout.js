@@ -230,7 +230,14 @@ window.RPRESS_Checkout = (function ($) {
 				withCredentials: true
 			},
 			success: function (discount_response) {
-				var zero = '0' + rpress_global_vars.decimal_separator + '00';
+				var zero_decimals = parseInt(rpress_global_vars.currency_decimals, 10);
+				if (isNaN(zero_decimals)) {
+					zero_decimals = 2;
+				}
+				if (String(rpress_global_vars.currency_value_type || 'float') === 'round') {
+					zero_decimals = 0;
+				}
+				var zero = zero_decimals > 0 ? '0' + rpress_global_vars.decimal_separator + new Array(zero_decimals + 1).join('0') : '0';
 				$('.rpress_cart_amount')
 					.each(function () {
 						if (rpress_global_vars.currency_sign + zero == $(this)

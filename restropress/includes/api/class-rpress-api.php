@@ -1401,6 +1401,7 @@ class RPRESS_API {
 		}
 		$data['info']['site']['currency']            = rpress_get_currency();
 		$data['info']['site']['currency_position']   = rpress_get_option( 'currency_position', 'before' );
+		$data['info']['site']['currency_value_type'] = rpress_get_currency_value_type();
 		$data['info']['site']['decimal_separator']   = rpress_get_option( 'decimal_separator', '.' );
 		$data['info']['site']['thousands_separator'] = rpress_get_option( 'thousands_separator', ',' );
 		return apply_filters( 'rpress_api_info', $data, $this );

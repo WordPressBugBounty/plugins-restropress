@@ -1,4 +1,38 @@
 var $ = jQuery;
+function rp_dashboard_format_currency(value) {
+    var numeric = parseFloat(value);
+    if (isNaN(numeric)) {
+        numeric = 0;
+    }
+
+    var decimalPlaces = parseInt(rpress_vars.currency_decimals, 10);
+    if (isNaN(decimalPlaces)) {
+        decimalPlaces = 2;
+    }
+
+    if (String(rpress_vars.currency_value_type || 'float') === 'round') {
+        decimalPlaces = 0;
+        numeric = Math.round(numeric);
+    }
+
+    var amount = numeric.toFixed(decimalPlaces);
+    var decimalSeparator = rpress_vars.decimal_separator || '.';
+    var thousandsSeparator = rpress_vars.thousands_separator || ',';
+
+    if (decimalSeparator !== '.') {
+        amount = amount.split('.').join(decimalSeparator);
+    }
+
+    var amountParts = amount.split(decimalSeparator);
+    amountParts[0] = amountParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSeparator);
+    amount = amountParts.join(decimalSeparator);
+
+    if (rpress_vars.currency_pos === 'before') {
+        return rpress_vars.currency_sign + amount;
+    }
+
+    return amount + rpress_vars.currency_sign;
+}
 $(document).ready(function ($) {
     $.ajax({
         url: rpress_vars.ajaxurl,
@@ -284,8 +318,8 @@ function renderGrowthBadge(selector, value) {
 function applyDashboardSummary(response) {
     $('body #total-order').text(response.order_count);
     $('body #total-customer').text(response.customer_count);
-    $('body #total-refund').text(rpress_vars.currency_sign + response.total_refund);
-    $('body #total-sales').text(rpress_vars.currency_sign + response.total_sales);
+    $('body #total-refund').text(rp_dashboard_format_currency(response.total_refund));
+    $('body #total-sales').text(rp_dashboard_format_currency(response.total_sales));
 
     renderGrowthBadge('#total-order-percentage', response.order_percentage);
     renderGrowthBadge('#total-customer-percentage', response.customer_percentage);

@@ -181,15 +181,23 @@ jQuery(document)
           $('#rpress_purchase_form input[name="rpress-gateway"]')
             .val(selectedGateway);
         }
-        var complete_purchase_val = $(this)
+        var $purchaseButton = $(this);
+        var complete_purchase_val = $purchaseButton
           .val();
-        $(this)
+        $purchaseButton
           .val(rpress_global_vars.purchase_loading);
-        $(this)
+        $purchaseButton
           .prop('disabled', true);
-        $(this)
-          .after('<span class="rp-loading"></span>');
-        $(this).parents('body').append('<div class="blur-content"><p class="blur-txt">'+rpress_scripts.blurtxt+'</p><span class="blur-loader"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin: auto; background: rgb(255, 255, 255); display: block; shape-rendering: auto;" width="200px" height="200px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" r="32" stroke-width="8" stroke="#fe718d" stroke-dasharray="50.26548245743669 50.26548245743669" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" keyTimes="0;1" values="0 50 50;360 50 50"></animateTransform></circle></svg></span></div>');
+        $purchaseButton
+          .addClass('rp-purchase-button-loading');
+        $purchaseButton
+          .closest('#rpress_purchase_submit')
+          .addClass('rp-submit-loading')
+          .find('.rp-purchase-loading')
+          .remove();
+        $purchaseButton
+          .after('<span class="rp-loading rp-purchase-loading" aria-hidden="true"></span>');
+        $purchaseButton.parents('body').append('<div class="blur-content"><p class="blur-txt">'+rpress_scripts.blurtxt+'</p><span class="blur-loader"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin: auto; background: rgb(255, 255, 255); display: block; shape-rendering: auto;" width="200px" height="200px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" r="32" stroke-width="8" stroke="#fe718d" stroke-dasharray="50.26548245743669 50.26548245743669" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" keyTimes="0;1" values="0 50 50;360 50 50"></animateTransform></circle></svg></span></div>');
         var requestData = $('#rpress_purchase_form')
           .serialize() + '&action=rpress_process_checkout&rpress_ajax=true';
         if (selectedGateway && selectedGateway !== '0') {
@@ -218,6 +226,10 @@ jQuery(document)
             } else {
               $('#rpress-purchase-button')
                 .val(complete_purchase_val);
+              $('#rpress-purchase-button')
+                .removeClass('rp-purchase-button-loading');
+              $('#rpress_purchase_submit')
+                .removeClass('rp-submit-loading');
               $('.rp-loading')
                 .remove();
               $('.rpress_errors')

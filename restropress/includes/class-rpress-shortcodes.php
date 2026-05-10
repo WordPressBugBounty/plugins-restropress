@@ -11,8 +11,25 @@ defined( 'ABSPATH' ) || exit;
  */
 class RP_Shortcodes {
   /**
-    * Init Shortcodes.
-    */
+   * Normalize shortcode attributes to an array.
+   *
+   * Some shortcode callbacks pass attributes through string escapers, which can
+   * trigger "Array to string conversion" warnings when attributes are arrays.
+   *
+   * @param mixed $atts Raw shortcode attributes.
+   * @return array
+   */
+  private static function normalize_shortcode_atts( $atts ) {
+    if ( is_array( $atts ) ) {
+      return $atts;
+    }
+
+    return array();
+  }
+
+  /**
+     * Init Shortcodes.
+     */
   public static function init() {
     $shortcodes = array(
       'fooditems'             => __CLASS__ . '::fooditems',
@@ -52,12 +69,7 @@ class RP_Shortcodes {
   ) {
     ob_start();
 
-        if (empty($atts) || is_array($atts)) {
-
-            $escaped_atts = $atts; // or json_encode($atts);
-        } else {
-            $escaped_atts = esc_js($atts);
-        }
+    $escaped_atts = self::normalize_shortcode_atts( $atts );
     // @codingStandardsIgnoreStart
     echo empty( $wrapper['before'] ) ? '<div class="restropress ' . apply_filters( 'restropress_container_class', esc_attr( $wrapper['class'] ) )  . '">' : $wrapper['before'];
     call_user_func( $function, $escaped_atts ); 
@@ -71,12 +83,7 @@ class RP_Shortcodes {
    * @return string
    */
   public static function fooditems( $atts ) {
-        if (empty($atts) || is_array($atts)) {
-
-            $escaped_atts = $atts; // or json_encode($atts);
-        } else {
-            $escaped_atts = esc_js($atts);
-        }
+    $escaped_atts = self::normalize_shortcode_atts( $atts );
     return self::shortcode_wrapper( array( 'RP_Shortcode_Fooditems', 'output' ), $escaped_atts );
   }
   /**
@@ -91,7 +98,7 @@ class RP_Shortcodes {
    */
   public static function fooditem_cart( $atts = array(), $content = null ) {
     ob_start();
-    $escaped_atts = esc_js($atts);
+    $escaped_atts = self::normalize_shortcode_atts( $atts );
     rpress_shopping_cart($escaped_atts);
     
     return ob_get_clean();
@@ -232,7 +239,7 @@ class RP_Shortcodes {
    */
   public static function rpress_login( $atts, $content = null ) {
     $redirect = '';
-    $escaped_atts = esc_js($atts);
+    $escaped_atts = self::normalize_shortcode_atts( $atts );
     extract( shortcode_atts( array(
       'redirect' => $redirect
       ), $escaped_atts, 'rpress_login' )
@@ -271,7 +278,7 @@ class RP_Shortcodes {
     if ( ! empty( $order_history ) ) {
       $redirect = get_permalink( $order_history );
     }
-    $escaped_atts = esc_js($atts);
+    $escaped_atts = self::normalize_shortcode_atts( $atts );
     extract( shortcode_atts( array(
       'redirect' => $redirect
       ), $escaped_atts, 'rpress_register' )
@@ -291,7 +298,7 @@ class RP_Shortcodes {
    * @return string $discounts_lists List of all the active discount codes
    */
   public static function fooditem_discounts( $atts, $content = null ) {
-    $escaped_atts = esc_js($atts);
+    $escaped_atts = self::normalize_shortcode_atts( $atts );
     $discounts = rpress_get_discounts();
     $discounts_list = '<ul id="rpress_discounts_list">';
     if ( ! empty( $discounts ) && rpress_has_active_discounts() ) {
@@ -330,7 +337,7 @@ class RP_Shortcodes {
    * @return string Output generated from the profile editor
    */
   public static function rpress_profile_editor( $atts, $content = null ) {
-    $escaped_atts = esc_js($atts);
+    $escaped_atts = self::normalize_shortcode_atts( $atts );
     ob_start();
     if( ! rpress_user_pending_verification() ) {
       rpress_get_template_part( 'shortcode', 'profile-editor',$escaped_atts);
@@ -351,7 +358,7 @@ class RP_Shortcodes {
    * @return string
    */
   public static function customer_dashboard( $atts = array(), $content = null ) {
-    $escaped_atts = esc_js($atts);
+    $escaped_atts = self::normalize_shortcode_atts( $atts );
     ob_start();
     include_once plugin_dir_path(RP_PLUGIN_FILE).'templates/rpress-user-dashboard.php';
     return ob_get_clean();

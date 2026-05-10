@@ -50,42 +50,43 @@ $store_location     = rpress_get_option( 'store_address' );
 $payment_key        = rpress_get_payment_key( $payment->ID );
 $visible_items      = 0;
 $order_status_key   = sanitize_key( $order_status );
+$status_asset_base  = trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/';
 $status_media_map   = array(
 	'pending'    => array(
-		'src'         => trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/pending.gif',
+		'src'         => $status_asset_base . 'pending.gif',
 		'description' => __( 'Your order is waiting for confirmation.', 'restropress' ),
 	),
 	'accepted'   => array(
-		'src'         => trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/accepted.gif',
+		'src'         => $status_asset_base . 'accepted.gif',
 		'description' => __( 'Your order has been accepted by the restaurant.', 'restropress' ),
 	),
 	'processing' => array(
-		'src'         => trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/processing.gif',
+		'src'         => $status_asset_base . 'prepare-food.gif',
 		'description' => __( 'Your order is being prepared in the kitchen.', 'restropress' ),
 	),
 	'ready'      => array(
-		'src'         => trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/ready.gif',
+		'src'         => $status_asset_base . 'ready.gif',
 		'description' => __( 'Your order is ready for pickup or handoff.', 'restropress' ),
 	),
 	'transit'    => array(
-		'src'         => trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/transit.gif',
+		'src'         => $status_asset_base . 'delivery-boy.gif',
 		'description' => __( 'Your order is on the way.', 'restropress' ),
 	),
 	'completed'  => array(
-		'src'         => trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/completed.gif',
+		'src'         => $status_asset_base . 'delivered.gif',
 		'description' => __( 'Your order is completed. Enjoy your meal!', 'restropress' ),
 	),
 	'cancelled'  => array(
-		'src'         => trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/cancelled.gif',
+		'src'         => $status_asset_base . 'cancelled.gif',
 		'description' => __( 'This order has been cancelled.', 'restropress' ),
 	),
 	'failed'     => array(
-		'src'         => trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/failed.gif',
+		'src'         => $status_asset_base . 'cancelled.gif',
 		'description' => __( 'There was an issue with this order.', 'restropress' ),
 	),
 );
 $default_status_media = array(
-	'src'         => trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/pending.gif',
+	'src'         => $status_asset_base . 'pending.gif',
 	'description' => __( 'Your order status is being updated.', 'restropress' ),
 );
 $current_status_media = isset( $status_media_map[ $order_status_key ] ) ? $status_media_map[ $order_status_key ] : $default_status_media;

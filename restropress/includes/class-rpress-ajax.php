@@ -137,6 +137,68 @@ class RP_AJAX {
   }
 
   /**
+   * Get cart summary fragment HTML for sidebar cart refresh.
+   *
+   * @since 3.2.8.6.4
+   *
+   * @return string
+   */
+  private static function get_cart_summary_fragment() {
+    if ( ! function_exists( 'rpress_get_cart_sidebar_summary_html' ) ) {
+      return '';
+    }
+
+    return rpress_get_cart_sidebar_summary_html();
+  }
+
+  /**
+   * Build a common cart totals payload for AJAX responses.
+   *
+   * @since 3.2.8.6.4
+   *
+   * @return array
+   */
+  private static function get_cart_totals_payload() {
+    $payload = array(
+      'subtotal'      => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ), ENT_COMPAT, 'UTF-8' ),
+      'total'         => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ), ENT_COMPAT, 'UTF-8' ),
+      'cart_quantity' => html_entity_decode( rpress_get_cart_quantity() ),
+      'cart_summary'  => self::get_cart_summary_fragment(),
+    );
+
+    if ( rpress_use_taxes() ) {
+      $cart_tax = (float) rpress_get_cart_tax();
+      $payload['tax']   = html_entity_decode( rpress_currency_filter( rpress_format_amount( $cart_tax ) ), ENT_COMPAT, 'UTF-8' );
+      $payload['taxes'] = $payload['tax'];
+    }
+
+    return $payload;
+  }
+
+  /**
+   * Ensure cart AJAX response always carries summary/totals payload.
+   *
+   * @since 3.2.8.6.4
+   *
+   * @param mixed $response AJAX response payload.
+   * @return array
+   */
+  private static function ensure_cart_response_payload( $response ) {
+    if ( ! is_array( $response ) ) {
+      $response = array();
+    }
+
+    $defaults = self::get_cart_totals_payload();
+    foreach ( $defaults as $key => $value ) {
+      if ( ! array_key_exists( $key, $response ) ) {
+        $response[ $key ] = $value;
+      }
+    }
+
+    return $response;
+  }
+
+  /**
    * Check whether the current request can access a frontend order action.
    *
    * Logged-in users can only access their own user-linked orders.
@@ -244,6 +306,7 @@ class RP_AJAX {
                 $return['taxes'] = html_entity_decode( rpress_currency_filter( rpress_format_amount( $cart_tax ) ), ENT_COMPAT, 'UTF-8' );
             }
             $return = apply_filters( 'rpress_cart_data', $return );
+            $return = self::ensure_cart_response_payload( $return );
         }
     }
     $html = '<div>
@@ -716,6 +779,18 @@ class RP_AJAX {
     $data = rpress_sanitize_array( $_POST );
     $response = apply_filters( 'rpress_check_service_slot', $data );
     $response = apply_filters( 'rpress_validate_slot', $response );
+    if ( is_wp_error( $response ) ) {
+      $response = array(
+        'status' => 'error',
+        'msg'    => $response->get_error_message(),
+      );
+    } elseif ( ! is_array( $response ) ) {
+      $response = array(
+        'status' => ! empty( $response ) ? 'success' : 'error',
+      );
+    }
+
+    $response = array_merge( $response, self::get_cart_totals_payload() );
     wp_send_json( $response );
     wp_die();
   }
@@ -803,8 +878,7 @@ class RP_AJAX {
    * Add To Cart in the popup
    */
   public static function add_to_cart() {
-    // Remove all cart fees.
-    RPRESS()->session->set('rpress_cart_fees', null);
+    // Keep cart fees between add-to-cart requests; fee extensions recalculate as needed.
     // Remove any resuming payments.
     RPRESS()->session->set('rpress_resume_payment', null);
     check_ajax_referer( 'add-to-cart', 'security' );
@@ -855,18 +929,15 @@ class RP_AJAX {
     );
     $item   = apply_filters( 'rpress_ajax_pre_cart_item_template', $item );
     $items .= rpress_get_cart_item_template( $key, $item, true, $data_key = $key );
-    $return = array(
-     'subtotal'      => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ), ENT_COMPAT, 'UTF-8' ),
-     'total'         => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ), ENT_COMPAT, 'UTF-8' ),
-     'cart_item'     => $items,
-     'cart_key'      => $key,
-     'cart_quantity' => html_entity_decode( rpress_get_cart_quantity() )
+    $return = array_merge(
+      self::get_cart_totals_payload(),
+      array(
+        'cart_item' => $items,
+        'cart_key'  => $key,
+      )
     );
-    if ( rpress_use_taxes() ) {
-      $cart_tax = (float) rpress_get_cart_tax();
-      $return['taxes'] = html_entity_decode( rpress_currency_filter( rpress_format_amount( $cart_tax ) ), ENT_COMPAT, 'UTF-8' );
-    }
     $return = apply_filters( 'rpress_cart_data', $return );
+    $return = self::ensure_cart_response_payload( $return );
     wp_send_json( $return );
     rpress_die();
   }
@@ -932,18 +1003,15 @@ class RP_AJAX {
     );
     $item   = apply_filters( 'rpress_ajax_pre_cart_item_template', $item );
     $items  = rpress_get_cart_item_template( $cart_key, $item, true, $data_key = '' );
-    $return = array(
-     'subtotal'      => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ), ENT_COMPAT, 'UTF-8' ),
-     'total'         => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ), ENT_COMPAT, 'UTF-8' ),
-     'cart_item'     => $items,
-     'cart_key'      => $cart_key,
-     'cart_quantity' => html_entity_decode( rpress_get_cart_quantity() )
+    $return = array_merge(
+      self::get_cart_totals_payload(),
+      array(
+        'cart_item' => $items,
+        'cart_key'  => $cart_key,
+      )
     );
-    if ( rpress_use_taxes() ) {
-      $cart_tax = (float) rpress_get_cart_tax();
-      $return['tax'] = html_entity_decode( rpress_currency_filter( rpress_format_amount( $cart_tax ) ), ENT_COMPAT, 'UTF-8' );
-    }
     $return = apply_filters( 'rpress_cart_data', $return );
+    $return = self::ensure_cart_response_payload( $return );
     echo wp_json_encode( $return );
     rpress_die();
   }
@@ -960,12 +1028,15 @@ class RP_AJAX {
         'subtotal'      => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ), ENT_COMPAT, 'UTF-8' ),
         'total'         => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ), ENT_COMPAT, 'UTF-8' ),
         'cart_quantity' => html_entity_decode( rpress_get_cart_quantity() ),
+        'cart_summary'  => self::get_cart_summary_fragment(),
       );
       if ( rpress_use_taxes() ) {
         $cart_tax = (float) rpress_get_cart_tax();
         $return['tax'] = html_entity_decode( rpress_currency_filter( rpress_format_amount( $cart_tax ) ), ENT_COMPAT, 'UTF-8' );
+        $return['taxes'] = $return['tax'];
       }
       $return = apply_filters( 'rpress_cart_data', $return );
+      $return = self::ensure_cart_response_payload( $return );
       wp_send_json( $return );
     }
     rpress_die();

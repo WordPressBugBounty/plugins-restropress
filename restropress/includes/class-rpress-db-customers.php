@@ -105,6 +105,11 @@ class RPRESS_DB_Customers extends RPRESS_DB  {
 		}
 		$customer = $this->get_customer_by( 'email', $args['email'] );
 		if( $customer ) {
+			// If a deleted customer returns (same email), bring them back from trash.
+			if ( metadata_exists( 'customer', (int) $customer->id, '_rpress_customer_trashed' ) ) {
+				delete_metadata( 'customer', (int) $customer->id, '_rpress_customer_trashed' );
+				$this->set_last_changed();
+			}
 			// update an existing customer
 			// Update the payment IDs attached to the customer
 			if( ! empty( $args['payment_ids'] ) ) {

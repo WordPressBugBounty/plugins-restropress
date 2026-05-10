@@ -501,7 +501,7 @@ function rpress_get_button_styles()
 	$styles = array(
 		'th-rectangle' => __('Rectangle Button', 'restropress'),
 		'th-rounded' => __('Rounded button', 'restropress'),
-		'th-rectangle' => __('Rectangle Button', 'restropress'),
+		'th-border-radius' => __('Border Radius', 'restropress'),
 		'th-plain' => __('Plain Text', 'restropress'),
 	);
 	return apply_filters('rpress_button_styles', $styles);
@@ -523,6 +523,20 @@ function rpress_get_add_button_styles()
 
 	);
 	return apply_filters('rpress_add_button_styles', $styles);
+}
+
+/**
+ * Check whether add button should be visible on frontend.
+ *
+ * @since 3.2.5
+ * @return bool True when add button is visible, false when hidden.
+ */
+function rpress_is_add_button_visible()
+{
+	$visibility = sanitize_key((string) rpress_get_option('add_button_visibility', 'show'));
+	$is_visible = ('hide' !== $visibility);
+
+	return (bool) apply_filters('rpress_is_add_button_visible', $is_visible, $visibility);
 }
 /**
  * Default formatting for fooditem excerpts
@@ -850,6 +864,11 @@ function rpress_is_order_history_page()
 function rpress_add_body_classes($class)
 {
 	$classes = (array) $class;
+
+	if (!rpress_is_add_button_visible()) {
+		$classes[] = 'rpress-add-button-hidden';
+	}
+
 	switch (true) {
 		case rpress_is_checkout():
 			$classes[] = 'rpress-checkout';
@@ -1108,6 +1127,7 @@ function rpress_add_delivery_steps()
 			'id' => true,
 			'data-toggle' => true,
 			'data-service-type' => true,
+			'data-food-id' => true,
 			'role' => true,
 			'aria-controls' => true,
 			'aria-selected' => true,
@@ -1121,9 +1141,21 @@ function rpress_add_delivery_steps()
 			'value' => true,
 			'selected' => true, 
 		),
-		'span' => array('class' => true),
-		'br' => array(),
-	);
+			'span' => array(
+				'class'       => true,
+				'style'       => true,
+				'aria-hidden' => true,
+			),
+			'i' => array(
+				'class'       => true,
+				'style'       => true,
+				'aria-hidden' => true,
+			),
+			'h6' => array(
+				'class' => true,
+			),
+			'br' => array(),
+		);
 
 
 	echo wp_kses(rpress_get_delivery_steps(''), $allowed_html);

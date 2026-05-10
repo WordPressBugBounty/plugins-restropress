@@ -346,11 +346,109 @@ function rpress_customer_save_note( $args ) {
 }
 add_action( 'rpress_add-customer-note', 'rpress_customer_save_note', 10, 1 );
 /**
- * Delete a customer
+ * Move a customer to trash.
+ *
+ * @since  3.2.8.6.3
+ * @param  int $customer_id Customer ID.
+ * @return bool
+ */
+function rpress_trash_customer_record( $customer_id ) {
+	$customer_id = absint( $customer_id );
+	if ( empty( $customer_id ) ) {
+		return false;
+	}
+
+	$customer = new RPRESS_Customer( $customer_id );
+	if ( empty( $customer->id ) ) {
+		return false;
+	}
+
+	if ( $customer->get_meta( '_rpress_customer_trashed', true ) ) {
+		return true;
+	}
+
+	$updated = $customer->update_meta( '_rpress_customer_trashed', '1' );
+	if ( $updated ) {
+		RPRESS()->customers->set_last_changed();
+	}
+
+	return (bool) $updated;
+}
+/**
+ * Restore a customer from trash.
+ *
+ * @since  3.2.8.6.3
+ * @param  int $customer_id Customer ID.
+ * @return bool
+ */
+function rpress_restore_customer_record( $customer_id ) {
+	$customer_id = absint( $customer_id );
+	if ( empty( $customer_id ) ) {
+		return false;
+	}
+
+	$customer = new RPRESS_Customer( $customer_id );
+	if ( empty( $customer->id ) ) {
+		return false;
+	}
+
+	if ( ! $customer->get_meta( '_rpress_customer_trashed', true ) ) {
+		return true;
+	}
+
+	$deleted = $customer->delete_meta( '_rpress_customer_trashed' );
+	if ( $deleted ) {
+		RPRESS()->customers->set_last_changed();
+	}
+
+	return (bool) $deleted;
+}
+/**
+ * Permanently delete a customer record and handle payment relationships.
+ *
+ * @since  3.2.8.6.3
+ * @param  int  $customer_id Customer ID.
+ * @param  bool $remove_data Whether to delete all associated payments and records.
+ * @return bool
+ */
+function rpress_delete_customer_record( $customer_id, $remove_data = false ) {
+	$customer_id = absint( $customer_id );
+	if ( empty( $customer_id ) ) {
+		return false;
+	}
+
+	$customer = new RPRESS_Customer( $customer_id );
+	if ( empty( $customer->id ) ) {
+		return false;
+	}
+
+	$payments_array = array_filter( array_map( 'absint', explode( ',', (string) $customer->payment_ids ) ) );
+	$success        = RPRESS()->customers->delete( $customer->id );
+
+	if ( ! $success ) {
+		return false;
+	}
+
+	if ( $remove_data ) {
+		// Remove all payments, logs, etc.
+		foreach ( $payments_array as $payment_id ) {
+			rpress_delete_purchase( $payment_id, false, true );
+		}
+	} else {
+		// Just set the payments to customer_id of 0.
+		foreach ( $payments_array as $payment_id ) {
+			rpress_update_payment_meta( $payment_id, '_rpress_payment_customer_id', 0 );
+		}
+	}
+
+	return true;
+}
+/**
+ * Move a customer to trash.
  *
  * @since  1.0.0
- * @param  array $args The $_POST array being passeed
- * @return int         Wether it was a successful deletion
+ * @param  array $args The $_POST/$_GET payload.
+ * @return void
  */
 function rpress_customer_delete( $args ) {
 	$customer_edit_role = apply_filters( 'rpress_edit_customers_role', 'edit_shop_payments' );
@@ -360,10 +458,11 @@ function rpress_customer_delete( $args ) {
 	if ( empty( $args ) ) {
 		return;
 	}
-	$customer_id   = (int)$args['customer_id'];
-	$confirm       = ! empty( $args['rpress-customer-delete-confirm'] ) ? true : false;
-	$remove_data   = ! empty( $args['rpress-customer-delete-records'] ) ? true : false;
-	$nonce         = $args['_wpnonce'];
+
+	$customer_id = isset( $args['customer_id'] ) ? absint( $args['customer_id'] ) : 0;
+	$confirm     = ! empty( $args['rpress-customer-delete-confirm'] );
+	$nonce       = isset( $args['_wpnonce'] ) ? $args['_wpnonce'] : '';
+
 	if ( ! wp_verify_nonce( $nonce, 'delete-customer' ) ) {
 		wp_die( esc_html__( 'Cheatin\' eh?!', 'restropress' ) );
 	}
@@ -374,37 +473,179 @@ function rpress_customer_delete( $args ) {
 		wp_safe_redirect( admin_url( 'admin.php?page=rpress-customers&view=overview&id=' . $customer_id ) );
 		exit;
 	}
-	$customer = new RPRESS_Customer( $customer_id );
-	do_action( 'rpress_pre_delete_customer', $customer_id, $confirm, $remove_data );
-	$success = false;
-	if ( $customer->id > 0 ) {
-		$payments_array = array_filter( array_map( 'absint', explode( ',', (string) $customer->payment_ids ) ) );
-		$success        = RPRESS()->customers->delete( $customer->id );
-		if ( $success ) {
-			if ( $remove_data ) {
-				// Remove all payments, logs, etc
-				foreach ( $payments_array as $payment_id ) {
-					rpress_delete_purchase( $payment_id, false, true );
-				}
-			} else {
-				// Just set the payments to customer_id of 0
-				foreach ( $payments_array as $payment_id ) {
-					rpress_update_payment_meta( $payment_id, '_rpress_payment_customer_id', 0 );
-				}
-			}
-			$redirect = admin_url( 'admin.php?page=rpress-customers&rpress-message=customer-deleted' );
-		} else {
-			rpress_set_error( 'rpress-customer-delete-failed', esc_html__( 'Error deleting customer', 'restropress' ) );
-			$redirect = admin_url( 'admin.php?page=rpress-customers&view=delete&id=' . $customer_id );
-		}
+
+	do_action( 'rpress_pre_delete_customer', $customer_id, true, false );
+	if ( rpress_trash_customer_record( $customer_id ) ) {
+		$redirect = admin_url( 'admin.php?page=rpress-customers&rpress-message=customer-trashed' );
 	} else {
-		rpress_set_error( 'rpress-customer-delete-invalid-id', esc_html__( 'Invalid Customer ID', 'restropress' ) );
-		$redirect = admin_url( 'admin.php?page=rpress-customers' );
+		rpress_set_error( 'rpress-customer-delete-failed', esc_html__( 'Error deleting customer', 'restropress' ) );
+		$redirect = admin_url( 'admin.php?page=rpress-customers&view=delete&id=' . $customer_id );
 	}
+
 	wp_safe_redirect( $redirect );
 	exit;
 }
 add_action( 'rpress_delete-customer', 'rpress_customer_delete', 10, 1 );
+/**
+ * Restore a trashed customer.
+ *
+ * @since 3.2.8.6.3
+ * @param array $args The $_GET payload.
+ * @return void
+ */
+function rpress_customer_restore( $args ) {
+	$customer_edit_role = apply_filters( 'rpress_edit_customers_role', 'edit_shop_payments' );
+	if ( ! is_admin() || ! current_user_can( $customer_edit_role ) ) {
+		wp_die( esc_html__( 'You do not have permission to restore this customer.', 'restropress' ) );
+	}
+	if ( empty( $args ) ) {
+		return;
+	}
+
+	$customer_id = isset( $args['customer_id'] ) ? absint( $args['customer_id'] ) : 0;
+	$nonce       = isset( $args['_wpnonce'] ) ? $args['_wpnonce'] : '';
+	if ( ! wp_verify_nonce( $nonce, 'restore-customer' ) ) {
+		wp_die( esc_html__( 'Cheatin\' eh?!', 'restropress' ) );
+	}
+
+	$redirect = admin_url( 'admin.php?page=rpress-customers&status=trash' );
+	if ( rpress_restore_customer_record( $customer_id ) ) {
+		$redirect = add_query_arg( 'rpress-message', 'customer-restored', $redirect );
+	}
+
+	wp_safe_redirect( $redirect );
+	exit;
+}
+add_action( 'rpress_restore-customer', 'rpress_customer_restore', 10, 1 );
+/**
+ * Permanently delete a customer.
+ *
+ * @since 3.2.8.6.3
+ * @param array $args The $_GET/$_POST payload.
+ * @return void
+ */
+function rpress_customer_delete_permanently( $args ) {
+	$customer_edit_role = apply_filters( 'rpress_edit_customers_role', 'edit_shop_payments' );
+	if ( ! is_admin() || ! current_user_can( $customer_edit_role ) ) {
+		wp_die( esc_html__( 'You do not have permission to permanently delete this customer.', 'restropress' ) );
+	}
+	if ( empty( $args ) ) {
+		return;
+	}
+
+	$customer_id = isset( $args['customer_id'] ) ? absint( $args['customer_id'] ) : 0;
+	$confirm     = ! empty( $args['rpress-customer-delete-confirm'] );
+	$remove_data = ! empty( $args['rpress-customer-delete-records'] );
+	$nonce       = isset( $args['_wpnonce'] ) ? $args['_wpnonce'] : '';
+
+	if ( ! wp_verify_nonce( $nonce, 'delete-customer-permanently' ) ) {
+		wp_die( esc_html__( 'Cheatin\' eh?!', 'restropress' ) );
+	}
+	if ( ! $confirm ) {
+		wp_safe_redirect( admin_url( 'admin.php?page=rpress-customers&status=trash' ) );
+		exit;
+	}
+
+	do_action( 'rpress_pre_delete_customer', $customer_id, true, $remove_data );
+	$redirect = admin_url( 'admin.php?page=rpress-customers&status=trash' );
+
+	if ( rpress_delete_customer_record( $customer_id, $remove_data ) ) {
+		$redirect = add_query_arg( 'rpress-message', 'customer-deleted', $redirect );
+	}
+
+	wp_safe_redirect( $redirect );
+	exit;
+}
+add_action( 'rpress_delete-customer-permanently', 'rpress_customer_delete_permanently', 10, 1 );
+/**
+ * Process Customers list table bulk actions.
+ *
+ * @since 3.2.8.6.3
+ * @return void
+ */
+function rpress_customers_list_table_process_bulk_actions() {
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	if ( 'rpress-customers' !== $page ) {
+		return;
+	}
+
+	$view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'customers';
+	if ( 'customers' !== $view ) {
+		return;
+	}
+
+	$action = '';
+	if ( isset( $_REQUEST['action'] ) && '-1' !== wp_unslash( $_REQUEST['action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$action = sanitize_key( wp_unslash( $_REQUEST['action'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	} elseif ( isset( $_REQUEST['action2'] ) && '-1' !== wp_unslash( $_REQUEST['action2'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$action = sanitize_key( wp_unslash( $_REQUEST['action2'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	}
+
+	if ( ! in_array( $action, array( 'delete', 'restore', 'delete_permanently' ), true ) ) {
+		return;
+	}
+
+	$nonce = isset( $_REQUEST['_wpnonce'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		: '';
+
+	if ( ! wp_verify_nonce( $nonce, 'bulk-Customers' ) && ! wp_verify_nonce( $nonce, 'bulk-customers' ) ) {
+		return;
+	}
+
+	$customer_edit_role = apply_filters( 'rpress_edit_customers_role', 'edit_shop_payments' );
+	if ( ! current_user_can( $customer_edit_role ) ) {
+		return;
+	}
+
+	$ids = isset( $_REQUEST['customer'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		? wp_unslash( $_REQUEST['customer'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		: array();
+
+	$ids = wp_parse_id_list( $ids );
+	$processed_count = 0;
+
+	foreach ( $ids as $customer_id ) {
+		switch ( $action ) {
+			case 'delete':
+				do_action( 'rpress_pre_delete_customer', $customer_id, true, false );
+				if ( rpress_trash_customer_record( $customer_id ) ) {
+					$processed_count++;
+				}
+				break;
+			case 'restore':
+				if ( rpress_restore_customer_record( $customer_id ) ) {
+					$processed_count++;
+				}
+				break;
+			case 'delete_permanently':
+				do_action( 'rpress_pre_delete_customer', $customer_id, true, false );
+				if ( rpress_delete_customer_record( $customer_id, false ) ) {
+					$processed_count++;
+				}
+				break;
+		}
+	}
+
+	$redirect_url = wp_get_referer();
+	if ( empty( $redirect_url ) ) {
+		$redirect_url = admin_url( 'admin.php?page=rpress-customers' );
+	}
+
+	if ( $processed_count > 0 ) {
+		$message = 'customer-trashed';
+		if ( 'restore' === $action ) {
+			$message = 'customer-restored';
+		} elseif ( 'delete_permanently' === $action ) {
+			$message = 'customer-deleted';
+		}
+		$redirect_url = add_query_arg( 'rpress-message', $message, $redirect_url );
+	}
+
+	wp_safe_redirect( $redirect_url );
+	exit;
+}
+add_action( 'admin_init', 'rpress_customers_list_table_process_bulk_actions' );
 /**
  * Disconnect a user ID from a customer
  *

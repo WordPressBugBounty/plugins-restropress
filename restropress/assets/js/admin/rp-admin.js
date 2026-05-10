@@ -2279,17 +2279,38 @@ jQuery(document)
   });
 // Graphing Helper Functions
 var rpressFormatCurrency = function (value) {
-  // Convert the value to a floating point number in case it arrives as a string.
   var numeric = parseFloat(value);
-  // Specify the local currency.
-  var storeCurrency = rpress_vars.currency;
-  var decimalPlaces = rpress_vars.currency_decimals;
-  return numeric.toLocaleString(storeCurrency, {
-    style: 'currency',
-    currency: storeCurrency,
-    minimumFractionDigits: decimalPlaces,
-    maximumFractionDigits: decimalPlaces
-  });
+  if (isNaN(numeric)) {
+    numeric = 0;
+  }
+
+  var decimalPlaces = parseInt(rpress_vars.currency_decimals, 10);
+  if (isNaN(decimalPlaces)) {
+    decimalPlaces = 2;
+  }
+
+  if (String(rpress_vars.currency_value_type || 'float') === 'round') {
+    decimalPlaces = 0;
+    numeric = Math.round(numeric);
+  }
+
+  var amount = numeric.toFixed(decimalPlaces);
+  var decimalSeparator = rpress_vars.decimal_separator || '.';
+  var thousandsSeparator = rpress_vars.thousands_separator || ',';
+
+  if (decimalSeparator !== '.') {
+    amount = amount.split('.').join(decimalSeparator);
+  }
+
+  var amountParts = amount.split(decimalSeparator);
+  amountParts[0] = amountParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSeparator);
+  amount = amountParts.join(decimalSeparator);
+
+  if (rpress_vars.currency_pos === 'before') {
+    return rpress_vars.currency_sign + amount;
+  }
+
+  return amount + rpress_vars.currency_sign;
 }
 var rpressFormatNumber = function (value) {
   // Convert the value to a floating point number in case it arrives as a string.

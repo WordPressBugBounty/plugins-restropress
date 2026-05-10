@@ -54,6 +54,7 @@ function rpress_customers_list() {
 		<?php do_action( 'rpress_customers_table_top' ); ?>
 		<form id="rpress-customers-filter" method="get" action="<?php echo esc_url( admin_url( 'admin.php?page=rpress-customers' ) ); ?>">
 			<?php
+			$customers_table->views();
 			$customers_table->search_box( esc_html__( 'Search Customers', 'restropress' ), 'rpress-customers' );
 			$customers_table->display();
 			?>
@@ -580,11 +581,7 @@ function rpress_customers_delete_view( $customer ) {
 				<span class="delete-customer-options">
 					<p>
 						<?php echo wp_kses_post( RPRESS()->html->checkbox( array( 'name' => 'rpress-customer-delete-confirm' ) ) ); ?>
-						<label for="rpress-customer-delete-confirm"><?php esc_html_e( 'Are you sure you want to delete this customer?', 'restropress' ); ?></label>
-					</p>
-					<p>
-						<?php echo wp_kses_post( RPRESS()->html->checkbox( array( 'name' => 'rpress-customer-delete-records', 'options' => array( 'disabled' => true ) ) ) ); ?>
-						<label for="rpress-customer-delete-records"><?php esc_html_e( 'Delete all associated payments and records?', 'restropress' ); ?></label>
+						<label for="rpress-customer-delete-confirm"><?php esc_html_e( 'Are you sure you want to move this customer to trash?', 'restropress' ); ?></label>
 					</p>
 					<?php do_action( 'rpress_customer_delete_inputs', $customer ); ?>
 				</span>
@@ -592,7 +589,7 @@ function rpress_customers_delete_view( $customer ) {
 					<input type="hidden" name="customer_id" value="<?php echo esc_attr( $customer->id ); ?>" />
 					<?php wp_nonce_field( 'delete-customer', '_wpnonce', false, true ); ?>
 					<input type="hidden" name="rpress_action" value="delete-customer" />
-					<input type="submit" disabled="disabled" id="rpress-delete-customer" class="button-primary" value="<?php esc_html_e( 'Delete Customer', 'restropress' ); ?>" />
+					<input type="submit" id="rpress-delete-customer" class="button-primary" value="<?php esc_html_e( 'Move To Trash', 'restropress' ); ?>" />
 					<a id="rpress-delete-customer-cancel" href="<?php echo esc_url( admin_url( 'admin.php?page=rpress-customers&view=overview&id=' . $customer->id ) ) ; ?>" class="delete"><?php esc_html_e( 'Cancel', 'restropress' ); ?></a>
 				</span>
 			</div>

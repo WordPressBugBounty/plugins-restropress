@@ -226,8 +226,23 @@ class RP_Frontend_Scripts
     $user_params = array(
       'ajaxurl' => rpress_get_ajax_url(),
       'address_nonce' => wp_create_nonce( 'rpress-user-address' ),
+      'order_details_nonce' => wp_create_nonce( 'show-order-details' ),
+      'delete_confirm_text' => esc_html__( 'Are you sure you want to delete this address?', 'restropress' ),
+      'delete_success_text' => esc_html__( 'Address Deleted', 'restropress' ),
+      'delete_failed_text' => esc_html__( 'Unable to delete the address. Please try again.', 'restropress' ),
+      'delete_error_text' => esc_html__( 'Something went wrong while deleting the address. Please try again.', 'restropress' ),
+      'edit_address_title_text' => esc_html__( 'Edit Delivery Address', 'restropress' ),
+      'add_address_title_text' => esc_html__( 'Add Delivery Address', 'restropress' ),
+      'save_changes_text' => esc_html__( 'Save Changes', 'restropress' ),
+      'save_address_text' => esc_html__( 'Save Address', 'restropress' ),
     );
-    wp_register_script('user-dashboard-scripts', plugin_dir_url(RP_PLUGIN_FILE) . 'assets/js/user-dashboard.js', array('jquery'), RP_VERSION, true);
+    $user_dashboard_script_version = RP_VERSION;
+    $user_dashboard_script_path = trailingslashit(RP_PLUGIN_DIR) . 'assets/js/user-dashboard.js';
+    if (file_exists($user_dashboard_script_path)) {
+      $user_dashboard_script_version = RP_VERSION . '.' . filemtime($user_dashboard_script_path);
+    }
+
+    wp_register_script('user-dashboard-scripts', plugin_dir_url(RP_PLUGIN_FILE) . 'assets/js/user-dashboard.js', array('jquery'), $user_dashboard_script_version, true);
     wp_localize_script('user-dashboard-scripts', 'users', $user_params);
     wp_enqueue_script('user-dashboard-scripts');
     if (is_restropress_page()) {
@@ -241,6 +256,7 @@ class RP_Frontend_Scripts
       self::enqueue_script('rp-reorder');
     }
 
+    self::enqueue_script('rp-modal');
     self::enqueue_script('rp-frontend');
     if (rpress_is_checkout()) {
       self::enqueue_script('rp-checkout');
@@ -292,11 +308,14 @@ class RP_Frontend_Scripts
       'currency' => rpress_get_currency(),
       'currency_sign' => rpress_currency_filter(),
       'currency_pos' => rpress_get_option('currency_position', 'before'),
+      'currency_value_type' => rpress_get_currency_value_type(),
+      'currency_decimals' => rpress_currency_decimal_filter(),
       'expire_cookie_time' => $expire_cookie_time,
       'confirm_empty_cart' => esc_html__('Are you sure! You want to clear the cart?', 'restropress'),
       'success' => esc_html__('Success', 'restropress'),
       'success_empty_cart' => esc_html__('Cart cleared', 'restropress'),
       'decimal_separator' => rpress_get_option('decimal_separator', '.'),
+      'thousands_separator' => rpress_get_option('thousands_separator', ','),
       'cart_quantity' => $cart_quantity,
       'items' => esc_html__('Items', 'restropress'),
       'no_image' => RP_PLUGIN_URL . 'assets/images/no-image.png',
@@ -318,6 +337,8 @@ class RP_Frontend_Scripts
       'checkout_error_anchor' => '#rpress_purchase_submit',
       'currency_sign' => rpress_currency_filter(''),
       'currency_pos' => rpress_get_option('currency_position', 'before'),
+      'currency_value_type' => rpress_get_currency_value_type(),
+      'currency_decimals' => rpress_currency_decimal_filter(),
       'decimal_separator' => rpress_get_option('decimal_separator', '.'),
       'thousands_separator' => rpress_get_option('thousands_separator', ','),
       'no_gateway' => esc_html__('Please select a payment method', 'restropress'),
@@ -404,7 +425,13 @@ class RP_Frontend_Scripts
     if (rpress_get_option('disable_styles', false)) {
       return;
     }
-    wp_register_style('user-dashboard-styles', plugin_dir_url(RP_PLUGIN_FILE) . '/assets/css/user-dashboard.css', array(), RP_VERSION, 'all');
+    $user_dashboard_style_version = RP_VERSION;
+    $user_dashboard_style_path = trailingslashit(RP_PLUGIN_DIR) . 'assets/css/user-dashboard.css';
+    if (file_exists($user_dashboard_style_path)) {
+      $user_dashboard_style_version = RP_VERSION . '.' . filemtime($user_dashboard_style_path);
+    }
+
+    wp_register_style('user-dashboard-styles', plugin_dir_url(RP_PLUGIN_FILE) . '/assets/css/user-dashboard.css', array(), $user_dashboard_style_version, 'all');
     wp_enqueue_style('user-dashboard-styles');
     if (!is_restropress_page()) {
       return;
@@ -502,6 +529,51 @@ class RP_Frontend_Scripts
     </style>
     <?php
   }
+
+  /**
+   * Mix a hex color with white/black for dynamic UI tones.
+   *
+   * @param string $hex Hex color.
+   * @param string $target Target hex color.
+   * @param int    $weight Target mix percentage.
+   * @return string
+   */
+  private static function mix_hex_color($hex, $target, $weight)
+  {
+    $hex = sanitize_hex_color($hex);
+    $target = sanitize_hex_color($target);
+
+    if (!$hex || !$target) {
+      return '#ED5575';
+    }
+
+    $hex = ltrim($hex, '#');
+    $target = ltrim($target, '#');
+
+    if (3 === strlen($hex)) {
+      $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+    }
+
+    if (3 === strlen($target)) {
+      $target = $target[0] . $target[0] . $target[1] . $target[1] . $target[2] . $target[2];
+    }
+
+    $weight = max(0, min(100, absint($weight))) / 100;
+
+    $base = sscanf('#' . $hex, '#%02x%02x%02x');
+    $mix = sscanf('#' . $target, '#%02x%02x%02x');
+
+    if (!is_array($base) || !is_array($mix) || count($base) !== 3 || count($mix) !== 3) {
+      return '#ED5575';
+    }
+
+    $r = round($base[0] * (1 - $weight) + $mix[0] * $weight);
+    $g = round($base[1] * (1 - $weight) + $mix[1] * $weight);
+    $b = round($base[2] * (1 - $weight) + $mix[2] * $weight);
+
+    return sprintf('#%02x%02x%02x', $r, $g, $b);
+  }
+
   /**
    * Load head styles for Primary & Secondary colors
    *
@@ -514,15 +586,33 @@ class RP_Frontend_Scripts
     if (rpress_get_option('disable_styles', false) || !is_object($post)) {
       return;
     }
-    $primary_color = esc_html(rpress_get_option('primary_color', '#ED5575'));
-    $add_button_bg_color = esc_html(rpress_get_option('add_button_background_color', '#FEE2E8'));
-    $add_button_text_color = esc_html(rpress_get_option('add_button_text_color', '#000000'));
+    if (!function_exists('is_restropress_page') || !is_restropress_page()) {
+      return;
+    }
+    $primary_color = sanitize_hex_color(rpress_get_option('primary_color', '#ED5575'));
+    if (!$primary_color) {
+      $primary_color = '#ED5575';
+    }
+    $add_button_bg_color = sanitize_hex_color(rpress_get_option('add_button_background_color', '#FEE2E8'));
+    if (!$add_button_bg_color) {
+      $add_button_bg_color = '#FEE2E8';
+    }
+    $add_button_text_color = sanitize_hex_color(rpress_get_option('add_button_text_color', '#000000'));
+    if (!$add_button_text_color) {
+      $add_button_text_color = '#000000';
+    }
     $button_style = sanitize_key((string) rpress_get_option('button_style', 'th-rounded'));
     $default_control_radius = '100px';
-    if ('th-rectangle' === $button_style || 'th-plain' === $button_style) {
+    if ('th-border-radius' === $button_style) {
+      $default_control_radius = '8px';
+    } elseif ('th-rectangle' === $button_style || 'th-plain' === $button_style) {
       $default_control_radius = '0px';
     }
     $rgb = sscanf($primary_color, "#%02x%02x%02x");
+    $theme_contrast = '#ffffff';
+    $theme_label = self::mix_hex_color($primary_color, '#000000', 28);
+    $theme_dark = self::mix_hex_color($primary_color, '#000000', 22);
+    $theme_light = self::mix_hex_color($primary_color, '#ffffff', 30);
 
     // Validate and escape
     if (is_array($rgb) && count($rgb) === 3) {
@@ -530,19 +620,63 @@ class RP_Frontend_Scripts
       $g = absint($rgb[1]);
       $b = absint($rgb[2]);
       $rgba = esc_attr("{$r},{$g},{$b}");
+      $brightness = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+      $theme_contrast = $brightness > 155 ? '#111827' : '#ffffff';
+
+      if ($brightness > 190) {
+        $theme_label = self::mix_hex_color($primary_color, '#000000', 48);
+      } elseif ($brightness < 70) {
+        $theme_label = self::mix_hex_color($primary_color, '#ffffff', 28);
+      }
     } else {
       // fallback if invalid
       $rgba = "0,0,0";
     }
     ?>
     <style type="text/css">
-      :root {
+      .rpress-wrap,
+      .rpress-section,
+      .rpress-sidebar-cart-wrap,
+      .rpress-mobile-cart-icons,
+      .cart_item.rpress_checkout,
+      body.rpress-checkout #rpress_checkout_wrap,
+      body.rpress-checkout #rpress_purchase_form,
+      .rp-thankyou-page,
+      #rpress_user_history.rpress-order-history,
+      .user-dashboard-wrapper,
+      form.rpress_form,
+      .custom-reset-password,
+      #rpressModal,
+      #rpressModal.show-service-options,
+      #rpressModal.show-order-details.rpress-order-details-context,
+      #rpressDateTime.rpress-edit-address-popup {
         --rpress-theme-primary:
           <?php echo sanitize_hex_color($primary_color); ?>
         ;
         --rpress-theme-primary-rgb:
           <?php echo esc_attr($rgba); ?>
         ;
+        --rpress-theme-primary-dark:
+          <?php echo sanitize_hex_color($theme_dark); ?>
+        ;
+        --rpress-theme-primary-light:
+          <?php echo sanitize_hex_color($theme_light); ?>
+        ;
+        --rpress-theme-primary-contrast:
+          <?php echo sanitize_hex_color($theme_contrast); ?>
+        ;
+        --rpress-theme-label:
+          <?php echo sanitize_hex_color($theme_label); ?>
+        ;
+        --rpress-theme-link:
+          <?php echo sanitize_hex_color($primary_color); ?>
+        ;
+        --rpress-theme-section-bg: rgba(<?php echo esc_attr($rgba); ?>, 0.055);
+        --rpress-theme-section-bg-strong: rgba(<?php echo esc_attr($rgba); ?>, 0.12);
+        --rpress-theme-section-bg-soft: rgba(<?php echo esc_attr($rgba); ?>, 0.035);
+        --rpress-theme-border-soft: rgba(<?php echo esc_attr($rgba); ?>, 0.18);
+        --rpress-theme-border: rgba(<?php echo esc_attr($rgba); ?>, 0.32);
+        --rpress-theme-focus: rgba(<?php echo esc_attr($rgba); ?>, 0.16);
         --rpress-default-control-radius:
           <?php echo esc_attr($default_control_radius); ?>
         ;
@@ -556,15 +690,248 @@ class RP_Frontend_Scripts
         --rp-old-ui-modal-rect-radius: var(--rpress-default-control-radius);
       }
 
+      /* Keep frontend surfaces, labels, and links synced with Theme Color. */
+      .rpress-wrap,
+      .rpress-section,
+      body.rpress-checkout #rpress_checkout_wrap,
+      .rp-thankyou-page,
+      #rpress_user_history.rpress-order-history,
+      .user-dashboard-wrapper,
+      form.rpress_form,
+      .custom-reset-password,
+      #rpressModal,
+      #rpressDateTime {
+        --rp-checkout-accent: var(--rpress-theme-primary);
+        --rp-checkout-accent-rgb: var(--rpress-theme-primary-rgb);
+        --rp-checkout-brand: var(--rpress-theme-primary);
+        --rp-checkout-brand-rgb: var(--rpress-theme-primary-rgb);
+        --rp-checkout-card-soft: var(--rpress-theme-section-bg-soft);
+        --rp-checkout-border: var(--rpress-theme-border-soft);
+        --rp-thankyou-accent: var(--rpress-theme-primary);
+        --rp-thankyou-accent-ink: var(--rpress-theme-primary-dark);
+        --rp-thankyou-surface: var(--rpress-theme-section-bg);
+        --rp-thankyou-border: var(--rpress-theme-border-soft);
+      }
+
+      .rpress-wrap a:not(.button):not(.btn):not(.rpress-submit):not(.rpress-add-to-cart),
+      body.rpress-checkout #rpress_checkout_wrap a:not(.button):not(.btn):not(.rpress-submit):not(.rpress-add-to-cart),
+      form.rpress_form a,
+      .custom-reset-password a,
+      .user-dashboard-wrapper a,
+      #rpress_user_history.rpress-order-history a:not(.rpress-view-order-btn):not(.rpress-reorder-btn),
+      .rp-thankyou-page a {
+        color: var(--rpress-theme-link) !important;
+      }
+
+      .rpress-wrap label,
+      .rpress-wrap .rpress-label,
+      .rpress-checkout #rpress_checkout_wrap label,
+      .rpress-checkout #rpress_checkout_wrap .rpress-label,
+      .rpress-checkout #rpress_checkout_wrap .delivery-time-text,
+      .rpress-checkout #rpress_checkout_wrap .pickup-time-text,
+      form.rpress_form p label,
+      .custom-reset-password form label,
+      .user-dashboard-wrapper .form-label,
+      .user-dashboard-wrapper .box-title-description,
+      .user-dashboard-wrapper table#user-orders tbody td::before,
+      #rpress_user_history.rpress-order-history .rpress-history-card-label,
+      #rpress_user_history.rpress-order-history .rpress-history-meta-item span,
+      #rpress_user_history.rpress-order-history .rpress-history-items span,
+      #rpress_user_history.rpress-order-history .rpress-history-total span,
+      .rp-thankyou-meta-item span,
+      .rp-thankyou-list span,
+      #rpressModal.show-order-details.rpress-order-details-context .rp-detils-content-view .rp-detail-label {
+        color: var(--rpress-theme-label) !important;
+      }
+
+      body.rpress-checkout #rpress_checkout_wrap,
+      .user-dashboard-wrapper {
+        background: linear-gradient(180deg, var(--rpress-theme-section-bg-soft) 0%, #ffffff 100%) !important;
+      }
+
+      body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_discount_code,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_rewards,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_login_register,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_user_info,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_order_details,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_payment_mode_select_wrap,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_payment_icons,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_cc_fields,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_cc_address,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap table,
+      #rpress_user_history.rpress-order-history .rpress-history-card,
+      .user-dashboard-wrapper .box-bg,
+      .user-dashboard-wrapper .light-gray-bg,
+      .user-dashboard-wrapper .address-wrap,
+      .user-dashboard-wrapper table#user-orders,
+      .user-dashboard-wrapper table#user-orders tbody tr,
+      #rpressModal.show-order-details.rpress-order-details-context .modal__container,
+      #rpressModal.show-order-details.rpress-order-details-context .rp-order-section-md-data,
+      #rpressModal.show-order-details.rpress-order-details-context .rp-order-list-main-wrap ul.rpress-cart {
+        background: linear-gradient(180deg, #ffffff 0%, var(--rpress-theme-section-bg-soft) 100%) !important;
+        border-color: var(--rpress-theme-border-soft) !important;
+      }
+
+      .rp-thankyou-hero {
+        background: linear-gradient(140deg, #ffffff 0%, var(--rpress-theme-section-bg) 48%, #ffffff 100%) !important;
+        border-color: var(--rpress-theme-border-soft) !important;
+      }
+
+      .rp-thankyou-hero::before {
+        background: radial-gradient(circle at center, rgba(<?php echo esc_attr($rgba); ?>, 0.2), rgba(<?php echo esc_attr($rgba); ?>, 0)) !important;
+      }
+
+      .rp-thankyou-check {
+        background: linear-gradient(135deg, var(--rpress-theme-primary), var(--rpress-theme-primary-light)) !important;
+        box-shadow: 0 10px 20px rgba(<?php echo esc_attr($rgba); ?>, 0.28) !important;
+      }
+
+      .rp-thankyou-live-status,
+      .rp-thankyou-meta-item,
+      .rp-thankyou-card,
+      .rp-thankyou-next-item,
+      .rp-thankyou-table-wrap {
+        background: rgba(255, 255, 255, 0.92) !important;
+        border-color: var(--rpress-theme-border-soft) !important;
+      }
+
+      .rp-thankyou-page table#rp-order-summary thead th,
+      .rp-thankyou-page table#rp-order-summary tfoot td,
+      #rpress_user_history.rpress-order-history .rpress-order-history-count,
+      #rpress_user_history.rpress-order-history .rpress-history-meta-item,
+      .user-dashboard-wrapper table#user-orders thead th,
+      .user-dashboard-wrapper .viewbg,
+      .user-dashboard-wrapper div#user-orders_filter input[type="search"],
+      .user-dashboard-wrapper .rp-order-dropdown,
+      #rpressModal.show-order-details.rpress-order-details-context .modal__close {
+        background: var(--rpress-theme-section-bg) !important;
+        border-color: var(--rpress-theme-border-soft) !important;
+      }
+
+      .user-dashboard-wrapper ul.sidebar-menu li.active,
+      .user-dashboard-wrapper ul.sidebar-menu li:hover,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_payment_mode_select .rpress-gateway-option-selected,
+      body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option #rpressdeliveryTab .single-service-selected.active,
+      body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option #rpressdeliveryTab .single-service-selected[aria-selected="true"],
+      .rpress-section ul.rpress-category-lists .rpress-category-item.current,
+      .rpress-section ul.rpress-category-lists .rpress-category-item:hover,
+      .rpress-section .cd-dropdown-content li a.mnuactive {
+        background: var(--rpress-theme-section-bg-strong) !important;
+        border-color: var(--rpress-theme-primary) !important;
+        color: var(--rpress-theme-primary) !important;
+      }
+
+      .user-dashboard-wrapper ul.sidebar-menu li.active {
+        border-left-color: var(--rpress-theme-primary) !important;
+      }
+
+      .user-dashboard-wrapper ul.sidebar-menu li.active span,
+      .user-dashboard-wrapper ul.sidebar-menu li:hover span,
+      .user-dashboard-wrapper .address-wrap.default .type-of-address,
+      .user-dashboard-wrapper .rp-order-dropdown .dropdown__items li a:hover,
+      .user-dashboard-wrapper form.rpress_form .rpress-login-remember a,
+      .user-dashboard-wrapper form.rpress_form p.register-link-wrap .reglink,
+      .rpress-section .rpress-categories-menu ul li a:hover,
+      .rpress-section .rpress-categories-menu ul li a.active,
+      .rpress-section .rpress-price-holder span.price,
+      .rpress-section .special-inst span,
+      .rpress-section .special-margin span,
+      .rpress-section .delivery-change,
+      .rpress-section .rpress-clear-cart,
+      .rpress-section .cart-action-wrap a,
+      .rpress-section .rpress-show-terms a {
+        color: var(--rpress-theme-primary) !important;
+      }
+
+      .user-dashboard-wrapper .rp-order-dropdown .dropdown__items li a:hover svg path {
+        fill: var(--rpress-theme-primary) !important;
+      }
+
+      .user-dashboard-wrapper .input-wrap .form-control:focus,
+      .user-dashboard-wrapper input.search__input:focus,
+      .user-dashboard-wrapper div#user-orders_filter input[type="search"]:focus,
+      form.rpress_form p input:focus,
+      .custom-reset-password form input:focus,
+      body.rpress-checkout #rpress_checkout_wrap .rpress-input:focus,
+      body.rpress-checkout #rpress_checkout_wrap select.rpress-select:focus,
+      body.rpress-checkout #rpress_checkout_wrap select.rp-form-control:focus,
+      body.rpress-checkout #rpress_checkout_wrap select.rpress-hrs:focus,
+      body.rpress-checkout #rpress_checkout_wrap textarea.rpress-input:focus {
+        border-color: var(--rpress-theme-primary) !important;
+        box-shadow: 0 0 0 3px var(--rpress-theme-focus) !important;
+      }
+
+      .user-dashboard-wrapper .input-wrap .form-control:focus~.form-label {
+        color: var(--rpress-theme-primary) !important;
+      }
+
+      .user-dashboard-wrapper.user-profile .box-body button.btn.btn-primary,
+      .user-dashboard-wrapper .save-address,
+      .user-dashboard-wrapper form.profile-form-wrap input[type="submit"],
+      .user-dashboard-wrapper .address-wrap.default button.btn.btn-primary,
+      .user-dashboard-wrapper .address-wrap button.btn.btn-primary:hover,
+      form.rpress_form p input[type="submit"],
+      .custom-reset-password form input[type="submit"],
+      body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit #rpress-purchase-button,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit input[type="submit"],
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_rewards .rpress-apply-discount.rpress-submit,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_rewards .rpress-apply-redemp.rpress-submit,
+      body.rpress-checkout #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
+      #rpress_user_history.rpress-order-history .rpress-history-actions a,
+      .rp-live-status-toast {
+        background: var(--rpress-theme-primary) !important;
+        border-color: var(--rpress-theme-primary) !important;
+        color: var(--rpress-theme-primary-contrast) !important;
+      }
+
+      .user-dashboard-wrapper .address-wrap button.btn.btn-primary,
+      .user-dashboard-wrapper button.btn.btn-primary.add-new-address-btn,
+      .rp-thankyou-notify-btn,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit {
+        background: transparent !important;
+        border-color: var(--rpress-theme-primary) !important;
+        color: var(--rpress-theme-primary) !important;
+      }
+
+      .rp-thankyou-notify-btn:hover,
+      .rp-thankyou-notify-btn:focus,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:hover {
+        background: var(--rpress-theme-primary) !important;
+        color: var(--rpress-theme-primary-contrast) !important;
+      }
+
+      .user-dashboard-wrapper .radio-custom:checked + .radio-custom-label,
+      .user-dashboard-wrapper .radio-custom:checked + .radio-custom-label svg path {
+        color: var(--rpress-theme-primary) !important;
+        fill: var(--rpress-theme-primary) !important;
+      }
+
+      .user-dashboard-wrapper .radio-custom:checked + .radio-custom-label:before,
+      .user-dashboard-wrapper .default-address-checkbox input[type=checkbox]:checked + label,
+      form.rpress_form .rpress-login-remember input[type=checkbox]:checked + label {
+        background-color: var(--rpress-theme-primary) !important;
+        border-color: var(--rpress-theme-primary) !important;
+      }
+
       /* Sync frontend button/select shapes with "Default Button Style" (excluding item add buttons). */
-      .rpress-checkout a.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-      .rpress-checkout button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-      .rpress-checkout input[type="submit"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-      .rpress-checkout input[type="button"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-      .rpress-checkout a.rpress-checkout-cart.rpress-submit,
+      body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+      body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+      body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+      body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+      .rpress-section .rpress-tabs-wrapper.rpress-delivery-options,
+      .rpress-section .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs,
+      .rpress-section .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item,
+      .rpress-section .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item > a.nav-link,
+      .rpress-section .rpress_checkout a,
+      body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit,
       #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit,
       #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button,
       #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit,
+      #rpress_checkout_wrap .rpress-delivery-options ul#rpressdeliveryTab.nav,
+      #rpress_checkout_wrap .rpress-delivery-options ul#rpressdeliveryTab.nav>li,
+      #rpress_checkout_wrap .rpress-delivery-options ul#rpressdeliveryTab.nav>li.nav-item,
       #rpress_checkout_wrap .rpress-delivery-options ul#rpressdeliveryTab.nav>li>a,
       #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
       #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn,
@@ -579,8 +946,13 @@ class RP_Frontend_Scripts
       #rpressModal .rpress-popup-actions .submit-fooditem-button,
       #rpress_purchase_form #rpress-purchase-button,
       #rpress_purchase_form #rpress-user-login-submit input,
-      #rpress_login_submit .rpress-submit,
-      #rpress_register_submit .rpress-submit {
+      #rpress_login_submit,
+      #rpress_register_form input[type="submit"].rpress-submit,
+      #rpress_profile_editor_submit,
+      .rpress-order-history a.rpress-view-order-btn,
+      .rpress-order-history a.rpress-reorder-btn,
+      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
+      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
         border-radius: var(--rpress-default-control-radius) !important;
       }
 
@@ -674,9 +1046,15 @@ class RP_Frontend_Scripts
       .rpress-categories-menu ul li a:hover,
       .rpress-categories-menu ul li a.active,
       .rpress-price-holder span.price,
-      .qtyplus-wrap input[type="button"]:hover,
-      .qtyminus-wrap input[type="button"]:hover,
-      div.rpress-popup-actions .btn-count input[type="button"]:hover,
+      #rpressModal .qtyplus-wrap input[type="button"],
+      #rpressModal .qtyminus-wrap input[type="button"],
+      #rpressModal div.rpress-popup-actions .btn-count input[type="button"],
+      #rpressModal .qtyplus-wrap input[type="button"]:hover,
+      #rpressModal .qtyminus-wrap input[type="button"]:hover,
+      #rpressModal .qtyplus-wrap input[type="button"]:focus,
+      #rpressModal .qtyminus-wrap input[type="button"]:focus,
+      #rpressModal div.rpress-popup-actions .btn-count input[type="button"]:hover,
+      #rpressModal div.rpress-popup-actions .btn-count input[type="button"]:focus,
       .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit:hover .rpress-add-to-cart-label {
         color:
           <?php echo sanitize_hex_color($primary_color); ?>
@@ -684,7 +1062,16 @@ class RP_Frontend_Scripts
       }
 
       div.rpress-search-wrap input#rpress-food-search,
-      .rpress_fooditem_tags span.fooditem_tag {
+      .rpress_fooditem_tags span.fooditem_tag,
+      #rpressModal .qtyplus-wrap input[type="button"],
+      #rpressModal .qtyminus-wrap input[type="button"],
+      #rpressModal div.rpress-popup-actions .btn-count input[type="button"],
+      #rpressModal .qtyplus-wrap input[type="button"]:hover,
+      #rpressModal .qtyminus-wrap input[type="button"]:hover,
+      #rpressModal .qtyplus-wrap input[type="button"]:focus,
+      #rpressModal .qtyminus-wrap input[type="button"]:focus,
+      #rpressModal div.rpress-popup-actions .btn-count input[type="button"]:hover,
+      #rpressModal div.rpress-popup-actions .btn-count input[type="button"]:focus {
         border-color:
           <?php echo sanitize_hex_color($primary_color); ?>
         ;
@@ -697,9 +1084,17 @@ class RP_Frontend_Scripts
       }
 
       .button.rpress-submit,
-      .btn.btn-block.btn-primary,
+      #rpressModal.show-service-options .btn.btn-block.btn-primary,
+      #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary,
       .rpress-mobile-cart-icons .rp-cart-right-wrap,
-      .button.rpress-status {
+      .button.rpress-status,
+      #rpress_login_submit,
+      #rpress_register_form input[type="submit"].rpress-submit,
+      #rpress_profile_editor_submit,
+      .rpress-order-history a.rpress-view-order-btn,
+      .rpress-order-history a.rpress-reorder-btn,
+      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
+      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
         background:
           <?php echo sanitize_hex_color($primary_color); ?>
         ;
@@ -709,13 +1104,14 @@ class RP_Frontend_Scripts
         ;
       }
 
-      .rpress-popup-actions .submit-fooditem-button {
+      #rpressModal .rpress-popup-actions .submit-fooditem-button {
         background:
           <?php echo sanitize_hex_color($primary_color); ?>
         ;
         border: 1px solid
           <?php echo sanitize_hex_color($primary_color); ?>
         ;
+        color: #fff;
       }
 
       .cart_item.rpress_checkout a {
@@ -737,23 +1133,33 @@ class RP_Frontend_Scripts
       .button.rpress-submit:active,
       .button.rpress-submit:focus,
       .button.rpress-submit:hover,
-      .btn.btn-block.btn-primary:hover,
+      #rpressModal.show-service-options .btn.btn-block.btn-primary:hover,
+      #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary:hover,
       .cart_item.rpress_checkout a:hover,
-      .rpress-popup-actions .submit-fooditem-button:hover,
+      #rpressModal .rpress-popup-actions .submit-fooditem-button:hover,
+      #rpress_login_submit:hover,
+      #rpress_register_form input[type="submit"].rpress-submit:hover,
+      #rpress_profile_editor_submit:hover,
+      .rpress-order-history a.rpress-view-order-btn:hover,
+      .rpress-order-history a.rpress-reorder-btn:hover,
+      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:hover,
+      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:hover
       {
       border: 1px solid
         <?php echo sanitize_hex_color($primary_color); ?>
       ;
       }
 
-      .delivery-change,
-      .special-inst span,
-      .special-margin span,
+      .rpress-section .delivery-change,
+      .rpress-section .special-inst span,
+      .rpress-section .special-margin span,
       .rpress-clear-cart,
-      .cart-action-wrap a,
+      .rpress-section .cart-action-wrap a,
+      .rpress-sidebar-cart-wrap .cart-action-wrap a,
+      #rpress_checkout_wrap .cart-action-wrap a,
+      #rpressModal .cart-action-wrap a,
       .rpress_fooditems_list h5.rpress-cat,
       ul.rpress-cart span.cart-total,
-      a.rpress_cart_remove_item_btn,
       .rpress-show-terms a,
       .rpress-view-order-btn {
         color:
@@ -762,8 +1168,11 @@ class RP_Frontend_Scripts
       }
 
       .rpress-clear-cart:hover,
-      .delivery-change:hover,
-      .cart-action-wrap a:hover,
+      .rpress-section .delivery-change:hover,
+      .rpress-section .cart-action-wrap a:hover,
+      .rpress-sidebar-cart-wrap .cart-action-wrap a:hover,
+      #rpress_checkout_wrap .cart-action-wrap a:hover,
+      #rpressModal .cart-action-wrap a:hover,
       a.rpress_cart_remove_item_btn:hover,
       .rpress-show-terms a:hover {
         color:
@@ -787,7 +1196,8 @@ class RP_Frontend_Scripts
       .nav#rpressdeliveryTab>li.active>a,
       .nav#rpressdeliveryTab>li.active>a:hover,
       .nav#rpressdeliveryTab>li.active>a:focus,
-      .close-cart-ic,
+      .rpress-sidebar-cart-wrap .close-cart-ic,
+      .rpress-mobile-cart-icons .close-cart-ic,
       #rpress_checkout_wrap .nav#rpressdeliveryTab>li.active>a,
       #rpress_checkout_wrap .nav#rpressdeliveryTab>li.active>a:hover,
       #rpress_checkout_wrap .nav#rpressdeliveryTab>li.active>a:focus,
@@ -799,7 +1209,9 @@ class RP_Frontend_Scripts
       }
 
       .rpress-clear-cart.rp-loading:after,
-      .delivery-wrap .rp-loading:after,
+      .rpress-section .delivery-wrap .rp-loading:after,
+      #rpress_checkout_wrap .delivery-wrap .rp-loading:after,
+      #rpressModal .delivery-wrap .rp-loading:after,
       .rpress_checkout.rp-loading:after,
       .rpress-edit-from-cart.rp-loading:after,
       a.rpress-view-order-btn.rp-loading:after,
@@ -824,6 +1236,48 @@ class RP_Frontend_Scripts
         ;
       }
 
+      #rpress_purchase_submit.rp-submit-loading {
+        position: relative;
+      }
+
+      #rpress_purchase_submit .rp-purchase-loading {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 24px;
+        height: 24px;
+        margin: -12px 0 0 -12px;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      #rpress_purchase_submit .rp-purchase-loading:after {
+        border-color: #fff transparent #fff transparent;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        margin: 0 auto;
+      }
+
+      #rpress_purchase_submit .rp-purchase-button-loading {
+        color: transparent !important;
+        text-shadow: none !important;
+      }
+
+      .rpress-order-history a.rpress-view-order-btn,
+      .rpress-order-history a.rpress-reorder-btn,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
+      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
+        background:
+          <?php echo sanitize_hex_color($primary_color); ?>
+          !important;
+        border-color:
+          <?php echo sanitize_hex_color($primary_color); ?>
+          !important;
+        color: #fff !important;
+      }
+
       .rpress-cart .cart-action-wrap a.rpress-remove-from-cart,
       ul.rpress-category-lists .rpress-category-item:hover {
         background-color: rgba(<?php echo esc_attr($rgba); ?>, 0.1);
@@ -838,7 +1292,7 @@ class RP_Frontend_Scripts
         ;
       }
 
-      .cd-dropdown-wrapper .cd-dropdown-content li a.mnuactive {
+      .rpress-section .cd-dropdown-wrapper .cd-dropdown-content li a.mnuactive {
         color: #000;
         background-color: rgba(<?php echo esc_attr($rgba); ?>, 0.1);
         border-left: 4px solid
@@ -864,7 +1318,7 @@ class RP_Frontend_Scripts
         ;
       }
 
-      .pn-ProductNav_Indicator {
+      .rpress-section .pn-ProductNav_Indicator {
         position: absolute;
         bottom: 0;
         left: 0;
@@ -877,18 +1331,156 @@ class RP_Frontend_Scripts
         transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
       }
 
-      .pn-ProductNav_Link[aria-selected=true],
-      .pn-ProductNav_Link:hover {
+      .rpress-section .pn-ProductNav_Link[aria-selected=true],
+      .rpress-section .pn-ProductNav_Link:hover {
         color:
           <?php echo sanitize_hex_color($primary_color) ?>
         ;
         outline: 0;
       }
 
-       .container-actionmenu #actionburger {
+       .rpress-section .container-actionmenu #actionburger {
         background-color:
           <?php echo sanitize_hex_color($primary_color) ?>
        }
+
+      <?php if ('th-plain' === $button_style) : ?>
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        .button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        [type=submit].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        #rpressModal.show-service-options .btn.btn-block.btn-primary,
+        #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary,
+        .rpress-section .rpress_checkout a,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit,
+        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit,
+        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button,
+        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit,
+        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn,
+        #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
+        #rpressModal .rpress-popup-actions .submit-fooditem-button,
+        #rpress_purchase_form #rpress-purchase-button,
+        #rpress_purchase_form #rpress-user-login-submit input,
+        #rpress_login_submit,
+        #rpress_register_form input[type="submit"].rpress-submit,
+        #rpress_profile_editor_submit,
+        .rpress-order-history a.rpress-view-order-btn,
+        .rpress-order-history a.rpress-reorder-btn,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
+          background: transparent !important;
+          background-color: transparent !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          color:
+            <?php echo sanitize_hex_color($primary_color); ?>
+            !important;
+          height: auto !important;
+          line-height: inherit !important;
+          min-height: 0 !important;
+          padding: 0 !important;
+          text-decoration: underline !important;
+          text-transform: none !important;
+          width: auto !important;
+        }
+
+        #rpressModal .rpress-popup-actions .submit-fooditem-button {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          gap: 6px !important;
+          min-height: 0 !important;
+          line-height: 1.35 !important;
+          white-space: nowrap !important;
+        }
+
+        #rpressModal .rpress-popup-actions .submit-fooditem-button span.cart-item-price {
+          position: static !important;
+          right: auto !important;
+          margin-left: 4px !important;
+          font-size: inherit !important;
+          line-height: inherit !important;
+        }
+
+        .rpress-submit.rp-loading:after,
+        a.rpress-submit.rp-loading:after,
+        button.rpress-submit.rp-loading:after,
+        input[type="submit"].rpress-submit.rp-loading:after,
+        input[type="button"].rpress-submit.rp-loading:after,
+        #rpressModal .submit-fooditem-button.rp-loading:after,
+        #rpressModal.show-service-options .btn.rp-loading:after,
+        #rpressDateTime.rpress-edit-address-popup .btn.rp-loading:after,
+        .rpress_checkout.rp-loading:after,
+        .rpress-edit-from-cart.rp-loading:after,
+        .rpress-clear-cart.rp-loading:after,
+        .rpress-cart-adjustment .rp-loading:after,
+        .rpress-discount-code-field-wrap .rp-loading:after,
+        a.rpress-view-order-btn.rp-loading:after,
+        a.rpress-reorder-btn.rp-loading:after,
+        #rpress_purchase_submit .rp-loading:after,
+        #rpress_purchase_submit .rp-purchase-loading:after {
+          border-color:
+            <?php echo sanitize_hex_color($primary_color); ?>
+            transparent
+            <?php echo sanitize_hex_color($primary_color); ?>
+            transparent;
+        }
+      <?php else : ?>
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        .button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        [type=submit].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        #rpressModal.show-service-options .btn.btn-block.btn-primary,
+        #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary,
+        .rpress-section .rpress_checkout a,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit,
+        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit,
+        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button,
+        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit,
+        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn,
+        #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
+        #rpressModal .rpress-popup-actions .submit-fooditem-button,
+        #rpress_purchase_form #rpress-purchase-button,
+        #rpress_purchase_form #rpress-user-login-submit input,
+        #rpress_login_submit,
+        #rpress_register_form input[type="submit"].rpress-submit,
+        #rpress_profile_editor_submit,
+        .rpress-order-history a.rpress-view-order-btn,
+        .rpress-order-history a.rpress-reorder-btn,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
+          color: #fff !important;
+        }
+
+        .rpress-submit.rp-loading:after,
+        a.rpress-submit.rp-loading:after,
+        button.rpress-submit.rp-loading:after,
+        input[type="submit"].rpress-submit.rp-loading:after,
+        input[type="button"].rpress-submit.rp-loading:after,
+        #rpressModal .submit-fooditem-button.rp-loading:after,
+        #rpressModal.show-service-options .btn.rp-loading:after,
+        #rpressDateTime.rpress-edit-address-popup .btn.rp-loading:after,
+        .rpress_checkout.rp-loading:after,
+        .rpress-edit-from-cart.rp-loading:after,
+        .rpress-clear-cart.rp-loading:after,
+        .rpress-cart-adjustment .rp-loading:after,
+        .rpress-discount-code-field-wrap .rp-loading:after,
+        a.rpress-view-order-btn.rp-loading:after,
+        a.rpress-reorder-btn.rp-loading:after,
+        #rpress_purchase_submit .rp-loading:after,
+        #rpress_purchase_submit .rp-purchase-loading:after {
+          border-color: #fff transparent #fff transparent !important;
+        }
+      <?php endif; ?>
 
       @media only screen and (max-width: 768px) {
         #rpress_checkout_wrap #rpress_purchase_submit #rpress-purchase-button,
@@ -906,6 +1498,12 @@ class RP_Frontend_Scripts
    */
   public static function get_styles()
   {
+    $frontend_style_version = RP_VERSION;
+    $frontend_style_path = trailingslashit(RP_PLUGIN_DIR) . 'assets/css/rpress.css';
+    if (file_exists($frontend_style_path)) {
+      $frontend_style_version = RP_VERSION . '.' . filemtime($frontend_style_path);
+    }
+
     return apply_filters(
       'rpress_enqueue_styles',
       array(
@@ -940,7 +1538,7 @@ class RP_Frontend_Scripts
         'rp-frontend-styles' => array(
           'src' => self::get_asset_url('assets/css/rpress.css'),
           'deps' => array(),
-          'version' => RP_VERSION,
+          'version' => $frontend_style_version,
           'media' => 'all',
           'has_rtl' => false,
         ),

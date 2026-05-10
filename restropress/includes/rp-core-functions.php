@@ -1392,7 +1392,22 @@ function is_restropress_page()
     if ( $post_id > 0 && in_array( $post_id, array( $menu_page, $checkout_page, $success_page ), true ) ) {
       $rp_page = true;
     } else {
-      $shortcodes = array( 'fooditems', 'fooditem_checkout', 'fooditem_cart', 'order_history', 'rpress_receipt' );
+      $shortcodes = array(
+        'fooditems',
+        'fooditem_checkout',
+        'fooditem_cart',
+        'rpress_cart',
+        'rpress_receipt',
+        'fooditem_history',
+        'order_history',
+        'rpress_login',
+        'rpress_register',
+        'fooditem_discounts',
+        'rpress_profile_editor',
+        'customer_dashboard',
+        'foodsearch',
+        'custom_forgot_password',
+      );
       foreach ( $shortcodes as $shortcode ) {
         if ( rpress_post_has_shortcode_content( $post, $shortcode ) ) {
           $rp_page = true;
