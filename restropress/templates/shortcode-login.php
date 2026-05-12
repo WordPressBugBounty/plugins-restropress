@@ -29,15 +29,19 @@ if ( ! is_user_logged_in() ) :
 			<?php
 			$login_method = rpress_get_option( 'login_method', 'login_guest' );
 			if( ! is_user_logged_in() && $login_method != 'guest_only' ){
+				ob_start();
+				do_action( 'rpress_purchase_form_before_register_login' );
+				$login_provider_markup = trim( ob_get_clean() );
+
+				if ( ! empty( $login_provider_markup ) ) {
 				?>
 				<div class="gmail-login-link-wrap">
-					<?php
-						do_action( 'rpress_purchase_form_before_register_login' );
-					?>
+					<?php echo $login_provider_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				</div>
-				<div class="hr-lines">or Register with</div>
+				<div class="hr-lines"><?php esc_html_e( 'or Login with', 'restropress' ); ?></div>
 				<?php
-			}	
+				}
+			}
 			?>
 			<?php do_action( 'rpress_login_fields_before' ); ?>
 			<p class="rpress-login-username">

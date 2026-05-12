@@ -104,6 +104,41 @@ if ( ! function_exists( 'rpress_dashboard_safe_text' ) ) {
     }
 }
 
+if ( ! function_exists( 'rpress_customer_dashboard_login_url' ) ) {
+    /**
+     * Get the RestroPress login page URL for the customer dashboard.
+     *
+     * @return string
+     */
+    function rpress_customer_dashboard_login_url() {
+        $login_url = '';
+        $login_pages = get_posts(
+            array(
+                'post_type'      => 'page',
+                'post_status'    => array( 'publish', 'private' ),
+                'posts_per_page' => 5,
+                's'              => 'rpress_login',
+                'fields'         => 'ids',
+                'no_found_rows'  => true,
+            )
+        );
+
+        foreach ( $login_pages as $login_page_id ) {
+            $page_content = get_post_field( 'post_content', $login_page_id );
+            if ( has_shortcode( $page_content, 'rpress_login' ) ) {
+                $login_url = get_permalink( $login_page_id );
+                break;
+            }
+        }
+
+        if ( empty( $login_url ) ) {
+            $login_url = wp_login_url( rpress_get_current_page_url() );
+        }
+
+        return apply_filters( 'rpress_customer_dashboard_login_url', $login_url );
+    }
+}
+
 $username   = rpress_dashboard_safe_text( $username );
 $useremail  = rpress_dashboard_safe_text( $useremail );
 $userfname  = rpress_dashboard_safe_text( $userfname );
@@ -113,17 +148,17 @@ $userid     = rpress_dashboard_safe_text( $userid );
 $user_phone = rpress_dashboard_safe_text( $user_phone );
 
 if ( ! is_user_logged_in() ) {
-    // Set the redirect URL
-    $redirect_url = wp_login_url();
+    $redirect_url = rpress_customer_dashboard_login_url();
     ?>
    
     <div class="user-dashboard-wrapper user-profile">
         <div class="row">
             <div style="text-align: center; padding-bottom:20px;"><?php echo esc_html(__( 'You are not logged in, please Log In', 'restropress' ) ); ?></div>
-            <form action="<?php echo esc_url( $redirect_url ); ?>" method="post" style="text-align: center; padding-bottom:20px;">
-                <input type="hidden" name="redirect_to" value="<?php echo esc_url( $redirect_url ); ?>">
-                <input type="submit" value="Log In" />
-            </form>
+            <div style="text-align: center; padding-bottom:20px;">
+                <a class="rpress-submit button rpress-dashboard-login-button" href="<?php echo esc_url( $redirect_url ); ?>">
+                    <?php esc_html_e( 'Log In', 'restropress' ); ?>
+                </a>
+            </div>
         </div>
     </div>
     <?php

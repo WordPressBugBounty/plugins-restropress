@@ -676,8 +676,10 @@ body .custom-reset-password
     font-weight: 400;
     line-height: 100%;
     color: #191919;
+    width: calc(100vw - 40px);
     max-width: 438px;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 form.rpress_form h1.rpress-login-hd,
 .custom-reset-password h2
@@ -706,31 +708,32 @@ form.rpress_form .gmail-login-link-wrap {
     border-radius: 5px;
 }
 form.rpress_form .hr-lines{
-    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
     margin: 50px auto 40px;
     text-align: center;
     font-size: 14px;
+    line-height: 1.4;
     color: #ABACAC;
+    white-space: nowrap;
 }
 form.rpress_form .hr-lines:before{
-    content:" ";
+    content:"";
     height:1.5px;
-    width: 130px;
+    flex: 1 1 0;
+    max-width: 130px;
     background: #ECECEC;
     display: block;
-    position: absolute;
-    top: 50%;
-    left: 0;
 }
 form.rpress_form .hr-lines:after{
-    content:" ";
+    content:"";
     height: 1.5px;
-    width: 130px;
+    flex: 1 1 0;
+    max-width: 130px;
     background: #ECECEC;
     display: block;
-    position: absolute;
-    top: 50%;
-    right: 0;
 }
 form.rpress_form p{
     display: flex;
@@ -753,6 +756,7 @@ form.rpress_form p input,
     padding: 0 15px;
     border-radius: 5px;
     border: 1.6px solid #ECECEC;
+    box-sizing: border-box;
 }
 form.rpress_form p input:focus{
     outline: 0;
@@ -791,14 +795,24 @@ form.rpress_form p.rpress-login-remember{
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
 }
-form.rpress_form p.rpress-login-remember input {
+form.rpress_form p.rpress-login-remember span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    white-space: nowrap;
+}
+form.rpress_form p.rpress-login-remember input[type="checkbox"] {
+    appearance: auto;
+    accent-color: var(--rpress-theme-primary, #ED5575);
+    flex: 0 0 18px;
     border-radius: 2px;
     width: 18px;
     height: 18px;
-    margin: 0 10px 0 0;
-    position: relative;
-    top: 3px;
+    margin: 0;
+    position: static;
     outline: 0;
     box-shadow: none;
 }
@@ -807,35 +821,25 @@ form.rpress_form .rpress-login-remember{
 }
 form.rpress_form .rpress-login-remember label {
     cursor: pointer;
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    top: 2px;
-    left: 0px;
-    background: #fff;
-    border: 2px solid #ccc;
-    border-radius: 3px;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: var(--rpress-theme-primary, #ED5575);
+    line-height: 18px;
 }
 form.rpress_form .rpress-login-remember label:after {
-    opacity: 0;
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 4px;
-    background: transparent;
-    top: 4px;
-    left: 4px;
-    border: 2px solid #fff;
-    border-top: none;
-    border-right: none;
-    transform: rotate(-45deg);
+    content: none;
 }
 form.rpress_form .rpress-login-remember input[type=checkbox]:checked + label:after {
-	opacity: 1; 
+	opacity: 1;
 }
 form.rpress_form .rpress-login-remember input[type=checkbox]:checked + label {
-    background-color: var(--rpress-theme-primary, #000000);
-    border: 1px solid var(--rpress-theme-primary, #000000);
+    background: transparent;
+    border: 0;
 }
 form.rpress_form .rpress-login-remember a{
     color: var(--rpress-theme-primary, #ED5575);
@@ -1141,6 +1145,12 @@ form.rpress_form p.register-link-wrap .reglink:focus{
     }
 }
 @media screen and (max-width: 420px){
+    body form#rpress_login_form,
+    body form#rpress_register_form,
+    body .custom-reset-password {
+        width: 350px !important;
+        max-width: 350px !important;
+    }
     .user-dashboard-wrapper ul.sidebar-menu {
         grid-template-columns: 1fr;
     }
@@ -1153,13 +1163,30 @@ form.rpress_form p.register-link-wrap .reglink:focus{
         gap: 8px;
     }
 }
+@media screen and (max-width: 360px){
+    body form#rpress_login_form,
+    body form#rpress_register_form,
+    body .custom-reset-password {
+        width: 300px !important;
+        max-width: 300px !important;
+    }
+}
 @media screen and (min-width:320px) and (max-width:768px){
+    body form#rpress_login_form,
+    body form#rpress_register_form,
+    body .custom-reset-password {
+        width: calc(100vw - 40px);
+        max-width: calc(100vw - 40px);
+        padding: 0;
+    }
     form.rpress_form p.rpress-login-remember{
         font-size: 13px;
+        gap: 12px;
     }
-    form.rpress_form p.rpress-login-remember input,
-    form.rpress_form .rpress-login-remember label{
-        top: 5px;
+    form.rpress_form p.rpress-login-remember input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        flex-basis: 16px;
     }
     form.rpress_form p label {
         margin-bottom: 10px;
@@ -1169,13 +1196,16 @@ form.rpress_form p.register-link-wrap .reglink:focus{
         line-height: 20px;
         font-size: 12px;
     }
+    form.rpress_form .rpress-login-remember a{
+        white-space: nowrap;
+    }
     form.rpress_form p input[type="submit"] {
         height: 50px;
         font-size: 16px;
     }
     form.rpress_form .hr-lines:before,
     form.rpress_form .hr-lines:after{
-        width: 50px;
+        max-width: 50px;
     }
     form.rpress_form .gmail-login-link-wrap {
         padding: 15px 20px;

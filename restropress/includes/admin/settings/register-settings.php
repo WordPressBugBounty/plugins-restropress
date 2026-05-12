@@ -2947,6 +2947,14 @@ function rpress_descriptive_text_callback($args)
 	echo wp_kses(
 		apply_filters('rpress_after_setting_output', $html, $args),
 		array(
+			'a' => array(
+				'href' => true,
+				'target' => true,
+				'rel' => true,
+			),
+			'br' => array(),
+			'p' => array(),
+			'strong' => array(),
 			'span' => array(
 				'alt' => true,
 				'class' => true,

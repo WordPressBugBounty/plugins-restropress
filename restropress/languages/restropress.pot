@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the RestroPress plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: RestroPress 3.2.8.7\n"
+"Project-Id-Version: RestroPress 3.2.8.8\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/restropress\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-09T12:46:34+00:00\n"
+"POT-Creation-Date: 2026-05-11T15:42:41+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: restropress\n"
@@ -7190,148 +7190,6 @@ msgstr ""
 msgid "You must enable a payment gateway to use RestroPress"
 msgstr ""
 
-#: includes/gateways/amazon-payments.php:174
-msgid "There is an error with the Amazon Payments configuration."
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:230
-#: includes/gateways/amazon-payments.php:231
-msgid "Amazon"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:271
-msgid "Amazon Payments"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:285
-msgid "Amazon Payments Settings"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:290
-msgid "Register with Amazon"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:292
-msgid "Connect RestroPress to Amazon"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:295
-msgid "Once registration is complete, enter your API credentials below."
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:301
-msgid "Seller ID"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:302
-msgid "Found in the Integration settings. Also called a Merchant ID"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:308
-msgid "MWS Access Key"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:309
-#: includes/gateways/amazon-payments.php:316
-msgid "Found on Seller Central in the MWS Keys section"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:315
-msgid "MWS Secret Key"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:322
-msgid "Client ID"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:323
-msgid "The Amazon Client ID. Should look like `amzn1.application-oa2...`"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:329
-msgid "Amazon MWS Callback URL"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:330
-msgid "The Return URL to provide in your MWS Application. Enter this under your Login and Pay &rarr; Web Settings"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:338
-msgid "Amazon Merchant IPN URL"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:339
-#, php-format
-msgid "The IPN URL to provide in your MWS account. Enter this under your <a href=\"%s\">Integration Settings</a>"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:457
-msgid "Amazon OAuth Error"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:591
-msgid "Currently logged into Amazon as"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:592
-#: templates/rpress-user-dashboard.php:162
-msgid "Logout"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:723
-#: includes/gateways/amazon-payments.php:735
-msgid "Missing Reference ID, please try again"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:760
-#, php-format
-msgid "Your payment could not be authorized, please try a different payment method. Reason: %s"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:796
-#, php-format
-msgid "There was an issue processing your payment. Amazon error: %s"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:893
-msgid "Invalid Amazon seller ID"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:893
-#: includes/gateways/amazon-payments.php:920
-#: includes/gateways/paypal-standard.php:1581
-#: includes/gateways/paypal-standard.php:1586
-#: includes/gateways/paypal-standard.php:1671
-#: includes/gateways/paypal-standard.php:1679
-#: includes/gateways/paypal-standard.php:1729
-#: includes/gateways/paypal-standard.php:1738
-msgid "IPN Error"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:906
-msgid "Capture declined in Amazon"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:915
-#: includes/gateways/amazon-payments.php:974
-#, php-format
-msgid "Refund completed in Amazon. Refund ID: %s"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:970
-#, php-format
-msgid "Refund declined in Amazon. Refund ID: %s"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:977
-#, php-format
-msgid "Refund initiated in Amazon. Reference ID: %s"
-msgstr ""
-
-#: includes/gateways/amazon-payments.php:982
-msgid "Refund request failed in Amazon."
-msgstr ""
-
 #: includes/gateways/functions.php:24
 msgid "PayPal"
 msgstr ""
@@ -10113,4 +9971,132 @@ msgstr ""
 
 #: templates/shortcode-register.php:47
 msgid "Confirm Password"
+msgstr ""
+
+#: includes/gateways/stripe.php:170
+msgid "Stripe"
+msgstr ""
+
+#: includes/gateways/stripe.php:215
+msgid "Stripe Settings"
+msgstr ""
+
+#: includes/gateways/stripe.php:220
+msgid "Stripe Self Hosted Checkout"
+msgstr ""
+
+#: includes/gateways/stripe.php:221
+msgid "It will redirect to stripe.com for checkout."
+msgstr ""
+
+#: includes/gateways/stripe.php:227
+msgid "Test Secret Key"
+msgstr ""
+
+#: includes/gateways/stripe.php:228
+msgid "Enter your test secret key, found in your Stripe Account Settings"
+msgstr ""
+
+#: includes/gateways/stripe.php:235
+msgid "Test Publishable Key"
+msgstr ""
+
+#: includes/gateways/stripe.php:236
+msgid "Enter your test publishable key, found in your Stripe Account Settings"
+msgstr ""
+
+#: includes/gateways/stripe.php:243
+msgid "Live Secret Key"
+msgstr ""
+
+#: includes/gateways/stripe.php:244
+msgid "Enter your live secret key, found in your Stripe Account Settings"
+msgstr ""
+
+#: includes/gateways/stripe.php:251
+msgid "Live Publishable Key"
+msgstr ""
+
+#: includes/gateways/stripe.php:252
+msgid "Enter your live publishable key, found in your Stripe Account Settings"
+msgstr ""
+
+#: includes/gateways/stripe.php:259
+msgid "Webhook Signing Secret"
+msgstr ""
+
+#: includes/gateways/stripe.php:260
+msgid "Enter your Stripe webhook signing secret (starts with whsec_)."
+msgstr ""
+
+#: includes/gateways/stripe.php:267
+msgid "Webhooks"
+msgstr ""
+
+#: includes/gateways/stripe.php:270
+msgid "In order for Stripe to function completely, you must configure your Stripe webhooks. Visit your <a href=\"%1$s\" target=\"_blank\" rel=\"noopener noreferrer\">account dashboard</a> to configure them. Please add a webhook endpoint for the URL below.<br><strong>Webhook URL: %2$s</strong>"
+msgstr ""
+
+#: includes/gateways/stripe.php:325
+msgid "Core Stripe is disabled because the RestroPress Stripe extension is active."
+msgstr ""
+
+#: includes/gateways/stripe.php:334
+msgid "Core Stripe only supports Stripe hosted checkout."
+msgstr ""
+
+#: includes/gateways/stripe.php:339
+msgid "Please add your Stripe secret key before placing an order."
+msgstr ""
+
+#: includes/gateways/stripe.php:359
+msgid "Payment creation failed before sending the customer to Stripe. Payment data: %s"
+msgstr ""
+
+#: includes/gateways/stripe.php:387
+msgid "Total Order #%d"
+msgstr ""
+
+#: includes/gateways/stripe.php:411
+msgid "Stripe Error"
+msgstr ""
+
+#: includes/gateways/stripe.php:419
+msgid "Unable to create a Stripe checkout session."
+msgstr ""
+
+#: includes/gateways/stripe.php:424
+msgid "Stripe Checkout Session ID: %s"
+msgstr ""
+
+#: includes/gateways/stripe.php:457
+msgid "Missing Stripe secret key."
+msgstr ""
+
+#: includes/gateways/stripe.php:487
+msgid "Stripe returned an invalid response."
+msgstr ""
+
+#: includes/gateways/stripe.php:491
+msgid "Stripe request failed."
+msgstr ""
+
+#: includes/gateways/stripe.php:564
+msgid "RestroPress order"
+msgstr ""
+
+#: includes/gateways/stripe.php:680
+msgid "Stripe checkout payment failed."
+msgstr ""
+
+#: includes/gateways/stripe.php:690
+msgid "Stripe checkout session expired."
+msgstr ""
+
+#: includes/gateways/stripe.php:841
+msgid "Stripe payment failed due to an invalid amount."
+msgstr ""
+
+#: includes/gateways/stripe.php:848
+msgid "Stripe PaymentIntent ID: %s"
 msgstr ""

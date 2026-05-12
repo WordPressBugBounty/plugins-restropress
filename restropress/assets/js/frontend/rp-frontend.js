@@ -2723,7 +2723,8 @@ jQuery(function ($) {
       .length != '') {
       $('.sticky-sidebar')
         .rpressStickySidebar({
-          additionalMarginTop: totalHeight
+          additionalMarginTop: totalHeight,
+          minWidth: 992
         });
     }
   } else {
@@ -2986,7 +2987,8 @@ jQuery(function ($) {
   if ($(window).width() > 991) {
     if ($(".sticky-sidebar").length > 0) {
       $('.sticky-sidebar').rpressStickySidebar({
-        additionalMarginTop: rp_get_dynamic_scroll_offset()
+        additionalMarginTop: rp_get_dynamic_scroll_offset(),
+        minWidth: 992
       });
     }
   }

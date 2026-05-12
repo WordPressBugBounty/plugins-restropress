@@ -40,6 +40,7 @@ $service_section_heading = apply_filters(
 );
 $service_section_heading = trim( wp_strip_all_tags( (string) $service_section_heading ) );
 
+$button_style = sanitize_html_class( rpress_get_option( 'button_style', 'th-rounded' ) );
 $preorder_enabled      = false;
 $show_service_tabs      = false;
 $closed_message_display = '';
@@ -181,7 +182,7 @@ $show_location_field = '' !== $location_field_markup && ( $location_field_has_fo
                         rpress_get_template_part('rpress', $service);
                     }
                     ?>
-                    <a href="javascript:void(0);" class="btn btn-primary btn-block rpress-delivery-opt-update" data-food-id="{fooditem_id}">
+                    <a href="javascript:void(0);" class="btn btn-primary btn-block rpress-delivery-opt-update <?php echo esc_attr( $button_style ); ?>" data-food-id="{fooditem_id}">
                         <span class="rp-ajax-toggle-text">
                             <?php esc_html_e('Update', 'restropress'); ?>
                         </span>

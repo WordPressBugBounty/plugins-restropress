@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.2.8.7';
+	public $version = '3.2.8.8';
 	/**
 	 * The single instance of the class.
 	 *
@@ -209,6 +209,7 @@ final class RestroPress
 	{
 		global $rpress_options;
 		require_once RP_PLUGIN_DIR . 'includes/admin/settings/register-settings.php';
+		require_once RP_PLUGIN_DIR . 'includes/gateways/stripe.php';
 		$rpress_options = rpress_get_settings();
 		require_once RP_PLUGIN_DIR . 'includes/rp-actions.php';
 		if (file_exists(RP_PLUGIN_DIR . 'includes/deprecated-functions.php')) {
@@ -252,9 +253,6 @@ final class RestroPress
 		require_once RP_PLUGIN_DIR . 'includes/rp-core-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/functions.php';
-		if ( version_compare( phpversion(), '5.3', '>' ) ) {
-			require_once RP_PLUGIN_DIR . 'includes/gateways/amazon-payments.php';
-		}
 		require_once RP_PLUGIN_DIR . 'includes/gateways/paypal-standard.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/manual.php';
 		//Add frontend discount functionality

@@ -909,10 +909,13 @@ class RP_Frontend_Scripts
       }
 
       .user-dashboard-wrapper .radio-custom:checked + .radio-custom-label:before,
-      .user-dashboard-wrapper .default-address-checkbox input[type=checkbox]:checked + label,
-      form.rpress_form .rpress-login-remember input[type=checkbox]:checked + label {
+      .user-dashboard-wrapper .default-address-checkbox input[type=checkbox]:checked + label {
         background-color: var(--rpress-theme-primary) !important;
         border-color: var(--rpress-theme-primary) !important;
+      }
+
+      form.rpress_form .rpress-login-remember input[type=checkbox]:checked {
+        accent-color: var(--rpress-theme-primary) !important;
       }
 
       /* Sync frontend button/select shapes with "Default Button Style" (excluding item add buttons). */

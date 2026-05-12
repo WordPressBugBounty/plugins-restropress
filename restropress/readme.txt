@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
 Tested up to: 6.9.4
-Stable tag: 3.2.8.7
+Stable tag: 3.2.8.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -66,7 +66,7 @@ Tired of managing complex or expensive online ordering systems? RestroPress prov
 
 * Accept unlimited pickup and delivery orders directly from your website
 * Customizable menus with addons and modifiers for flexible offerings
-* Multiple payment gateways: PayPal, Cash on Delivery, Amazon, and more
+* Multiple payment gateways: PayPal, Stripe hosted checkout, Cash on Delivery, and more
 * Customer dashboard to view order history and quickly reorder
 * Real-time order management with live status updates for admins
 * Automatic creation of essential pages (cart, checkout, account) with shortcodes
@@ -120,6 +120,18 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 👉 [Explore Pro Features & Extensions](https://restropress.com/extension/)
 
 == Changelog ==
+
+= Version 3.2.8.8(2026-05-12) =
+* Updated: Plugin version bump to 3.2.8.8
+* Removed: Amazon Payments gateway and bundled Amazon payment libraries have been removed from core.
+* Added: Core Stripe payment gateway with hosted Stripe Checkout, test/live API keys, webhook signing secret, and webhook endpoint instructions.
+* Fixed: Core Stripe settings and gateway registration now show only when the separate RestroPress Stripe extension is inactive.
+* Fixed: Core Stripe runtime payment handlers now disable when the RestroPress Stripe extension is active, preventing duplicate Stripe handling.
+* Fixed: `[customer_dashboard]` login button now links to the RestroPress login shortcode page instead of the default WordPress login screen.
+* Fixed: Old UI order-settings popup now keeps Store Timing extension date/time fields in the legacy stacked layout.
+* Improved: Old UI order-settings date/time fields and Update action now follow the configured Default Button Style, including Plain Text behavior.
+* Fixed: Mobile grid-view cart bar now stays sticky at the footer while scrolling instead of shifting to the top/right side.
+* Code Cleanup
 
 = Version 3.2.8.7(2026-05-09) =
 * Updated: Plugin version bump to 3.2.8.7
@@ -237,7 +249,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.2.8.7 =
+= 3.2.8.8 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

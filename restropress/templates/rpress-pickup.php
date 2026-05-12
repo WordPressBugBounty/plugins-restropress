@@ -44,11 +44,19 @@ $pickup_date_label = date_i18n( get_option( 'date_format' ), strtotime( $pickup_
             ob_start();
             do_action( 'rpress_before_service_time', 'pickup' );
             $service_time_preface_markup = trim( ob_get_clean() );
-            $has_date_selector = false !== strpos( $service_time_preface_markup, 'rpress_get_delivery_dates' );
+            $has_date_selector = false !== strpos( $service_time_preface_markup, 'rpress_get_delivery_dates' )
+                || false !== strpos( $service_time_preface_markup, 'rpress_get_pickup_dates' );
 
             if ( '' !== $service_time_preface_markup ) {
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                echo $service_time_preface_markup;
+                if ( $has_date_selector ) {
+                    echo '<div class="rpress-service-date-row rpress-service-date-row-extension">';
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                    echo $service_time_preface_markup;
+                    echo '</div>';
+                } else {
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                    echo $service_time_preface_markup;
+                }
             }
 
             if ( ! $has_date_selector ) :
