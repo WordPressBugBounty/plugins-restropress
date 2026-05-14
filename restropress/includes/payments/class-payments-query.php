@@ -153,6 +153,22 @@ class RPRESS_Payments_Query extends RPRESS_Stats {
 		$this->children();
 		$this->fooditem();
 		$this->post__in();
+		$low_memory = ! empty( $this->args['low_memory'] );
+		unset( $this->args['low_memory'] );
+		if ( ! isset( $this->args['no_found_rows'] ) ) {
+			$this->__set( 'no_found_rows', true );
+		}
+		if ( ! isset( $this->args['update_post_term_cache'] ) ) {
+			$this->__set( 'update_post_term_cache', false );
+		}
+		if ( $low_memory ) {
+			if ( ! isset( $this->args['update_post_meta_cache'] ) ) {
+				$this->__set( 'update_post_meta_cache', false );
+			}
+			if ( ! isset( $this->args['cache_results'] ) ) {
+				$this->__set( 'cache_results', false );
+			}
+		}
 		do_action( 'rpress_pre_get_payments', $this );
 		$query = new WP_Query( $this->args );
 		$custom_output = array(

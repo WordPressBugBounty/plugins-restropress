@@ -132,9 +132,12 @@ class RPRESS_Batch_Sales_Export extends RPRESS_Batch_Export {
 		global $rpress_logs;
 		$args = array(
 			'post_type'		   => 'rpress_log',
-			'posts_per_page'   => -1,
+			'posts_per_page'   => 1,
 			'post_status'	   => 'publish',
 			'fields'           => 'ids',
+			'no_found_rows'    => false,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 			'post_parent'      => $this->fooditem_id,
 			'tax_query'        => array(
 				array(
@@ -152,7 +155,7 @@ class RPRESS_Batch_Sales_Export extends RPRESS_Batch_Export {
 			)
 		);
 		$logs       = new WP_Query( $args );
-		$total      = (int) $logs->post_count;
+		$total      = (int) $logs->found_posts;
 		$percentage = 100;
 		if ( $total > 0 ) {
 			$percentage = ( ( 30 * $this->step ) / $total ) * 100;

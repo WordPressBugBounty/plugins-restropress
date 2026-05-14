@@ -919,19 +919,19 @@ if (strpos($service_time_str, 'ASAP') !== false) {
   	}
   	public static function get_service_type_count( $service_type = '' ) {
 	    global $wpdb;
-	    $query_args = array(
-	      'post_type'       => 'rpress_payment',
-	      'posts_per_page'  => -1,
-	      'meta_query'  => array(
-	        array(
-	          'key' => '_rpress_delivery_type',
-	          'value' => array( $service_type ),
-	        ),
-	      ),
+	    return (int) $wpdb->get_var(
+	      $wpdb->prepare(
+	        "SELECT COUNT(DISTINCT p.ID)
+	        FROM {$wpdb->posts} p
+	        INNER JOIN {$wpdb->postmeta} pm
+	          ON pm.post_id = p.ID
+	          AND pm.meta_key = '_rpress_delivery_type'
+	        WHERE p.post_type = 'rpress_payment'
+	          AND p.post_status = 'publish'
+	          AND pm.meta_value = %s",
+	        $service_type
+	      )
 	    );
-	    $get_total = new WP_Query( $query_args );
-	    $totalpost = !empty( $get_total->found_posts ) ? $get_total->found_posts : 0;
-	    return $totalpost;
 	}
   	/**
      * Get order details by payment id to send to the ajax endpoint for previews.

@@ -337,6 +337,7 @@ function get_delivery_options($changeble)
     $service_time_str = __('ASAP', 'restropress') . $service_time_str;
   }
   ob_start();
+  $old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
   ?>
   <div class="delivery-wrap">
     <div class="delivery-opts">
@@ -349,12 +350,19 @@ function get_delivery_options($changeble)
         <?php endif; ?>
       <?php endif; ?>
     </div>
-    <?php if ($changeble && !empty($_COOKIE['service_type'])): ?>
+    <?php $show_change_link = $changeble && ( ! empty( $_COOKIE['service_type'] ) || $old_ui_ux_enabled ); ?>
+    <?php if ( $show_change_link ) : ?>
       <a href="#" class="delivery-change">
         <span class="rp-ajax-toggle-text">
-          <?php esc_html_e('Change?', 'restropress'); ?>
+          <?php echo esc_html( $old_ui_ux_enabled ? __( 'Change', 'restropress' ) : __( 'Change?', 'restropress' ) ); ?>
         </span>
       </a>
+      <?php if ( $old_ui_ux_enabled ) : ?>
+        <span class="rp-delivery-change-helper">
+          <span class="rp-delivery-change-tooltip-icon" tabindex="0" aria-label="<?php esc_attr_e( 'Delivery address help', 'restropress' ); ?>">?</span>
+          <span class="rp-delivery-change-tooltip-text"><?php esc_html_e( 'Change service type, date and time', 'restropress' ); ?></span>
+        </span>
+      <?php endif; ?>
     <?php endif; ?>
   </div>
   <?php
@@ -388,6 +396,7 @@ function get_date_time_options($changeble)
     $service_time_str = __('ASAP', 'restropress') . $service_time_str;
   }
   ob_start();
+  $old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
   ?>
   <div class="delivery-wrap">
     <div class="delivery-opts">
@@ -399,12 +408,19 @@ function get_date_time_options($changeble)
         <?php endif; ?>
       <?php endif; ?>
     </div>
-    <?php if ($changeble && !empty($_COOKIE['service_type'])): ?>
+    <?php $show_change_link = $changeble && ( ! empty( $_COOKIE['service_type'] ) || $old_ui_ux_enabled ); ?>
+    <?php if ( $show_change_link ) : ?>
       <a href="#" class="delivery-change">
         <span class="rp-ajax-toggle-text">
-          <?php esc_html_e('Change?', 'restropress'); ?>
+          <?php echo esc_html( $old_ui_ux_enabled ? __( 'Change', 'restropress' ) : __( 'Change?', 'restropress' ) ); ?>
         </span>
       </a>
+      <?php if ( $old_ui_ux_enabled ) : ?>
+        <span class="rp-delivery-change-helper">
+          <span class="rp-delivery-change-tooltip-icon" tabindex="0" aria-label="<?php esc_attr_e( 'Delivery address help', 'restropress' ); ?>">?</span>
+          <span class="rp-delivery-change-tooltip-text"><?php esc_html_e( 'Change service type, date and time', 'restropress' ); ?></span>
+        </span>
+      <?php endif; ?>
     <?php endif; ?>
   </div>
   <?php
@@ -979,6 +995,9 @@ function rpress_get_available_service_slots( $service_type, $service_date = '', 
 
   $service_date = rp_row_date( $service_date, $service_type );
   $today        = wp_date( 'Y-m-d' );
+  if ( strtotime( $service_date ) < strtotime( $today ) ) {
+    return array();
+  }
   $hide_past_time = $hide_past_time && ( $service_date === $today );
   $store_times  = rp_get_store_timings( $hide_past_time, $service_type );
   $store_times  = apply_filters( 'rpress_store_timings', $store_times, $service_type, $service_date );
@@ -1031,9 +1050,14 @@ function rpress_get_first_available_service_date( $service_type, $requested_date
   $service_type = sanitize_key( (string) $service_type );
   $seed_date    = rp_row_date( $requested_date, $service_type );
   $seed_ts      = strtotime( $seed_date );
+  $today_ts     = strtotime( wp_date( 'Y-m-d' ) );
 
   if ( false === $seed_ts ) {
     $seed_ts = current_time( 'timestamp' );
+  }
+
+  if ( false !== $today_ts && $seed_ts < $today_ts ) {
+    $seed_ts = $today_ts;
   }
 
   $lookahead_days      = max( 0, (int) $lookahead_days );
@@ -1115,20 +1139,22 @@ function rpress_get_next_available_service_time( $service_date, array $available
     return '';
   }
 
+  $has_minimum_timestamp = ! empty( $minimum_timestamp );
+
   foreach ( $available_slots as $slot ) {
     $slot_timestamp = strtotime( $service_date . ' ' . $slot );
     if ( false === $slot_timestamp ) {
       continue;
     }
 
-    if ( ! empty( $minimum_timestamp ) && $slot_timestamp < $minimum_timestamp ) {
+    if ( $has_minimum_timestamp && $slot_timestamp < $minimum_timestamp ) {
       continue;
     }
 
     return $slot;
   }
 
-  return (string) reset( $available_slots );
+  return $has_minimum_timestamp ? '' : (string) reset( $available_slots );
 }
 /**
  * Validates the cart before checkout

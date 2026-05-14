@@ -97,6 +97,9 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 				'post_status'            => array( 'publish', 'revoked' ),
 				'fields'                 => 'ids',
 				'update_post_term_cache' => false,
+				'update_post_meta_cache' => false,
+				'cache_results'          => false,
+				'no_found_rows'          => true,
 				'suppress_filters'       => false,
 				'start_date'             => $this->start_date, // These dates are not valid query args, but they are used for cache keys
 				'end_date'               => $this->end_date,
@@ -143,6 +146,10 @@ class RPRESS_Payment_Stats extends RPRESS_Stats {
 				'nopaging'           => true,
 				'log_type'           => 'sale',
 				'fields'             => 'ids',
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'cache_results'      => false,
+				'no_found_rows'      => true,
 				'suppress_filters'   => false,
 				'start_date'         => $this->start_date, // These dates are not valid query args, but they are used for cache keys
 				'end_date'           => $this->end_date,

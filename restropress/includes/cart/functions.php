@@ -432,13 +432,17 @@ function rpress_add_collection_to_cart( $taxonomy, $terms ) {
 	$args = array(
 		'post_type' => 'fooditem',
 		'posts_per_page' => -1,
-		$taxonomy => $terms
+		$taxonomy => $terms,
+		'fields' => 'ids',
+		'no_found_rows' => true,
+		'update_post_term_cache' => false,
+		'update_post_meta_cache' => false,
 	);
 	$items = get_posts( $args );
 	if ( $items ) {
 		foreach ( $items as $item ) {
-			rpress_add_to_cart( $item->ID );
-			$cart_item_ids[] = $item->ID;
+			rpress_add_to_cart( $item );
+			$cart_item_ids[] = $item;
 		}
 	}
 	return $cart_item_ids;

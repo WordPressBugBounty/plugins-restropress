@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $cart_quantity = rpress_get_cart_quantity();
 $display       = $cart_quantity > 0 ? '' : ' style="display:none;"';
 $button_style = rpress_get_option('button_style', 'button');
+$old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
 ?>
 <div class="rpress-cart-total-wrap">
 	<ul class="rpress-cart-summary-list">
@@ -42,6 +43,9 @@ $button_style = rpress_get_option('button_style', 'button');
 			<?php
 			$fee_label = isset( $fee['label'] ) ? $fee['label'] : esc_html__( 'Fee', 'restropress' );
 			$fee_amount = isset( $fee['amount'] ) ? (float) $fee['amount'] : 0;
+			if ( ! apply_filters( 'rpress_cart_sidebar_render_fee', true, $fee_id, $fee ) ) {
+				continue;
+			}
 			$fee_classes = array( 'cart_item', 'rpress-cart-meta', 'rpress_cart_fee' );
 			if ( false !== stripos( (string) $fee_label, 'delivery' ) ) {
 				$fee_classes[] = 'rpress-delivery-fee';
@@ -54,12 +58,20 @@ $button_style = rpress_get_option('button_style', 'button');
 		<?php endforeach; ?>
 	<?php endif; ?>
 	<?php do_action( 'rpress_cart_line_item' ); ?>
-	<li class="cart_item rpress-cart-meta rpress_total"><?php esc_html_e( 'Total (', 'restropress' ); ?><span class="rpress-cart-quantity" <?php echo wp_kses_post( $display ); ?> ><?php echo esc_html( $cart_quantity ); ?></span><?php esc_html_e( ' Items)', 'restropress' ); ?><span class="cart-total"><?php echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ) ); ?></span></li>
+	<li class="cart_item rpress-cart-meta rpress_total">
+		<span class="rpress-total-label"><?php esc_html_e( 'Total (', 'restropress' ); ?><span class="rpress-cart-quantity" <?php echo wp_kses_post( $display ); ?> ><?php echo esc_html( $cart_quantity ); ?></span><?php esc_html_e( ' Items)', 'restropress' ); ?></span>
+		<span class="cart-total"><?php echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ) ); ?></span>
+	</li>
 	</ul>
 </div>
 <!-- Service Type and Service Time -->
 <?php if ( ( isset( $_COOKIE['service_type'] ) && !empty( $_COOKIE['service_type'] ) ) || ( isset( $_COOKIE['service_time'] ) && !empty( $_COOKIE['service_time'] ) ) ) : ?>
 
+<?php endif; ?>
+<?php if ( $old_ui_ux_enabled && function_exists( 'get_delivery_options' ) ) : ?>
+<div class="delivery-items-options"<?php echo wp_kses_post( $display ); ?>>
+	<?php echo wp_kses_post( get_delivery_options( true ) ); ?>
+</div>
 <?php endif; ?>
 <?php if( apply_filters( 'rpress_show_checkout_button', true ) ) : ?>
 <ul class="rpress-cart-summary-list rpress-cart-checkout-list">

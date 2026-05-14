@@ -902,6 +902,37 @@ class RP_Frontend_Scripts
         color: var(--rpress-theme-primary-contrast) !important;
       }
 
+      #rpress_checkout_wrap #rpress_discount_code_wrap .rpress-discount-code-field-wrap {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      #rpress_checkout_wrap #rpress_discount_code_wrap input#rpress-discount {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+      }
+
+      #rpress_checkout_wrap #rpress_discount_code_wrap .rpress-apply-discount.rpress-submit {
+        flex: 0 0 auto !important;
+        margin-left: 0 !important;
+      }
+
+      @media only screen and (max-width: 480px) {
+        #rpress_checkout_wrap #rpress_discount_code_wrap .rpress-discount-code-field-wrap {
+          align-items: stretch !important;
+          flex-direction: column !important;
+        }
+
+        #rpress_checkout_wrap #rpress_discount_code_wrap .rpress-apply-discount.rpress-submit:not(.th-plain) {
+          width: 100% !important;
+        }
+      }
+
       .user-dashboard-wrapper .radio-custom:checked + .radio-custom-label,
       .user-dashboard-wrapper .radio-custom:checked + .radio-custom-label svg path {
         color: var(--rpress-theme-primary) !important;
@@ -918,11 +949,11 @@ class RP_Frontend_Scripts
         accent-color: var(--rpress-theme-primary) !important;
       }
 
-      /* Sync frontend button/select shapes with "Default Button Style" (excluding item add buttons). */
-      body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-      body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-      body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-      body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+      /* Sync frontend button/select shapes with "Default Button Style". */
+      body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available),
+      body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available),
+      body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available),
+      body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available),
       .rpress-section .rpress-tabs-wrapper.rpress-delivery-options,
       .rpress-section .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs,
       .rpress-section .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item,
@@ -1348,16 +1379,24 @@ class RP_Frontend_Scripts
        }
 
       <?php if ('th-plain' === $button_style) : ?>
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        .button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        [type=submit].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        .rpress-submit:not(.rpress-not-available),
+        a.rpress-submit:not(.rpress-not-available),
+        button.rpress-submit:not(.rpress-not-available),
+        input[type="submit"].rpress-submit:not(.rpress-not-available),
+        input[type="button"].rpress-submit:not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available),
+        .button.rpress-submit:not(.rpress-not-available),
+        [type=submit].rpress-submit:not(.rpress-not-available),
         #rpressModal.show-service-options .btn.btn-block.btn-primary,
         #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary,
         .rpress-section .rpress_checkout a,
+        .rpress-section .cart-action-wrap a,
         body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit,
+        body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit #rpress-purchase-button,
+        body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit input[type="submit"].rpress-submit,
         #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit,
         #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button,
         #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit,
@@ -1373,6 +1412,8 @@ class RP_Frontend_Scripts
         #rpress_profile_editor_submit,
         .rpress-order-history a.rpress-view-order-btn,
         .rpress-order-history a.rpress-reorder-btn,
+        body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
+        body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart,
         #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
         #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
           background: transparent !important;
@@ -1386,19 +1427,45 @@ class RP_Frontend_Scripts
           height: auto !important;
           line-height: inherit !important;
           min-height: 0 !important;
+          min-width: 0 !important;
           padding: 0 !important;
           text-decoration: underline !important;
+          text-underline-offset: 2px !important;
           text-transform: none !important;
           width: auto !important;
+        }
+
+        body.rpress-checkout #rpress_checkout_form_wrap #rpress-discount-code-wrap .rpress-apply-discount.rpress-submit {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          min-width: 92px !important;
+          min-height: 44px !important;
+          padding: 0 8px !important;
+          font-size: 16px !important;
+          line-height: 1.2 !important;
+        }
+
+        #rpressModal .rpress-popup-actions .rpress-popup-submit-wrap {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: flex-end !important;
         }
 
         #rpressModal .rpress-popup-actions .submit-fooditem-button {
           display: inline-flex !important;
           align-items: center !important;
-          justify-content: flex-start !important;
+          justify-content: center !important;
           gap: 6px !important;
+          width: auto !important;
+          max-width: 100% !important;
+          margin-left: 0 !important;
+          padding: 0 !important;
           min-height: 0 !important;
           line-height: 1.35 !important;
+          letter-spacing: 0 !important;
+          text-align: center !important;
+          text-transform: none !important;
           white-space: nowrap !important;
         }
 
@@ -1408,6 +1475,81 @@ class RP_Frontend_Scripts
           margin-left: 4px !important;
           font-size: inherit !important;
           line-height: inherit !important;
+          white-space: nowrap !important;
+        }
+
+        .rpress-submit:not(.rpress-not-available):hover,
+        .rpress-submit:not(.rpress-not-available):focus,
+        a.rpress-submit:not(.rpress-not-available):hover,
+        a.rpress-submit:not(.rpress-not-available):focus,
+        button.rpress-submit:not(.rpress-not-available):hover,
+        button.rpress-submit:not(.rpress-not-available):focus,
+        input[type="submit"].rpress-submit:not(.rpress-not-available):hover,
+        input[type="submit"].rpress-submit:not(.rpress-not-available):focus,
+        input[type="button"].rpress-submit:not(.rpress-not-available):hover,
+        input[type="button"].rpress-submit:not(.rpress-not-available):focus,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available):hover,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available):focus,
+        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available):hover,
+        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available):focus,
+        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available):hover,
+        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available):focus,
+        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available):hover,
+        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available):focus,
+        .button.rpress-submit:not(.rpress-not-available):hover,
+        .button.rpress-submit:not(.rpress-not-available):focus,
+        [type=submit].rpress-submit:not(.rpress-not-available):hover,
+        [type=submit].rpress-submit:not(.rpress-not-available):focus,
+        #rpressModal.show-service-options .btn.btn-block.btn-primary:hover,
+        #rpressModal.show-service-options .btn.btn-block.btn-primary:focus,
+        #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary:hover,
+        #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary:focus,
+        .rpress-section .rpress_checkout a:hover,
+        .rpress-section .rpress_checkout a:focus,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit:hover,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit:focus,
+        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit:hover,
+        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit:focus,
+        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button:hover,
+        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button:focus,
+        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:hover,
+        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:focus,
+        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update:hover,
+        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update:focus,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn:hover,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn:focus,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn:hover,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn:focus,
+        #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update:hover,
+        #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update:focus,
+        #rpressModal .rpress-popup-actions .submit-fooditem-button:hover,
+        #rpressModal .rpress-popup-actions .submit-fooditem-button:focus,
+        #rpress_purchase_form #rpress-purchase-button:hover,
+        #rpress_purchase_form #rpress-purchase-button:focus,
+        #rpress_purchase_form #rpress-user-login-submit input:hover,
+        #rpress_purchase_form #rpress-user-login-submit input:focus,
+        #rpress_login_submit:hover,
+        #rpress_login_submit:focus,
+        #rpress_register_form input[type="submit"].rpress-submit:hover,
+        #rpress_register_form input[type="submit"].rpress-submit:focus,
+        #rpress_profile_editor_submit:hover,
+        #rpress_profile_editor_submit:focus,
+        .rpress-order-history a.rpress-view-order-btn:hover,
+        .rpress-order-history a.rpress-view-order-btn:focus,
+        .rpress-order-history a.rpress-reorder-btn:hover,
+        .rpress-order-history a.rpress-reorder-btn:focus,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:hover,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:focus,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:hover,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:focus {
+          background: transparent !important;
+          background-color: transparent !important;
+          border-color: transparent !important;
+          box-shadow: none !important;
+          color:
+            <?php echo sanitize_hex_color($theme_dark); ?>
+            !important;
+          text-decoration: underline !important;
         }
 
         .rpress-submit.rp-loading:after,
@@ -1434,12 +1576,17 @@ class RP_Frontend_Scripts
             transparent;
         }
       <?php else : ?>
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        .button.rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
-        [type=submit].rpress-submit:not(.rpress-add-to-cart):not(.rpress-not-available),
+        .rpress-submit:not(.rpress-not-available),
+        a.rpress-submit:not(.rpress-not-available),
+        button.rpress-submit:not(.rpress-not-available),
+        input[type="submit"].rpress-submit:not(.rpress-not-available),
+        input[type="button"].rpress-submit:not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available),
+        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available),
+        .button.rpress-submit:not(.rpress-not-available),
+        [type=submit].rpress-submit:not(.rpress-not-available),
         #rpressModal.show-service-options .btn.btn-block.btn-primary,
         #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary,
         .rpress-section .rpress_checkout a,
@@ -1462,6 +1609,83 @@ class RP_Frontend_Scripts
         #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
         #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
           color: #fff !important;
+          text-decoration: none !important;
+        }
+
+        .rpress-submit:not(.rpress-not-available):hover,
+        .rpress-submit:not(.rpress-not-available):focus,
+        a.rpress-submit:not(.rpress-not-available):hover,
+        a.rpress-submit:not(.rpress-not-available):focus,
+        button.rpress-submit:not(.rpress-not-available):hover,
+        button.rpress-submit:not(.rpress-not-available):focus,
+        input[type="submit"].rpress-submit:not(.rpress-not-available):hover,
+        input[type="submit"].rpress-submit:not(.rpress-not-available):focus,
+        input[type="button"].rpress-submit:not(.rpress-not-available):hover,
+        input[type="button"].rpress-submit:not(.rpress-not-available):focus,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available):hover,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available):focus,
+        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available):hover,
+        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available):focus,
+        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available):hover,
+        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available):focus,
+        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available):hover,
+        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available):focus,
+        .button.rpress-submit:not(.rpress-not-available):hover,
+        .button.rpress-submit:not(.rpress-not-available):focus,
+        [type=submit].rpress-submit:not(.rpress-not-available):hover,
+        [type=submit].rpress-submit:not(.rpress-not-available):focus,
+        #rpressModal.show-service-options .btn.btn-block.btn-primary:hover,
+        #rpressModal.show-service-options .btn.btn-block.btn-primary:focus,
+        #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary:hover,
+        #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary:focus,
+        .rpress-section .rpress_checkout a:hover,
+        .rpress-section .rpress_checkout a:focus,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit:hover,
+        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit:focus,
+        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit:hover,
+        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit:focus,
+        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button:hover,
+        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button:focus,
+        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:hover,
+        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:focus,
+        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update:hover,
+        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update:focus,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn:hover,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn:focus,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn:hover,
+        #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn:focus,
+        #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update:hover,
+        #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update:focus,
+        #rpressModal .rpress-popup-actions .submit-fooditem-button:hover,
+        #rpressModal .rpress-popup-actions .submit-fooditem-button:focus,
+        #rpress_purchase_form #rpress-purchase-button:hover,
+        #rpress_purchase_form #rpress-purchase-button:focus,
+        #rpress_purchase_form #rpress-user-login-submit input:hover,
+        #rpress_purchase_form #rpress-user-login-submit input:focus,
+        #rpress_login_submit:hover,
+        #rpress_login_submit:focus,
+        #rpress_register_form input[type="submit"].rpress-submit:hover,
+        #rpress_register_form input[type="submit"].rpress-submit:focus,
+        #rpress_profile_editor_submit:hover,
+        #rpress_profile_editor_submit:focus,
+        .rpress-order-history a.rpress-view-order-btn:hover,
+        .rpress-order-history a.rpress-view-order-btn:focus,
+        .rpress-order-history a.rpress-reorder-btn:hover,
+        .rpress-order-history a.rpress-reorder-btn:focus,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:hover,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:focus,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:hover,
+        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:focus {
+          background:
+            <?php echo sanitize_hex_color($theme_dark); ?>
+            !important;
+          border-color:
+            <?php echo sanitize_hex_color($theme_dark); ?>
+            !important;
+          color:
+            <?php echo sanitize_hex_color($theme_contrast); ?>
+            !important;
+          text-decoration: none !important;
         }
 
         .rpress-submit.rp-loading:after,
@@ -1486,8 +1710,8 @@ class RP_Frontend_Scripts
       <?php endif; ?>
 
       @media only screen and (max-width: 768px) {
-        #rpress_checkout_wrap #rpress_purchase_submit #rpress-purchase-button,
-        #rpress_checkout_wrap #rpress_checkout_form_wrap .rpress-checkout-button-actions a.rpress-submit.button {
+        #rpress_checkout_wrap #rpress_purchase_submit #rpress-purchase-button:not(.th-plain),
+        #rpress_checkout_wrap #rpress_checkout_form_wrap .rpress-checkout-button-actions a.rpress-submit.button:not(.th-plain) {
           padding: 12px 16px;
         }
       }

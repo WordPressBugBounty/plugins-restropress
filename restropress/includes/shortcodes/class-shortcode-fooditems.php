@@ -42,7 +42,8 @@ class RP_Shortcode_Fooditems {
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
 			'orderby'        => $atts['fooditem_orderby'],
-			'order'          => $atts['fooditem_order']
+			'order'          => $atts['fooditem_order'],
+			'no_found_rows'  => true,
 		);
 	
 		// Add the modified $term_slugs to the tax query

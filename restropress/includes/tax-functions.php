@@ -115,24 +115,18 @@ function rpress_get_sales_tax_for_year( $year = null ) {
 	// Start at zero
 	$tax = 0;
 	if ( ! empty( $year ) ) {
-		$args = array(
-			'post_type'      => 'rpress_payment',
-			'post_status'    => array( 'publish', 'revoked' ),
-			'posts_per_page' => -1,
-			'year'           => $year,
-			'fields'         => 'ids'
+		$tax = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(CAST(pm.meta_value AS DECIMAL(18,2))), 0)
+				FROM {$wpdb->postmeta} pm
+				INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+				WHERE pm.meta_key = '_rpress_payment_tax'
+					AND p.post_type = 'rpress_payment'
+					AND p.post_status IN ('publish', 'revoked')
+					AND YEAR(p.post_date) = %d",
+				absint( $year )
+			)
 		);
-		$payments    = get_posts( $args );
-		if ( count( $payments ) > 0 ) {
-			$payment_ids  = array_filter( array_map( 'absint', (array) $payments ) );
-			$placeholders = implode( ',', array_fill( 0, count( $payment_ids ), '%d' ) );
-			$tax          = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT SUM( meta_value ) FROM {$wpdb->postmeta} WHERE meta_key = '_rpress_payment_tax' AND post_id IN ($placeholders)",
-					$payment_ids
-				)
-			);
-		}
 	}
 	return apply_filters( 'rpress_get_sales_tax_for_year', $tax, $year );
 }

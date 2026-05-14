@@ -220,6 +220,7 @@ class RPRESS_Logging {
 			'post_status'    => 'publish',
 			'paged'          => get_query_var( 'paged' ),
 			'log_type'       => false,
+			'no_found_rows'  => true,
 		);
 		$query_args = wp_parse_args( $args, $defaults );
 		if ( $query_args['log_type'] && $this->valid_type( $query_args['log_type'] ) ) {
@@ -251,9 +252,12 @@ class RPRESS_Logging {
 		$query_args = array(
 			'post_parent'      => $object_id,
 			'post_type'        => 'rpress_log',
-			'posts_per_page'   => -1,
+			'posts_per_page'   => 1,
 			'post_status'      => 'publish',
 			'fields'           => 'ids',
+			'no_found_rows'    => false,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 		);
 		if ( ! empty( $type ) && $this->valid_type( $type ) ) {
 			$query_args['tax_query'] = array(
@@ -271,7 +275,7 @@ class RPRESS_Logging {
 			$query_args['date_query'] = $date_query;
 		}
 		$logs = new WP_Query( $query_args );
-		return (int) $logs->post_count;
+		return (int) $logs->found_posts;
 	}
 	/**
 	 * Delete a log
@@ -290,6 +294,9 @@ class RPRESS_Logging {
 			'posts_per_page' => -1,
 			'post_status'    => 'publish',
 			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 		);
 		if ( ! empty( $type ) && $this->valid_type( $type ) ) {
 			$query_args['tax_query'] = array(

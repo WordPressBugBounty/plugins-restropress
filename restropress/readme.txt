@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
 Tested up to: 6.9.4
-Stable tag: 3.2.8.8
+Stable tag: 3.2.8.8.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -120,6 +120,16 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 👉 [Explore Pro Features & Extensions](https://restropress.com/extension/)
 
 == Changelog ==
+
+= Version 3.2.8.8.1(2026-05-14) =
+* Updated: Plugin version bump to 3.2.8.8.1
+* Updated: Optimized the memory allocation
+* Fixed: Delivery schedule now ignores stale/past service slots instead of falling back to unavailable times.
+* Improved: Listing cart totals, submit button styles, plain-text button behavior, and checkout coupon field layout.
+* Added: Cart sidebar fee render filter so extensions can own their own fee display rows.
+* Fixed: Old UI modal enforcement now reopens service settings on add/checkout when delivery zip/address is invalid and blocks stale item-detail popup flow.
+* Fixed: Cart summary change-link and helper tooltip now render only in Old RestroPress UI/UX mode and no longer leak into the default UI layout.
+* Improved: Core frontend/admin API, export, tax, cart, and payment query handling touched in this patch for safer and more consistent request data processing.
 
 = Version 3.2.8.8(2026-05-12) =
 * Updated: Plugin version bump to 3.2.8.8
@@ -249,7 +259,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.2.8.8 =
+= 3.2.8.8.1 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

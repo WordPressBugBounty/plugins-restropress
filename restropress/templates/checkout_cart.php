@@ -10,6 +10,7 @@ global $post;
 
 $support_email      = sanitize_email( (string) get_option( 'admin_email' ) );
 $support_contact_url = ! empty( $support_email ) ? 'mailto:' . antispambot( $support_email ) : home_url( '/' );
+$button_style       = sanitize_html_class( rpress_get_option( 'button_style', 'button' ) );
 ?>
 <table id="rpress_checkout_cart" class="rpress-cart ajaxed">
 	<thead>
@@ -102,7 +103,7 @@ $support_contact_url = ! empty( $support_email ) ? 'mailto:' . antispambot( $sup
 
 								<span class="cart-action-wrap rpress-checkout-item-actions">
 									<?php do_action( 'rpress_cart_actions', $item, $key ); ?>
-									<a class="rpress_cart_remove_item_btn rpress-remove-from-cart" href="<?php echo esc_url( rpress_remove_item_url( $key ) ); ?>">
+									<a class="rpress_cart_remove_item_btn rpress-remove-from-cart <?php echo esc_attr( $button_style ); ?>" href="<?php echo esc_url( rpress_remove_item_url( $key ) ); ?>">
 										<span class="rpress-remove-icon" aria-hidden="true">&times;</span>
 										<span class="rpress-remove-text"><?php esc_html_e( 'Remove', 'restropress' ); ?></span>
 									</a>

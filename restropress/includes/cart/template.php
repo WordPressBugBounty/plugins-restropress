@@ -55,7 +55,7 @@ function rpress_shopping_cart($echo = false)
  * @return string
  */
 function rpress_get_cart_sidebar_summary_html() {
-	if ( ! rpress_get_cart_contents() && ! rpress_cart_has_fees() ) {
+	if ( ! rpress_get_cart_contents() ) {
 		return '';
 	}
 

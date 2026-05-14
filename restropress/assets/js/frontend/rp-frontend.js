@@ -461,6 +461,235 @@ jQuery(function ($) {
     }
   }
 
+  function rp_get_first_field_value($scope, selectors) {
+    var $root = ($scope && $scope.length) ? $scope : $(document);
+    var value = '';
+    var $fields = $root.find(selectors);
+
+    $fields.filter(':visible').each(function () {
+      value = ($(this).val() || '').toString().trim();
+      return !value;
+    });
+
+    if (value) {
+      return value;
+    }
+
+    $fields.each(function () {
+      value = ($(this).val() || '').toString().trim();
+      return !value;
+    });
+
+    if (!value && $root[0] !== document) {
+      $fields = $(selectors);
+
+      $fields.filter(':visible').each(function () {
+        value = ($(this).val() || '').toString().trim();
+        return !value;
+      });
+
+      if (value) {
+        return value;
+      }
+
+      $fields.each(function () {
+        value = ($(this).val() || '').toString().trim();
+        return !value;
+      });
+    }
+
+    return value;
+  }
+
+  function rp_encode_cookie_value(value) {
+    if (!value) {
+      return '';
+    }
+
+    try {
+      return encodeURIComponent(decodeURIComponent(String(value).replace(/\+/g, '%20')));
+    } catch (error) {
+      return encodeURIComponent(String(value));
+    }
+  }
+
+  function rp_persist_delivery_context_for_update($scope, response, serviceType) {
+    if (String(serviceType || '').toLowerCase() !== 'delivery') {
+      return;
+    }
+
+    response = response || {};
+    var expireTime = rp_scripts.expire_cookie_time;
+    var deliveryZip = response.delivery_zip || rp_get_first_field_value(
+      $scope,
+      'input[id="rp_delivery_zone"], input[name="rp_delivery_zone"], #rpress-postcode, #rpress_postcode, input[name="rpress_postcode"]'
+    );
+    var deliveryLocation = response.delivery_location || response.delivery_address || rp_get_first_field_value(
+      $scope,
+      'input[id="rp_delivery_location"], input[name="rp_delivery_location"], #rpress-delivery-address, input[name="rpress_delivery_address"]'
+    );
+    var deliveryLatLng = response.delivery_latlng || rp_get_first_field_value(
+      $scope,
+      'input[id="rp_delivery_latllng"], input[name="rp_delivery_latllng"]'
+    );
+    var branchId = response.branch || response.branch_id || rp_get_first_field_value(
+      $scope,
+      'select[name="branch"], #rp-location, #rpress_location, input[name="rpress_location"]:checked, input[name="rpress_location_pickup"]:checked'
+    );
+
+    if (deliveryZip) {
+      rp_setCookie('delivery_zip', deliveryZip, expireTime);
+    }
+
+    if (deliveryLocation) {
+      var encodedLocation = rp_encode_cookie_value(deliveryLocation);
+      rp_setCookie('delivery_location', encodedLocation, expireTime);
+      rp_setCookie('delivery_address', encodedLocation, expireTime);
+    }
+
+    if (deliveryLatLng) {
+      rp_setCookie('delivery_latlng', deliveryLatLng, expireTime);
+    }
+
+    if (branchId) {
+      rp_setCookie('branch', branchId, expireTime);
+      rp_setCookie('rpress_chosen_location_id', branchId, expireTime);
+    }
+  }
+
+  function rp_decode_cookie_value(value) {
+    if (!value) {
+      return '';
+    }
+
+    try {
+      return decodeURIComponent(String(value).replace(/\+/g, '%20')).trim();
+    } catch (error) {
+      return String(value).trim();
+    }
+  }
+
+  function rp_is_delivery_fee_extension_active() {
+    return typeof window.DeliveryFeeVars !== 'undefined' && window.DeliveryFeeVars !== null;
+  }
+
+  function rp_is_old_ui_delivery_context_invalid(serviceType, $scope) {
+    if (!rp_is_old_ui_ux_enabled()) {
+      return false;
+    }
+
+    if (String(serviceType || '').toLowerCase() !== 'delivery') {
+      return false;
+    }
+
+    if (!rp_is_delivery_fee_extension_active()) {
+      return false;
+    }
+
+    if (!rp_has_valid_delivery_fee_context(serviceType, $scope)) {
+      return true;
+    }
+
+    return String(window.rpDeliveryFeeValidationState || '') === 'invalid';
+  }
+
+  function rp_has_valid_delivery_fee_context(serviceType, $scope) {
+    if (String(serviceType || '').toLowerCase() !== 'delivery') {
+      return true;
+    }
+
+    if (!rp_is_delivery_fee_extension_active()) {
+      return true;
+    }
+
+    var method = String((window.DeliveryFeeVars.delivery_fee_method || 'zip_based')).toLowerCase();
+    var $context = ($scope && $scope.length) ? $scope : $(document);
+
+    var deliveryZip = rp_get_first_field_value(
+      $context,
+      'input[id="rp_delivery_zone"], input[name="rp_delivery_zone"], #rpress-postcode, #rpress_postcode, input[name="rpress_postcode"]'
+    ) || rp_decode_cookie_value(rp_getCookie('delivery_zip'));
+
+    var deliveryLocation = rp_get_first_field_value(
+      $context,
+      'input[id="rp_delivery_location"], input[name="rp_delivery_location"], #rpress-delivery-address, input[name="rpress_delivery_address"]'
+    ) || rp_decode_cookie_value(rp_getCookie('delivery_location')) || rp_decode_cookie_value(rp_getCookie('delivery_address'));
+
+    if (method === 'location_based') {
+      return !!deliveryLocation;
+    }
+
+    return !!deliveryZip;
+  }
+
+  function rp_get_delivery_fee_context_error(serviceType) {
+    if (String(serviceType || '').toLowerCase() !== 'delivery') {
+      return '';
+    }
+
+    var method = String((window.DeliveryFeeVars && window.DeliveryFeeVars.delivery_fee_method) || 'zip_based').toLowerCase();
+    if (method === 'location_based') {
+      return (window.DeliveryFeeVars && (window.DeliveryFeeVars.error_empty_address || window.DeliveryFeeVars.error_invalid_location)) || 'Please enter your location';
+    }
+
+    return (window.DeliveryFeeVars && window.DeliveryFeeVars.error_empty_zip) || 'Please enter your zip/postal code';
+  }
+
+  function rp_open_legacy_service_options_modal(fooditemId) {
+    if (!$('#rpressModal').length || !rp_scripts || !rp_scripts.ajaxurl || !rp_scripts.service_type_nonce) {
+      return false;
+    }
+
+    $('#rpressModal')
+      .addClass('show-service-options')
+      .removeClass('rpress-delivery-options rpress-food-options checkout-error');
+
+    $.ajax({
+      type: "POST",
+      data: {
+        action: 'rpress_show_delivery_options',
+        fooditem_id: fooditemId || '',
+        security: rp_scripts.service_type_nonce
+      },
+      dataType: "json",
+      url: rp_scripts.ajaxurl,
+      success: function (response) {
+        if (!response || !response.data) {
+          return;
+        }
+
+        var $modal = $('#rpressModal');
+        if (fooditemId) {
+          $modal.attr('data-pending-fooditem-id', fooditemId);
+          $modal.attr('data-service-modal-context', 'add-to-cart');
+        }
+        $modal.find('.modal-title').html(response.data.html_title || '');
+        $modal.find('.modal-body').html(response.data.html || '');
+        if (typeof window.rp_prepare_old_ui_modal_selection === 'function') {
+          window.rp_prepare_old_ui_modal_selection($modal.find('.modal-body'));
+        }
+        MicroModal.show('rpressModal', {
+          disableScroll: true
+        });
+        $(document.body).trigger('opened_service_options', [response.data]);
+      }
+    });
+
+    return true;
+  }
+
+  function rp_get_delivery_change_helper_html() {
+    if (!rp_is_old_ui_ux_enabled()) {
+      return '';
+    }
+
+    return '' +
+      '<span class="rp-delivery-change-helper">' +
+      '<span class="rp-delivery-change-tooltip-icon" tabindex="0" aria-label="Delivery address help">?</span>' +
+      '<span class="rp-delivery-change-tooltip-text">Change service type, date and time</span>' +
+      '</span>';
+  }
+
   function rp_ensure_order_details_modal() {
     var $modal = $('#rpressModal').first();
     if ($modal.length) {
@@ -1236,59 +1465,21 @@ jQuery(function ($) {
       var fooditem_id = _self.attr('data-fooditem-id');
       var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
       var hasRequiredServiceContext = rp_get_storage_data();
-
-      if (oldUiUxEnabled && !hasRequiredServiceContext) {
-        $('#rpressModal')
-          .removeClass('rpress-delivery-options rpress-food-options checkout-error')
-          .addClass('show-service-options');
-
-        $.ajax({
-          type: "POST",
-          data: {
-            action: 'rpress_show_delivery_options',
-            fooditem_id: fooditem_id,
-            security: rp_scripts.service_type_nonce
-          },
-          dataType: "json",
-          url: rp_scripts.ajaxurl,
-          beforeSend: function () {
-            _self.addClass('rp-loading');
-            _self.find('.add-icon').addClass('icon-loading-toggle');
-            _self.find('.rp-ajax-toggle-text').addClass('rp-text-visibility');
-          },
-          complete: function () {
-            _self.removeClass('rp-loading');
-            _self.find('.add-icon').removeClass('icon-loading-toggle');
-            _self.find('.rp-ajax-toggle-text').removeClass('rp-text-visibility');
-          },
-          success: function (response) {
-            if (!response || !response.data) {
-              return;
-            }
-            var $modal = $('#rpressModal');
-            $modal
-              .attr('data-pending-fooditem-id', fooditem_id || '')
-              .attr('data-service-modal-context', 'add-to-cart');
-            $modal.find('.modal-title').html(response.data.html_title || '');
-            $modal.find('.modal-body').html(response.data.html || '');
-            if (typeof window.rp_prepare_old_ui_modal_selection === 'function') {
-              window.rp_prepare_old_ui_modal_selection($modal.find('.modal-body'));
-            }
-            MicroModal.show('rpressModal', {
-              disableScroll: true
-            });
-            $(document.body).trigger('opened_service_options', [response.data]);
-          }
-        });
-        return;
-      }
-
       var $serviceTypeScope = $('.rpress-delivery-wrap .rpress-tabs-wrapper:visible').first();
       var activeServiceTypeForValidation = rp_get_active_service_type(
         $serviceTypeScope.length ? $serviceTypeScope : $(document),
         rp_getCookie('service_type') || rp_scripts.default_service || 'delivery'
       );
       activeServiceTypeForValidation = rp_sync_service_ui_state($(document), activeServiceTypeForValidation) || activeServiceTypeForValidation;
+      var forceOldUiServiceModal = rp_is_old_ui_delivery_context_invalid(activeServiceTypeForValidation, $(document));
+
+      if (oldUiUxEnabled && (!hasRequiredServiceContext || forceOldUiServiceModal)) {
+        if (forceOldUiServiceModal) {
+          tata.error('Error', rp_get_delivery_fee_context_error(activeServiceTypeForValidation), { position: "tr" });
+        }
+        rp_open_legacy_service_options_modal(fooditem_id);
+        return;
+      }
 
       if (activeServiceTypeForValidation === 'delivery') {
         var delivery_zip = rp_getCookie('delivery_zip');
@@ -1800,7 +1991,9 @@ jQuery(function ($) {
                   .html(orderInfo);
                 if ($('.delivery-wrap .delivery-change')
                   .length == 0) {
-                  $("<a href='#' class='delivery-change'>" + rp_scripts.change_txt + "</a>")
+                  var changeText = rp_is_old_ui_ux_enabled() ? 'Change' : (rp_scripts.change_txt || 'Change?');
+                  var helperHtml = rp_is_old_ui_ux_enabled() ? rp_get_delivery_change_helper_html() : '';
+                  $("<a href='#' class='delivery-change'><span class='rp-ajax-toggle-text'>" + changeText + "</span></a>" + helperHtml)
                     .insertAfter(".delivery-opts");
                 }
               }
@@ -1977,6 +2170,14 @@ jQuery(function ($) {
       );
 
       serviceType = normalizedSelection.serviceType || serviceType || rp_getCookie('service_type') || rp_scripts.default_service || 'delivery';
+      if (oldUiUxEnabled) {
+        var isDeliveryFeeContextValid = rp_has_valid_delivery_fee_context(serviceType, $updateScope);
+        if (!isDeliveryFeeContextValid) {
+          tata.error('Error', rp_get_delivery_fee_context_error(serviceType), { position: "tr" });
+          rp_open_legacy_service_options_modal(foodItemId);
+          return false;
+        }
+      }
       var serviceTime = normalizedSelection.serviceTime;
       var serviceTimeText = normalizedSelection.serviceTimeText || serviceTime;
       var serviceDate = normalizedSelection.serviceDate;
@@ -2029,9 +2230,15 @@ jQuery(function ($) {
             .removeClass('rp-text-visibility');
           if (response.status == 'error') {
             _self.text(rpress_scripts.update);
+            if (oldUiUxEnabled) {
+              window.rpDeliveryFeeValidationState = 'invalid';
+            }
             tata.error(rp_scripts.error, response.error_msg || response.msg || rp_scripts.closed_message);
             return false;
           } else {
+            if (oldUiUxEnabled) {
+              window.rpDeliveryFeeValidationState = 'valid';
+            }
             rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
             if (serviceDate) {
               rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
@@ -2043,6 +2250,14 @@ jQuery(function ($) {
             } else {
               rp_setCookie('service_time', '', rp_scripts.expire_cookie_time);
               rp_setCookie('service_time_text', '', rp_scripts.expire_cookie_time);
+            }
+            if (oldUiUxEnabled) {
+              rp_persist_delivery_context_for_update($updateScope, response, serviceType);
+              if (!rp_has_valid_delivery_fee_context(serviceType, $updateScope)) {
+                tata.error('Error', rp_get_delivery_fee_context_error(serviceType), { position: "tr" });
+                rp_open_legacy_service_options_modal(foodItemId);
+                return false;
+              }
             }
             $('#rpressModal')
               .removeClass('show-service-options');
@@ -2187,9 +2402,15 @@ jQuery(function ($) {
             .removeClass('rp-text-visibility');
           if (response.status == 'error') {
             _self.text(rpress_scripts.update);
+            if (oldUiUxEnabled) {
+              window.rpDeliveryFeeValidationState = 'invalid';
+            }
             tata.error(rp_scripts.error, response.error_msg || response.msg || rp_scripts.closed_message);
             return false;
           } else {
+            if (oldUiUxEnabled) {
+              window.rpDeliveryFeeValidationState = 'valid';
+            }
             rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
             if (serviceDate) {
               rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
@@ -2201,6 +2422,9 @@ jQuery(function ($) {
             } else {
               rp_setCookie('service_time', '', rp_scripts.expire_cookie_time);
               rp_setCookie('service_time_text', '', rp_scripts.expire_cookie_time);
+            }
+            if (oldUiUxEnabled) {
+              rp_persist_delivery_context_for_update($updateScope, response, serviceType);
             }
             $('#rpressModal')
               .removeClass('show-service-options');
@@ -2603,6 +2827,24 @@ jQuery(function ($) {
     .on('click', '.cart_item.rpress_checkout a', function (e) {
       e.preventDefault();
       rp_sync_service_selection_cookies($('.rpress-delivery-wrap .rpress-tabs-wrapper:visible').first());
+      var checkoutServiceType = (
+        rp_getCookie('service_type') ||
+        rp_get_active_service_type($('.rpress-delivery-wrap .rpress-tabs-wrapper:visible').first(), rp_scripts.default_service || 'delivery') ||
+        rp_scripts.default_service ||
+        'delivery'
+      ).toString().toLowerCase();
+      if (rp_is_old_ui_ux_enabled()) {
+        if (rp_is_old_ui_delivery_context_invalid(checkoutServiceType, $('#rpress_checkout_wrap').length ? $('#rpress_checkout_wrap') : $(document))) {
+          tata.error('Error', rp_get_delivery_fee_context_error(checkoutServiceType), { position: "tr" });
+          rp_open_legacy_service_options_modal('');
+          return false;
+        }
+        if (!rp_has_valid_delivery_fee_context(checkoutServiceType, $('#rpress_checkout_wrap').length ? $('#rpress_checkout_wrap') : $(document))) {
+          tata.error('Error', rp_get_delivery_fee_context_error(checkoutServiceType), { position: "tr" });
+          rp_open_legacy_service_options_modal('');
+          return false;
+        }
+      }
       var CheckoutUrl = rp_scripts.checkout_page;
       var _self = $(this);
       var OrderText = _self.text();
@@ -4802,6 +5044,26 @@ jQuery(function ($) {
     $initialOrderServiceScope.length ? $initialOrderServiceScope : $(document),
     initialServiceType
   );
+  $(document).on('rp_delivery_fee_validation', function (event, response) {
+    if (!rp_is_old_ui_ux_enabled()) {
+      return;
+    }
+    response = response || {};
+    if (response.status === 'error' || parseInt(response.delivery_fee_error || 0, 10) === 1) {
+      window.rpDeliveryFeeValidationState = 'invalid';
+      return;
+    }
+
+    if (response.status === 'success') {
+      window.rpDeliveryFeeValidationState = 'valid';
+    }
+  });
+  $(document).on('input change', '#rp_delivery_zone, #rp_delivery_location, #rpress-delivery-address, #rpress-postcode, #rpress_postcode', function () {
+    if (!rp_is_old_ui_ux_enabled()) {
+      return;
+    }
+    window.rpDeliveryFeeValidationState = 'unknown';
+  });
   if (!oldUiUxEnabled) {
     window.rp_sync_service_selection_cookies(
       $initialOrderServiceScope.length ? $initialOrderServiceScope : $(document),

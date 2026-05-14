@@ -154,6 +154,9 @@ function rpress_get_users_ordered_products( $user = 0, $status = 'complete' ) {
 			'include'        => $product_ids,
 			'post_type'      => 'fooditem',
 			'posts_per_page' => -1,
+			'no_found_rows'  => true,
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
 		)
 	);
 	return apply_filters( 'rpress_users_purchased_products_list', get_posts( $args ) );

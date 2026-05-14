@@ -854,6 +854,7 @@ class RPRESS_API {
 				'posts_per_page'   => $this->per_page(),
 				'suppress_filters' => true,
 				'paged'            => $this->get_paged(),
+				'no_found_rows'    => true,
 			);
 			if ( isset( $args['s'] ) && !empty( $args['s'] ) ) {
 				$parameters['s'] = $args['s'];
@@ -1009,7 +1010,13 @@ class RPRESS_API {
 					}
 				}
 			} elseif ( $args['product'] == 'all' ) {
-				$products = get_posts( array( 'post_type' => 'fooditem', 'nopaging' => true ) );
+				$products = get_posts( array(
+					'post_type'              => 'fooditem',
+					'nopaging'               => true,
+					'no_found_rows'          => true,
+					'update_post_term_cache' => false,
+					'update_post_meta_cache' => false,
+				) );
 				$i = 0;
 				foreach ( $products as $product_info ) {
 					$sales['sales'][$i] = array( $product_info->post_name => rpress_get_fooditem_sales_stats( $product_info->ID ) );
@@ -1101,7 +1108,13 @@ class RPRESS_API {
 					}
 				}
 			} elseif ( $args['product'] == 'all' ) {
-				$products = get_posts( array( 'post_type' => 'fooditem', 'nopaging' => true ) );
+				$products = get_posts( array(
+					'post_type'              => 'fooditem',
+					'nopaging'               => true,
+					'no_found_rows'          => true,
+					'update_post_term_cache' => false,
+					'update_post_meta_cache' => false,
+				) );
 				$i = 0;
 				foreach ( $products as $product_info ) {
 					$earnings['earnings'][ $i ] = array( $product_info->post_name => rpress_get_fooditem_earnings_stats( $product_info->ID ) );
@@ -1155,9 +1168,9 @@ class RPRESS_API {
 			$query   = array();
 			$query[] = rpress_get_payment_by( 'key', $wp_query->query_vars['purchasekey'] );
 		} elseif( isset( $wp_query->query_vars['email'] ) ) {
-			$query = rpress_get_payments( array( 'fields' => 'ids', 'meta_key' => '_rpress_payment_user_email', 'meta_value' => $wp_query->query_vars['email'], 'number' => $this->per_page(), 'page' => $this->get_paged(), 'status' => 'publish' ) );
+			$query = rpress_get_payments( array( 'fields' => 'ids', 'meta_key' => '_rpress_payment_user_email', 'meta_value' => $wp_query->query_vars['email'], 'number' => $this->per_page(), 'page' => $this->get_paged(), 'status' => 'publish', 'low_memory' => true ) );
 		} else {
-			$query = rpress_get_payments( array( 'fields' => 'ids', 'number' => $this->per_page(), 'page' => $this->get_paged(), 'status' => 'publish' ) );
+			$query = rpress_get_payments( array( 'fields' => 'ids', 'number' => $this->per_page(), 'page' => $this->get_paged(), 'status' => 'publish', 'low_memory' => true ) );
 		}
 		if ( $query ) {
 			$i = 0;

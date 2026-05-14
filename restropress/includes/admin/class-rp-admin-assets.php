@@ -251,6 +251,47 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       wp_send_json( $SalesByDate ); 
     }
     
+    private function get_payment_report_by_date_bucket( $start_date, $end_date, $bucket, $sum_total = false, $status = '' ) {
+      global $wpdb;
+
+      $date_format = ( 'm' === $bucket ) ? '%m' : '%d';
+      $start_datetime = $start_date . ' 00:00:00';
+      $end_datetime   = gmdate( 'Y-m-d 00:00:00', strtotime( $end_date . ' +1 day' ) );
+      $select_value   = $sum_total ? 'COALESCE(SUM(CAST(pm_total.meta_value AS DECIMAL(18,2))), 0)' : 'COUNT(DISTINCT p.ID)';
+      $total_join     = $sum_total ? "LEFT JOIN {$wpdb->postmeta} pm_total ON pm_total.post_id = p.ID AND pm_total.meta_key = '_rpress_payment_total'" : '';
+      $status_sql     = '';
+      $query_args     = array( $date_format, $start_datetime, $end_datetime );
+
+      if ( '' !== $status ) {
+        $status_sql   = 'AND p.post_status = %s';
+        $query_args[] = $status;
+      }
+
+      $sql = "SELECT DATE_FORMAT(pm_delivery.meta_value, %s) AS date_key, {$select_value} AS total
+        FROM {$wpdb->posts} p
+        INNER JOIN {$wpdb->postmeta} pm_delivery
+          ON pm_delivery.post_id = p.ID
+          AND pm_delivery.meta_key = '_rpress_delivery_date'
+        {$total_join}
+        WHERE p.post_type = 'rpress_payment'
+          AND p.post_date >= %s
+          AND p.post_date < %s
+          {$status_sql}
+        GROUP BY date_key";
+
+      $rows = $wpdb->get_results( $wpdb->prepare( $sql, $query_args ) );
+      $data = array();
+
+      foreach ( $rows as $row ) {
+        if ( '' === $row->date_key || null === $row->date_key ) {
+          continue;
+        }
+        $data[ $row->date_key ] = $sum_total ? (float) $row->total : (int) $row->total;
+      }
+
+      return $data;
+    }
+
     public function get_revenue_report( $filter_type ) {
       $SalesByDate          = [];
       $key                  = "";
@@ -279,32 +320,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       }
      
       
-      $args = array(
-        'post_type'      => 'rpress_payment',
-        'post_status'    => 'publish',
-        'posts_per_page' => -1,
-        'date_query'     => array(
-          'after'     => $first_day_for_filter,
-          'before'    => $last_day_for_filter,
-          'inclusive' => true,
-        ),
-      );
-      
-      $query = new WP_Query( $args );
-      if ( $query->have_posts() ) {
-        while ( $query->have_posts() ) {
-          $query->the_post(); 
-          $post_id = get_the_ID();
-          $payment = new RPRESS_Payment( $post_id ); 
-          $amount  = $payment->total;  
-          $deliveryDate = get_post_meta( $post_id, '_rpress_delivery_date', true);
-          $day          = gmdate( $key, strtotime( $deliveryDate ) );
-          if (  !isset( $SalesByDate[ $day ] ) ) $SalesByDate[ $day ] = 0;
-          $SalesByDate[$day] += $amount;
-        }        
-        wp_reset_postdata();
-      }
-      return  $SalesByDate;    
+      return $this->get_payment_report_by_date_bucket( $first_day_for_filter, $last_day_for_filter, $key, true, 'publish' );
   
     }
     /**
@@ -1878,31 +1894,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           $first_day_for_filter   = gmdate("$currentYear-01-01");
           $last_day_for_filter    = gmdate("$currentYear-12-t");
         }
-        $args = array(
-            'post_type'       => 'rpress_payment',
-            'posts_per_page'  => -1,
-            'date_query'      => array(
-                'after'     => $first_day_for_filter,
-                'before'    => $last_day_for_filter,
-                'inclusive' => true,
-            ),
-        );
-        $query = new WP_Query( $args );
-        if ( $query->have_posts() ) {
-            while ( $query->have_posts() ) {
-                $query->the_post();
-                $post_id      = get_the_ID();
-                $payment      = new RPRESS_Payment( $post_id );
-                $deliveryDate = get_post_meta( $post_id, '_rpress_delivery_date', true );
-                $day = gmdate( $key, strtotime( $deliveryDate ) );
-                if ( !isset( $SalesByDate[ $day ] ) ) {
-                    $SalesByDate[ $day ] = 0;
-                }
-                $SalesByDate[ $day ] += 1;
-            }
-          wp_reset_postdata();
-        }
-        return $SalesByDate;
+        return $this->get_payment_report_by_date_bucket( $first_day_for_filter, $last_day_for_filter, $key );
     }
     public function customers_data_filter(){
       if ( ! current_user_can( apply_filters( 'rpress_dashboard_stats_cap', 'view_shop_reports' ) ) ) {

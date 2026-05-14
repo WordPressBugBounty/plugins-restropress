@@ -43,7 +43,7 @@ $button_style = rpress_get_option('button_style', 'button');
               </div>
             </div>
           </div>
-          <div class="rp-col-md-8 rp-col-xs-8">
+          <div class="rp-col-md-8 rp-col-xs-8 rpress-popup-submit-wrap">
             <a href="javascript:void(0);" data-title="" data-item-qty="1" data-cart-key="" data-item-id=""
               data-variable-id="" data-item-price="" data-cart-action=""
               class="center submit-fooditem-button <?php echo esc_attr($button_style); ?> text-center inline rp-col-md-6">
