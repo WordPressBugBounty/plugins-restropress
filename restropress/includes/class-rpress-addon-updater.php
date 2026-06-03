@@ -30,13 +30,13 @@ class RestroPress_Addon_Updater {
 	public function __construct( $_api_url, $_plugin_file, $_api_data = null ) {
 		global $edd_plugin_data;
 		$this->api_url     = trailingslashit( $_api_url );
-		$this->api_data    = $_api_data;
+		$this->api_data    = is_array( $_api_data ) ? $_api_data : array();
 		$this->name        = plugin_basename( $_plugin_file );
 		$this->slug        = basename( $_plugin_file, '.php' );
-		$this->version     = $_api_data['version'];
-		$this->wp_override = isset( $_api_data['wp_override'] ) ? (bool) $_api_data['wp_override'] : false;
+		$this->version     = isset( $this->api_data['version'] ) ? $this->api_data['version'] : '';
+		$this->wp_override = isset( $this->api_data['wp_override'] ) ? (bool) $this->api_data['wp_override'] : false;
 		$this->beta        = ! empty( $this->api_data['beta'] ) ? true : false;
-		$this->cache_key   = 'rpress_sl_' . md5( serialize( $this->slug . $this->api_data['license'] . $this->beta ) );
+		$this->cache_key   = 'rpress_sl_' . md5( serialize( $this->slug . ( isset( $this->api_data['license'] ) ? $this->api_data['license'] : '' ) . $this->beta ) );
 		$edd_plugin_data[ $this->slug ] = $this->api_data;
 		/**
 		 * Fires after the $edd_plugin_data is setup.
@@ -76,31 +76,22 @@ class RestroPress_Addon_Updater {
 	 * @return array Modified update array with custom plugin data.
 	 */
 	public function check_update( $_transient_data ) {
-		global $pagenow;
 		if ( ! is_object( $_transient_data ) ) {
 			$_transient_data = new stdClass;
 		}
-		if ( 'plugins.php' == $pagenow && is_multisite() ) {
-			return $_transient_data;
+		if ( empty( $_transient_data->response ) || ! is_array( $_transient_data->response ) ) {
+			$_transient_data->response = array();
+		}
+		if ( empty( $_transient_data->checked ) || ! is_array( $_transient_data->checked ) ) {
+			$_transient_data->checked = array();
 		}
 		if ( ! empty( $_transient_data->response ) && ! empty( $_transient_data->response[ $this->name ] ) && false === $this->wp_override ) {
 			return $_transient_data;
 		}
 		$version_info = $this->get_cached_version_info();
 		if ( false === $version_info ) {
-			$textdomain = str_replace( '-', '_', $this->api_data['item_name']);
-			$items = get_transient( 'restropress_add_ons_feed' );
-			if( ! $items ) {
-				$items = rpress_fetch_items();
-			}
-			$item_id = '';
-			foreach ($items as $key => $item) {
-				
-				if ( $textdomain == $item->text_domain ) {
-					$item_id = $item->id;
-				}
-			}
-			$version_info = $this->api_request( 'plugin_latest_version', array( 'slug' => $this->slug, 'beta' => $this->beta, 'item_id' => $item_id, ) );
+			$item_id = $this->get_extension_item_id();
+			$version_info = $this->api_request( 'plugin_latest_version', array( 'slug' => $this->slug, 'beta' => $this->beta, 'item_id' => $item_id ) );
 			$this->set_version_info_cache( $version_info );
 		}
 		if ( false !== $version_info && is_object( $version_info ) && isset( $version_info->new_version ) ) {
@@ -108,6 +99,8 @@ class RestroPress_Addon_Updater {
 				$_transient_data->response[ $this->name ] = $version_info;
 				// Make sure the plugin property is set to the plugin's name/location. See issue 1463 on Software Licensing's GitHub repo.
 				$_transient_data->response[ $this->name ]->plugin = $this->name;
+				$_transient_data->response[ $this->name ]->id     = $this->get_extension_item_id();
+				$_transient_data->response[ $this->name ]->tested = $this->get_tested_version( $version_info );
 			}
 			$_transient_data->last_checked           = time();
 			$_transient_data->checked[ $this->name ] = $this->version;
@@ -121,8 +114,8 @@ class RestroPress_Addon_Updater {
 	 * @param array   $plugin
 	 */
 	public function show_update_notification( $file, $plugin ) {
-		// Allow single site admins to see that an update is available.
-		if ( ! current_user_can( 'activate_plugins' ) ) {
+		// Allow admins who can manage or apply plugin updates to see that an update is available.
+		if ( ! current_user_can( 'activate_plugins' ) && ! current_user_can( 'update_plugins' ) ) {
 			return;
 		}
 		if ( $this->name !== $file ) {
@@ -237,7 +230,7 @@ class RestroPress_Addon_Updater {
 				'icons'   => array(),
 			)
 		);
-		$cache_key = 'edd_api_request_' . md5( serialize( $this->slug . $this->api_data['license'] . $this->beta ) );
+		$cache_key = 'edd_api_request_' . md5( serialize( $this->slug . ( isset( $this->api_data['license'] ) ? $this->api_data['license'] : '' ) . $this->beta ) );
 		// Get the transient where we store the api request for this plugin for 24 hours
 		$edd_api_request_transient = $this->get_cached_version_info( $cache_key );
 		//If we have no transient-saved value, run the API, set a fresh transient with the API value, and return that value too right now.
@@ -340,7 +333,7 @@ class RestroPress_Addon_Updater {
 			return;
 		}
 		$data = array_merge( $this->api_data, $_data );
-		if ( $data['slug'] != $this->slug ) {
+		if ( empty( $data['slug'] ) || $data['slug'] != $this->slug ) {
 			return;
 		}
 		if( $this->api_url == trailingslashit ( home_url() ) ) {
@@ -350,10 +343,10 @@ class RestroPress_Addon_Updater {
 			'edd_action' => 'get_version',
 			'license'    => ! empty( $data['license'] ) ? $data['license'] : '',
 			'item_name'  => isset( $data['item_name'] ) ? $data['item_name'] : false,
-			'item_id'    => isset( $data['item_id'] ) ? $data['item_id'] : false,
+			'item_id'    => ! empty( $data['item_id'] ) ? absint( $data['item_id'] ) : false,
 			'version'    => isset( $data['version'] ) ? $data['version'] : false,
 			'slug'       => $data['slug'],
-			'author'     => $data['author'],
+			'author'     => isset( $data['author'] ) ? $data['author'] : '',
 			'url'        => home_url(),
 			'beta'       => ! empty( $data['beta'] ),
 		);
@@ -414,6 +407,9 @@ class RestroPress_Addon_Updater {
 			$cache_key = $this->cache_key;
 		}
 		$cache = get_option( $cache_key );
+		if ( ! is_array( $cache ) ) {
+			return false;
+		}
 		if( empty( $cache['timeout'] ) || time() > $cache['timeout'] ) {
 			return false; // Cache is expired
 		}
@@ -445,18 +441,7 @@ class RestroPress_Addon_Updater {
 	}
 	public function get_repo_api_data() {
 		$version_info = $this->get_cached_version_info();
-		$textdomain = str_replace( '-', '_', $this->api_data['item_name']);
-		$items = get_transient( 'restropress_add_ons_feed' );
-		if( ! $items ) {
-			$items = rpress_fetch_items();
-		}
-		$item_id = '';
-		foreach ($items as $key => $item) {
-			
-			if ( $textdomain == $item->text_domain ) {
-				$item_id = $item->id;
-			}
-		}
+		$item_id = $this->get_extension_item_id();
 		if ( false === $version_info || empty( $version_info->new_version ) ) {
 			$version_info = $this->api_request(
 				'plugin_latest_version',
@@ -476,6 +461,35 @@ class RestroPress_Addon_Updater {
 			$this->set_version_info_cache( $version_info );
 		}
 		return $version_info;
+	}
+	private function get_extension_item_id() {
+		if ( ! empty( $this->api_data['item_id'] ) ) {
+			return absint( $this->api_data['item_id'] );
+		}
+
+		$item_name  = isset( $this->api_data['item_name'] ) ? $this->api_data['item_name'] : $this->slug;
+		$textdomain = str_replace( '-', '_', sanitize_key( $item_name ) );
+		$items      = get_transient( 'restropress_add_ons_feed' );
+
+		if ( ! is_array( $items ) && function_exists( 'rpress_fetch_items' ) ) {
+			$items = rpress_fetch_items();
+		}
+
+		if ( ! is_array( $items ) ) {
+			return 0;
+		}
+
+		foreach ( $items as $item ) {
+			if ( ! is_object( $item ) || empty( $item->text_domain ) || empty( $item->id ) ) {
+				continue;
+			}
+
+			if ( $textdomain === str_replace( '-', '_', sanitize_key( $item->text_domain ) ) ) {
+				return absint( $item->id );
+			}
+		}
+
+		return 0;
 	}
 	private function get_tested_version( $version_info ) {
 		// There is no tested version.

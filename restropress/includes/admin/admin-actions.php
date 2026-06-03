@@ -71,28 +71,77 @@ add_action( 'admin_notices', 'rp_addon_activation_notice' );
  * Check all extensions for updates
  * @since 2.7.2
  */
-add_action( 'init', 'check_extensions_update', 10, 1 );
+add_action( 'init', 'check_extensions_update', 0 );
 function check_extensions_update() {
-  if ( !is_admin() || wp_doing_ajax() ) return;
+  $doing_cron = function_exists( 'wp_doing_cron' )
+    ? wp_doing_cron()
+    : ( defined( 'DOING_CRON' ) && DOING_CRON );
+
+  if ( ! is_admin() && ! $doing_cron && ! ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+    return;
+  }
+
   if ( ! function_exists( 'get_plugins' ) ) {
       require_once ABSPATH . 'wp-admin/includes/plugin.php';
   }
+
+  $items = get_transient( 'restropress_add_ons_feed' );
+  if ( ! is_array( $items ) ) {
+    $items = rpress_fetch_items();
+  }
+  $items = is_array( $items ) ? $items : array();
+  $feed_items = array();
+
+  foreach ( $items as $item ) {
+    if ( ! is_object( $item ) || empty( $item->text_domain ) ) {
+      continue;
+    }
+
+    $feed_items[ str_replace( '-', '_', sanitize_key( $item->text_domain ) ) ] = $item;
+  }
+
   $all_plugins = get_plugins();
   $ext_data = [];
   foreach ( $all_plugins as $key => $plugin ) {
-    if ( strtolower( $plugin['Author'] ) == 'magnigenie' ) {
-      $ext_data[$plugin['TextDomain']] = array(
-        'path'    => $key,
-        'version' => $plugin['Version'],
-        'item_name' => $plugin['TextDomain'],
+    if ( $key == plugin_basename( RP_PLUGIN_FILE ) ) {
+      continue;
+    }
+
+    $text_domain = ! empty( $plugin['TextDomain'] ) ? $plugin['TextDomain'] : dirname( $key );
+    if ( '.' === $text_domain || empty( $text_domain ) ) {
+      $text_domain = basename( $key, '.php' );
+    }
+
+    $license_key = str_replace( '-', '_', sanitize_key( $text_domain ) );
+    $author      = strtolower( wp_strip_all_tags( isset( $plugin['Author'] ) ? $plugin['Author'] : '' ) );
+    $feed_item   = isset( $feed_items[ $license_key ] ) ? $feed_items[ $license_key ] : null;
+    $is_rpress_extension = ! empty( $feed_item ) || in_array( $author, array( 'magnigenie', 'magnigeeks', 'restropress' ), true );
+
+    if ( $is_rpress_extension ) {
+      $item_name = ! empty( $feed_item->title )
+        ? wp_strip_all_tags( $feed_item->title )
+        : ( ! empty( $plugin['Name'] ) ? $plugin['Name'] : $text_domain );
+
+      $ext_data[ $key ] = array(
+        'path'        => $key,
+        'version'     => ! empty( $plugin['Version'] ) ? $plugin['Version'] : '0',
+        'item_name'   => $item_name,
+        'license_key' => $license_key,
+        'item_id'     => ! empty( $feed_item->id ) ? absint( $feed_item->id ) : 0,
       );
     }
   }
   if ( !empty( $ext_data ) ) {
-    foreach ( $ext_data as $key => $ext ) {
-      if ( $ext['path'] == plugin_basename( RP_PLUGIN_FILE ) ) continue ;
-      $text_domain = str_replace( '-', '_', $key );
-      new RestroPress_License( $ext['path'] , $ext['item_name'] , $ext['version'], 'MagniGenie', $text_domain . '_license' );
+    foreach ( $ext_data as $ext ) {
+      new RestroPress_License(
+        $ext['path'],
+        $ext['item_name'],
+        $ext['version'],
+        'MagniGenie',
+        $ext['license_key'] . '_license',
+        null,
+        $ext['item_id']
+      );
     }
   }
 }

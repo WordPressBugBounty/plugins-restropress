@@ -22,6 +22,7 @@ class RestroPress_License {
 	private $version;
 	private $author;
 	private $api_url = 'https://www.restropress.com';
+	private $updater = null;
 	/**
 	 * Class constructor
 	 *
@@ -66,8 +67,8 @@ class RestroPress_License {
 	 * @return  void
 	 */
 	private function hooks() {
-		// Addons Updater
-		add_action( 'admin_init', array( $this, 'auto_updater' ), 0 );
+		// Register immediately so WordPress cron, AJAX, and admin update checks can see extension updates.
+		$this->auto_updater();
 	}
 	/**
 	 * Auto updater
@@ -76,6 +77,10 @@ class RestroPress_License {
 	 * @return  void
 	 */
 	public function auto_updater() {
+		if ( $this->updater instanceof RestroPress_Addon_Updater ) {
+			return $this->updater;
+		}
+
 		$args = array(
 			'version'   => $this->version,
 			'license'   => $this->license,
@@ -87,11 +92,13 @@ class RestroPress_License {
 			$args['item_name'] = $this->item_name;
 		}
 		// Setup the updater
-		$edd_updater = new RestroPress_Addon_Updater(
+		$this->updater = new RestroPress_Addon_Updater(
 			$this->api_url,
 			$this->file,
 			$args
 		);
+
+		return $this->updater;
 	}
 }
 endif; // end class_exists check
