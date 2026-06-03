@@ -82,6 +82,7 @@ if ( '' === $service_label_text ) {
 
 $customer_name    = trim( rpress_order_details_safe_text( $firstname . ' ' . $lastname ) );
 $phone_text       = rpress_order_details_safe_text( $phone );
+$service_date     = ( '' !== $service_date && 'undefined' !== $service_date ) ? rpress_local_date( $service_date ) : '';
 $service_date     = rpress_order_details_safe_text( $service_date );
 $service_time     = rpress_order_details_safe_text( $service_time );
 $payment_type     = rpress_order_details_safe_text( rpress_get_gateway_checkout_label( rpress_get_payment_gateway( $payment->ID ) ) );

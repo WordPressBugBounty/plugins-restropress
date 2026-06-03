@@ -5,7 +5,14 @@ function rp_getCookie(cname) {
   for (var i = 0; i < ca.length; i++) {
     var c = ca[i];
     while (c.charAt(0) == ' ') c = c.substring(1);
-    if (c.indexOf(name) != -1) return c.substring(name.length, c.length);
+    if (c.indexOf(name) != -1) {
+      var value = c.substring(name.length, c.length);
+      try {
+        return decodeURIComponent(value.replace(/\+/g, '%20'));
+      } catch (error) {
+        return value;
+      }
+    }
   }
   return "";
 }
@@ -71,22 +78,32 @@ function rp_format_currency_value(value) {
 
   return amount + rp_scripts.currency_sign;
 }
-function rp_clear_old_ui_service_cookies() {
+function rp_clear_service_selection_cookies(includeAddressContext) {
   var cookieKeys = [
     'service_type',
     'service_time',
     'service_time_text',
     'service_date',
     'delivery_date',
-    'delivery_zip',
-    'delivery_location',
-    'delivery_address',
-    'branch',
-    'branch_name'
+    'service_date_manual'
   ];
+
+  if (includeAddressContext) {
+    cookieKeys = cookieKeys.concat([
+      'delivery_zip',
+      'delivery_location',
+      'delivery_address',
+      'branch',
+      'branch_name'
+    ]);
+  }
+
   for (var i = 0; i < cookieKeys.length; i++) {
     rp_clearCookie(cookieKeys[i]);
   }
+}
+function rp_clear_old_ui_service_cookies() {
+  rp_clear_service_selection_cookies(true);
 }
 /* Get RestroPress Storage Data */
 function rp_get_storage_data() {
@@ -1031,28 +1048,11 @@ jQuery(function ($) {
 
     return selectedValue;
   }
-  function rp_ensure_select_placeholder($select, placeholderText) {
+  function rp_remove_select_placeholder($select) {
     if (!$select || !$select.length) {
       return;
     }
-
-    var $existingPlaceholder = $select.find('option[data-rp-placeholder="1"]').first();
-    if ($existingPlaceholder.length) {
-      return;
-    }
-
-    var text = (placeholderText || '').toString().trim();
-    if (!text) {
-      text = 'Select an option';
-    }
-
-    var $placeholder = $('<option />', {
-      value: '',
-      text: text
-    })
-      .attr('data-rp-placeholder', '1');
-
-    $select.prepend($placeholder);
+    $select.find('option[data-rp-placeholder="1"]').remove();
   }
   function rp_prepare_old_ui_modal_selection($scope) {
     if (!rp_is_old_ui_ux_enabled()) {
@@ -1073,11 +1073,18 @@ jQuery(function ($) {
     var requiresServiceChoice = $root.find('#rpressdeliveryTab .single-service-selected').length > 1;
 
     if (!selectedServiceType && requiresServiceChoice) {
-      var $firstServiceTab = $root.find('#rpressdeliveryTab .single-service-selected')
-        .first();
-      if ($firstServiceTab.length) {
-        selectedServiceType = String($firstServiceTab.data('service-type') || '')
-          .toLowerCase();
+      selectedServiceType = rp_get_active_service_type(
+        $root,
+        (rp_scripts && rp_scripts.default_service) ? rp_scripts.default_service : 'delivery'
+      );
+
+      if (!selectedServiceType) {
+        var $firstServiceTab = $root.find('#rpressdeliveryTab .single-service-selected')
+          .first();
+        if ($firstServiceTab.length) {
+          selectedServiceType = String($firstServiceTab.data('service-type') || '')
+            .toLowerCase();
+        }
       }
     }
 
@@ -1087,22 +1094,8 @@ jQuery(function ($) {
 
     $root.find('.rpress_get_delivery_dates').each(function () {
       var $dateSelect = $(this);
-      rp_ensure_select_placeholder($dateSelect, 'Select a date');
-      if (!selectedServiceDate) {
-        var $selectableDateOptions = $dateSelect.find('option')
-          .filter(function () {
-            var optionValue = ($(this).val() || '').toString().trim();
-            return optionValue !== '' && !$(this).prop('disabled');
-          });
-
-        // When preorder is not enabled, date select typically has one valid option (today).
-        // In that case auto-select it instead of keeping the placeholder selected.
-        if ($selectableDateOptions.length === 1) {
-          $dateSelect.val($selectableDateOptions.first().val());
-        } else {
-          $dateSelect.val('');
-        }
-      }
+      rp_remove_select_placeholder($dateSelect);
+      rp_restore_service_date_select($dateSelect, selectedServiceDate, true);
     });
 
     $root.find('.delivery-settings-wrapper').each(function () {
@@ -1116,10 +1109,8 @@ jQuery(function ($) {
         if (rp_is_service_time_hidden(paneServiceType)) {
           return;
         }
-        rp_ensure_select_placeholder($timeSelect, 'Select a time');
-        if (!selectedServiceTime) {
-          $timeSelect.val('');
-        }
+        rp_remove_select_placeholder($timeSelect);
+        rp_restore_service_time_select($timeSelect, selectedServiceTime, true);
       });
     });
   }
@@ -1148,6 +1139,86 @@ jQuery(function ($) {
 
     return fallbackTime;
   }
+
+  function rp_is_date_like_text(value) {
+    return /^\d{1,4}([./-])\d{1,2}\1\d{1,4}$/.test(
+      (value || '')
+        .toString()
+        .trim()
+    );
+  }
+
+  function rp_get_active_service_closed_message($scope, serviceType) {
+    var normalizedServiceType = String(serviceType || '')
+      .toLowerCase();
+    var $root = ($scope && $scope.length) ? $scope : $(document);
+    var selectors = [];
+
+    if (normalizedServiceType) {
+      selectors = selectors.concat([
+        '.delivery-settings-wrapper#nav-' + normalizedServiceType + '.active.show .rpress-service-closed-message .rpress-closed-message-text',
+        '.delivery-settings-wrapper#nav-' + normalizedServiceType + '.active.show .rpress-service-closed-message',
+        '.delivery-settings-wrapper#nav-' + normalizedServiceType + ' .rpress-service-closed-message .rpress-closed-message-text',
+        '.delivery-settings-wrapper#nav-' + normalizedServiceType + ' .rpress-service-closed-message',
+        '.rpress-service-closed-message[data-service-type="' + normalizedServiceType + '"] .rpress-closed-message-text',
+        '.rpress-service-closed-message[data-service-type="' + normalizedServiceType + '"]'
+      ]);
+    }
+
+    selectors = selectors.concat([
+      '.delivery-settings-wrapper.active.show .rpress-service-closed-message .rpress-closed-message-text',
+      '.delivery-settings-wrapper.active.show .rpress-service-closed-message'
+    ]);
+
+    for (var i = 0; i < selectors.length; i++) {
+      var message = $root.find(selectors[i])
+        .first()
+        .text()
+        .trim();
+      if (!message && !$root.is(document)) {
+        message = $(document)
+          .find(selectors[i])
+          .first()
+          .text()
+          .trim();
+      }
+      if (message && !rp_is_date_like_text(message)) {
+        return message;
+      }
+    }
+
+    return '';
+  }
+
+  function rp_update_inline_service_display(selection, oldUiUxEnabled) {
+    if (!selection) {
+      return;
+    }
+
+    var $deliveryDate = $('#deliveryDate');
+    var $deliveryTime = $('#deliveryTime');
+    var $summaryWrap = $deliveryDate.closest('.rpress_order-address-wrap');
+
+    if (selection.serviceClosedMessage) {
+      $summaryWrap.addClass('rpress-store-closed-inline');
+      $deliveryDate
+        .addClass('rp-store-timing-notice rpress-closed-summary-text')
+        .text(selection.serviceClosedMessage);
+      $deliveryTime.text('');
+      return;
+    }
+
+    $summaryWrap.removeClass('rpress-store-closed-inline');
+    $deliveryDate.removeClass('rp-store-timing-notice rpress-closed-summary-text');
+
+    if (selection.serviceDateText && (!oldUiUxEnabled || rp_getCookie('service_date') || rp_getCookie('delivery_date'))) {
+      $deliveryDate.text(selection.serviceDateText);
+    }
+    if (selection.serviceTimeText && (!oldUiUxEnabled || rp_getCookie('service_time') || rp_getCookie('service_time_text'))) {
+      $deliveryTime.text(selection.serviceTimeText);
+    }
+  }
+
   function rp_apply_service_defaults($scope, preferredServiceType, persistCookies, requireExplicitSelection, preferCurrentSelection) {
     var shouldPersistCookies = (persistCookies !== false);
     var enforceManualSelection = (requireExplicitSelection === true);
@@ -1159,9 +1230,16 @@ jQuery(function ($) {
     var requestedServiceDate = (rp_getCookie('service_date') || rp_getCookie('delivery_date') || '')
       .toString()
       .trim();
+    var requestedServiceDateText = (rp_getCookie('delivery_date') || '')
+      .toString()
+      .trim();
+    if (requestedServiceDateText && !/\d/.test(requestedServiceDateText)) {
+      requestedServiceDateText = '';
+    }
     var $activeDateSelect = rp_get_active_service_date_select($root, serviceType);
     var serviceDate = '';
     var serviceDateText = '';
+    var serviceClosedMessage = rp_get_active_service_closed_message($root, serviceType);
 
     if (shouldPreferCurrentSelection && $activeDateSelect.length) {
       requestedServiceDate = ($activeDateSelect.val() || '')
@@ -1181,10 +1259,10 @@ jQuery(function ($) {
         .trim();
     } else {
       serviceDate = requestedServiceDate;
-      serviceDateText = requestedServiceDate;
+      serviceDateText = requestedServiceDateText || requestedServiceDate;
     }
 
-    if (!$activeDateSelect.length) {
+    if (!$activeDateSelect.length && !serviceDateText) {
       var fallbackDateText = ($('#deliveryDate').first().text() || '')
         .toString()
         .trim()
@@ -1196,7 +1274,9 @@ jQuery(function ($) {
 
     if (serviceDate && shouldPersistCookies) {
       rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
-      rp_setCookie('delivery_date', serviceDateText || serviceDate, rp_scripts.expire_cookie_time);
+      if (!serviceClosedMessage) {
+        rp_setCookie('delivery_date', serviceDateText || serviceDate, rp_scripts.expire_cookie_time);
+      }
     }
 
     var requestedServiceTime = (rp_getCookie('service_time') || rp_getCookie('service_time_text') || '')
@@ -1248,7 +1328,8 @@ jQuery(function ($) {
     return {
       serviceType: serviceType,
       serviceDate: serviceDate,
-      serviceDateText: serviceDateText,
+      serviceDateText: serviceClosedMessage || serviceDateText,
+      serviceClosedMessage: serviceClosedMessage,
       serviceTime: serviceTime,
       serviceTimeText: serviceTimeText
     };
@@ -1429,8 +1510,10 @@ jQuery(function ($) {
   window.rp_restore_service_time_select = rp_restore_service_time_select;
   window.rp_restore_service_date_select = rp_restore_service_date_select;
   window.rp_apply_service_defaults = rp_apply_service_defaults;
+  window.rp_update_inline_service_display = rp_update_inline_service_display;
   window.rp_is_service_time_hidden = rp_is_service_time_hidden;
   window.rp_is_old_ui_ux_enabled = rp_is_old_ui_ux_enabled;
+  window.rp_clear_service_selection_cookies = rp_clear_service_selection_cookies;
   window.rp_clear_old_ui_service_cookies = rp_clear_old_ui_service_cookies;
   window.rp_prepare_old_ui_modal_selection = rp_prepare_old_ui_modal_selection;
 
@@ -1547,21 +1630,23 @@ jQuery(function ($) {
 
       var getClosedMessage = function () {
         var selectors = [
-          '.rpress_order-address-wrap #deliveryDate.rp-store-timing-notice:visible',
-          '.rpress_order-address-wrap .rp-store-timing-notice:visible',
+          '.delivery-settings-wrapper#nav-' + serviceType + '.active.show .rpress-service-closed-message .rpress-closed-message-text:visible',
+          '.delivery-settings-wrapper#nav-' + serviceType + '.active.show .rpress-service-closed-message:visible',
+          '.delivery-settings-wrapper#nav-' + serviceType + ' .rpress-service-closed-message .rpress-closed-message-text:visible',
           '.delivery-settings-wrapper#nav-' + serviceType + ' .rpress-service-closed-message:visible',
-          '#rpressDateTime .rpress-service-closed-message:visible',
-          '.rpress_order-address-wrap #deliveryDate.rp-store-timing-notice',
-          '.rpress_order-address-wrap .rp-store-timing-notice',
-          '.delivery-settings-wrapper#nav-' + serviceType + ' .rpress-service-closed-message',
-          '#rpressDateTime .rpress-service-closed-message'
+          '#rpressDateTime .delivery-settings-wrapper.active.show .rpress-service-closed-message .rpress-closed-message-text:visible',
+          '#rpressDateTime .delivery-settings-wrapper.active.show .rpress-service-closed-message:visible',
+          '.delivery-settings-wrapper#nav-' + serviceType + '.active.show .rpress-service-closed-message .rpress-closed-message-text',
+          '.delivery-settings-wrapper#nav-' + serviceType + '.active.show .rpress-service-closed-message',
+          '#rpressDateTime .delivery-settings-wrapper.active.show .rpress-service-closed-message .rpress-closed-message-text',
+          '#rpressDateTime .delivery-settings-wrapper.active.show .rpress-service-closed-message'
         ];
         for (var i = 0; i < selectors.length; i++) {
           var message = $(selectors[i])
             .first()
             .text()
             .trim();
-          if (message) {
+          if (message && !/^\d{1,4}([./-])\d{1,2}\1\d{1,4}$/.test(message)) {
             return message;
           }
         }
@@ -2243,6 +2328,7 @@ jQuery(function ($) {
             if (serviceDate) {
               rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
               rp_setCookie('delivery_date', normalizedSelection.serviceDateText || serviceDate, rp_scripts.expire_cookie_time);
+              rp_setCookie('service_date_manual', serviceDate, rp_scripts.expire_cookie_time);
             }
             if (serviceTime) {
               rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
@@ -2415,6 +2501,7 @@ jQuery(function ($) {
             if (serviceDate) {
               rp_setCookie('service_date', serviceDate, rp_scripts.expire_cookie_time);
               rp_setCookie('delivery_date', normalizedSelection.serviceDateText || serviceDate, rp_scripts.expire_cookie_time);
+              rp_setCookie('service_date_manual', serviceDate, rp_scripts.expire_cookie_time);
             }
             if (serviceTime) {
               rp_setCookie('service_time', serviceTime, rp_scripts.expire_cookie_time);
@@ -2703,6 +2790,10 @@ jQuery(function ($) {
               rp_refresh_sidebar_cart_summary(response.cart_summary);
             }
             if (response.cart_quantity == 0) {
+              rp_clear_service_selection_cookies(false);
+              $('#deliveryDate').text('');
+              $('#deliveryTime').text('');
+              $('.delivery-items-options').hide();
               $('li.rpress-cart-meta, .cart_item.rpress_subtotal, .rpress-cart-number-of-items, .cart_item.rpress_checkout, .cart_item.rpress_cart_tax, .cart_item.rpress_total')
                 .hide();
               $('.rpress-cart')
@@ -2778,6 +2869,9 @@ jQuery(function ($) {
           },
           success: function (response) {
             if (response.status == 'success') {
+              rp_clear_service_selection_cookies(false);
+              $('#deliveryDate').text('');
+              $('#deliveryTime').text('');
               rp_update_mobile_cart_summary(rp_format_currency_value(0), 0);
               $(document.body)
                 .trigger('rpress_quantity_updated', [0]);
@@ -5020,9 +5114,6 @@ jQuery(function ($) {
   }
 
   var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
-  if (oldUiUxEnabled && String(rp_scripts.cart_quantity || '0') === '0') {
-    rp_clear_old_ui_service_cookies();
-  }
 
   var serviceType = rp_getCookie('service_type');
   if (serviceType) {
@@ -5092,7 +5183,13 @@ jQuery(function ($) {
         selectedServiceType
       );
       if (!oldUiUxEnabled) {
-        window.rp_sync_service_selection_cookies($serviceScope.length ? $serviceScope : $(document), selectedServiceType);
+        var selectedServiceDefaults = window.rp_sync_service_selection_cookies(
+          $serviceScope.length ? $serviceScope : $(document),
+          selectedServiceType
+        );
+        if (typeof window.rp_update_inline_service_display === 'function') {
+          window.rp_update_inline_service_display(selectedServiceDefaults, oldUiUxEnabled);
+        }
       }
     }, 0);
   });
@@ -5200,23 +5297,20 @@ jQuery(document).ready(function ($) {
 
   var selection = null;
   if (oldUiUxEnabled) {
-    var shouldResetOldUiContext = String(rp_scripts.cart_quantity || '0') === '0';
-    var resetOldUiServiceContext = function () {
-      rp_clear_old_ui_service_cookies();
-      $('#deliveryDate').text('');
-      $('#deliveryTime').text('');
-      if (typeof window.rp_prepare_old_ui_modal_selection === 'function') {
-        window.rp_prepare_old_ui_modal_selection($selectionScope.length ? $selectionScope : $(document));
-      }
-    };
-
-    if (shouldResetOldUiContext) {
-      resetOldUiServiceContext();
-      setTimeout(resetOldUiServiceContext, 0);
-      setTimeout(resetOldUiServiceContext, 1200);
-    } else if (typeof window.rp_prepare_old_ui_modal_selection === 'function') {
+    if (typeof window.rp_prepare_old_ui_modal_selection === 'function') {
       window.rp_prepare_old_ui_modal_selection($selectionScope.length ? $selectionScope : $(document));
     }
+
+    var oldUiServiceType = (rp_getCookie('service_type') || rp_scripts.default_service || 'delivery')
+      .toString()
+      .toLowerCase();
+    selection = (typeof window.rp_apply_service_defaults === 'function')
+      ? window.rp_apply_service_defaults(
+        $selectionScope.length ? $selectionScope : $(document),
+        oldUiServiceType,
+        false
+      )
+      : null;
   } else {
     var serviceType = rp_getCookie('service_type') || rp_scripts.default_service || 'delivery';
     rp_setCookie('service_type', serviceType, rp_scripts.expire_cookie_time);
@@ -5229,11 +5323,8 @@ jQuery(document).ready(function ($) {
       : null;
   }
 
-  if (selection && selection.serviceDateText && (!oldUiUxEnabled || rp_getCookie('service_date') || rp_getCookie('delivery_date'))) {
-    $('#deliveryDate').text(selection.serviceDateText);
-  }
-  if (selection && selection.serviceTimeText && (!oldUiUxEnabled || rp_getCookie('service_time') || rp_getCookie('service_time_text'))) {
-    $('#deliveryTime').text(selection.serviceTimeText);
+  if (typeof window.rp_update_inline_service_display === 'function') {
+    window.rp_update_inline_service_display(selection, oldUiUxEnabled);
   }
 
   function initStickyMenu() {

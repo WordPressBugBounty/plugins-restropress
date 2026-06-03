@@ -389,7 +389,7 @@ class RP_Frontend_Scripts
       'delivery_time_enabled' => $delivery_time_enabled,
       'pickup_time_enabled' => $pickup_time_enabled,
       'display_date' => rp_current_date(),
-      'current_date' => current_time('Y-m-d'),
+      'current_date' => rpress_get_wp_now()->format('Y-m-d'),
       'update' => esc_html__('Update', 'restropress'),
       'subtotal' => esc_html__('SubTotal', 'restropress'),
       'change_txt' => esc_html__('Change?', 'restropress'),

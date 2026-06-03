@@ -87,6 +87,16 @@ function rpress_complete_purchase( $payment_id, $new_status, $old_status ) {
         unset( $_COOKIE['delivery_date'] );
         setcookie( "delivery_date", "", time() - 300, "/" );
     }
+    if ( isset( $_COOKIE['service_date'] )
+     && !empty( $_COOKIE['service_date']  ) ) {
+        unset( $_COOKIE['service_date'] );
+        setcookie( "service_date", "", time() - 300, "/" );
+    }
+    if ( isset( $_COOKIE['service_date_manual'] )
+     && !empty( $_COOKIE['service_date_manual']  ) ) {
+        unset( $_COOKIE['service_date_manual'] );
+        setcookie( "service_date_manual", "", time() - 300, "/" );
+    }
     // Increase the customer's purchase stats
     $customer = new RPRESS_Customer( $customer_id );
      $customer->increase_purchase_count();

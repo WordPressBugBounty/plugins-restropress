@@ -564,8 +564,8 @@ function rpress_count_payments( $args = array() ) {
 
 	$service_date = ! empty( $args['service-date'] ) ? $args['service-date'] : $args['service_date'];
 	if ( ! empty( $service_date ) ) {
-		$service_timestamp = strtotime( $service_date );
-		$service_date      = false !== $service_timestamp ? date_i18n( 'Y-m-d', $service_timestamp ) : sanitize_text_field( $service_date );
+		$service_timestamp = rpress_get_wp_timestamp( $service_date );
+		$service_date      = false !== $service_timestamp ? wp_date( 'Y-m-d', $service_timestamp, rpress_get_wp_timezone() ) : sanitize_text_field( $service_date );
 		$join             .= " LEFT JOIN $wpdb->postmeta sd ON (p.ID = sd.post_id)";
 		$where            .= $wpdb->prepare(
 			" AND sd.meta_key = %s AND sd.meta_value = %s",

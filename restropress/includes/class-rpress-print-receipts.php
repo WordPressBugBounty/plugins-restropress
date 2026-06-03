@@ -170,14 +170,12 @@ class RPRESS_Print_Receipts {
     $customer_mail = $payment_meta['email'];
     $customer_phone = ! empty( $payment_meta['phone'] ) ? $payment_meta['phone']:'';
     // Service Type & Time
-    $timezone = get_option( 'timezone_string' );
-    date_default_timezone_set( $timezone );
     $service_type = $payment->get_meta( '_rpress_delivery_type' );
     $service_time = $payment->get_meta( '_rpress_delivery_time' );
     $service_date = $payment->get_meta( '_rpress_delivery_date' );
     $service_type = ! empty( $service_type ) ? ucfirst($service_type) : '';
     $service_time = ! empty( $service_time ) ? $service_time : '';
-    $service_date = ! empty( $service_date ) && $service_date != 'undefined' ? date_i18n( get_option( 'date_format' ), strtotime( $service_date ) ) : '';
+    $service_date = ! empty( $service_date ) && 'undefined' !== $service_date ? rpress_local_date( $service_date ) : '';
     // Payment Type
     $gateway          = $payment->gateway;
     $get_payment_type = rpress_get_gateway_admin_label( $gateway );

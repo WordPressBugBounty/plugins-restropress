@@ -624,11 +624,13 @@ class RP_AJAX {
     if ( empty( $selected_date ) ) {
       $selected_date = rpress_get_first_available_service_date( $service_type, '' );
     } else {
-      $selected_date_ts = strtotime( $selected_date );
+      $selected_date_ts = rpress_get_wp_timestamp( $selected_date );
       if ( false === $selected_date_ts ) {
         $selected_date = rpress_get_first_available_service_date( $service_type, '' );
       } else {
-        $selected_date = date_i18n( 'Y-m-d', $selected_date_ts );
+        $selected_date = wp_date( 'Y-m-d', $selected_date_ts, rpress_get_wp_timezone() );
+        setcookie( 'service_date_manual', $selected_date, time() + ( 86400 * 30 ), '/' );
+        $_COOKIE['service_date_manual'] = $selected_date;
       }
     }
 
@@ -654,7 +656,7 @@ class RP_AJAX {
     }
     if ( ! $service_time_hidden ) {
       $prep_time  = (int) rpress_get_option( 'prep_time', 0 ) * 60;
-      $current_time = current_time( 'timestamp' ) + $prep_time;
+      $current_time = rpress_get_wp_now()->getTimestamp() + $prep_time;
       $service_time = rpress_match_service_time_to_slot( $service_time, $available_slots, $allow_asap );
       if ( empty( $service_time ) ) {
         $service_time = rpress_get_next_available_service_time( $selected_date, $available_slots, $current_time );
@@ -670,13 +672,13 @@ class RP_AJAX {
     }
     if ( ! $service_time_hidden && ! empty( $service_time ) && ! $allow_asap ) {
       $prep_time  = (int) rpress_get_option( 'prep_time', 0 ) * 60;
-      $current_time = current_time( 'timestamp' ) + $prep_time;
-      $service_time_ts = strtotime( $selected_date . ' ' . $service_time );
+      $current_time = rpress_get_wp_now()->getTimestamp() + $prep_time;
+      $service_time_ts = rpress_get_wp_timestamp( $selected_date . ' ' . $service_time );
       if ( false !== $service_time_ts && $service_time_ts < $current_time ) {
         $fallback_service_time = rpress_get_next_available_service_time( $selected_date, $available_slots, $current_time );
         if ( ! empty( $fallback_service_time ) ) {
           $service_time = $fallback_service_time;
-          $service_time_ts = strtotime( $selected_date . ' ' . $service_time );
+          $service_time_ts = rpress_get_wp_timestamp( $selected_date . ' ' . $service_time );
         }
       }
       if ( false === $service_time_ts || $service_time_ts < $current_time ) {
@@ -1048,21 +1050,19 @@ class RP_AJAX {
     check_ajax_referer( 'clear-cart', 'security' );
     
     rpress_empty_cart();
-    // Removing Service Time Cookie
-    if ( isset( $_COOKIE['service_time'] ) ) {
-      unset( $_COOKIE['service_time'] );
-      setcookie( "service_time", "", time() - 300,"/" );
+    $service_cookie_keys = array(
+      'service_type',
+      'service_time',
+      'service_time_text',
+      'service_date',
+      'delivery_date',
+    );
+    foreach ( $service_cookie_keys as $service_cookie_key ) {
+      if ( isset( $_COOKIE[ $service_cookie_key ] ) ) {
+        unset( $_COOKIE[ $service_cookie_key ] );
+      }
+      setcookie( $service_cookie_key, '', time() - 300, '/' );
     }
-    // Removing Service Type Cookie
-    if ( isset( $_COOKIE['service_type'] ) ) {
-      unset( $_COOKIE['service_type'] );
-      setcookie( "service_type", "", time() - 300,"/" );
-    }
-    // Removing Delivery Date Cookie
-    if ( isset( $_COOKIE['delivery_date'] ) ) :
-      unset( $_COOKIE['delivery_date'] );
-      setcookie( "delivery_date", "", time() - 300,"/" );
-    endif;
     $return['status']   = 'success';
     $return['response'] = '<li class="cart_item empty"><span class="rpress_empty_cart">'.apply_filters( 'rpress_empty_cart_message', '<span class="rpress_empty_cart">' .esc_html__( 'CHOOSE AN ITEM FROM THE MENU TO GET STARTED.', 'restropress' ) . '</span>' ).'</span></li>';
     echo wp_json_encode( $return );

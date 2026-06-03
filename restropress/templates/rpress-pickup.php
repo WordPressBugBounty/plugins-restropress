@@ -20,8 +20,8 @@ $context        = rpress_get_service_context( 'pickup' );
 ] = $context;
 
 $current_service = $active_context['service_type'];
-$pickup_date_value = ! empty( $service_date_raw ) ? $service_date_raw : current_time( 'Y-m-d' );
-$pickup_date_label = date_i18n( get_option( 'date_format' ), strtotime( $pickup_date_value ) );
+$pickup_date_value = ! empty( $service_date_raw ) ? $service_date_raw : rpress_get_wp_now()->format( 'Y-m-d' );
+$pickup_date_label = rpress_format_service_date( $pickup_date_value );
 ?>
 
 <?php $pickup_pane_classes = 'tab-pane fade delivery-settings-wrapper'; ?>

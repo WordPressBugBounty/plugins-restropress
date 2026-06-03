@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
 Requires PHP: 5.5
 Tested up to: 7.0
-Stable tag: 3.2.8.8.1
+Stable tag: 3.2.8.8.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -120,6 +120,19 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 👉 [Explore Pro Features & Extensions](https://restropress.com/extension/)
 
 == Changelog ==
+
+= Version 3.2.8.8.5(2026-06-03) =
+* Updated: Plugin version bump to 3.2.8.8.5
+* Fixed: Core service date handling now follows the configured WordPress timezone and date format across order-online, checkout, order details, and receipts.
+* Fixed: Closed-store order-online summaries now show the configured store closed message instead of being overwritten by a stale selected date.
+* Fixed: Selected service date/time cookies now stay synchronized and no longer change the customer-selected schedule between listing, checkout, and confirmation views.
+* Fixed: Service date/time selections are no longer cleared from cached old UI menu pages when a stale cart count is rendered.
+* Fixed: Checkout now submits and saves the selected service date/time from the active checkout controls before falling back to cookies.
+* Fixed: Cart-empty actions now clear the complete service selection cookie set to avoid stale confirmation data.
+* Fixed: Old UI schedule popup now shows the resolved service date in core when no Store Timing date selector is injected.
+* Fixed: Core service date and slot availability now use the WordPress timezone consistently
+* Fixed: Future pre-order dates are no longer blocked by the current-day closed state when valid future slots exist.
+* Fixed: Display-format service dates such as d/m/Y are parsed safely before slot and order validation.
 
 = Version 3.2.8.8.1(2026-05-14) =
 * Updated: Plugin version bump to 3.2.8.8.1
@@ -259,7 +272,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.2.8.8.1 =
+= 3.2.8.8.5 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

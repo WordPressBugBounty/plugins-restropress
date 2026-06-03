@@ -23,7 +23,7 @@ $asap_option        = rpress_get_option('enable_asap_option', '');
 $asap_option_only   = rpress_get_option('enable_asap_option_only', '');
 $button_style       = rpress_get_option('button_style', 'button');
 $has_store_timings  = is_array($store_timings) && !empty($store_timings);
-$show_update_button = rpress_is_service_enabled( $service_type ) && $has_store_timings;
+$show_update_button = rpress_is_service_enabled( $service_type ) && $has_store_timings && ! empty( $context['is_store_open'] );
 
 $asap_text_key      = $service_type . '_asap_text';
 $delivery_asap_text = rpress_get_option($asap_text_key, '');
@@ -123,6 +123,10 @@ foreach ( $popup_services as $popup_service ) {
                                 : array();
                             $popup_is_store_open  = ! empty( $popup_context['is_store_open'] );
                             $popup_selected_time  = ! empty( $popup_context['selected_time'] ) ? $popup_context['selected_time'] : '';
+                            $popup_service_date_value = ! empty( $popup_context['service_date_raw'] )
+                                ? $popup_context['service_date_raw']
+                                : rpress_get_wp_now()->format( 'Y-m-d' );
+                            $popup_service_date_label = rpress_format_service_date( $popup_service_date_value );
                             $popup_has_store_time = ! empty( $popup_store_timings );
                             $popup_closed_notice  = rpress_store_closed_message( $popup_service );
                             $popup_is_active      = ( $popup_service === $service_type );
@@ -134,8 +138,17 @@ foreach ( $popup_services as $popup_service ) {
                             $popup_time_label_text = ( 'pickup' === $popup_service )
                                 ? apply_filters( 'rpress_pickup_time_string', __( 'Select a pickup time', 'restropress' ) )
                                 : apply_filters( 'rpress_delivery_time_string', __( 'Select a delivery time', 'restropress' ) );
+                            $popup_date_label_text = ( 'pickup' === $popup_service )
+                                ? __( 'Pickup date', 'restropress' )
+                                : __( 'Delivery date', 'restropress' );
                             $popup_time_label_class = ( 'pickup' === $popup_service ) ? 'pickup-time-text' : 'delivery-time-text';
                             $popup_time_aria_label  = ( 'pickup' === $popup_service ) ? __( 'Pickup time', 'restropress' ) : __( 'Delivery time', 'restropress' );
+                            $popup_date_select_id   = ( 'pickup' === $popup_service ) ? 'rpress_get_pickup_dates' : 'rpress_get_delivery_dates';
+                            ob_start();
+                            do_action( 'rpress_before_service_time', $popup_service );
+                            $popup_service_time_preface_markup = trim( (string) ob_get_clean() );
+                            $popup_has_date_selector = false !== strpos( $popup_service_time_preface_markup, 'rpress_get_delivery_dates' )
+                                || false !== strpos( $popup_service_time_preface_markup, 'rpress_get_pickup_dates' );
                             $popup_tab_classes      = 'tab-pane fade delivery-settings-wrapper';
                             if ( $popup_is_active ) {
                                 $popup_tab_classes .= ' active show';
@@ -144,14 +157,32 @@ foreach ( $popup_services as $popup_service ) {
                             <div class="<?php echo esc_attr( $popup_tab_classes ); ?>" id="nav-<?php echo esc_attr( $popup_service ); ?>" role="tabpanel" aria-labelledby="nav-<?php echo esc_attr( $popup_service ); ?>-tab">
 								<?php if ( empty( $popup_store_timings ) || ! $popup_is_store_open ) : ?>
                                     <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
-                                        <div class="alert alert-warning rpress-service-closed-message rp-store-timing-notice-row" data-service-type="<?php echo esc_attr( $popup_service ); ?>">
-                                            <span class="rp-store-timing-notice"><?php echo esc_html( $popup_closed_notice ); ?></span>
+                                        <div class="alert alert-warning rpress-service-closed-message" data-service-type="<?php echo esc_attr( $popup_service ); ?>" role="status" aria-live="polite">
+                                            <span class="rpress-closed-message-text"><?php echo esc_html( $popup_closed_notice ); ?></span>
                                         </div>
                                     </div>
 								<?php elseif ( rpress_is_service_enabled( $popup_service ) ) : ?>
-                                    <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
-										<?php do_action( 'rpress_before_service_time', $popup_service ); ?>
-                                    </div>
+                                    <?php if ( '' !== $popup_service_time_preface_markup ) : ?>
+                                        <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12 rpress-service-date-row<?php echo $popup_has_date_selector ? ' rpress-service-date-row-extension' : ''; ?>">
+                                            <?php echo $popup_service_time_preface_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ( ! $popup_has_date_selector ) : ?>
+                                        <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12 rpress-service-date-row">
+                                            <div class="<?php echo esc_attr( $popup_time_label_class ); ?>">
+                                                <?php echo esc_html( $popup_date_label_text ); ?>
+                                            </div>
+                                            <select
+                                                class="rpress-select rp-form-control rpress_get_delivery_dates rpress-service-date-select"
+                                                id="<?php echo esc_attr( $popup_date_select_id ); ?>"
+                                                name="rpress_service_date"
+                                                aria-label="<?php echo esc_attr( $popup_date_label_text ); ?>">
+                                                <option value="<?php echo esc_attr( $popup_service_date_value ); ?>" selected>
+                                                    <?php echo esc_html( $popup_service_date_label ); ?>
+                                                </option>
+                                            </select>
+                                        </div>
+                                    <?php endif; ?>
                                     <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12 rpress-service-hours-row">
                                         <div class="<?php echo esc_attr( $popup_time_label_class ); ?>">
 											<?php echo esc_html( $popup_time_label_text ); ?>

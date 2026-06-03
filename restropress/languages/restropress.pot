@@ -2,11 +2,11 @@
 # This file is distributed under the same license as the RestroPress package.
 msgid ""
 msgstr ""
-"Project-Id-Version: RestroPress\n"
+"Project-Id-Version: RestroPress 3.2.8.8.5\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-14 15:30+0000\n"
+"POT-Creation-Date: 2026-06-03 00:00+0000\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
 "X-Poedit-SearchPath-0: .\n"
@@ -395,7 +395,7 @@ msgstr ""
 msgid "Minimum Order Error"
 msgstr ""
 
-#: includes/class-rpress-frontend-scripts.php:281, includes/rp-core-functions.php:2644, includes/admin/settings/register-settings.php:636
+#: includes/class-rpress-frontend-scripts.php:281, includes/rp-core-functions.php:2861, includes/admin/settings/register-settings.php:636
 msgid "Sorry, we are closed for ordering now."
 msgstr ""
 
@@ -8308,23 +8308,23 @@ msgstr ""
 msgid "Close modal"
 msgstr ""
 
-#: templates/rpress-datetime-popup.php:135
+#: templates/rpress-datetime-popup.php:138
 msgid "Select a pickup time"
 msgstr ""
 
-#: templates/rpress-datetime-popup.php:136
+#: templates/rpress-datetime-popup.php:140
 msgid "Select a delivery time"
 msgstr ""
 
-#: templates/rpress-datetime-popup.php:138, templates/rpress-pickup.php:86, templates/rpress-pickup.php:108
+#: templates/rpress-datetime-popup.php:145, templates/rpress-pickup.php:86, templates/rpress-pickup.php:108
 msgid "Pickup time"
 msgstr ""
 
-#: templates/rpress-datetime-popup.php:138, templates/rpress-delivery.php:86, templates/rpress-delivery.php:108
+#: templates/rpress-datetime-popup.php:145, templates/rpress-delivery.php:86, templates/rpress-delivery.php:108
 msgid "Delivery time"
 msgstr ""
 
-#: templates/rpress-delivery.php:66, templates/rpress-delivery.php:72
+#: templates/rpress-datetime-popup.php:143, templates/rpress-delivery.php:66, templates/rpress-delivery.php:72
 msgid "Delivery date"
 msgstr ""
 
@@ -8336,7 +8336,7 @@ msgstr ""
 msgid "e.g. allergies, extra spicy, etc."
 msgstr ""
 
-#: templates/rpress-pickup.php:66, templates/rpress-pickup.php:72
+#: templates/rpress-datetime-popup.php:142, templates/rpress-pickup.php:66, templates/rpress-pickup.php:72
 msgid "Pickup date"
 msgstr ""
 

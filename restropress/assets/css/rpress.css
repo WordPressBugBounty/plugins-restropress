@@ -2262,6 +2262,26 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates:focus,
 #rpressDateTime.rpress-edit-address-popup .rpress-popup-service-content > .delivery-settings-wrapper.active.show {
 	display: block;
 }
+#rpressDateTime.rpress-edit-address-popup .rpress-service-closed-message {
+	display: block;
+	margin: 0;
+	padding: 14px 16px;
+	background: #fff7ed;
+	border: 1px solid #fed7aa;
+	border-radius: 8px;
+	color: #9a3412;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.45;
+	opacity: 1;
+	visibility: visible;
+}
+#rpressDateTime.rpress-edit-address-popup .rpress-service-closed-message .rpress-closed-message-text {
+	display: block;
+	color: inherit;
+	opacity: 1;
+	visibility: visible;
+}
 #rpressDateTime.rpress-edit-address-popup .rpress-service-type-message p.rpress_order-address-wrap {
 	background: #fff;
 	border: 1px solid #e5e7eb;
@@ -2811,6 +2831,22 @@ body.rp-old-ui-ux-enabled #rpressModal.show-service-options a.btn.btn-primary.bt
 .rpress-options-row p.rpress_order-address-wrap #deliveryTime {
 	white-space: nowrap;
 	flex: 0 0 auto;
+}
+.rpress-options-row p.rpress_order-address-wrap.rpress-store-closed-inline {
+	max-width: min(360px, 42vw);
+	border-radius: 8px;
+	background: #fff7ed;
+	border: 1px solid #fed7aa;
+	color: #9a3412;
+}
+.rpress-options-row p.rpress_order-address-wrap .rpress-closed-summary-text {
+	display: inline-block;
+	max-width: 100%;
+	white-space: normal !important;
+	overflow-wrap: anywhere;
+	color: #9a3412;
+	font-weight: 600;
+	line-height: 1.35;
 }
 .rpress-options-row p.rpress_order-address-wrap a{
 	color: var(--rpress-theme-primary, #0074DB);
@@ -7874,6 +7910,13 @@ body.admin-bar .order-online .rpress-section .make-me-sticky .scrollable-div-wra
 	.order-online .rpress-section .rpress-options-row p.rpress_order-address-wrap.rpress-order-address-inline #deliveryTime {
 		white-space: nowrap;
 		flex: 0 0 auto;
+	}
+	.order-online .rpress-section .rpress-options-row p.rpress_order-address-wrap.rpress-store-closed-inline {
+		max-width: 100%;
+	}
+	.order-online .rpress-section .rpress-options-row p.rpress_order-address-wrap.rpress-order-address-inline .rpress-closed-summary-text {
+		white-space: normal;
+		flex: 1 1 auto;
 	}
 
 	.order-online .rpress-section .rpress-options-row p.rpress_order-address-wrap.rpress-order-address-inline #editDateTime,

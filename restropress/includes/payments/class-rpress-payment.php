@@ -790,13 +790,17 @@ public function __set( $key, $value ) {
 						$this->update_meta( '_rpress_delivery_type', $service_type );
 						break;
 					case 'delivery_time':
-						$delivery_time = isset($_COOKIE['service_time']) ? sanitize_text_field( $_COOKIE['service_time'] )  : '';
+						$delivery_time = isset($_COOKIE['service_time'])
+							? sanitize_text_field( wp_unslash( $_COOKIE['service_time'] ) )
+							: ( isset( $_POST['rpress_service_time'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_service_time'] ) ) : '' );
 						$this->update_meta( '_rpress_delivery_time', $delivery_time );
 						break;
-  					case 'delivery_date':
-    					$service_date = isset( $_COOKIE['service_date'] ) ? sanitize_text_field( $_COOKIE['service_date'] ): rpress_local_date( current_time( "Y-m-d" ) );
-      					$this->update_meta( '_rpress_delivery_date', $service_date );
-      					break;
+					case 'delivery_date':
+						$service_date = isset( $_COOKIE['service_date'] )
+							? sanitize_text_field( wp_unslash( $_COOKIE['service_date'] ) )
+							: ( isset( $_POST['rpress_service_date'] ) ? sanitize_text_field( wp_unslash( $_POST['rpress_service_date'] ) ) : rpress_get_wp_now()->format( 'Y-m-d' ) );
+						$this->update_meta( '_rpress_delivery_date', $service_date );
+						break;
 					case 'discounts':
 						if ( ! is_array( $this->discounts ) ) {
 							$this->discounts = explode( ',', $this->discounts );

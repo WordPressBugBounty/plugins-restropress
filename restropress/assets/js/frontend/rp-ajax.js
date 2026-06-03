@@ -131,7 +131,9 @@ jQuery(document)
         e.preventDefault();
         var selectedServiceType = '';
         var selectedServiceTime = '';
+        var selectedServiceTimeText = '';
         var selectedServiceDate = '';
+        var selectedServiceDateText = '';
         var $activeServiceTab = $('.rp-checkout-service-option #rpressdeliveryTab .single-service-selected.active, #rpress_checkout_order_details #rpressdeliveryTab .single-service-selected.active')
           .first();
         if ($activeServiceTab.length) {
@@ -158,22 +160,28 @@ jQuery(document)
             .first();
         }
         if ($activePane.length) {
-          selectedServiceTime = String($activePane.find('.rpress-hrs')
-            .first()
-            .val() || '');
-          selectedServiceDate = String($activePane.find('.rpress_get_delivery_dates')
-            .first()
-            .val() || '');
+          var $serviceTimeSelect = $activePane.find('.rpress-hrs')
+            .first();
+          var $serviceDateSelect = $activePane.find('.rpress_get_delivery_dates')
+            .first();
+          selectedServiceTime = String($serviceTimeSelect.val() || '');
+          selectedServiceTimeText = String($serviceTimeSelect.find('option:selected').text() || selectedServiceTime)
+            .trim();
+          selectedServiceDate = String($serviceDateSelect.val() || '');
+          selectedServiceDateText = String($serviceDateSelect.find('option:selected').text() || selectedServiceDate)
+            .trim();
         }
         if (selectedServiceType) {
           rp_setCookie('service_type', selectedServiceType, rp_scripts.expire_cookie_time);
         }
         if (selectedServiceTime) {
           rp_setCookie('service_time', selectedServiceTime, rp_scripts.expire_cookie_time);
+          rp_setCookie('service_time_text', selectedServiceTimeText || selectedServiceTime, rp_scripts.expire_cookie_time);
         }
         if (selectedServiceDate) {
           rp_setCookie('service_date', selectedServiceDate, rp_scripts.expire_cookie_time);
-          rp_setCookie('delivery_date', selectedServiceDate, rp_scripts.expire_cookie_time);
+          rp_setCookie('delivery_date', selectedServiceDateText || selectedServiceDate, rp_scripts.expire_cookie_time);
+          rp_setCookie('service_date_manual', selectedServiceDate, rp_scripts.expire_cookie_time);
         }
         var selectedGateway = $('#rpress-gateway option:selected, input.rpress-gateway:checked')
           .val();

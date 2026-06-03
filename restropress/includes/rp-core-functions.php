@@ -305,6 +305,35 @@ function rpress_get_instruction_by_key($cart_key)
   }
   return $instruction;
 }
+
+/**
+ * Get the selected service date from cookies for display.
+ *
+ * @param string $service_type Service type.
+ * @return string
+ */
+function rpress_get_service_date_cookie_display( $service_type = '' ) {
+  $service_date_raw = isset( $_COOKIE['service_date'] )
+    ? sanitize_text_field( wp_unslash( $_COOKIE['service_date'] ) )
+    : '';
+  $delivery_date = isset( $_COOKIE['delivery_date'] )
+    ? sanitize_text_field( wp_unslash( $_COOKIE['delivery_date'] ) )
+    : '';
+  $manual_service_date = isset( $_COOKIE['service_date_manual'] )
+    ? sanitize_text_field( wp_unslash( $_COOKIE['service_date_manual'] ) )
+    : '';
+  $requested_date = ! empty( $service_date_raw ) ? $service_date_raw : $delivery_date;
+
+  if ( '' === $requested_date || ! preg_match( '/\d/', $requested_date ) ) {
+    return '';
+  }
+
+  $allow_future = ! empty( $manual_service_date ) && $manual_service_date === $service_date_raw;
+  $selected_date = rpress_get_selected_service_date( $service_type, $requested_date, $allow_future );
+
+  return rpress_format_service_date( $selected_date );
+}
+
 /**
  * Show delivery options in the cart
  *
@@ -314,17 +343,9 @@ function rpress_get_instruction_by_key($cart_key)
  */
 function get_delivery_options($changeble)
 {
-  $service_date = isset($_COOKIE['delivery_date']) ? sanitize_text_field(wp_unslash($_COOKIE['delivery_date'])) : '';
   $service_type_cookie = isset( $_COOKIE['service_type'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_type'] ) ) : '';
+  $service_date = rpress_get_service_date_cookie_display( $service_type_cookie );
   $hide_service_time = function_exists( 'rp_otil_is_service_time_hidden' ) ? rp_otil_is_service_time_hidden( $service_type_cookie ) : false;
-  $current_time = current_time('timestamp');
-  $close_time = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
-  $close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
-  if (!empty(rpress_get_option('enable_always_open')) && $current_time > $close_time) {
-    $service_date = new DateTime($service_date);
-    $service_date->add(new DateInterval('P1D'));
-    $service_date = $service_date->format('F d, Y');
-  }
 
   // Assume the cookie 'service_time_text' is set to 'ASAP- 50 min'
   $service_time_str = isset($_COOKIE['service_time_text']) ? sanitize_text_field(wp_unslash($_COOKIE['service_time_text'])) : '';
@@ -342,8 +363,13 @@ function get_delivery_options($changeble)
   <div class="delivery-wrap">
     <div class="delivery-opts">
       <?php if (!empty($_COOKIE['service_type'])): ?>
-        <span
-          class="delMethod"><?php echo esc_html(rpress_service_label(sanitize_text_field(wp_unslash($_COOKIE['service_type'])))) . ', ' . esc_html($service_date); ?></span>
+        <?php
+        $service_method_label = rpress_service_label( sanitize_text_field( wp_unslash( $_COOKIE['service_type'] ) ) );
+        if ( '' !== $service_date ) {
+          $service_method_label .= ', ' . $service_date;
+        }
+        ?>
+        <span class="delMethod"><?php echo esc_html( $service_method_label ); ?></span>
         <?php if ( ! $hide_service_time && !empty($_COOKIE['service_time']) ): ?>
           <span
             class="delTime"><?php printf(esc_html__(', %s', 'restropress'), esc_html(sanitize_text_field($service_time_str))); ?></span>
@@ -373,17 +399,9 @@ function get_delivery_options($changeble)
 
 function get_date_time_options($changeble)
 {
-  $service_date = isset($_COOKIE['delivery_date']) ? sanitize_text_field(wp_unslash($_COOKIE['delivery_date'])) : '';
   $service_type_cookie = isset( $_COOKIE['service_type'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_type'] ) ) : '';
+  $service_date = rpress_get_service_date_cookie_display( $service_type_cookie );
   $hide_service_time = function_exists( 'rp_otil_is_service_time_hidden' ) ? rp_otil_is_service_time_hidden( $service_type_cookie ) : false;
-  $current_time = current_time('timestamp');
-  $close_time = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
-  $close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
-  if (!empty(rpress_get_option('enable_always_open')) && $current_time > $close_time) {
-    $service_date = new DateTime($service_date);
-    $service_date->add(new DateInterval('P1D'));
-    $service_date = $service_date->format('F d, Y');
-  }
 
   // Assume the cookie 'service_time_text' is set to 'ASAP- 50 min'
   $service_time_str = isset($_COOKIE['service_time_text']) ? sanitize_text_field(wp_unslash($_COOKIE['service_time_text'])) : '';
@@ -512,15 +530,23 @@ function rpress_remove_food_cat_view_link($actions, $taxonomy)
  */
 function rp_get_store_timings($hide_past_time = true, $service_type = null)
 {
-  $current_time = current_time('timestamp');
+  $now = rpress_get_wp_now();
+  $current_time = $now->getTimestamp();
+  $current_date = $now->format('Y-m-d');
   $prep_time = !empty(rpress_get_option('prep_time')) ? rpress_get_option('prep_time') : 30;
   $open_time = !empty(rpress_get_option('open_time')) ? rpress_get_option('open_time') : '9:00am';
   $close_time = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
   $time_interval = apply_filters('rp_store_time_interval', '30', $service_type);
   $time_interval = $time_interval * 60;
   $prep_time = $prep_time * 60;
-  $open_time = strtotime(date_i18n('Y-m-d') . ' ' . $open_time);
-  $close_time = strtotime(date_i18n('Y-m-d') . ' ' . $close_time);
+  $open_time = rpress_get_wp_timestamp($current_date . ' ' . $open_time);
+  $close_time = rpress_get_wp_timestamp($current_date . ' ' . $close_time);
+  if (empty($open_time) || empty($close_time)) {
+    return array();
+  }
+  if ($close_time < $open_time) {
+    $close_time += DAY_IN_SECONDS;
+  }
   $time_today = apply_filters('rpress_timing_for_today', true);
   $store_times = range($open_time, $close_time, $time_interval);
   $store_time_format = rpress_get_option('store_time_format');
@@ -547,10 +573,10 @@ function rp_get_store_timings($hide_past_time = true, $service_type = null)
   foreach ($store_times as $store_time) {
     if ($hide_past_time) {
         if ($store_time > $current_time) {
-            $store_timings[] = date_i18n($date_format, $store_time);
+            $store_timings[] = wp_date($date_format, $store_time, rpress_get_wp_timezone());
         }
     } else {
-        $store_timings[] = date_i18n($date_format, $store_time);
+        $store_timings[] = wp_date($date_format, $store_time, rpress_get_wp_timezone());
     }
 }
   return $store_timings;
@@ -563,14 +589,149 @@ function rp_get_store_timings($hide_past_time = true, $service_type = null)
  */
 function rp_get_current_time()
 {
-  $current_time = '';
-  $timezone = get_option('timezone_string');
-  if (!empty($timezone)) {
-    $tz = new DateTimeZone($timezone);
-    $dt = new DateTime("now", $tz);
-    $current_time = $dt->format("H:i:s");
+  return rpress_get_wp_now()->format("H:i:s");
+}
+
+/**
+ * Get the WordPress timezone object with a fallback for offset-only sites.
+ *
+ * @since 3.2.8.8.2
+ * @return DateTimeZone
+ */
+function rpress_get_wp_timezone()
+{
+  if (function_exists('wp_timezone')) {
+    return wp_timezone();
   }
-  return $current_time;
+
+  $timezone_string = get_option('timezone_string');
+  if (!empty($timezone_string)) {
+    try {
+      return new DateTimeZone($timezone_string);
+    } catch (Exception $e) {
+      // Fall through to offset handling.
+    }
+  }
+
+  $offset = (float) get_option('gmt_offset', 0);
+  $sign = $offset < 0 ? '-' : '+';
+  $absolute_offset = abs($offset);
+  $hours = (int) floor($absolute_offset);
+  $minutes = (int) round(($absolute_offset - $hours) * 60);
+  if (60 === $minutes) {
+    $hours++;
+    $minutes = 0;
+  }
+  $timezone = sprintf('%s%02d:%02d', $sign, $hours, $minutes);
+
+  try {
+    return new DateTimeZone($timezone);
+  } catch (Exception $e) {
+    return new DateTimeZone('UTC');
+  }
+}
+
+/**
+ * Get the current DateTime in the WordPress timezone.
+ *
+ * @since 3.2.8.8.2
+ * @return DateTimeImmutable
+ */
+function rpress_get_wp_now()
+{
+  if (function_exists('current_datetime')) {
+    $datetime = current_datetime();
+    if ($datetime instanceof DateTimeImmutable) {
+      return $datetime;
+    }
+    if ($datetime instanceof DateTime) {
+      return DateTimeImmutable::createFromMutable($datetime);
+    }
+  }
+
+  return new DateTimeImmutable('now', rpress_get_wp_timezone());
+}
+
+/**
+ * Parse a date/time string in the WordPress timezone.
+ *
+ * @since 3.2.8.8.2
+ * @param string $date_time Date/time string.
+ * @return DateTimeImmutable|false
+ */
+function rpress_parse_wp_datetime($date_time)
+{
+  $date_time = trim((string) $date_time);
+  if ('' === $date_time) {
+    return false;
+  }
+
+  $timezone = rpress_get_wp_timezone();
+
+  if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_time)) {
+    $datetime = DateTimeImmutable::createFromFormat('!Y-m-d', $date_time, $timezone);
+    return $datetime instanceof DateTimeImmutable ? $datetime : false;
+  }
+
+  $date_format = get_option('date_format');
+  $time_format = get_option('time_format');
+  $known_formats = array(
+    $date_format,
+    $date_format . ' ' . $time_format,
+    $date_format . ' H:i',
+    $date_format . ' H:i:s',
+    $date_format . ' h:i A',
+    'Y-m-d H:i',
+    'Y-m-d H:i:s',
+    'm/d/Y',
+    'm/d/Y H:i',
+    'm/d/Y H:i:s',
+    'm/d/Y h:i A',
+    'd/m/Y',
+    'd/m/Y H:i',
+    'd/m/Y H:i:s',
+    'd/m/Y h:i A',
+    'm-d-Y',
+    'd-m-Y',
+    'd.m.Y',
+    'F j, Y',
+    'F j Y',
+    'M j, Y',
+  );
+
+  foreach (array_unique(array_filter($known_formats)) as $known_format) {
+    $datetime = DateTimeImmutable::createFromFormat('!' . $known_format, $date_time, $timezone);
+    $errors = DateTimeImmutable::getLastErrors();
+    $has_errors = is_array($errors) && ($errors['warning_count'] > 0 || $errors['error_count'] > 0);
+
+    if ($datetime instanceof DateTimeImmutable && !$has_errors) {
+      return $datetime;
+    }
+  }
+
+  try {
+    return new DateTimeImmutable($date_time, $timezone);
+  } catch (Exception $e) {
+    $timestamp = strtotime($date_time);
+    if (false === $timestamp) {
+      return false;
+    }
+
+    return (new DateTimeImmutable('@' . $timestamp))->setTimezone($timezone);
+  }
+}
+
+/**
+ * Convert a WordPress timezone date/time string to a Unix timestamp.
+ *
+ * @since 3.2.8.8.2
+ * @param string $date_time Date/time string.
+ * @return int|false
+ */
+function rpress_get_wp_timestamp($date_time)
+{
+  $datetime = rpress_parse_wp_datetime($date_time);
+  return $datetime instanceof DateTimeImmutable ? $datetime->getTimestamp() : false;
 }
 /**
  * Get current date
@@ -581,7 +742,7 @@ function rp_get_current_time()
 function rp_current_date($format = '')
 {
   $date_format = empty($format) ? get_option('date_format') : $format;
-  $date_i18n = date_i18n($date_format);
+  $date_i18n = wp_date($date_format, rpress_get_wp_now()->getTimestamp(), rpress_get_wp_timezone());
   return apply_filters('rpress_current_date', $date_i18n);
 }
 /**
@@ -593,8 +754,8 @@ function rp_current_date($format = '')
 function rpress_local_date($date)
 {
   $date_format = apply_filters('rpress_date_format', get_option('date_format', true));
-  $timestamp = strtotime($date);
-  $local_date = empty(get_option('timezone_string')) ? date_i18n($date_format, $timestamp) : wp_date($date_format, $timestamp);
+  $timestamp = rpress_get_wp_timestamp($date);
+  $local_date = $timestamp ? wp_date($date_format, $timestamp, rpress_get_wp_timezone()) : $date;
   return apply_filters('rpress_local_date', $local_date, $date);
 }
 
@@ -612,13 +773,13 @@ function rpress_format_service_date($date)
     return '';
   }
 
-  $timestamp = strtotime($date);
+  $timestamp = rpress_get_wp_timestamp($date);
   if (!$timestamp) {
     return $date;
   }
 
   $date_format = get_option('date_format');
-  return empty(get_option('timezone_string')) ? date_i18n($date_format, $timestamp) : wp_date($date_format, $timestamp);
+  return wp_date($date_format, $timestamp, rpress_get_wp_timezone());
 }
 
 /**
@@ -641,12 +802,12 @@ function rpress_format_service_time($service_time, $service_date = '')
   }
 
   $time_format = get_option('time_format');
-  $timestamp = $service_date ? strtotime($service_date . ' ' . $service_time) : strtotime($service_time);
+  $timestamp = $service_date ? rpress_get_wp_timestamp($service_date . ' ' . $service_time) : rpress_get_wp_timestamp($service_time);
   if (!$timestamp) {
     return $service_time;
   }
 
-  return date_i18n($time_format, $timestamp);
+  return wp_date($time_format, $timestamp, rpress_get_wp_timezone());
 }
 /**
  * Get list of categories
@@ -788,7 +949,9 @@ function rp_get_store_service_hours(
   // -----------------------------
   // Current timestamp (WP timezone aware)
   // -----------------------------
-  $current_timestamp = current_time('timestamp');
+  $now = rpress_get_wp_now();
+  $current_timestamp = $now->getTimestamp();
+  $service_date = rp_row_date($service_date, $service_type);
 
   // -----------------------------
   // Get Store Timings
@@ -802,7 +965,7 @@ function rp_get_store_service_hours(
     $service_date
   );
 
-  $store_timings_for_today = apply_filters('rpress_timing_for_today', true);
+  $store_timings_for_today = apply_filters('rpress_timing_for_today', true) && ($service_date === $now->format('Y-m-d'));
 
   // ASAP option
   $asap_option = rpress_get_option('enable_asap_option', '');
@@ -814,28 +977,28 @@ function rp_get_store_service_hours(
     // Fix dot format like 7.00 AM â†’ 7:00 AM
     $selected_time = str_replace('.', ':', $selected_time);
 
-    $selected_timestamp = strtotime($selected_time);
+    $selected_timestamp = rpress_get_wp_timestamp($service_date . ' ' . $selected_time);
   }
 
   if (empty($store_timings) || !is_array($store_timings)) {
     return;
   }
 
-  foreach ($store_timings as $time) {
+  foreach ($store_timings as $key => $time) {
 
     if (empty($time)) {
       continue;
     }
 
     // Convert to timestamp
-    $time_int = is_numeric($time) ? (int) $time : strtotime($time);
+    $time_int = is_numeric($time) ? (int) $time : rpress_get_wp_timestamp($service_date . ' ' . $time);
 
     if (!$time_int) {
       continue;
     }
 
     // Format for display (WP timezone aware)
-    $formatted_time = date_i18n($date_format, $time_int);
+    $formatted_time = wp_date($date_format, $time_int, rpress_get_wp_timezone());
 
     // Skip past times if current_time_aware enabled
     if ($store_timings_for_today && $current_time_aware) {
@@ -980,7 +1143,7 @@ function rpress_checkout_delivery_type($service_type, $service_time)
 /**
  * Build normalized service slots for a given service/date.
  *
- * @since 3.2.9
+ * @since 3.2.8.8.2
  *
  * @param string $service_type Service type.
  * @param string $service_date Service date in Y-m-d.
@@ -994,8 +1157,8 @@ function rpress_get_available_service_slots( $service_type, $service_date = '', 
   }
 
   $service_date = rp_row_date( $service_date, $service_type );
-  $today        = wp_date( 'Y-m-d' );
-  if ( strtotime( $service_date ) < strtotime( $today ) ) {
+  $today        = rpress_get_wp_now()->format( 'Y-m-d' );
+  if ( $service_date < $today ) {
     return array();
   }
   $hide_past_time = $hide_past_time && ( $service_date === $today );
@@ -1039,7 +1202,7 @@ function rpress_get_available_service_slots( $service_type, $service_date = '', 
 /**
  * Resolve first valid date for the service type.
  *
- * @since 3.2.9
+ * @since 3.2.8.8.2
  *
  * @param string $service_type Service type.
  * @param string $requested_date Requested date.
@@ -1049,22 +1212,22 @@ function rpress_get_available_service_slots( $service_type, $service_date = '', 
 function rpress_get_first_available_service_date( $service_type, $requested_date = '', $lookahead_days = 30 ) {
   $service_type = sanitize_key( (string) $service_type );
   $seed_date    = rp_row_date( $requested_date, $service_type );
-  $seed_ts      = strtotime( $seed_date );
-  $today_ts     = strtotime( wp_date( 'Y-m-d' ) );
+  $seed_dt      = rpress_parse_wp_datetime( $seed_date );
+  $today_dt     = rpress_parse_wp_datetime( rpress_get_wp_now()->format( 'Y-m-d' ) );
 
-  if ( false === $seed_ts ) {
-    $seed_ts = current_time( 'timestamp' );
+  if ( false === $seed_dt ) {
+    $seed_dt = $today_dt;
   }
 
-  if ( false !== $today_ts && $seed_ts < $today_ts ) {
-    $seed_ts = $today_ts;
+  if ( $today_dt instanceof DateTimeImmutable && $seed_dt < $today_dt ) {
+    $seed_dt = $today_dt;
   }
 
   $lookahead_days      = max( 0, (int) $lookahead_days );
   $service_time_hidden = function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $service_type );
 
   for ( $offset = 0; $offset <= $lookahead_days; $offset++ ) {
-    $candidate_date = wp_date( 'Y-m-d', strtotime( '+' . $offset . ' day', $seed_ts ) );
+    $candidate_date = $seed_dt->modify( '+' . $offset . ' day' )->format( 'Y-m-d' );
 
     if ( ! rpress_is_store_open( $service_type, $candidate_date ) ) {
       continue;
@@ -1080,12 +1243,46 @@ function rpress_get_first_available_service_date( $service_type, $requested_date
     }
   }
 
-  return wp_date( 'Y-m-d', $seed_ts );
+  return $seed_dt->format( 'Y-m-d' );
+}
+/**
+ * Resolve the selected service date for display without advancing to tomorrow.
+ *
+ * @since 3.2.8.8.5
+ *
+ * @param string $service_type Service type.
+ * @param string $requested_date Requested date.
+ * @param bool   $allow_future Whether future dates from cookies should be preserved.
+ * @return string
+ */
+function rpress_get_selected_service_date( $service_type, $requested_date = '', $allow_future = true ) {
+  $service_type = sanitize_key( (string) $service_type );
+  $seed_date    = rp_row_date( $requested_date, $service_type );
+  $seed_dt      = rpress_parse_wp_datetime( $seed_date );
+  $today_dt     = rpress_parse_wp_datetime( rpress_get_wp_now()->format( 'Y-m-d' ) );
+
+  if ( false === $today_dt ) {
+    return $seed_date;
+  }
+
+  if ( false === $seed_dt ) {
+    return $today_dt->format( 'Y-m-d' );
+  }
+
+  if ( $seed_dt < $today_dt ) {
+    return $today_dt->format( 'Y-m-d' );
+  }
+
+  if ( ! $allow_future && $seed_dt > $today_dt ) {
+    return $today_dt->format( 'Y-m-d' );
+  }
+
+  return $seed_dt->format( 'Y-m-d' );
 }
 /**
  * Match service time with available slots.
  *
- * @since 3.2.9
+ * @since 3.2.8.8.2
  *
  * @param string $requested_time Requested slot.
  * @param array  $available_slots Available slots.
@@ -1112,10 +1309,10 @@ function rpress_match_service_time_to_slot( $requested_time, array $available_sl
     }
   }
 
-  $requested_timestamp = strtotime( $requested_time );
+  $requested_timestamp = rpress_get_wp_timestamp( $requested_time );
   if ( false !== $requested_timestamp ) {
     foreach ( $available_slots as $slot ) {
-      $slot_timestamp = strtotime( $slot );
+      $slot_timestamp = rpress_get_wp_timestamp( $slot );
       if ( false !== $slot_timestamp && $slot_timestamp === $requested_timestamp ) {
         return $slot;
       }
@@ -1127,7 +1324,7 @@ function rpress_match_service_time_to_slot( $requested_time, array $available_sl
 /**
  * Get next available slot from available service slots.
  *
- * @since 3.2.9
+ * @since 3.2.8.8.2
  *
  * @param string $service_date Service date.
  * @param array  $available_slots Available slots.
@@ -1142,7 +1339,7 @@ function rpress_get_next_available_service_time( $service_date, array $available
   $has_minimum_timestamp = ! empty( $minimum_timestamp );
 
   foreach ( $available_slots as $slot ) {
-    $slot_timestamp = strtotime( $service_date . ' ' . $slot );
+    $slot_timestamp = rpress_get_wp_timestamp( $service_date . ' ' . $slot );
     if ( false === $slot_timestamp ) {
       continue;
     }
@@ -1165,9 +1362,11 @@ function rpress_get_next_available_service_time( $service_date, array $available
  */
 function rpress_pre_validate_order() {
 
-    $service_type = !empty($_COOKIE['service_type'])
-        ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) 
-        : '';
+    $service_type = !empty($_POST['rpress_service_type'])
+        ? sanitize_key(wp_unslash($_POST['rpress_service_type']))
+        : (!empty($_COOKIE['service_type'])
+            ? sanitize_text_field(wp_unslash($_COOKIE['service_type']))
+            : '');
 
     $normalized_service_type = sanitize_key( $service_type );
     $allowed_services = rpress_get_enabled_services();
@@ -1188,19 +1387,28 @@ function rpress_pre_validate_order() {
     setcookie( 'service_type', $service_type, time() + ( 86400 * 30 ), '/' );
     $_COOKIE['service_type'] = $service_type;
 
-    $service_time_raw = !empty($_COOKIE['service_time'])
-        ? sanitize_text_field(wp_unslash($_COOKIE['service_time']))
-        : '';
+    $service_time_raw = !empty($_POST['rpress_service_time'])
+        ? sanitize_text_field(wp_unslash($_POST['rpress_service_time']))
+        : (!empty($_COOKIE['service_time'])
+            ? sanitize_text_field(wp_unslash($_COOKIE['service_time']))
+            : '');
 
-    $service_date_raw = !empty($_COOKIE['service_date'])
-        ? sanitize_text_field(wp_unslash($_COOKIE['service_date']))
-        : '';
+    $service_date_raw = !empty($_POST['rpress_service_date'])
+        ? sanitize_text_field(wp_unslash($_POST['rpress_service_date']))
+        : (!empty($_COOKIE['service_date'])
+            ? sanitize_text_field(wp_unslash($_COOKIE['service_date']))
+            : '');
+
+    if ( ! empty( $_POST['rpress_service_date'] ) ) {
+      setcookie( 'service_date_manual', $service_date_raw, time() + ( 86400 * 30 ), '/' );
+      $_COOKIE['service_date_manual'] = $service_date_raw;
+    }
 
     $service_date = rpress_get_first_available_service_date( $service_type, $service_date_raw );
     setcookie( 'service_date', $service_date, time() + ( 86400 * 30 ), '/' );
     $_COOKIE['service_date'] = $service_date;
 
-    $service_display_date = date_i18n( 'F j', strtotime( $service_date ) );
+    $service_display_date = rpress_format_service_date( $service_date );
     setcookie( 'delivery_date', $service_display_date, time() + ( 86400 * 30 ), '/' );
     $_COOKIE['delivery_date'] = $service_display_date;
 
@@ -1217,7 +1425,7 @@ function rpress_pre_validate_order() {
     // Preparation Time.
     $prep_time = (int) rpress_get_option('prep_time', 0) * 60;
 
-    $current_time = current_time('timestamp') + $prep_time;
+    $current_time = rpress_get_wp_now()->getTimestamp() + $prep_time;
     $allow_asap = ! empty( rpress_get_option( 'enable_asap_option' ) );
     $available_slots = rpress_get_available_service_slots( $service_type, $service_date, true );
 
@@ -1242,7 +1450,7 @@ function rpress_pre_validate_order() {
       $_COOKIE['service_time_text'] = $service_time_raw;
     }
 
-    $service_time = empty( $service_time_raw ) ? 0 : strtotime( $service_date . ' ' . $service_time_raw );
+    $service_time = empty( $service_time_raw ) ? 0 : rpress_get_wp_timestamp( $service_date . ' ' . $service_time_raw );
 
     /* ==============================
        Minimum Order Validation
@@ -1307,7 +1515,7 @@ function rpress_pre_validate_order() {
         }
 
         $service_time_raw = $fallback_slot;
-        $service_time = strtotime( $service_date . ' ' . $service_time_raw );
+        $service_time = rpress_get_wp_timestamp( $service_date . ' ' . $service_time_raw );
         setcookie( 'service_time', $service_time_raw, time() + ( 86400 * 30 ), '/' );
         setcookie( 'service_time_text', $service_time_raw, time() + ( 86400 * 30 ), '/' );
         $_COOKIE['service_time'] = $service_time_raw;
@@ -2601,35 +2809,44 @@ add_filter('body_class', function ($classes) {
  */
 function rpress_is_store_open($service_type, $selected_date = '')
 {
-  $current_time = current_time('timestamp');
-  $current_day = date_i18n('Y-m-d', $current_time);
+  $now = rpress_get_wp_now();
+  $current_time = $now->getTimestamp();
+  $current_day = $now->format('Y-m-d');
+  $selected_date = !empty($selected_date) ? rp_row_date($selected_date, $service_type) : $current_day;
+  $has_service_hours = true;
 
   if (!empty(rpress_get_option('enable_always_open'))) {
-    $open_time = strtotime($current_day . ' 00:00');
-    $close_time = strtotime($current_day . ' 23:59');
+    $open_time = rpress_get_wp_timestamp($current_day . ' 00:00');
+    $close_time = rpress_get_wp_timestamp($current_day . ' 23:59');
     $is_open = true;
   } else {
     $open_time_raw = !empty(rpress_get_option('open_time')) ? rpress_get_option('open_time') : '9:00am';
     $close_time_raw = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
 
-    $open_time = strtotime($current_day . ' ' . $open_time_raw);
-    $close_time = strtotime($current_day . ' ' . $close_time_raw);
+    $open_time = rpress_get_wp_timestamp($current_day . ' ' . $open_time_raw);
+    $close_time = rpress_get_wp_timestamp($current_day . ' ' . $close_time_raw);
 
     if ($open_time === false || $close_time === false) {
       $is_open = false;
+      $has_service_hours = false;
     } elseif ($close_time < $open_time) {
       // Overnight window (for example 6:00pm to 2:00am).
       $is_open = ($current_time >= $open_time || $current_time <= $close_time);
     } elseif ($close_time === $open_time) {
       // Same open/close values are treated as closed unless "always open" is enabled.
       $is_open = false;
+      $has_service_hours = false;
     } else {
       $is_open = ($current_time >= $open_time && $current_time <= $close_time);
     }
   }
-  if (empty($selected_date)) {
-    $selected_date = date_i18n('Y-m-d', $current_time);
+
+  if ($selected_date > $current_day) {
+    $is_open = $has_service_hours;
+  } elseif ($selected_date < $current_day) {
+    $is_open = false;
   }
+
   // Apply filter to allow other plugins to modify the status
   $is_open = apply_filters('rpress_is_store_open', $is_open, $service_type, $selected_date, $current_time, $open_time, $close_time);
 
@@ -2718,16 +2935,24 @@ function rpress_get_service_context( $service_type_override = '' ): array
   );
 
   /* ---------------- Date Formatting ---------------- */
-  $raw = rpress_get_first_available_service_date( $context['service_type'], $context['service_date_raw'] );
+  $manual_service_date_cookie = ! empty( $_COOKIE['service_date_manual'] )
+    ? sanitize_text_field( wp_unslash( $_COOKIE['service_date_manual'] ) )
+    : '';
+  $manual_service_date = ! empty( $manual_service_date_cookie ) && $manual_service_date_cookie === $context['service_date_raw'];
+  $raw = rpress_get_selected_service_date( $context['service_type'], $context['service_date_raw'], $manual_service_date );
   $context['service_date_raw'] = $raw;
 
   if (!empty($raw)) {
-    $date = DateTime::createFromFormat('Y-m-d', $raw);
-    $context['service_date'] = $date
-      ? $date->format('F j')
-      : date_i18n('F j');
+    $context['service_date'] = rpress_format_service_date( $raw );
   } else {
-    $context['service_date'] = date_i18n('F j');
+    $context['service_date'] = rpress_format_service_date( rpress_get_wp_now()->format( 'Y-m-d' ) );
+  }
+
+  if ( ! $manual_service_date && ! empty( $raw ) ) {
+    setcookie( 'service_date', $raw, time() + ( 86400 * 30 ), '/' );
+    setcookie( 'delivery_date', $context['service_date'], time() + ( 86400 * 30 ), '/' );
+    $_COOKIE['service_date']  = $raw;
+    $_COOKIE['delivery_date'] = $context['service_date'];
   }
 
   /* ---------------- Time Handling ---------------- */
@@ -2774,7 +2999,7 @@ function rpress_get_service_context( $service_type_override = '' ): array
 
   $service_date_for_checks = !empty($context['service_date_raw'])
     ? rp_row_date($context['service_date_raw'], $context['service_type'])
-    : date_i18n('Y-m-d');
+    : rpress_get_wp_now()->format('Y-m-d');
 
   if (!rpress_is_store_open($context['service_type'], $service_date_for_checks)) {
     $context['is_store_open'] = false;
@@ -2791,7 +3016,7 @@ function rp_row_date($raw_date, $service_type): string
     $service_type
   );
   if (empty($raw)) {
-    return date_i18n('Y-m-d');
+    return rpress_get_wp_now()->format('Y-m-d');
   }
   return $raw;
 }

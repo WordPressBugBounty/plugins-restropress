@@ -47,7 +47,7 @@ if ( $show_closed_state && ( 'delivery_and_pickup' !== $enabled_service ) ) {
 }
 ?>
 
-<p class="rpress_order-address-wrap rpress-order-address-inline">
+<p class="rpress_order-address-wrap rpress-order-address-inline<?php echo $show_closed_state ? ' rpress-store-closed-inline' : ''; ?>">
     <span class="rpress-order-address-summary">
     <?php
     if ( $is_multilocation_active ):
@@ -69,7 +69,7 @@ if ( $show_closed_state && ( 'delivery_and_pickup' !== $enabled_service ) ) {
     <?php endif; ?>
 
     <?php if ( $show_closed_state ) : ?>
-        <span id="deliveryDate" class="rp-store-timing-notice">
+        <span id="deliveryDate" class="rp-store-timing-notice rpress-closed-summary-text">
             <?php echo esc_html( $closed_notice ); ?>
         </span>
     <?php else : ?>
