@@ -19,7 +19,7 @@ $button_style = rpress_get_option('button_style', 'button');
           <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
             <div class="row addon-modal-overlap-bg">
               <div class="modal__image-section">
-                  <img class="item-image" src="">
+                  <img class="item-image" alt="" hidden />
                   <p class="item-description"></p>
               </div>
               <main class="modal__content modal-body">             

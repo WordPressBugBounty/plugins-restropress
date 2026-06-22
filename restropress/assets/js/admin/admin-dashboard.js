@@ -34,6 +34,10 @@ function rp_dashboard_format_currency(value) {
     return amount + rpress_vars.currency_sign;
 }
 $(document).ready(function ($) {
+    if ($('.rp-command-center').length) {
+        return;
+    }
+
     $.ajax({
         url: rpress_vars.ajaxurl,
         type: 'POST',

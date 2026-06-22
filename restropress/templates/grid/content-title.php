@@ -26,26 +26,6 @@ if ( ! defined( 'ABSPATH' ) ) {
           <?php echo wp_kses( apply_filters( 'rpress_fooditems_content', wp_trim_words( $description, $excerpt_length ), $description ), array( 'p' => array(), ) ); ?>
         </div>
       <?php endif; ?>
-      <?php
-      $disable_category = rpress_get_option( 'disable_category_menu', false );
-      $option_view_food_items  = rpress_get_option( 'option_view_food_items' );
-      //Grid view design issue fixed
-      if( $disable_category && $option_view_food_items == "grid_view" ) :
-       ?>
-      <?php $enable_tags = rpress_get_option( 'enable_tags_display', false ); ?>
-      <?php if( $enable_tags ) : ?>
-        <?php
-        $terms = get_the_terms( get_the_id(), 'fooditem_tag' );
-        if( $terms ) {
-          echo '<div class="rpress_fooditem_tags">';
-          foreach (array_slice($terms, 0, 2) as $key => $term) {
-            echo '<span class="fooditem_tag ' . esc_attr( $term->slug ) . '">' . esc_html( $term->name ) . '</span>';
-          }
-          echo '</div>';
-        }
-        ?>
-      <?php endif; ?>
-    <?php endif; ?>
   </div>
   <?php $enable_tags = rpress_get_option( 'enable_tags_display', false ); ?>
   <?php if( $enable_tags ) : ?>

@@ -1,0 +1,6 @@
+name,category,price,food_type,dietary,description,variants,addons
+Cappuccino,Beverages,3.50,veg,Vegetarian,"Simple product: one fixed price. Leave variants and addons blank.",,
+Cold Brew,Beverages,,veg,Vegan;Gluten-free,"Variable product: priced by size. Leave price blank and list sizes in variants as name:price, separated by semicolons.","Small:3.50; Large:4.50",
+Falafel Wrap,Mains,9.00,veg,Vegan,"Product with add-ons: one base price plus optional extras. Group format: Name [single|multiple]: option:price, option:price — separate groups with semicolons.",,"Extra toppings [multiple]: Hummus:0.50, Pickles:0.50, Extra falafel:1.50; Spice level [single]: Mild:0, Hot:0"
+Grilled Chicken Bowl,Mains,,non_veg,Halal;Gluten-free,"Variable product with add-ons: sizes in variants AND modifier groups in addons.","Regular:9.50; Large:11.50","Add protein [single]: Tofu:2.00, Extra chicken:3.00; Sauces [multiple]: Garlic:0.50, Chilli:0.50"
+Garlic Bread,Sides,5.00,veg,Vegetarian,"Simple product again. food_type is veg or non_veg; dietary labels are semicolon-separated.",,

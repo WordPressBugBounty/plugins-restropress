@@ -25,13 +25,29 @@ function rpress_update_payment_details( $data ) {
 	$payment_id = absint( $data['rpress_payment_id'] );
 	$payment    = new RPRESS_Payment( $payment_id );
 	$addon_data = array();
-	//Update payment meta
-	$service_type = isset( $_POST['rp_service_type'] ) ? sanitize_text_field( $_POST['rp_service_type'] ) : '';
-	$service_time = isset( $_POST['rp_service_time'] ) ? sanitize_text_field( $_POST['rp_service_time'] ) : '';
+	$previous_order_status = rpress_get_order_status( $payment_id );
+	// Update service meta - only for fields actually submitted, so a partial
+	// form can never wipe existing values.
+	if ( isset( $_POST['rp_service_type'] ) ) {
+		update_post_meta( $payment_id, '_rpress_delivery_type', sanitize_text_field( wp_unslash( $_POST['rp_service_type'] ) ) );
+	}
+	if ( isset( $_POST['rp_service_time'] ) ) {
+		update_post_meta( $payment_id, '_rpress_delivery_time', sanitize_text_field( wp_unslash( $_POST['rp_service_time'] ) ) );
+	}
+	if ( isset( $_POST['rp_service_date'] ) ) {
+		// The edit field shows the site's display date format; every screen
+		// matches this meta as Y-m-d, so normalise before saving - otherwise
+		// one untouched "Save changes" makes the order vanish from the
+		// dashboard, live board, and today filters.
+		$service_date_raw = sanitize_text_field( wp_unslash( $_POST['rp_service_date'] ) );
+		$service_date     = function_exists( 'rpress_parse_payment_filter_date' ) ? rpress_parse_payment_filter_date( $service_date_raw ) : '';
+		if ( '' === $service_date && '' !== $service_date_raw ) {
+			$parsed_ts    = strtotime( $service_date_raw );
+			$service_date = $parsed_ts ? date( 'Y-m-d', $parsed_ts ) : $service_date_raw;
+		}
+		update_post_meta( $payment_id, '_rpress_delivery_date', $service_date );
+	}
 	$order_status = isset( $_POST['rpress_order_status'] ) ? sanitize_text_field( $_POST['rpress_order_status'] ) : '';
-	update_post_meta( $payment_id , '_rpress_delivery_type', $service_type );
-	update_post_meta( $payment_id , '_rpress_delivery_time', $service_time );
-	update_post_meta( $payment_id , '_order_status', $order_status );
 	// Retrieve the payment ID
 	$payment_id = absint( $data['rpress_payment_id'] );
 	$payment    = new RPRESS_Payment( $payment_id );
@@ -41,25 +57,42 @@ function rpress_update_payment_details( $data ) {
 	$status      = $data['rpress-payment-status'];
 	$unlimited   = isset( $data['rpress-unlimited-fooditems'] ) ? '1' : '';
 	$date        = sanitize_text_field( $data['rpress-payment-date'] );
-	$hour        = sanitize_text_field( $data['rpress-payment-time-hour'] );
+	// Cast to int first so non-numeric input ("abc") can't slip past the
+	// range check and reach strtotime as garbage.
+	$hour        = absint( $data['rpress-payment-time-hour'] );
 	// Restrict to our high and low
 	if ( $hour > 23 ) {
 		$hour = 23;
 	} elseif ( $hour < 0 ) {
 		$hour = 00;
 	}
-	$minute      = sanitize_text_field( $data['rpress-payment-time-min'] );
+	$minute      = absint( $data['rpress-payment-time-min'] );
 	// Restrict to our high and low
 	if ( $minute > 59 ) {
 		$minute = 59;
 	} elseif ( $minute < 0 ) {
 		$minute = 00;
 	}
-	$address     = array_map( 'trim', explode(',',!empty( $data['rpress-payment-address'][0] )  ) );
+	$address     = array(
+		'line1'   => '',
+		'line2'   => '',
+		'city'    => '',
+		'country' => '',
+		'state'   => '',
+		'zip'     => '',
+	);
+
+	if ( ! empty( $data['rpress-payment-address'][0] ) && is_array( $data['rpress-payment-address'][0] ) ) {
+		$address = wp_parse_args(
+			array_map( 'sanitize_text_field', $data['rpress-payment-address'][0] ),
+			$address
+		);
+	}
 	$curr_total  = rpress_sanitize_amount( $payment->total );
 	$new_total   = rpress_sanitize_amount( sanitize_text_field( $_POST['rpress-payment-total'] ) );
 	$tax         = isset( $_POST['rpress-payment-tax'] ) ? rpress_sanitize_amount( sanitize_text_field( $_POST['rpress-payment-tax'] ) ) : 0;
-	$date        = gmdate( 'Y-m-d', strtotime( $date ) ) . ' ' . $hour . ':' . $minute . ':00';
+	$date_ts     = strtotime( $date );
+	$date        = ( $date_ts ? gmdate( 'Y-m-d', $date_ts ) : gmdate( 'Y-m-d' ) ) . ' ' . sprintf( '%02d:%02d:00', $hour, $minute );
 	$curr_customer_id  = sanitize_text_field( $data['rpress-current-customer'] );
 	$new_customer_id   = sanitize_text_field( $data['customer-id'] );
 	// Setup purchased items and price options
@@ -68,12 +101,21 @@ function rpress_update_payment_details( $data ) {
 		foreach ( $updated_fooditems as $cart_position => $fooditem ) {
 			if( isset( $fooditem['addon_items'] ) && !empty( $fooditem['addon_items'] ) ) {
 				foreach(  $fooditem['addon_items'] as $key => $addons ) {
+					if ( ! is_string( $addons ) || '' === trim( $addons ) ) {
+						continue;
+					}
 					$addons = explode('|', $addons);
-					if( is_array( $addons ) && !empty( $addons ) ) {
-						$addon_data[$fooditem['id']][$key]['addon_item_name'] = $addons[0];
-						$addon_data[$fooditem['id']][$key]['addon_id'] = $addons[1];
-						$addon_data[$fooditem['id']][$key]['price'] = $addons[2];
-						$addon_data[$fooditem['id']][$key]['quantity'] = $addons[3];
+					if( count( $addons ) >= 4 && ! empty( $fooditem['id'] ) ) {
+						$fooditem_id_key = absint( $fooditem['id'] );
+						if ( ! isset( $addon_data[ $fooditem_id_key ] ) || ! is_array( $addon_data[ $fooditem_id_key ] ) ) {
+							$addon_data[ $fooditem_id_key ] = array();
+						}
+						$addon_data[ $fooditem_id_key ][ $key ] = array(
+							'addon_item_name' => sanitize_text_field( $addons[0] ),
+							'addon_id'        => absint( $addons[1] ),
+							'price'           => rpress_format_amount( $addons[2] ),
+							'quantity'        => absint( $addons[3] ) > 0 ? absint( $addons[3] ) : 1,
+						);
 					}
 				}
 			}
@@ -91,6 +133,7 @@ function rpress_update_payment_details( $data ) {
 					'item_price' => $item_price,
 					'quantity'   => $quantity,
 					'tax'        => $item_tax,
+					'instruction'=> isset( $fooditem['instruction'] ) ? sanitize_text_field( $fooditem['instruction'] ) : '',
 				);
 				$payment->modify_cart_item( $cart_position, $args, $addon_data );
 			} else {
@@ -115,9 +158,10 @@ function rpress_update_payment_details( $data ) {
 					'item_price'  => $item_price,
 					'price_id'    => $price_id,
 					'tax'         => $tax,
+					'instruction' => isset( $fooditem['instruction'] ) ? sanitize_text_field( $fooditem['instruction'] ) : '',
 				);
-				$addon_data = isset( $addon_data[ $fooditem_id ] ) ? $addon_data[ $fooditem_id ] : '';
-				$payment->add_fooditem( $fooditem_id, $args, $addon_data );
+				$fooditem_addon_data = isset( $addon_data[ $fooditem_id ] ) ? $addon_data[ $fooditem_id ] : '';
+				$payment->add_fooditem( $fooditem_id, $args, $fooditem_addon_data );
 			}
 		}
 		$deleted_fooditems = json_decode( stripcslashes( $data['rpress-payment-removed'] ), true );
@@ -228,8 +272,12 @@ function rpress_update_payment_details( $data ) {
 		}
 	}
 	$updated = $payment->save();
-  	$order_status = isset( $_POST['rpress_order_status'] ) ? sanitize_text_field( $_POST['rpress_order_status'] ) : '';
-	rpress_update_order_status( $payment_id, $order_status );
+	// Only fire the status pipeline (customer notifications, completed ->
+	// paid promotion) when the status actually changed; re-saving an order
+	// must not re-notify the customer of their current status.
+	if ( '' !== $order_status && $order_status !== $previous_order_status ) {
+		rpress_update_order_status( $payment_id, $order_status );
+	}
 	if ( 0 === $updated ) {
 		wp_die( esc_html__( 'Error Updating Payment', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 400 ) );
 	}

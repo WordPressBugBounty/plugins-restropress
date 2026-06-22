@@ -154,14 +154,48 @@ jQuery(function ($) {
       $('#print-display-area-' + payment_id)
         .load(ajaxurl + '?action=rp_print_payment_data&payment_id=' + payment_id + '&security=' + encodeURIComponent(rpress_vars.order_nonce), function () {
           var printContent = document.getElementById('print-display-area-' + payment_id);
-          var WinPrint = window.open('', '', 'width=900,height=650');
-          WinPrint.document.write(printContent.innerHTML);
-          WinPrint.document.close();
-          setTimeout(function () {
-            WinPrint.focus();
-            WinPrint.print();
-            WinPrint.close();
-          }, 200);
+          if (!printContent) {
+            return;
+          }
+          // Print through a hidden iframe instead of a popup window. The popup
+          // approach was blocked on repeat clicks and the window self-closed
+          // before the preview could render; the iframe prints reliably every
+          // time and waits for the receipt (including the logo) to load.
+          var existing = document.getElementById('rp-print-frame');
+          if (existing) {
+            existing.parentNode.removeChild(existing);
+          }
+          var iframe = document.createElement('iframe');
+          iframe.id = 'rp-print-frame';
+          iframe.setAttribute('aria-hidden', 'true');
+          iframe.style.position = 'fixed';
+          iframe.style.right = '0';
+          iframe.style.bottom = '0';
+          iframe.style.width = '0';
+          iframe.style.height = '0';
+          iframe.style.border = '0';
+          document.body.appendChild(iframe);
+
+          var frameWin = iframe.contentWindow;
+          var frameDoc = frameWin.document;
+          frameDoc.open();
+          frameDoc.write(printContent.innerHTML);
+          frameDoc.close();
+
+          var triggerPrint = function () {
+            try {
+              frameWin.focus();
+              frameWin.print();
+            } catch (e) {}
+          };
+          // Wait for images (the store logo) to finish loading before printing.
+          if (frameDoc.readyState === 'complete') {
+            setTimeout(triggerPrint, 250);
+          } else {
+            iframe.onload = function () {
+              setTimeout(triggerPrint, 250);
+            };
+          }
         });
     });
 });
@@ -566,10 +600,13 @@ jQuery(document)
     // Date picker
     var rpress_datepicker = $('.rpress_datepicker');
     if (rpress_datepicker.length > 0) {
-      var dateFormat = 'mm/dd/yy';
+      var dateFormat = rpress_vars.date_format || 'mm/dd/yy';
       rpress_datepicker.datepicker({
         dateFormat: dateFormat
       });
+      if (rpress_vars.date_placeholder) {
+        rpress_datepicker.attr('placeholder', rpress_vars.date_placeholder);
+      }
     }
     /**
      * Edit payment screen JS
@@ -660,6 +697,8 @@ jQuery(document)
                 .val(1);
               $('.rpress-order-payment-recalc-totals')
                 .show();
+              $('#rpress-order-recalc-total')
+                .trigger('click');
             }
             return false;
           });
@@ -721,7 +760,7 @@ jQuery(document)
           e.preventDefault();
         
           var selectedButton = $(this);
-          var order_fooditem_select = $('#rpress_order_fooditem_select'),
+          var order_fooditem_select = $('#rpress-order-fooditem-select, #rpress_order_fooditem_select').first(),
               order_fooditem_quantity = $('#rpress-order-fooditem-quantity'),
               order_fooditem_price = $('#rpress-order-fooditem-price'),
               order_fooditem_tax = $('#rpress-order-fooditem-tax');
@@ -816,7 +855,7 @@ jQuery(document)
           $(clone).insertAfter('#rpress-purchased-items div.row:last');
           $('.rpress-order-payment-recalc-totals').show();
           $('.rpress-add-fooditem-field').val('');
-          $("#rpress_order_fooditem_select").val('').trigger("chosen:updated");
+          $("#rpress-order-fooditem-select, #rpress_order_fooditem_select").val('').trigger("chosen:updated");
           $(".rp-add-update-elements").find('.rpress-fooditem-price').empty();
         });             
       },
@@ -875,8 +914,7 @@ jQuery(document)
           row.find('input.rpress-payment-details-fooditem-amount').val(item_total);
           row.find('span.rpress-payment-details-fooditem-amount').text(item_total);
         
-          // Optionally trigger full total recalculation
-          // $('#rpress-order-recalc-total').trigger('click');
+          $('#rpress-order-recalc-total').trigger('click');
         });               
       },
       recalculate_total: function () {
@@ -905,8 +943,11 @@ jQuery(document)
             if (Array.isArray(selectedAddons)) {
               selectedAddons.forEach(function (addonString) {
                 var addonData = addonString.split('|');
-                var addonPrice = parseFloat(addonData[2] || 0);
-        
+                // The option value embeds a currency-formatted price
+                // ("₹12.00") - strip everything but digits before parsing,
+                // or formatted addons silently drop out of the total.
+                var addonPrice = parseFloat(String(addonData[2] || '').replace(/[^0-9.-]/g, ''));
+
                 if (!isNaN(addonPrice)) {
                   addonTotal += addonPrice * quantity;
                 }
@@ -2186,11 +2227,15 @@ jQuery(document)
             if ($(this)
               .prop('checked')) {
               records_input.attr('disabled', false);
-              submit_button.attr('disabled', false);
+              submit_button
+                .attr('disabled', false)
+                .removeClass('button-disabled');
             } else {
               records_input.attr('disabled', true);
               records_input.prop('checked', false);
-              submit_button.attr('disabled', true);
+              submit_button
+                .attr('disabled', true)
+                .addClass('button-disabled');
             }
           });
       }
@@ -2407,7 +2452,10 @@ function rpress_attach_tooltips(selector) {
   });
 }
 jQuery(function ($) {
-  if (rpress_vars.is_admin == 1 && rpress_vars.enable_order_notification == 1) {
+  // The Live Orders kanban runs its own new-order chime + alert, so skip this
+  // global notifier there to avoid the sound playing twice for one order.
+  var rpHasLiveBoard = document.querySelector('.rp-live-orders') !== null;
+  if (rpress_vars.is_admin == 1 && rpress_vars.enable_order_notification == 1 && ! rpHasLiveBoard) {
     if (typeof Notification !== "undefined") {
       Notification.requestPermission()
         .then(function (result) {
@@ -2430,11 +2478,22 @@ jQuery(function ($) {
               success: function (response) {
                 if (response != '0') {
                   if (typeof response.title === "undefined") return;
+
+                  // Stop and clear any sound still playing from a previous
+                  // alert before starting a new one - otherwise audio elements
+                  // accumulate and overlap, which is heard as the chime
+                  // "playing multiple times".
+                  var stopNotifyAudio = function () {
+                    $('.rpress_notify_audio').each(function () {
+                      try { this.pause(); this.currentTime = 0; } catch (e) {}
+                    }).remove();
+                  };
+                  stopNotifyAudio();
+
                   var notifyTitle = response.title;
                   var options = {
                     body: response.body,
                     icon: response.icon,
-                    sound: response.sound,
                   };
                   var n = new Notification(notifyTitle, options);
                   n.custom_options = {
@@ -2442,29 +2501,36 @@ jQuery(function ($) {
                   }
                   n.onclick = function (event) {
                     event.preventDefault(); // prevent the browser from focusing the Notification's tab
+                    stopNotifyAudio();
                     window.open(n.custom_options.url, '_blank');
                   };
-                  //add audio notify because, this property is not currently supported in any browser.
-                  if (response.sound != '') {
-                    var loopsound = '1' == rpress_vars.loopsound ? 'loop' : '';
-                    $("<audio controls " + loopsound + " class='rpress_notify_audio'></audio>")
-                      .attr({
-                        'src': response.sound,
-                      })
-                      .appendTo("body");
-                    $('.rpress_notify_audio')
-                      .trigger("play");
+                  // Audio notification (the Notification API's own `sound`
+                  // option isn't supported by browsers). Reuse a single
+                  // element rather than appending one per poll.
+                  if (response.sound) {
+                    var $audio = $("<audio class='rpress_notify_audio'></audio>").attr('src', response.sound);
+                    if ('1' == rpress_vars.loopsound) {
+                      $audio.attr('loop', 'loop');
+                    }
+                    $audio.appendTo("body");
+                    var playPromise = $audio[0].play();
+                    if (playPromise && typeof playPromise.catch === 'function') {
+                      playPromise.catch(function () {});
+                    }
                   }
-                  //set time to notify is show
+                  // Always give the sound a definite end. A looping chime with
+                  // duration 0 would otherwise ring forever with no way to stop
+                  // it; fall back to a sane window so it self-silences.
                   var time_notify = parseInt(rpress_vars.notification_duration);
-                  if (time_notify > 0) {
-                    time_notify = time_notify * 1000;
-                    setTimeout(n.close.bind(n), time_notify);
+                  if (isNaN(time_notify) || time_notify <= 0) {
+                    time_notify = 10;
                   }
+                  setTimeout(function () {
+                    try { n.close(); } catch (e) {}
+                    stopNotifyAudio();
+                  }, time_notify * 1000);
                   n.onclose = function (event) {
-                    event.preventDefault();
-                    $('.rpress_notify_audio')
-                      .remove();
+                    stopNotifyAudio();
                   };
                 }
               },
@@ -2479,21 +2545,35 @@ jQuery(function($) {
   $( '.restropress-addon-item' ).find( '.rpress-addon-title' ).each(function(){
     $(this).attr('data-search-term', $(this).text().toLowerCase());
   });
-  $('#rpress-plugin-search').on('keyup', function(){
+  $('#rpress-plugin-search').on('input keyup', function(){
     var searchTerm = $(this).val().toLowerCase();
-    var DataId = '';
-    var SelectedTermId;
-    
-    $('.restropress-addon-item').hide()
-    $('.rpress-addon-title').each(function(index, elem) {
-      let result =  $(this).text().match(new RegExp(searchTerm,'gi'));
-      if(Array.isArray(result) && result.length >0){
-        let id = $(this).parent().find('.rpress-license-field').attr('data-item-id');
-        $(`input[data-item-id='${id}']`).parent().parent().parent().parent().parent().show()
+
+    $('.restropress-addon-item').hide();
+
+    if ( searchTerm.length === 0 ) {
+      $('.restropress-addon-item').show();
+      return;
+    }
+
+    $('.rpress-addon-title').each(function() {
+      var card = $(this).closest('.restropress-addon-item');
+      var title = $(this).attr('data-search-term') || $(this).text().toLowerCase();
+      var description = card.find('.rp-extension-description').text().toLowerCase();
+
+      if ( title.indexOf(searchTerm) !== -1 || description.indexOf(searchTerm) !== -1 ) {
+        card.show();
       }
-  
     });
    });
+
+  // Prefill the extensions search from a ?s= URL param (e.g. deep links from
+  // onboarding "Browse gateways") and apply the filter immediately.
+  (function(){
+    var $search = $('#rpress-plugin-search');
+    if ( ! $search.length || typeof URLSearchParams === 'undefined' ) { return; }
+    var term = new URLSearchParams(window.location.search).get('s');
+    if ( term ) { $search.val(term).trigger('keyup'); }
+  })();
 });
 jQuery(document).ready(function($) {
   let currentStep = 1;

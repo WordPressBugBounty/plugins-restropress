@@ -27,6 +27,14 @@ class RP_Admin_Menus
 		add_action('admin_menu', array($this, 'admin_menu'));
 		add_action('admin_menu', array($this, 'menu_order_count'));
 
+		// Style the Orders pending-count bubble as a RestroPress-orange badge.
+		add_action('admin_head', array($this, 'print_menu_badge_css'));
+
+		// The badge count is cached per date-range; invalidate it whenever an
+		// order is created or changes status so the number stays accurate.
+		add_action('rpress_insert_payment', array($this, 'bump_menu_pending_version'));
+		add_action('rpress_update_order_status', array($this, 'bump_menu_pending_version'));
+		add_action('rpress_update_payment_status', array($this, 'bump_menu_pending_version'));
 
 		//Custom menu ordering
 		add_filter('custom_menu_order', '__return_true');
@@ -54,6 +62,18 @@ class RP_Admin_Menus
 		add_submenu_page('restropress', esc_html__('RestroPress Extensions', 'restropress'), '<span style="color:#f39c12;">' . esc_html__('Extensions', 'restropress') . '</span>', 'manage_shop_settings', 'rpress-extensions', 'rpress_extensions_page');
 		// Remove the additional restropress menu
 		remove_submenu_page('restropress', 'restropress');
+
+		// Menu import/export live under Menu Items (the CPT menu), reachable at
+		// edit.php?post_type=fooditem&page=rpress-menu-(import|export). Following
+		// the WooCommerce pattern, the pages are registered but hidden from the
+		// sidebar - they surface as buttons in the Menu Items list header
+		// (see rpress_fooditem_list_table_buttons) so the submenu stays clean.
+		add_submenu_page('edit.php?post_type=fooditem', esc_html__('Import Menu', 'restropress'), esc_html__('Import', 'restropress'), 'edit_products', 'rpress-menu-import', array('RPress_Onboarding', 'render_menu_importer'));
+		if ( function_exists( 'rpress_menu_export_page' ) ) {
+			add_submenu_page('edit.php?post_type=fooditem', esc_html__('Export Menu', 'restropress'), esc_html__('Export', 'restropress'), 'export_shop_reports', 'rpress-menu-export', 'rpress_menu_export_page');
+		}
+		remove_submenu_page('edit.php?post_type=fooditem', 'rpress-menu-import');
+		remove_submenu_page('edit.php?post_type=fooditem', 'rpress-menu-export');
 	}
 	public function rpress_dashboard_page()
 	{
@@ -86,17 +106,221 @@ class RP_Admin_Menus
 			unset($submenu['restropress'][0]);
 			// Add count if user has access.
 			if (apply_filters('rpress_include_pending_order_count_in_menu', true) && current_user_can('edit_shop_payments')) {
-				$order_count = apply_filters('rpress_menu_order_count', rp_get_order_count('pending'));
+				// Count pending orders for the date range currently in effect on the
+				// Orders screen (defaults to Today, follows whatever filter the user
+				// last applied there). See get_menu_pending_count().
+				$pending_count = $this->get_menu_pending_count();
+				$order_count = apply_filters('rpress_menu_order_count', $pending_count);
 				if ($order_count) {
 					foreach ($submenu['restropress'] as $key => $menu_item) {
 						if (0 === strpos($menu_item[0], _x('Orders', 'Admin menu name', 'restropress'))) {
-							$submenu['restropress'][$key][0] .= ' <span class="awaiting-mod update-plugins count-' . esc_attr($order_count) . '"><span class="processing-count">' . number_format_i18n($order_count) . '</span></span>';
+							$submenu['restropress'][$key][0] .= ' <span class="rpress-order-badge">' . number_format_i18n($order_count) . '</span>';
 							break;
 						}
 					}
 				}
 			}
 		}
+	}
+
+	/**
+	 * Pending-order count for the Orders menu badge.
+	 *
+	 * The count tracks the Orders screen's date filter: when the user is on the
+	 * Orders list it reads the live filter from the request and remembers it, so
+	 * the badge on every other admin page mirrors that same window. With no
+	 * filter chosen it defaults to Today (the Orders screen default view).
+	 *
+	 * Cached briefly and per date-range; the cache key carries a version that is
+	 * bumped whenever an order is created or changes status.
+	 *
+	 * @since 3.3
+	 * @return int
+	 */
+	public function get_menu_pending_count()
+	{
+		$range   = $this->resolve_orders_badge_range();
+		$version = (int) get_option('rpress_menu_pending_version', 1);
+		$cache_key = 'rpress_menu_pending_' . $version . '_' . md5(wp_json_encode($range));
+
+		$cached = get_transient($cache_key);
+		if (false !== $cached) {
+			return (int) $cached;
+		}
+
+		$args = array(
+			'post_type'              => 'rpress_payment',
+			'post_status'            => array('pending'),
+			'posts_per_page'         => -1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
+		);
+
+		// Empty range = all-time (the Orders screen "All" chip). Otherwise scope
+		// to post_date, mirroring the Orders list date filter.
+		if (!$range['all'] && ($range['start'] || $range['end'])) {
+			$args['date_query'] = array(
+				array(
+					'after'     => $range['start'] ? $range['start'] . ' 00:00:00' : '',
+					'before'    => $range['end'] ? $range['end'] . ' 23:59:59' : '',
+					'inclusive' => true,
+				),
+			);
+		}
+
+		$query = new WP_Query($args);
+		$count = (int) $query->post_count;
+
+		set_transient($cache_key, $count, 2 * MINUTE_IN_SECONDS);
+		return $count;
+	}
+
+	/**
+	 * Resolve the date window the badge should count within.
+	 *
+	 * On the Orders list screen, read the live filter and persist it to user
+	 * meta. Elsewhere, reuse the last persisted filter, defaulting to Today.
+	 *
+	 * @since 3.3
+	 * @return array{all:bool,start:string,end:string}
+	 */
+	protected function resolve_orders_badge_range()
+	{
+		$page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+		$view = isset($_GET['view']) ? sanitize_key(wp_unslash($_GET['view'])) : '';
+		$on_orders_list = ('rpress-payment-history' === $page) && ('' === $view || 'list' === $view);
+
+		if ($on_orders_list) {
+			$range = $this->read_badge_range_from_request();
+			if (is_user_logged_in()) {
+				update_user_meta(get_current_user_id(), 'rpress_orders_badge_range', $range);
+			}
+			return $range;
+		}
+
+		$saved = is_user_logged_in() ? get_user_meta(get_current_user_id(), 'rpress_orders_badge_range', true) : '';
+		if (is_array($saved) && isset($saved['all'], $saved['start'], $saved['end'])) {
+			return $saved;
+		}
+		return $this->default_today_badge_range();
+	}
+
+	/**
+	 * Read the Orders list date filter out of the current request.
+	 *
+	 * @since 3.3
+	 * @return array{all:bool,start:string,end:string}
+	 */
+	protected function read_badge_range_from_request()
+	{
+		$date_range = isset($_GET['date-range']) ? sanitize_key(wp_unslash($_GET['date-range'])) : '';
+		if ('all' === $date_range) {
+			return array('all' => true, 'start' => '', 'end' => '');
+		}
+
+		$start = isset($_GET['start-date']) ? sanitize_text_field(wp_unslash($_GET['start-date'])) : '';
+		$end   = isset($_GET['end-date'])   ? sanitize_text_field(wp_unslash($_GET['end-date']))   : '';
+
+		// No explicit dates means the Orders screen is showing Today.
+		if ('' === $start && '' === $end) {
+			return $this->default_today_badge_range();
+		}
+		if ('' === $end) {
+			$end = $start;
+		}
+		if ('' === $start) {
+			$start = $end;
+		}
+
+		return array(
+			'all'   => false,
+			'start' => $this->normalize_badge_date($start),
+			'end'   => $this->normalize_badge_date($end),
+		);
+	}
+
+	/**
+	 * Today's range in the site timezone.
+	 *
+	 * @since 3.3
+	 * @return array{all:bool,start:string,end:string}
+	 */
+	protected function default_today_badge_range()
+	{
+		$today = date_i18n('Y-m-d');
+		return array('all' => false, 'start' => $today, 'end' => $today);
+	}
+
+	/**
+	 * Normalize a request date (in the site's display format) to Y-m-d.
+	 *
+	 * @since 3.3
+	 * @param string $date Raw date from the request.
+	 * @return string Y-m-d, or '' when unparseable.
+	 */
+	protected function normalize_badge_date($date)
+	{
+		if (function_exists('rpress_parse_payment_filter_date')) {
+			$parsed = rpress_parse_payment_filter_date($date);
+			if ($parsed) {
+				return $parsed;
+			}
+		}
+		$timestamp = strtotime($date);
+		return $timestamp ? gmdate('Y-m-d', $timestamp) : '';
+	}
+
+	/**
+	 * Invalidate the cached badge counts after an order changes.
+	 *
+	 * Counts are keyed by a version number, so bumping it lets every cached
+	 * range fall through to a fresh query without tracking individual keys.
+	 *
+	 * @since 3.3
+	 * @return void
+	 */
+	public function bump_menu_pending_version()
+	{
+		$version = (int) get_option('rpress_menu_pending_version', 1);
+		update_option('rpress_menu_pending_version', $version + 1, false);
+	}
+
+	/**
+	 * Output the Orders menu badge styling (RestroPress-orange rounded pill).
+	 *
+	 * @since 3.3
+	 * @return void
+	 */
+	public function print_menu_badge_css()
+	{
+		?>
+<style id="rpress-order-badge-css">
+#adminmenu .rpress-order-badge {
+	display: inline-block;
+	min-width: 18px;
+	height: 18px;
+	margin: 1px 0 0 6px;
+	padding: 0 6px;
+	border-radius: 9px;
+	background: #ff4f18;
+	color: #fff;
+	font-size: 11px;
+	line-height: 18px;
+	font-weight: 600;
+	text-align: center;
+	vertical-align: middle;
+	box-sizing: border-box;
+}
+#adminmenu li.current .rpress-order-badge,
+#adminmenu a:hover .rpress-order-badge,
+#adminmenu li.menu-top:hover .rpress-order-badge {
+	background: #ff4f18;
+	color: #fff;
+}
+</style>
+		<?php
 	}
 
 	public function rpress_add_setup_wizard_menu()
@@ -187,3 +411,4 @@ class RP_Admin_Menus
 	}
 }
 return new RP_Admin_Menus();
+

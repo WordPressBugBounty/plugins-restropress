@@ -177,7 +177,7 @@ if (!function_exists('rpress_search_form')) {
   {
     ?>
     <div class="rpress-search-wrap rpress-live-search">
-      <input id="rpress-food-search" type="text" placeholder="<?php esc_html_e('Search', 'restropress'); ?>" aria-label="<?php esc_attr_e('Search food items', 'restropress'); ?>">
+      <input id="rpress-food-search" type="text" placeholder="<?php esc_html_e('Search', 'restropress'); ?>" aria-label="<?php esc_attr_e('Search menu items', 'restropress'); ?>">
     </div>
     <?php
   }
@@ -984,7 +984,37 @@ function rp_get_store_service_hours(
     return;
   }
 
-  foreach ($store_timings as $key => $time) {
+  // ASAP is rendered as its own option ahead of the time slots, so the slot
+  // loop needs no index bookkeeping (the previous undefined-$key check here
+  // leaked PHP warnings into the option markup, which then got submitted and
+  // saved as the order's service time).
+  if ($asap_option) {
+    ?>
+    <option <?php selected('ASAP' === $selected_time, true); ?> value="ASAP"><?php echo esc_html__('ASAP', 'restropress'); ?></option>
+    <?php
+  }
+
+  // If the order's current time doesn't match any slot (slot config changed,
+  // or the time was set programmatically), keep it as a selected option so
+  // re-saving the order can't silently move it to ASAP / the first slot.
+  if ($selected_timestamp) {
+    $selected_matches_slot = false;
+    foreach ($store_timings as $probe_time) {
+      $probe_int = is_numeric($probe_time) ? (int) $probe_time : strtotime($probe_time);
+      if ($probe_int && $probe_int === $selected_timestamp) {
+        $selected_matches_slot = true;
+        break;
+      }
+    }
+    if (!$selected_matches_slot) {
+      $selected_display = date_i18n($date_format, $selected_timestamp);
+      ?>
+      <option selected value="<?php echo esc_attr($selected_display); ?>"><?php echo esc_html($selected_display); ?></option>
+      <?php
+    }
+  }
+
+  foreach ($store_timings as $time) {
 
     if (empty($time)) {
       continue;
@@ -1008,20 +1038,13 @@ function rp_get_store_service_hours(
       }
     }
 
-    // Check selected
-    $is_selected = false;
-
-    if ($asap_option && $key === 0 && $selected_time === 'ASAP') {
-      $is_selected = true;
-    } elseif ($selected_timestamp && $selected_timestamp === $time_int) {
-      $is_selected = true;
-    }
+    $is_selected = ($selected_timestamp && $selected_timestamp === $time_int);
 
     ?>
 
     <option <?php selected($is_selected, true); ?>
-      value="<?php echo esc_attr(($asap_option && $key === 0) ? 'ASAP' : $formatted_time); ?>">
-      <?php echo esc_html(($asap_option && $key === 0) ? __('ASAP', 'restropress') : $formatted_time); ?>
+      value="<?php echo esc_attr($formatted_time); ?>">
+      <?php echo esc_html($formatted_time); ?>
     </option>
 
     <?php
@@ -2649,8 +2672,8 @@ function rp_get_label_plural($lowercase = false)
 function rp_get_default_labels()
 {
   $defaults = array(
-    'singular' => __('Food Item', 'restropress'),
-    'plural' => __('Food Items', 'restropress')
+    'singular' => __('Menu Item', 'restropress'),
+    'plural' => __('Menu Items', 'restropress')
   );
   return apply_filters('rp_default_fooditems_name', $defaults);
 }
@@ -2669,6 +2692,28 @@ function rpress_get_fooditem_icon($id = '')
   if (!empty($food_type) && !empty($icon_url))
     return '<img src="' . $icon_url . '" class="rpress-food-type-icon">';
 }
+
+/**
+ * Default the new-order notification sound to the bundled chime.
+ *
+ * The setting is an upload field with no default, so a fresh store would
+ * pop the desktop notification silently. Fall back to the shipped sound
+ * (assets/sounds/new-order.wav) when the admin hasn't uploaded their own.
+ *
+ * @since 3.3
+ * @param mixed  $value   Stored option value.
+ * @param string $key     Option key.
+ * @param mixed  $default Default passed to rpress_get_option().
+ * @return mixed
+ */
+function rpress_default_notification_sound($value, $key, $default)
+{
+  if (false === $value || null === $value || '' === $value) {
+    return apply_filters('rpress_default_notification_sound', RP_PLUGIN_URL . 'assets/sounds/new-order.wav');
+  }
+  return $value;
+}
+add_filter('rpress_get_option_notification_sound', 'rpress_default_notification_sound', 10, 3);
 /**
  * Get defalut checkout fields
  *
@@ -2738,36 +2783,6 @@ function rp_get_checkout_fields()
   );
   return apply_filters('rpress_checkout_fields', $checkout_fields, $customer['delivery_address']);
 }
-/**
- *  Get order count based on order status
- *  @since 2.8.4
- *
- *  @param string $status
- *  @return int $order_count 
- */
-function rp_get_order_count($status = 'pending')
-{
-  global $wpdb;
-
-  $query = $wpdb->prepare(
-    "SELECT COUNT(DISTINCT pm.post_id) AS count
-    FROM {$wpdb->postmeta} pm
-    INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-    WHERE pm.meta_key = %s
-      AND pm.meta_value = %s
-      AND p.post_type = %s
-      AND p.post_status <> %s",
-    '_order_status',
-    $status,
-    'rpress_payment',
-    'trash'
-  );
-
-  $order_count = (int) $wpdb->get_var($query);
-
-  return apply_filters('rpress_order_count', $order_count, $status);
-}
-
 add_action('admin_init', 'my_plugin_handle_setup_form');
 function my_plugin_handle_setup_form()
 {
@@ -2949,8 +2964,15 @@ function rpress_get_service_context( $service_type_override = '' ): array
   }
 
   if ( ! $manual_service_date && ! empty( $raw ) ) {
-    setcookie( 'service_date', $raw, time() + ( 86400 * 30 ), '/' );
-    setcookie( 'delivery_date', $context['service_date'], time() + ( 86400 * 30 ), '/' );
+    // This context builder runs during template render (after wp_head has
+    // already sent output), so writing a real Set-Cookie header here triggers
+    // "headers already sent" warnings. Only set the browser cookie while
+    // headers are still open; the in-request superglobal is always updated and
+    // the storefront JS persists these cookies client-side regardless.
+    if ( ! headers_sent() ) {
+      setcookie( 'service_date', $raw, time() + ( 86400 * 30 ), '/' );
+      setcookie( 'delivery_date', $context['service_date'], time() + ( 86400 * 30 ), '/' );
+    }
     $_COOKIE['service_date']  = $raw;
     $_COOKIE['delivery_date'] = $context['service_date'];
   }

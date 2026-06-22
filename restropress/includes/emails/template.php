@@ -49,7 +49,7 @@ function rpress_email_preview_template_tags( $message ) {
 	$fooditem_list = '<ul>';
 	$fooditem_list .= '<li>' . __( 'Sample Product Title', 'restropress' ) . '<br />';
 	$fooditem_list .= '<div>';
-	$fooditem_list .= '<a href="#">' . __( 'Sample Food Item Name', 'restropress' ) . '</a> - <small>' . __( 'Optional notes about this fooditem.', 'restropress' ) . '</small>';
+	$fooditem_list .= '<a href="#">' . __( 'Sample Menu Item Name', 'restropress' ) . '</a> - <small>' . __( 'Optional notes about this fooditem.', 'restropress' ) . '</small>';
 	$fooditem_list .= '</div>';
 	$fooditem_list .= '</li>';
 	$fooditem_list .= '</ul>';

@@ -437,6 +437,57 @@ function rpress_undo_purchase( $fooditem_id = false, $payment_id = null ) {
 	}
 }
 /**
+ * Parse an admin payment date filter into a normalized Y-m-d date.
+ *
+ * The Orders screen displays dates using the site's WordPress date format,
+ * but older RestroPress filters used m/d/Y. Keep both working so old links
+ * and merchant-specific date formats are supported.
+ *
+ * @since 3.3
+ *
+ * @param string $date Date string from an admin filter.
+ * @return string Normalized Y-m-d date, or empty string when invalid.
+ */
+function rpress_parse_payment_filter_date( $date ) {
+	$date = trim( wp_strip_all_tags( (string) $date ) );
+	if ( '' === $date ) {
+		return '';
+	}
+
+	$formats = array_unique(
+		array_filter(
+			array(
+				get_option( 'date_format' ),
+				'm/d/Y',
+				'n/j/Y',
+				'Y-m-d',
+				'd/m/Y',
+				'j/n/Y',
+				'd-m-Y',
+				'j-n-Y',
+			)
+		)
+	);
+
+	foreach ( $formats as $format ) {
+		$parsed = DateTime::createFromFormat( '!' . $format, $date, wp_timezone() );
+		if ( $parsed instanceof DateTime ) {
+			$errors = DateTime::getLastErrors();
+			if ( empty( $errors['warning_count'] ) && empty( $errors['error_count'] ) ) {
+				return $parsed->format( 'Y-m-d' );
+			}
+		}
+	}
+
+	$timestamp = strtotime( $date );
+	if ( false !== $timestamp ) {
+		return date_i18n( 'Y-m-d', $timestamp );
+	}
+
+	return '';
+}
+
+/**
  * Count Payments
  *
  * Returns the total number of payments recorded.
@@ -564,40 +615,34 @@ function rpress_count_payments( $args = array() ) {
 
 	$service_date = ! empty( $args['service-date'] ) ? $args['service-date'] : $args['service_date'];
 	if ( ! empty( $service_date ) ) {
+		// Use main's timezone-correct conversion, keep 3.3's empty-date guard.
 		$service_timestamp = rpress_get_wp_timestamp( $service_date );
 		$service_date      = false !== $service_timestamp ? wp_date( 'Y-m-d', $service_timestamp, rpress_get_wp_timezone() ) : sanitize_text_field( $service_date );
-		$join             .= " LEFT JOIN $wpdb->postmeta sd ON (p.ID = sd.post_id)";
-		$where            .= $wpdb->prepare(
-			" AND sd.meta_key = %s AND sd.meta_value = %s",
-			'_rpress_delivery_date',
-			$service_date
-		);
+		if ( '' !== $service_date ) {
+			$join             .= " LEFT JOIN $wpdb->postmeta sd ON (p.ID = sd.post_id)";
+			$where            .= $wpdb->prepare(
+				" AND sd.meta_key = %s AND sd.meta_value = %s",
+				'_rpress_delivery_date',
+				$service_date
+			);
+		}
 	}
 	
 	// Limit payments count by date
-	if ( ! empty( $args['start-date'] ) && false !== strpos( $args['start-date'], '/' ) ) {
-		$date_parts = explode( '/', $args['start-date'] );
-		$month      = ! empty( $date_parts[0] ) && is_numeric( $date_parts[0] ) ? $date_parts[0] : 0;
-		$day        = ! empty( $date_parts[1] ) && is_numeric( $date_parts[1] ) ? $date_parts[1] : 0;
-		$year       = ! empty( $date_parts[2] ) && is_numeric( $date_parts[2] ) ? $date_parts[2] : 0;
-		$is_date    = checkdate( $month, $day, $year );
-		if ( false !== $is_date ) {
-			$date   = new DateTime( $args['start-date'] );
-			$where .= $wpdb->prepare( " AND p.post_date >= '%s'", $date->format( 'Y-m-d' ) );
+	if ( ! empty( $args['start-date'] ) ) {
+		$date = rpress_parse_payment_filter_date( $args['start-date'] );
+		if ( '' !== $date ) {
+			$where .= $wpdb->prepare( " AND p.post_date >= '%s'", $date );
 		}
 		// Fixes an issue with the payments list table counts when no end date is specified (partly with stats class)
 		if ( empty( $args['end-date'] ) ) {
 			$args['end-date'] = $args['start-date'];
 		}
 	}
-	if ( ! empty ( $args['end-date'] ) && false !== strpos( $args['end-date'], '/' ) ) {
-		$date_parts = explode( '/', $args['end-date'] );
-		$month      = ! empty( $date_parts[0] ) ? $date_parts[0] : 0;
-		$day        = ! empty( $date_parts[1] ) ? $date_parts[1] : 0;
-		$year       = ! empty( $date_parts[2] ) ? $date_parts[2] : 0;
-		$is_date    = checkdate( $month, $day, $year );
-		if ( false !== $is_date ) {
-			$date = gmdate( 'Y-m-d', strtotime( '+1 day', mktime( 0, 0, 0, $month, $day, $year ) ) );
+	if ( ! empty ( $args['end-date'] ) ) {
+		$date = rpress_parse_payment_filter_date( $args['end-date'] );
+		if ( '' !== $date ) {
+			$date = gmdate( 'Y-m-d', strtotime( '+1 day', strtotime( $date ) ) );
 			$where .= $wpdb->prepare( " AND p.post_date < '%s'", $date );
 		}
 	}
@@ -797,7 +842,8 @@ function rpress_get_order_status_label( $status = '' ) {
       'accepted'    => __( 'Accepted', 'restropress' ),
       'processing'  => __( 'Processing', 'restropress' ),
       'ready' 		=> __( 'Ready', 'restropress' ),
-      'transit' 	=> __( 'In Transit', 'restropress' ),
+      'transit' 	=> __( 'Picked Up', 'restropress' ),
+      'out_for_delivery' => __( 'Out for Delivery', 'restropress' ),
       'cancelled'   => __( 'Cancelled', 'restropress' ),
       'completed'   => __( 'Completed', 'restropress' ),
     );
@@ -819,8 +865,10 @@ function rpress_get_order_status_label( $status = '' ) {
       'processing_text' => '#ffffff',
       'ready' 			=> '#75A84C',
       'ready_text' 		=> '#ffffff',
-      'transit' 		=> '#cac300',
-      'transit_text' 	=> '#464343',
+      'transit' 		=> '#f5a623',
+      'transit_text' 	=> '#ffffff',
+      'out_for_delivery' => '#4a90e2',
+      'out_for_delivery_text' => '#ffffff',
       'cancelled'   	=> '#eba3a3',
       'cancelled_text' 	=> '#761919',
       'completed' 		=> '#e0f0d7',

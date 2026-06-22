@@ -1,32 +1,32 @@
 <?php
 /**
- * Food Item variable price html
+ * Food Item variable price - compact inline row.
  *
  * @package RestroPress/Admin
  */
 defined( 'ABSPATH' ) || exit;
-$count 	= !empty( $current ) ? $current : 0;
-$name  	= !empty( $price ) && is_array( $price )  ? $price['name'] : '';
-$amount = !empty( $price ) ? $price['amount'] : 0;
+$count  = ! empty( $current ) ? $current : 0;
+$name   = ! empty( $price ) && is_array( $price ) ? $price['name']   : '';
+$amount = ! empty( $price ) && is_array( $price ) ? $price['amount'] : 0;
 ?>
-<div class="rp-metabox variable-price">
-	<h3>
-		<a href="#" class="remove_row delete">
-			<?php esc_html_e( 'Remove', 'restropress' ); ?>
-		</a>
-		<div class="tips sort" data-tip="<?php esc_html_e( 'Drag Drop to reorder the addon categories.', 'restropress' );?>"></div>
-		<strong class="price_name">
-			<?php echo $name == '' ? esc_html__( 'Option Name', 'restropress' ) : esc_html( $name ); ?>
-		</strong>
-	</h3>
-	<div class="rp-metabox-content">
-		<div class="rp-col-6 price-name">
-			<input type="text" value="<?php echo esc_attr( $name ); ?>" name="rpress_variable_prices[<?php echo absint( $count ); ?>][name]" class="rp-input rp-input-variable-name" placeholder="<?php esc_html_e( 'Option Name', 'restropress' ); ?>">
-		</div>
-		<div class="rp-col-6 price-value">
-			<?php esc_html_e( 'Price:', 'restropress' ); ?>
-			<?php echo esc_html( rpress_currency_symbol() ); ?>
-			<input type="number" step="any" min="0.00" value="<?php echo esc_attr( rpress_sanitize_amount( $amount ) ); ?>" name="rpress_variable_prices[<?php echo absint( $count ); ?>][amount]" class="rp-input" placeholder="0.00">
-		</div>
-	</div>
+<div class="rp-metabox variable-price rp-varprice-row">
+	<span class="price_name" style="display:none"><?php echo $name !== '' ? esc_html( $name ) : esc_html__( 'Option Name', 'restropress' ); ?></span>
+	<span class="dashicons dashicons-menu rp-varprice-drag tips sort"
+		data-tip="<?php esc_attr_e( 'Drag to reorder', 'restropress' ); ?>"></span>
+	<input type="text"
+		value="<?php echo esc_attr( $name ); ?>"
+		name="rpress_variable_prices[<?php echo absint( $count ); ?>][name]"
+		class="rp-input rp-input-variable-name rp-varprice-name"
+		placeholder="<?php esc_attr_e( 'Option name (e.g. Small)', 'restropress' ); ?>">
+	<span class="rp-varprice-currency"><?php echo esc_html( rpress_currency_symbol() ); ?></span>
+	<input type="number"
+		step="any" min="0.00"
+		value="<?php echo esc_attr( rpress_sanitize_amount( $amount ) ); ?>"
+		name="rpress_variable_prices[<?php echo absint( $count ); ?>][amount]"
+		class="rp-input rp-varprice-amount"
+		placeholder="0.00">
+	<a href="#" class="remove_row delete rp-varprice-remove"
+		title="<?php esc_attr_e( 'Remove option', 'restropress' ); ?>">
+		<span class="dashicons dashicons-trash"></span>
+	</a>
 </div>

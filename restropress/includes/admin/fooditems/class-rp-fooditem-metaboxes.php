@@ -17,15 +17,87 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @return void
  */
 class RP_FoodItem_Meta_Boxes {
+
+  /**
+   * Running counter for section numbering - incremented as sections render so
+   * conditional sections (e.g. Inventory, which only shows when the inventory
+   * extension is active) don't leave gaps in the numbering.
+   */
+  protected static $section_counter = 0;
+
+  /**
+   * Return the next section number for use in section headers.
+   * Reset to 0 at the start of every editor render via `output_tabs()`.
+   */
+  public static function next_section_number() {
+    return ++self::$section_counter;
+  }
+
   public static function init() {
     add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ) );
     add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ), 1, 2 );
+    add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_editor_assets' ) );
+    add_filter( 'rpress_metabox_save_rpress_variable_prices', array( __CLASS__, 'strip_blank_price_rows' ) );
   }
+
+  /**
+   * Drop variable-price rows the operator left blank. An option with no name
+   * can't be displayed or selected on the menu, and a leftover "0.00" row
+   * would otherwise be picked as the item's lowest price (shown as the
+   * "from" price on the menu card). Rows are re-indexed so price IDs stay
+   * contiguous.
+   *
+   * @param mixed $prices Submitted variable price rows.
+   * @return array
+   */
+  public static function strip_blank_price_rows( $prices ) {
+    if ( ! is_array( $prices ) ) {
+      return $prices;
+    }
+    $clean = array();
+    foreach ( $prices as $price ) {
+      if ( ! is_array( $price ) ) {
+        continue;
+      }
+      $name   = isset( $price['name'] ) ? trim( (string) $price['name'] ) : '';
+      $amount = isset( $price['amount'] ) ? trim( (string) $price['amount'] ) : '';
+      // Keep a row only if it has a name; a nameless row is not a real option.
+      if ( '' === $name && ( '' === $amount || 0.0 === (float) $amount ) ) {
+        continue;
+      }
+      $clean[] = $price;
+    }
+    return array_values( $clean );
+  }
+
+  /**
+   * Enqueue the redesigned editor stylesheet and localise extra JS strings.
+   */
+  public static function enqueue_editor_assets( $hook ) {
+    $screen = get_current_screen();
+    if ( ! $screen || $screen->post_type !== 'fooditem' ) {
+      return;
+    }
+
+    // Editor stylesheet (cache-busted by file mtime)
+    wp_enqueue_style(
+      'rp-fooditem-editor',
+      RP_PLUGIN_URL . 'assets/css/rp-fooditem-editor.css',
+      array( 'rpress-admin' ),
+      filemtime( RP_PLUGIN_DIR . 'assets/css/rp-fooditem-editor.css' )
+    );
+
+    // Add body class so CSS can hide the native postimagediv sidebar box
+    add_filter( 'admin_body_class', function( $classes ) {
+      return $classes . ' fooditem-editor-active';
+    } );
+  }
+
   public static function add_meta_boxes() {
     $screen    = get_current_screen();
     $screen_id = $screen ? $screen->id : '';
-    
-    add_meta_box( 'rpress-fooditem-data', esc_html__( 'Food Item Data', 'restropress' ), array( __CLASS__, 'metabox_output' ), 'fooditem', 'normal', 'high' );
+
+    add_meta_box( 'rpress-fooditem-data', esc_html__( 'Menu Item Data', 'restropress' ), array( __CLASS__, 'metabox_output' ), 'fooditem', 'normal', 'high' );
   }
   public static function metabox_output( $post ) {
     global $thepostid, $fooditem_object,$rpress_sku;
@@ -40,9 +112,28 @@ class RP_FoodItem_Meta_Boxes {
    */
   private static function output_tabs() {
     global $post, $thepostid, $fooditem_object;
+    self::$section_counter = 0;
     include 'views/html-fooditem-data-general.php';
+    /**
+     * Extension hook - render full custom sections between Pricing and
+     * Category & Tags. Plugins should output complete `.rp-fi-section`
+     * blocks here, using `RP_FoodItem_Meta_Boxes::next_section_number()`
+     * for the section heading number.
+     */
+    do_action( 'rpress_fooditem_section_after_pricing', $post );
     include 'views/html-fooditem-data-category.php';
+    /**
+     * Extension hook - render full custom sections between Category & Tags
+     * and Addons. Same contract as `rpress_fooditem_section_after_pricing`.
+     */
+    do_action( 'rpress_fooditem_section_after_category', $post );
     include 'views/html-fooditem-data-addons.php';
+    /**
+     * Extension hook - render full custom sections after Addons (the last
+     * core section). Same contract as the other section hooks: output
+     * complete `.rp-fi-section` blocks using `next_section_number()`.
+     */
+    do_action( 'rpress_fooditem_section_after_addons', $post );
   }
   /**
    * Return array of tabs to show.
@@ -128,19 +219,26 @@ class RP_FoodItem_Meta_Boxes {
         $sku = !empty( $_POST['rpress_sku'] ) ? sanitize_text_field( $_POST['rpress_sku'] ) : null ;
         update_post_meta(  $post_id, 'rpress_sku', $sku );
     }
-    // Set the lowest price as the product price so that we can use it on frontend display.
-    if( rpress_has_variable_prices() ) {
+    // Set the lowest price as the product price so we can use it on the
+    // frontend menu card ("from ₹X") and for price sorting. Pass $post_id -
+    // the no-arg form always returns false, which left rpress_price empty.
+    if( rpress_has_variable_prices( $post_id ) ) {
       $lowest = rpress_get_lowest_price_option( $post_id );
       update_post_meta( $post_id, 'rpress_price', $lowest );
     }
     // Save categories for the food item.
-    if( !empty( $_POST['food_categories'] ) && count ( $_POST['food_categories'] ) > 0 ) {
-      $food_categories = rpress_sanitize_array( $_POST['food_categories'] );
-      wp_set_post_terms( $post_id, $food_categories, 'food-category'  );
+    // Categories. Unslash before sanitizing so names with apostrophes
+    // ("Chef's Specials") don't accumulate backslashes. An explicitly empty
+    // submission clears the category terms.
+    if ( isset( $_POST['food_categories'] ) ) {
+      $food_categories_raw = wp_unslash( $_POST['food_categories'] );
+      $food_categories     = ! empty( $food_categories_raw ) ? rpress_sanitize_array( $food_categories_raw ) : array();
+      wp_set_post_terms( $post_id, $food_categories, 'food-category' );
     }
     // Save addons for the food item.
     if ( ! empty( $_POST['addons'] ) && count ( $_POST['addons'] ) > 0 ) {
-      $addons = isset( $_POST['addons'] ) && !empty( $_POST['addons'] ) ? rpress_sanitize_array( $_POST['addons'] ) : null;
+      $addons_raw = wp_unslash( $_POST['addons'] );
+      $addons = ! empty( $addons_raw ) ? rpress_sanitize_array( $addons_raw ) : null;
       $addon_terms = array();
       $addon_to_save = array();
       
@@ -171,33 +269,40 @@ class RP_FoodItem_Meta_Boxes {
       }
       update_post_meta( $post_id, '_addon_items', '' );
     }
-    // Save Addon Category
+    // Save Addon Category (inline "new add-on group" creation).
     if ( isset( $_POST['addon_category'] ) && !empty( $_POST['addon_category'] ) && count( $_POST['addon_category'] ) > 0 ) {
       $addon_data = array();
-      $addon_categories = isset( $_POST['addon_category'] ) && !empty( $_POST['addon_category'] )  ? rpress_sanitize_array( $_POST['addon_category'] ) : array();
+      $addon_categories = rpress_sanitize_array( wp_unslash( $_POST['addon_category'] ) );
       foreach( $addon_categories as $key => $addon_cat ) {
         $name = !empty( $addon_cat['name'] ) ? $addon_cat['name'] : '';
         $type = !empty( $addon_cat['type'] ) ? $addon_cat['type'] : 'multiple';
-        $term_data = wp_insert_term( $name, 'addon_category', array( 'parent' => 0, 'slug' => sanitize_title( $name ) ) );
-        if ( !is_wp_error( $term_data ) ) {
-          if ( !empty( $term_data[ 'term_id' ] ) ) {
-            $term_id = $term_data[ 'term_id' ];
-            update_term_meta( $term_id, '_type',  $type );
-            wp_set_post_terms( $post_id, $term_id, 'addon_category', true );
-            $addon_data[$key]['category'] = $term_id;
-            if ( !empty( $addon_cat['addon_name'] ) && count( $addon_cat['addon_name'] ) > 0 ) {
-              foreach( $addon_cat['addon_name'] as $k => $child_addon ) {
-                $term_name = !empty( $child_addon ) ? $child_addon : '';
-                $term_price = !empty( $addon_cat['addon_price'][$k] ) ? $addon_cat['addon_price'][$k] : '';
-                if ( !empty( $term_name ) ) {
-                  $child_terms = wp_insert_term( $term_name, 'addon_category', array( 'parent' => $term_id, 'slug' => sanitize_title( $term_name ) ) );
-                }
-                if ( !empty( $term_price ) && !empty( $child_terms['term_id'] ) ) {
-                  update_term_meta( $child_terms['term_id'], '_price', $term_price );
-                  wp_set_post_terms( $post_id, $child_terms['term_id'], 'addon_category', true );
-                  $addon_data[$key]['items'][] = $child_terms['term_id'];
-                }
+        if ( '' === trim( (string) $name ) ) {
+          continue;
+        }
+        // Reuse an existing group of the same name instead of silently
+        // dropping it: wp_insert_term returns a WP_Error on a duplicate, so
+        // recover the existing term_id from the error data.
+        $term_id   = self::resolve_addon_term( $name, 0 );
+        if ( ! $term_id ) {
+          continue;
+        }
+        update_term_meta( $term_id, '_type',  $type );
+        wp_set_post_terms( $post_id, $term_id, 'addon_category', true );
+        $addon_data[$key]['category'] = $term_id;
+        if ( !empty( $addon_cat['addon_name'] ) && count( $addon_cat['addon_name'] ) > 0 ) {
+          foreach( $addon_cat['addon_name'] as $k => $child_addon ) {
+            $term_name = !empty( $child_addon ) ? $child_addon : '';
+            $term_price = !empty( $addon_cat['addon_price'][$k] ) ? $addon_cat['addon_price'][$k] : '';
+            if ( '' === trim( (string) $term_name ) ) {
+              continue;
+            }
+            $child_id = self::resolve_addon_term( $term_name, $term_id );
+            if ( $child_id ) {
+              if ( !empty( $term_price ) ) {
+                update_term_meta( $child_id, '_price', $term_price );
               }
+              wp_set_post_terms( $post_id, $child_id, 'addon_category', true );
+              $addon_data[$key]['items'][] = $child_id;
             }
           }
         }
@@ -206,6 +311,29 @@ class RP_FoodItem_Meta_Boxes {
     }
     // Hook to allow users to save any custom fields.
     do_action( 'rpress_save_fooditem', $post_id, $post );
+  }
+  /**
+   * Resolve an add-on group/option term by name under a parent, reusing an
+   * existing term when one already exists (wp_insert_term returns a WP_Error
+   * with the existing term_id in that case) instead of silently failing.
+   *
+   * @since 3.3
+   * @param string $name   Term name.
+   * @param int    $parent Parent term id (0 for a top-level group).
+   * @return int Term id, or 0 on failure.
+   */
+  protected static function resolve_addon_term( $name, $parent = 0 ) {
+    $inserted = wp_insert_term( $name, 'addon_category', array( 'parent' => (int) $parent, 'slug' => sanitize_title( $name ) ) );
+    if ( ! is_wp_error( $inserted ) ) {
+      return ! empty( $inserted['term_id'] ) ? (int) $inserted['term_id'] : 0;
+    }
+    // Duplicate name - WP_Error carries the existing term id in its error data.
+    $existing_id = (int) $inserted->get_error_data();
+    if ( $existing_id ) {
+      return $existing_id;
+    }
+    $existing = get_term_by( 'name', $name, 'addon_category' );
+    return ( $existing && (int) $existing->parent === (int) $parent ) ? (int) $existing->term_id : 0;
   }
   /**
    * Update food addon items
@@ -224,8 +352,14 @@ class RP_FoodItem_Meta_Boxes {
     $get_addon_items = get_post_meta( $post_id, '_addon_items', true );
     if ( is_array( $get_addon_items )
       && !empty( $get_addon_items ) ) {
+      // Key by category id so re-saving an inline group updates in place
+      // instead of appending a duplicate entry each time.
       foreach( $addon_data as $addon_list ) {
-        $get_addon_items[] = $addon_list;
+        if ( ! empty( $addon_list['category'] ) ) {
+          $get_addon_items[ $addon_list['category'] ] = $addon_list;
+        } else {
+          $get_addon_items[] = $addon_list;
+        }
       }
     }
     else {

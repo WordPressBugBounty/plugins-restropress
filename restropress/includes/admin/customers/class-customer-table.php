@@ -94,9 +94,37 @@ class RPRESS_Customer_Reports_Table extends WP_List_Table {
 		?>
 		<p class="search-box">
 			<label class="screen-reader-text" for="<?php echo esc_attr( $input_id ); ?>"><?php echo esc_html( $text ); ?>:</label>
-			<input type="search" id="<?php echo esc_attr( $input_id ); ?>" name="s" value="<?php _admin_search_query(); ?>" />
-			<?php submit_button( $text, 'button', false, false, array('ID' => 'search-submit') ); ?>
+			<input type="search" id="<?php echo esc_attr( $input_id ); ?>" class="rp-input" name="s" value="<?php _admin_search_query(); ?>" />
+			<?php submit_button( $text, 'button rp-btn rp-btn-secondary', false, false, array('ID' => 'search-submit') ); ?>
 		</p>
+		<?php
+	}
+	/**
+	 * Gets a list of CSS classes for the table tag.
+	 *
+	 * @since 3.2.8.6.4
+	 * @return array
+	 */
+	protected function get_table_classes() {
+		$classes   = parent::get_table_classes();
+		$classes[] = 'rp-table';
+
+		return array_unique( $classes );
+	}
+	/**
+	 * Render extra controls in the table navigation.
+	 *
+	 * @since 3.2.8.6.4
+	 * @param string $which The table navigation position.
+	 */
+	protected function extra_tablenav( $which ) {
+		if ( 'top' !== $which ) {
+			return;
+		}
+		?>
+		<div class="alignright actions rp-table-search-action">
+			<?php $this->search_box( esc_html__( 'Search Customers', 'restropress' ), 'rpress-customers' ); ?>
+		</div>
 		<?php
 	}
 	/**

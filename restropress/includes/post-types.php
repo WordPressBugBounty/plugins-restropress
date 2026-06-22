@@ -33,7 +33,7 @@ function rpress_setup_rpress_post_types() {
 		'not_found'             => __( 'No %2$s found', 'restropress' ),
 		'not_found_in_trash'    => __( 'No %2$s found in Trash', 'restropress' ),
 		'parent_item_colon'     => '',
-		'menu_name'             => _x( 'Food Items', 'fooditem post type menu name', 'restropress' ),
+		'menu_name'             => _x( 'Menu Items', 'fooditem post type menu name', 'restropress' ),
 		'featured_image'        => __( '%1$s Image', 'restropress' ),
 		'set_featured_image'    => __( 'Set %1$s Image', 'restropress' ),
 		'remove_featured_image' => __( 'Remove %1$s Image', 'restropress' ),
@@ -126,8 +126,8 @@ add_action( 'init', 'rpress_setup_rpress_post_types', 1 );
  */
 function rpress_get_default_labels() {
 	$defaults = array(
-	   'singular' => __( 'Food Item', 'restropress' ),
-	   'plural'   => __( 'Food Items','restropress' )
+	   'singular' => __( 'Menu Item', 'restropress' ),
+	   'plural'   => __( 'Menu Items', 'restropress' )
 	);
 	return apply_filters( 'rpress_default_fooditems_name', $defaults );
 }
@@ -207,19 +207,19 @@ function rpress_setup_fooditem_taxonomies() {
   register_taxonomy( 'food-category', array( 'fooditem' ), $food_item_args );
   //Register taxonomy for food category
   register_taxonomy_for_object_type( 'food-category', 'fooditem' );
-	/** Categories */
+	/** Add-on Groups */
 	$category_labels = array(
-		'name'              => sprintf( _x( 'Addon', 'taxonomy general name', 'restropress' ), rpress_get_label_singular() ),
-		'singular_name'     => sprintf( _x( 'Addon', 'taxonomy singular name', 'restropress' ), rpress_get_label_singular() ),
-		'search_items'      => sprintf( __( 'Search Addon', 'restropress' ), rpress_get_label_singular() ),
-		'all_items'         => sprintf( __( 'All Addon', 'restropress' ), rpress_get_label_singular() ),
-		'parent_item'       => sprintf( __( 'Parent Addon', 'restropress' ), rpress_get_label_singular() ),
-		'parent_item_colon' => sprintf( __( 'Parent Addon:', 'restropress' ), rpress_get_label_singular() ),
-		'edit_item'         => sprintf( __( 'Edit Addon', 'restropress' ), rpress_get_label_singular() ),
-		'update_item'       => sprintf( __( 'Update Addon', 'restropress' ), rpress_get_label_singular() ),
-		'add_new_item'      => sprintf( __( 'Add New Addon', 'restropress' ), rpress_get_label_singular() ),
-		'new_item_name'     => sprintf( __( 'New Addon Name', 'restropress' ), rpress_get_label_singular() ),
-		'menu_name'         => __( 'Addons', 'restropress' ),
+		'name'              => _x( 'Add-on Groups', 'taxonomy general name', 'restropress' ),
+		'singular_name'     => _x( 'Add-on Group', 'taxonomy singular name', 'restropress' ),
+		'search_items'      => __( 'Search Add-on Groups', 'restropress' ),
+		'all_items'         => __( 'All Add-on Groups', 'restropress' ),
+		'parent_item'       => __( 'Parent Add-on Group', 'restropress' ),
+		'parent_item_colon' => __( 'Parent Add-on Group:', 'restropress' ),
+		'edit_item'         => __( 'Edit Add-on Group', 'restropress' ),
+		'update_item'       => __( 'Update Add-on Group', 'restropress' ),
+		'add_new_item'      => __( 'Add New Add-on Group', 'restropress' ),
+		'new_item_name'     => __( 'New Add-on Group Name', 'restropress' ),
+		'menu_name'         => __( 'Add-ons', 'restropress' ),
 	);
 	$category_args = apply_filters( 'rpress_addon_category_args', array(
 			'hierarchical' => true,
@@ -259,8 +259,85 @@ function rpress_setup_fooditem_taxonomies() {
 	);
 	register_taxonomy( 'fooditem_tag', array( 'fooditem' ), $tag_args );
 	register_taxonomy_for_object_type( 'fooditem_tag', 'fooditem' );
+
+	/** Dietary preferences (worldwide standard: vegetarian, vegan, gluten-free, halal, etc.) */
+	$dietary_labels = array(
+		'name'                  => __( 'Dietary Labels', 'restropress' ),
+		'singular_name'         => __( 'Dietary Label', 'restropress' ),
+		'search_items'          => __( 'Search Dietary Labels', 'restropress' ),
+		'all_items'             => __( 'All Dietary Labels', 'restropress' ),
+		'edit_item'             => __( 'Edit Dietary Label', 'restropress' ),
+		'update_item'           => __( 'Update Dietary Label', 'restropress' ),
+		'add_new_item'          => __( 'Add New Dietary Label', 'restropress' ),
+		'new_item_name'         => __( 'New Dietary Label Name', 'restropress' ),
+		'menu_name'             => __( 'Dietary Labels', 'restropress' ),
+		'choose_from_most_used' => __( 'Choose from the most used dietary labels', 'restropress' ),
+	);
+	$dietary_args = apply_filters( 'rpress_dietary_args', array(
+			'hierarchical' => false,
+			'labels'       => apply_filters( 'rpress_dietary_labels', $dietary_labels ),
+			'show_ui'      => true,
+			'show_in_rest' => true,
+			'query_var'    => 'dietary',
+			'rewrite'      => array( 'slug' => $slug . '/dietary', 'with_front' => false ),
+			'capabilities' => array( 'manage_terms' => 'manage_product_terms', 'edit_terms' => 'edit_product_terms', 'assign_terms' => 'assign_product_terms', 'delete_terms' => 'delete_product_terms' ),
+		)
+	);
+	register_taxonomy( 'dietary', array( 'fooditem' ), $dietary_args );
+	register_taxonomy_for_object_type( 'dietary', 'fooditem' );
 }
 add_action( 'init', 'rpress_setup_fooditem_taxonomies', 0 );
+
+/**
+ * Seed the default dietary labels once (worldwide standard set).
+ *
+ * Runs after the taxonomy is registered; guarded by an option so it only
+ * inserts the defaults a single time and never fights manual edits.
+ *
+ * @since 3.3
+ * @return void
+ */
+function rpress_seed_default_dietary_terms() {
+	if ( ! taxonomy_exists( 'dietary' ) ) {
+		return;
+	}
+	// Versioned guard: '2' also runs a one-time de-duplication pass.
+	if ( '2' === (string) get_option( 'rpress_dietary_seeded' ) ) {
+		return;
+	}
+
+	$defaults = apply_filters( 'rpress_default_dietary_terms', array(
+		'Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 'Nut-free', 'Halal', 'Kosher', 'Spicy',
+	) );
+
+	// Index existing terms by lower-cased name so we can detect duplicates.
+	$existing = get_terms( array( 'taxonomy' => 'dietary', 'hide_empty' => false ) );
+	$by_name  = array();
+	if ( is_array( $existing ) ) {
+		foreach ( $existing as $t ) {
+			$by_name[ strtolower( $t->name ) ][] = $t;
+		}
+	}
+
+	foreach ( $defaults as $name ) {
+		$key = strtolower( $name );
+		if ( empty( $by_name[ $key ] ) ) {
+			wp_insert_term( $name, 'dietary' ); // missing - create once.
+		} elseif ( count( $by_name[ $key ] ) > 1 ) {
+			// Duplicates exist - keep the first, delete the rest (only safe for unused terms).
+			$dupes = $by_name[ $key ];
+			array_shift( $dupes );
+			foreach ( $dupes as $extra ) {
+				if ( 0 === (int) $extra->count ) {
+					wp_delete_term( $extra->term_id, 'dietary' );
+				}
+			}
+		}
+	}
+
+	update_option( 'rpress_dietary_seeded', '2' );
+}
+add_action( 'init', 'rpress_seed_default_dietary_terms', 11 );
 /**
  * Get the singular and plural labels for a fooditem taxonomy
  *

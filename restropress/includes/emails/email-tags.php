@@ -291,11 +291,7 @@ function rpress_email_tag_fooditem_list( $payment_id ) {
                 }
             }
             if ( ! empty( $special_instruction ) ) {
-              echo '<p>' . sprintf( 
-                  /* translators: %s: Placeholder for special instruction */
-                  esc_html__( '<strong>Special Instruction</strong> : %s', 'restropress' ), 
-                  esc_html( $special_instruction )
-              ) . '</p>';
+              echo '<p><strong>' . esc_html__( 'Special Instruction', 'restropress' ) . '</strong> : ' . esc_html( $special_instruction ) . '</p>';
             }
             ?>
           </td>
@@ -568,7 +564,10 @@ function rpress_email_tag_service_time( $payment_id ) {
 */
 function rpress_email_tag_order_note( $payment_id ) {
   $order_note = get_post_meta( $payment_id, '_rpress_order_note', true );
-  return $order_note;
+  $order_note = is_scalar( $order_note ) ? (string) $order_note : '';
+  $order_note = html_entity_decode( $order_note, ENT_QUOTES, 'UTF-8' );
+  $order_note = wp_strip_all_tags( $order_note );
+  return esc_html( $order_note );
 }
 /**
  * Email template tag: order_id

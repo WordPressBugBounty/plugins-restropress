@@ -1,0 +1,26 @@
+.wp-admin [class*="rp-"] {
+  box-sizing: border-box;
+}
+
+.wp-admin .rp-admin-scope {
+  color: var(--rp-color-text);
+  font-family: var(--rp-font-family);
+}
+
+.wp-admin .rp-admin-scope a:focus,
+.wp-admin .rp-admin-scope button:focus,
+.wp-admin .rp-admin-scope input:focus,
+.wp-admin .rp-admin-scope select:focus,
+.wp-admin .rp-admin-scope textarea:focus,
+.wp-admin .rp-focusable:focus {
+  outline: none;
+  box-shadow: var(--rp-focus-ring-primary);
+}
+
+.wp-admin .rp-admin-scope .dashicons {
+  line-height: 1;
+}
+
+.wp-admin .rp-admin-scope [hidden] {
+  display: none !important;
+}

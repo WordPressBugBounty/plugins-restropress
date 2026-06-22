@@ -10,6 +10,30 @@
  */
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
+
+require_once dirname( __FILE__ ) . '/class-rpress-reports-intelligence.php';
+require_once dirname( __FILE__ ) . '/report-helpers.php';
+
+$rpress_report_tab_files = apply_filters(
+	'rpress_reports_tab_files',
+	array(
+		'overview'          => dirname( __FILE__ ) . '/tabs/overview.php',
+		'sales'             => dirname( __FILE__ ) . '/tabs/sales.php',
+		'orders-risk'       => dirname( __FILE__ ) . '/tabs/orders-risk.php',
+		'menu'              => dirname( __FILE__ ) . '/tabs/menu.php',
+		'customers'         => dirname( __FILE__ ) . '/tabs/customers.php',
+		'payments-recovery' => dirname( __FILE__ ) . '/tabs/payments-recovery.php',
+		'taxes'             => dirname( __FILE__ ) . '/tabs/taxes.php',
+		'export'            => dirname( __FILE__ ) . '/tabs/export.php',
+	)
+);
+
+foreach ( $rpress_report_tab_files as $rpress_report_tab_file ) {
+	if ( is_readable( $rpress_report_tab_file ) ) {
+		require_once $rpress_report_tab_file;
+	}
+}
+
 /**
  * Reports Page
  *
@@ -20,17 +44,44 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 */
 function rpress_reports_page() {
 	$current_page = admin_url( 'admin.php?page=rpress-reports' );
-	$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'reports';
+	$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'overview';
+	$tabs       = RPRESS_Reports_Intelligence::get_tabs();
+	$filters    = RPRESS_Reports_Intelligence::get_filters();
+	$range_options = RPRESS_Reports_Intelligence::get_range_options();
+	$period_label  = isset( $range_options[ $filters['range'] ] ) ? $range_options[ $filters['range'] ] : esc_html__( 'Selected Period', 'restropress' );
+	if ( ! isset( $tabs[ $active_tab ] ) ) {
+		$active_tab = 'overview';
+	}
 	?>
-	<div class="wrap">
-		<h2><?php esc_html_e( 'RestroPress Reports', 'restropress' ); ?></h2>
-		<h2 class="nav-tab-wrapper">
-			<a href="<?php echo esc_url(add_query_arg( array( 'tab' => 'reports', 'settings-updated' => false ), $current_page )); ?>" class="nav-tab <?php echo $active_tab == 'reports' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Reports', 'restropress' ); ?></a>
-			<?php if ( current_user_can( 'export_shop_reports' ) ) { ?>
-				<a href="<?php echo esc_url(add_query_arg( array( 'tab' => 'export', 'settings-updated' => false ), $current_page )); ?>" class="nav-tab <?php echo $active_tab == 'export' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Export', 'restropress' ); ?></a>
-			<?php } ?>
+	<div class="wrap rp-admin-scope rp-reports-page">
+		<div class="rp-page-header rp-reports-header">
+			<div class="rp-page-header-titles">
+				<p class="rp-page-eyebrow"><?php esc_html_e( 'Reports', 'restropress' ); ?></p>
+				<h1 class="wp-heading-inline rp-page-title"><?php esc_html_e( 'RestroPress Reports', 'restropress' ); ?></h1>
+				<p class="rp-page-subtitle"><?php esc_html_e( 'Restaurant performance, risk trends, menu movement, customers, payments, and exports.', 'restropress' ); ?></p>
+			</div>
+			<div class="rp-reports-period-card rp-card">
+				<span><?php esc_html_e( 'Selected period', 'restropress' ); ?></span>
+				<div class="rp-reports-period-heading">
+					<strong><?php echo esc_html( $period_label ); ?></strong>
+					<button
+						type="button"
+						class="rp-icon-action rp-date-range-edit rp-reports-period-edit"
+						aria-label="<?php esc_attr_e( 'Edit selected period', 'restropress' ); ?>"
+					>
+						<span class="dashicons dashicons-edit" aria-hidden="true"></span>
+					</button>
+				</div>
+				<small><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $filters['start'] ) ) . ' - ' . date_i18n( get_option( 'date_format' ), strtotime( $filters['end'] ) ) ); ?></small>
+			</div>
+		</div>
+		<hr class="wp-header-end">
+		<nav class="nav-tab-wrapper rp-tabs" aria-label="<?php esc_attr_e( 'RestroPress reports tabs', 'restropress' ); ?>">
+			<?php foreach ( $tabs as $tab_id => $tab_label ) : ?>
+				<a href="<?php echo esc_url( add_query_arg( array( 'tab' => $tab_id, 'settings-updated' => false ), $current_page ) ); ?>" class="nav-tab rp-tab <?php echo $active_tab === $tab_id ? 'nav-tab-active' : ''; ?>"><?php echo esc_html( $tab_label ); ?></a>
+			<?php endforeach; ?>
 			<?php do_action( 'rpress_reports_tabs' ); ?>
-		</h2>
+		</nav>
 		<?php
 		do_action( 'rpress_reports_page_top' );
 		do_action( 'rpress_reports_tab_' . $active_tab );
@@ -39,6 +90,99 @@ function rpress_reports_page() {
 	</div><!-- .wrap -->
 	<?php
 }
+
+/**
+ * Render shared intelligence reports filters.
+ *
+ * @since 3.3
+ *
+ * @param string $active_tab Active report tab.
+ * @param array  $filters Current filters.
+ * @return void
+ */
+function rpress_reports_intelligence_filters( $active_tab, $filters ) {
+	$service_options = function_exists( 'rpress_get_service_types' ) ? rpress_get_service_types() : array();
+	$payment_options = rpress_get_payment_statuses();
+	$order_options   = rpress_get_order_statuses();
+	$range_options   = RPRESS_Reports_Intelligence::get_range_options();
+	?>
+	<form class="rp-grid rp-grid-filter rp-filter-bar rp-reports-intelligence-filter" method="get">
+		<input type="hidden" name="page" value="rpress-reports" />
+		<input type="hidden" name="tab" value="<?php echo esc_attr( $active_tab ); ?>" />
+		<input type="hidden" name="range" value="<?php echo esc_attr( $filters['range'] ); ?>" />
+		<input type="hidden" name="start_date" value="<?php echo esc_attr( $filters['start_date'] ); ?>" />
+		<input type="hidden" name="end_date" value="<?php echo esc_attr( $filters['end_date'] ); ?>" />
+		<div class="rp-filter-field">
+			<label for="rp-report-range"><?php esc_html_e( 'Date range', 'restropress' ); ?></label>
+			<select
+				id="rp-report-range"
+				class="rp-select rp-date-range-preset"
+				aria-label="<?php esc_attr_e( 'Select report date range', 'restropress' ); ?>"
+			>
+				<?php foreach ( $range_options as $range_id => $range_label ) : ?>
+					<option value="<?php echo esc_attr( $range_id ); ?>" <?php selected( $filters['range'], $range_id ); ?>><?php echo esc_html( $range_label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+		<?php if ( 'export' !== $active_tab ) : ?>
+			<div class="rp-filter-field">
+				<label for="rp-report-compare"><?php esc_html_e( 'Compare', 'restropress' ); ?></label>
+				<span id="rp-report-compare" class="rp-filter-value" role="text"><?php esc_html_e( 'Previous Period', 'restropress' ); ?></span>
+			</div>
+		<?php endif; ?>
+		<div class="rp-filter-field">
+			<label for="rp-report-service"><?php esc_html_e( 'Service Type', 'restropress' ); ?></label>
+			<select id="rp-report-service" name="service_type" class="rp-select">
+				<option value=""><?php esc_html_e( 'All services', 'restropress' ); ?></option>
+				<?php foreach ( $service_options as $service_id => $service_label ) : ?>
+					<option value="<?php echo esc_attr( $service_id ); ?>" <?php selected( $filters['service_type'], $service_id ); ?>><?php echo esc_html( $service_label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+		<div class="rp-filter-field">
+			<label for="rp-report-payment"><?php esc_html_e( 'Payment', 'restropress' ); ?></label>
+			<select id="rp-report-payment" name="payment_status" class="rp-select">
+				<option value=""><?php esc_html_e( 'All payments', 'restropress' ); ?></option>
+				<?php foreach ( $payment_options as $payment_id => $payment_label ) : ?>
+					<option value="<?php echo esc_attr( $payment_id ); ?>" <?php selected( $filters['payment_status'], $payment_id ); ?>><?php echo esc_html( $payment_label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+		<div class="rp-filter-field">
+			<label for="rp-report-order-status"><?php esc_html_e( 'Order Status', 'restropress' ); ?></label>
+			<select id="rp-report-order-status" name="order_status" class="rp-select">
+				<option value=""><?php esc_html_e( 'All statuses', 'restropress' ); ?></option>
+				<?php foreach ( $order_options as $status_id => $status_label ) : ?>
+					<option value="<?php echo esc_attr( $status_id ); ?>" <?php selected( $filters['order_status'], $status_id ); ?>><?php echo esc_html( $status_label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+	</form>
+	<?php
+}
+
+/**
+ * Placeholder for report tabs that are intentionally phased.
+ *
+ * @since 3.3
+ *
+ * @param string $tab Tab key.
+ * @return void
+ */
+function rpress_reports_tab_coming_next( $tab ) {
+	$filters = RPRESS_Reports_Intelligence::get_filters();
+	$tabs = RPRESS_Reports_Intelligence::get_tabs();
+	?>
+	<section class="rp-grid rp-reports-intelligence">
+		<?php rpress_reports_intelligence_filters( $tab, $filters ); ?>
+		<div class="rp-card rp-reports-panel rp-reports-coming-next">
+			<h2><?php echo esc_html( isset( $tabs[ $tab ] ) ? $tabs[ $tab ] : __( 'Report', 'restropress' ) ); ?></h2>
+			<p><?php esc_html_e( 'This section is next in the phased Reports Intelligence rollout. Overview is live first so the shared data model can be verified before expanding the remaining tabs.', 'restropress' ); ?></p>
+		</div>
+	</section>
+	<?php
+}
+
 /**
  * Default Report Views
  *
@@ -106,8 +250,8 @@ function rpress_report_views() {
 	$views        = rpress_reports_default_views();
 	$current_view = isset( $_GET['view'] )  ? sanitize_text_field( $_GET['view'] ) : 'earnings';
 	?>
-	<form id="rpress-reports-filter" method="get">
-		<select id="rpress-reports-view" name="view">
+	<form id="rpress-reports-filter" class="rp-filter-bar rp-reports-filter" method="get">
+		<select id="rpress-reports-view" name="view" class="rp-select rp-field-md">
 			<option value="-1"><?php esc_html_e( 'Report Type', 'restropress' ); ?></option>
 			<?php foreach ( $views as $view_id => $label ) : ?>
 				<option value="<?php echo esc_attr( $view_id ); ?>" <?php selected( $view_id, $current_view ); ?>><?php echo esc_html( $label ); ?></option>
@@ -115,7 +259,7 @@ function rpress_report_views() {
 		</select>
 		<?php do_action( 'rpress_report_view_actions' ); ?>
 		<input type="hidden" name="page" value="rpress-reports"/>
-		<?php submit_button( esc_html__( 'Show', 'restropress' ), 'secondary', 'submit', false ); ?>
+		<?php submit_button( esc_html__( 'Show', 'restropress' ), 'secondary rp-btn rp-btn-secondary', 'submit', false ); ?>
 	</form>
 	<?php
 	do_action( 'rpress_report_view_actions_after' );
@@ -158,7 +302,7 @@ function rpress_reports_fooditem_details() {
 			<div class="alignleft">
 				<?php rpress_report_views(); ?>
 			</div>&nbsp;
-			<button onclick="history.go(-1);" class="button-secondary"><?php esc_html_e( 'Go Back', 'restropress' ); ?></button>
+			<button onclick="history.go(-1);" class="button button-secondary rp-btn rp-btn-secondary"><?php esc_html_e( 'Go Back', 'restropress' ); ?></button>
 		</div>
 	</div>
 <?php
@@ -328,7 +472,7 @@ function rpress_reports_taxes() {
 					</select>
 					<input type="hidden" name="page" value="rpress-reports" />
 					<input type="hidden" name="view" value="taxes" />
-					<?php submit_button( esc_html__( 'Submit', 'restropress' ), 'secondary', 'submit', false ); ?>
+			<?php submit_button( esc_html__( 'Submit', 'restropress' ), 'secondary rp-btn rp-btn-secondary', 'submit', false ); ?>
 				</form>
 			</div><!-- .inside -->
 		</div><!-- .postbox -->
@@ -336,280 +480,6 @@ function rpress_reports_taxes() {
 	<?php
 }
 add_action( 'rpress_reports_view_taxes', 'rpress_reports_taxes' );
-/**
- * Renders the 'Export' tab on the Reports Page
- *
- * @since 1.0
- * @return void
- */
-function rpress_reports_tab_export() {
-	if( ! current_user_can( 'view_shop_reports' ) ) {
-		return;
-	}
-	?>
-	<div id="rpress-dashboard-widgets-wrap">
-		<div class="metabox-holder">
-			<div id="post-body">
-				<div id="post-body-content">
-					<?php do_action( 'rpress_reports_tab_export_content_top' ); ?>
-					<div class="postbox rpress-export-fooditems">
-						<h3><span><?php esc_html_e('Export FoodItems in CSV','restropress' ); ?></span></h3>
-						<div class="inside">
-							<p><?php esc_html_e( 'Download a CSV of Food Items.', 'restropress' ); ?></p>
-							<form id="rpress-export-file-fooditems" class="rpress-export-form rpress-import-export-form" method="post">
-								<?php wp_nonce_field( 'rpress_ajax_export', 'rpress_ajax_export' ); ?>
-								<input type="hidden" name="rpress-export-class" value="RPRESS_Batch_RestroPress_Export"/>
-								<input type="submit" value="<?php esc_html_e( 'Generate CSV', 'restropress' ); ?>" class="button-secondary"/>
-							</form>
-						</div><!-- .inside -->
-					</div><!-- .postbox -->
-					<div class="postbox rpress-export-earnings-report">
-						<h3><span><?php esc_html_e( 'Export Earnings Report', 'restropress' ); ?></span></h3>
-						<div class="inside">
-							<p><?php esc_html_e( 'Download a CSV giving a detailed look into earnings over time.', 'restropress' ); ?></p>
-							<form id="rpress-export-earnings" class="rpress-export-form rpress-import-export-form" method="post">
-								<?php
-								echo wp_kses(
-									RPRESS()->html->month_dropdown( 'start_month' ),
-									array(
-										'select' => array(
-											'name' => array(),
-											'id'   => array(),
-											'class'=> array(),
-										),
-										'option' => array(
-											'value'    => array(),
-											'selected' => array(),
-										),
-									)
-								);
-
-								echo wp_kses(
-									RPRESS()->html->year_dropdown( 'start_year' ),
-									array(
-										'select' => array(
-											'name' => array(),
-											'id'   => array(),
-											'class'=> array(),
-										),
-										'option' => array(
-											'value'    => array(),
-											'selected' => array(),
-										),
-									)
-								);
-								?>
-								<?php echo esc_html_x( 'to', 'Date one to date two', 'restropress' ); ?>
-								<?php
-								echo wp_kses(
-									RPRESS()->html->month_dropdown( 'end_month' ),
-									array(
-										'select' => array(
-											'name' => array(),
-											'id'   => array(),
-											'class'=> array(),
-										),
-										'option' => array(
-											'value'    => array(),
-											'selected' => array(),
-										),
-									)
-								);
-
-								echo wp_kses(
-									RPRESS()->html->year_dropdown( 'end_year' ),
-									array(
-										'select' => array(
-											'name' => array(),
-											'id'   => array(),
-											'class'=> array(),
-										),
-										'option' => array(
-											'value'    => array(),
-											'selected' => array(),
-										),
-									)
-								);
-								?>
-								<?php wp_nonce_field( 'rpress_ajax_export', 'rpress_ajax_export' ); ?>
-								<input type="hidden" name="rpress-export-class" value="RPRESS_Batch_Earnings_Report_Export"/>
-								<span>
-									<input type="submit" value="<?php esc_html_e( 'Generate CSV', 'restropress' ); ?>" class="button-secondary"/>
-									<span class="spinner"></span>
-								</span>
-							</form>
-						</div><!-- .inside -->
-					</div><!-- .postbox -->
-					<div class="postbox rpress-export-payment-history">
-						<h3><span><?php esc_html_e('Export Order History','restropress' ); ?></span></h3>
-						<div class="inside">
-							<p><?php esc_html_e( 'Download a CSV of all orders recorded.', 'restropress' ); ?></p>
-							<form id="rpress-export-payments" class="rpress-export-form rpress-import-export-form" method="post">
-								<?php
-								echo wp_kses(
-									RPRESS()->html->date_field( array(
-										'id'          => 'rpress-payment-export-start',
-										'name'        => 'start',
-										'placeholder' => esc_html__( 'Choose start date', 'restropress' ),
-									) ),
-									array(
-										'input' => array(
-											'type'        => array(),
-											'id'          => array(),
-											'name'        => array(),
-											'value'       => array(),
-											'placeholder' => array(),
-											'class'       => array(),
-										),
-									)
-								);
-
-								echo wp_kses(
-									RPRESS()->html->date_field( array(
-										'id'          => 'rpress-payment-export-end',
-										'name'        => 'end',
-										'placeholder' => esc_html__( 'Choose end date', 'restropress' ),
-									) ),
-									array(
-										'input' => array(
-											'type'        => array(),
-											'id'          => array(),
-											'name'        => array(),
-											'value'       => array(),
-											'placeholder' => array(),
-											'class'       => array(),
-										),
-									)
-								);
-								?>
-								<select name="order_status">
-									<option value=""><?php esc_html_e( 'All Statuses', 'restropress' ); ?></option>
-									<?php
-									$statuses = rpress_get_order_statuses();
-									foreach( $statuses as $status => $label ) {
-										echo '<option value ="' . esc_attr( $status ). '">' . esc_html( $label ). '</option>';
-									}
-									?>
-								</select>
-								<?php wp_nonce_field( 'rpress_ajax_export', 'rpress_ajax_export' ); ?>
-								<input type="hidden" name="rpress-export-class" value="RPRESS_Batch_Payments_Export"/>
-								<span>
-									<input type="submit" value="<?php esc_html_e( 'Generate CSV', 'restropress' ); ?>" class="button-secondary"/>
-									<span class="spinner"></span>
-								</span>
-							</form>
-						</div><!-- .inside -->
-					</div><!-- .postbox -->
-					<div class="postbox rpress-export-customers">
-						<h3><span><?php esc_html_e('Export Customers in CSV','restropress' ); ?></span></h3>
-						<div class="inside">
-							<p><?php esc_html_e( 'Download a CSV of Customers.', 'restropress' ); ?></p>
-							<form id="rpress-export-customers" class="rpress-export-form rpress-import-export-form" method="post">
-								<?php
-								echo wp_kses(
-									RPRESS()->html->product_dropdown( array(
-										'name'   => 'fooditem',
-										'id'     => 'rpress_customer_export_download',
-										'chosen' => true,
-									) ),
-									array(
-										'select' => array(
-											'name'  => array(),
-											'id'    => array(),
-											'class' => array(),
-										),
-										'option' => array(
-											'value'    => array(),
-											'selected' => array(),
-										),
-									)
-								);
-								?>
-								<?php wp_nonce_field( 'rpress_ajax_export', 'rpress_ajax_export' ); ?>
-								<input type="hidden" name="rpress-export-class" value="RPRESS_Batch_Customers_Export"/>
-								<input type="submit" value="<?php esc_html_e( 'Generate CSV', 'restropress' ); ?>" class="button-secondary"/>
-							</form>
-						</div><!-- .inside -->
-					</div><!-- .postbox -->
-					<div class="postbox rpress-export-payment-history">
-						<h3><span><?php esc_html_e('Export Sales', 'restropress' ); ?></span></h3>
-						<div class="inside">
-							<p><?php esc_html_e( 'Download a CSV of all sales.', 'restropress' ); ?></p>
-							<form id="rpress-export-sales" class="rpress-export-form rpress-import-export-form" method="post">
-								<?php
-								// Product dropdown
-								echo wp_kses(
-									RPRESS()->html->product_dropdown( array(
-										'name'   => 'fooditem_id',
-										'id'     => 'rpress_sales_export_fooditem',
-										'chosen' => true,
-									) ),
-									array(
-										'select' => array(
-											'name'  => array(),
-											'id'    => array(),
-											'class' => array(),
-										),
-										'option' => array(
-											'value'    => array(),
-											'selected' => array(),
-										),
-									)
-								);
-
-								// Start date field
-								echo wp_kses(
-									RPRESS()->html->date_field( array(
-										'id'          => 'rpress-sales-export-start',
-										'name'        => 'start',
-										'placeholder' => esc_html__( 'Choose start date', 'restropress' ),
-									) ),
-									array(
-										'input' => array(
-											'type'        => array(),
-											'id'          => array(),
-											'name'        => array(),
-											'placeholder' => array(),
-											'class'       => array(),
-										),
-									)
-								);
-
-								// End date field
-								echo wp_kses(
-									RPRESS()->html->date_field( array(
-										'id'          => 'rpress-sales-export-end',
-										'name'        => 'end',
-										'placeholder' => esc_html__( 'Choose end date', 'restropress' ),
-									) ),
-									array(
-										'input' => array(
-											'type'        => array(),
-											'id'          => array(),
-											'name'        => array(),
-											'placeholder' => array(),
-											'class'       => array(),
-										),
-									)
-								);
-								?>
-								<?php wp_nonce_field( 'rpress_ajax_export', 'rpress_ajax_export' ); ?>
-								<input type="hidden" name="rpress-export-class" value="RPRESS_Batch_Sales_Export"/>
-								<span>
-									<input type="submit" value="<?php esc_html_e( 'Generate CSV', 'restropress' ); ?>" class="button-secondary"/>
-									<span class="spinner"></span>
-								</span>
-							</form>
-						</div><!-- .inside -->
-					</div><!-- .postbox -->
-					<?php do_action( 'rpress_reports_tab_export_content_bottom' ); ?>
-				</div><!-- .post-body-content -->
-			</div><!-- .post-body -->
-		</div><!-- .metabox-holder -->
-	</div><!-- #rpress-dashboard-widgets-wrap -->
-	<?php
-}
-add_action( 'rpress_reports_tab_export', 'rpress_reports_tab_export' );
 /**
  * Retrieves estimated monthly earnings and sales
  *

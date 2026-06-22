@@ -315,7 +315,12 @@ function rpress_get_lowest_price_option( $fooditem_id = 0 ) {
 				$min_id = $key;
 			}
 		}
-		$low = $prices[ $min_id ]['amount'];
+		// Every row may have had an empty amount (e.g. a named option with no
+		// price), leaving $min_id unset - keep the 0.00 default instead of
+		// dereferencing an undefined key.
+		if ( isset( $min_id ) ) {
+			$low = $prices[ $min_id ]['amount'];
+		}
 	}
 	return rpress_sanitize_amount( $low );
 }

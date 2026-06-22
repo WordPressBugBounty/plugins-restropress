@@ -382,9 +382,16 @@ class RPRESS_Payments_Query extends RPRESS_Stats {
 		if ( ! ( $this->args['service_date'] ) ) {
 			return;
 		}
+		$service_date = function_exists( 'rpress_parse_payment_filter_date' )
+			? rpress_parse_payment_filter_date( $this->args['service_date'] )
+			: date_i18n( 'Y-m-d', strtotime( $this->args['service_date'] ) );
+		if ( '' === $service_date ) {
+			$this->__unset( 'service_date' );
+			return;
+		}
 		$this->__set( 'meta_query', array(
 			'key'   => '_rpress_delivery_date',
-			'value' => date_i18n( 'Y-m-d', strtotime( $this->args['service_date'] ) )
+			'value' => $service_date,
 		) );
 		$this->__unset( 'service_date' );
 	}

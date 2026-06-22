@@ -1754,9 +1754,14 @@ jQuery(function ($) {
           $('#rpressModal .item-description')
             .html(response.data.description);
 
-          $('#rpressModal .item-image').attr('src', '');
+          // Set the image only when one exists. An empty src makes the browser
+          // re-request the page URL and render a broken image, so remove the
+          // attribute and hide the element when the item has no photo.
+          var $itemImage = $('#rpressModal .item-image');
           if (response.data.image_url) {
-            $('#rpressModal .item-image').attr('src', response.data.image_url);
+            $itemImage.attr('src', response.data.image_url).prop('hidden', false);
+          } else {
+            $itemImage.removeAttr('src').prop('hidden', true);
           }
           $('#rpressModal .cart-item-price')
             .attr('data-price', response.data.price_raw);
@@ -1851,9 +1856,13 @@ jQuery(function ($) {
             $('#rpressModal')
               .find('.submit-fooditem-button')
               .attr('data-title', FoodItemName);
-            $('#rpressModal .item-image').attr('src', '');
+            // Set the image only when one exists (empty src re-requests the page
+            // URL and shows a broken image); hide the element otherwise.
+            var $editItemImage = $('#rpressModal .item-image');
             if (response.data.image_url) {
-              $('#rpressModal .item-image').attr('src', response.data.image_url);
+              $editItemImage.attr('src', response.data.image_url).prop('hidden', false);
+            } else {
+              $editItemImage.removeAttr('src').prop('hidden', true);
             }
             $('#rpressModal')
               .find('.submit-fooditem-button')
@@ -2084,9 +2093,13 @@ jQuery(function ($) {
               }
               $('.delivery-items-options')
                 .css('display', 'block');
+              // Always reveal the cart summary/checkout once an item is added.
+              // The ".rpress.item-order" header is now always present in the
+              // template, so the removeClass below must not be gated by it or
+              // the checkout button stays hidden until a page refresh.
+              $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').removeClass('empty-cart');
               if ($('div.rpress.item-order').length == 0) {
                 var orderitems = $('<div class="rpress item-order"><h4>Ordered menu</h4><span>1 items</span></div>');
-                $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').removeClass('empty-cart');
                 $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').prepend(orderitems);
               }
               if ($('li.rpress-cart-item')
@@ -3633,7 +3646,7 @@ jQuery(function ($) {
 /* RestroPress active category highlighter */
 jQuery(function ($) {
   const rp_category_links = $('.rpress-category-lists .rpress-category-link');
-  const rp_category_links_grid = $('#pnProductNavContents .pn-ProductNav_Link');
+  const rp_category_links_grid = $('#pnProductNavContents .pn-ProductNav_Link, #pnProductNavContentsMobile .pn-ProductNav_Link');
   if (rp_category_links.length > 0) {
     function rp_apply_list_active_term(termId) {
       if (typeof termId === 'undefined' || termId === null || termId === '') {
@@ -3701,44 +3714,51 @@ jQuery(function ($) {
 
   if (rp_category_links_grid.length > 0) {
     const header_height = $('header:eq(0)').height();
-    const $nav = $('#pnProductNav');          // the actual scroller
-    const $navContents = $('#pnProductNavContents');  // inner content
-    const $indicator = $('#pnIndicator');
+    // Drive BOTH the desktop and mobile category navs (identical markup, different
+    // IDs). Previously only the desktop nav was wired, so on mobile the active
+    // category never highlighted or moved its indicator on scroll.
+    const navGroups = [
+      { $nav: $('#pnProductNav'),       $contents: $('#pnProductNavContents'),       $indicator: $('#pnIndicator') },
+      { $nav: $('#pnProductNavMobile'), $contents: $('#pnProductNavContentsMobile'), $indicator: $('#pnIndicatorMobile') }
+    ].filter(function (g) { return g.$contents.length; });
     let current_category = rp_category_links_grid.eq(0).attr('href').substr(1);
 
-    // Make sure navContents is positioned so indicator can be positioned inside it
-    if ($navContents.length && $navContents.css('position') === 'static') {
-      $navContents.css('position', 'relative');
+    navGroups.forEach(function (g) {
+      if (g.$contents.css('position') === 'static') {
+        g.$contents.css('position', 'relative');
+      }
+    });
+
+    function rpNavGroupVisible(g) {
+      return g.$contents.length && g.$contents.is(':visible') && g.$contents[0].getBoundingClientRect().width > 0;
     }
 
-    // ---- helper: move indicator visually under the link ----
-    function moveIndicatorTo($link) {
-      if (!$link || !$link.length) return;
-
-      // Use bounding rects so calculation is robust even with transforms / scrolling
+    // ---- helper: position one group's indicator under its active link ----
+    function moveIndicatorInGroup(g, $link) {
+      if (!$link || !$link.length || !g.$indicator.length) return;
       const linkRect = $link[0].getBoundingClientRect();
-      const contentsRect = $navContents[0].getBoundingClientRect();
-
-      // left relative to contents' left (visual coordinate)
-      const left = Math.round(linkRect.left - contentsRect.left + ($navContents.scrollLeft() || 0));
+      const contentsRect = g.$contents[0].getBoundingClientRect();
+      const left = Math.round(linkRect.left - contentsRect.left + (g.$contents.scrollLeft() || 0));
       const width = Math.round(linkRect.width);
-
-      // Apply width and translateX in px (reliable)
-      $indicator.css({
-        width: width + 'px',
-        transform: 'translateX(' + left + 'px)'
-      });
-
-      // Ensure the active link is visible / centered inside the scroller
-      scrollActiveIntoView($link);
+      g.$indicator.css({ width: width + 'px', transform: 'translateX(' + left + 'px)' });
+      scrollActiveIntoView(g, $link);
     }
 
-    // ---- helper: scroll the scroller so the link is visible/centered ----
-    function scrollActiveIntoView($link) {
+    // ---- move the indicator under the active category in every VISIBLE nav ----
+    function moveIndicatorTo(category) {
+      navGroups.forEach(function (g) {
+        if (!rpNavGroupVisible(g)) return; // skip the hidden nav (e.g. mobile on desktop)
+        const $link = g.$contents.find('.pn-ProductNav_Link').filter('[href="#' + category + '"]');
+        if ($link.length) moveIndicatorInGroup(g, $link);
+      });
+    }
+
+    // ---- helper: scroll a group's scroller so the link is visible/centered ----
+    function scrollActiveIntoView(g, $link) {
       if (!$link || !$link.length) return;
 
       // Choose real scroller (outer nav) - fallback to contents if outer missing
-      const $scroller = $nav.length ? $nav : $navContents;
+      const $scroller = g.$nav.length ? g.$nav : g.$contents;
       if (!$scroller.length) return;
 
       const scrollerEl = $scroller[0];
@@ -3762,7 +3782,7 @@ jQuery(function ($) {
 
       // If the inner contents currently has a transform (arrow animation in progress),
       // animated scrollLeft may behave unexpectedly. In that case use scrollIntoView fallback:
-      const contentsTransform = getComputedStyle($navContents[0]).transform;
+      const contentsTransform = getComputedStyle(g.$contents[0]).transform;
       if (contentsTransform && contentsTransform !== 'none') {
         // fallback - ask the browser to scroll the nearest scrollable ancestor
         try {
@@ -3794,9 +3814,9 @@ jQuery(function ($) {
         .filter(`[href="#${current_category}"]`)
         .attr('aria-selected', 'true').addClass('mnuactive');
 
-      // Move indicator + ensure visible
+      // Move indicator + ensure visible (in every visible nav)
       if ($activeLink.length) {
-        moveIndicatorTo($activeLink);
+        moveIndicatorTo(current_category);
       }
 
       // Sync the dropdown menu
@@ -3834,7 +3854,7 @@ jQuery(function ($) {
 
       const $active = rp_category_links_grid.filter(`[href="#${current}"]`);
       if ($active.length) {
-        moveIndicatorTo($active);
+        moveIndicatorTo(current);
 
         // Sync dropdown
         const activeHref = $active.attr("href");
@@ -3846,8 +3866,8 @@ jQuery(function ($) {
     // Nav link click instant feedback
     $(document).on("click", ".pn-ProductNav_Link", function (e) {
       const $this = $(this);
-      // Move indicator & scroll into view immediately
-      moveIndicatorTo($this);
+      // Move indicator & scroll into view immediately (in every visible nav)
+      moveIndicatorTo($this.attr("href").substr(1));
 
       // Sync dropdown
       const activeHref = $this.attr("href");
@@ -5361,14 +5381,16 @@ jQuery(document).ready(function ($) {
         }
       });
 
-      // Recalculate left & width on resize
+      // Recalculate left & width on resize. Reset the menu to its natural size -
+      // never force the horizontal category nav to the sidebar's height (that left
+      // a large empty band around the nav after resizing).
       $(window).on('resize.stickyMenu', function () {
         $menu.css({
           'position': 'static',
           'width': '',
           'top': '',
           'left': '',
-          'height': $sidebar.length > 0 ? $sidebar.outerHeight() : 'auto'
+          'height': ''
         });
         menuOffset = $menu.offset().top;
       });

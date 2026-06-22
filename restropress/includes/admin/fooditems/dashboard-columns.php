@@ -322,7 +322,7 @@ function rpress_save_bulk_edit() {
 	check_ajax_referer( 'rpress-bulk-edit', 'rpress_bulk_nonce' );
 
 	if ( ! current_user_can( 'edit_products' ) ) {
-		wp_die( esc_html__( 'You do not have permission to edit food items.', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
+		wp_die( esc_html__( 'You do not have permission to edit menu items.', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
 
 	$post_ids = ( isset( $_POST['post_ids'] ) && ! empty( $_POST['post_ids'] ) ) ? rpress_sanitize_array( wp_unslash( $_POST['post_ids'] ) ) : array();
@@ -340,6 +340,92 @@ function rpress_save_bulk_edit() {
 	die();
 }
 add_action( 'wp_ajax_rpress_save_bulk_edit', 'rpress_save_bulk_edit' );
+/**
+ * Add Duplicate link to food item row actions.
+ */
+function rpress_fooditem_duplicate_row_action( $actions, $post ) {
+	if ( $post->post_type !== 'fooditem' || ! current_user_can( 'edit_post', $post->ID ) ) {
+		return $actions;
+	}
+	$nonce = wp_create_nonce( 'rpress_duplicate_fooditem_' . $post->ID );
+	$url   = admin_url( 'admin.php?action=rpress_duplicate_fooditem&post=' . $post->ID . '&_wpnonce=' . $nonce );
+	$actions['rp-row-action-duplicate'] = '<a href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Duplicate this menu item as a draft', 'restropress' ) . '">' . esc_html__( 'Duplicate', 'restropress' ) . '</a>';
+	return $actions;
+}
+add_filter( 'post_row_actions', 'rpress_fooditem_duplicate_row_action', 10, 2 );
+
+/**
+ * Handle duplicate food item action.
+ */
+function rpress_handle_duplicate_fooditem() {
+	if ( ! isset( $_GET['action'] ) || $_GET['action'] !== 'rpress_duplicate_fooditem' ) {
+		return;
+	}
+	if ( empty( $_GET['post'] ) || empty( $_GET['_wpnonce'] ) ) {
+		wp_die( esc_html__( 'Missing parameters.', 'restropress' ) );
+	}
+
+	$post_id = absint( $_GET['post'] );
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'rpress_duplicate_fooditem_' . $post_id ) ) {
+		wp_die( esc_html__( 'Security check failed.', 'restropress' ) );
+	}
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		wp_die( esc_html__( 'You do not have permission to duplicate this item.', 'restropress' ) );
+	}
+
+	$original = get_post( $post_id );
+	if ( ! $original || $original->post_type !== 'fooditem' ) {
+		wp_die( esc_html__( 'Invalid menu item.', 'restropress' ) );
+	}
+
+	$new_id = wp_insert_post(
+		array(
+			'post_title'   => $original->post_title . ' ' . esc_html__( '(Copy)', 'restropress' ),
+			'post_content' => $original->post_content,
+			'post_excerpt' => $original->post_excerpt,
+			'post_type'    => 'fooditem',
+			'post_status'  => 'draft',
+			'post_author'  => get_current_user_id(),
+		)
+	);
+
+	if ( is_wp_error( $new_id ) ) {
+		wp_die( esc_html__( 'Could not duplicate the menu item.', 'restropress' ) );
+	}
+
+	// Copy all post meta except thumbnail (handled separately below).
+	$meta_rows = get_post_meta( $post_id );
+	foreach ( $meta_rows as $meta_key => $meta_values ) {
+		if ( $meta_key === '_thumbnail_id' ) {
+			continue;
+		}
+		foreach ( $meta_values as $value ) {
+			add_post_meta( $new_id, $meta_key, maybe_unserialize( $value ) );
+		}
+	}
+
+	// Copy featured image.
+	$thumbnail_id = get_post_thumbnail_id( $post_id );
+	if ( $thumbnail_id ) {
+		set_post_thumbnail( $new_id, $thumbnail_id );
+	}
+
+	// Copy taxonomies (food-category, addon_category, fooditem_tag).
+	$taxonomies = get_object_taxonomies( 'fooditem' );
+	foreach ( $taxonomies as $taxonomy ) {
+		$terms = wp_get_object_terms( $post_id, $taxonomy, array( 'fields' => 'ids' ) );
+		if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+			wp_set_object_terms( $new_id, $terms, $taxonomy );
+		}
+	}
+
+	do_action( 'rpress_duplicate_fooditem', $new_id, $post_id );
+
+	wp_safe_redirect( admin_url( 'post.php?action=edit&post=' . $new_id ) );
+	exit;
+}
+add_action( 'admin_action_rpress_duplicate_fooditem', 'rpress_handle_duplicate_fooditem' );
+
 function add_addons_price_type_columns( $columns ) {
     $columns['price-type'] = 'Price/Type';
     return $columns;
@@ -363,3 +449,47 @@ function add_addons_price_type_column_content( $content, $column_name, $term_id 
     return $content;
 }
 add_filter( 'manage_addon_category_custom_column', 'add_addons_price_type_column_content', 10, 3 );
+
+/**
+ * Add "Import" and "Export" buttons to the Menu Items list header, next to
+ * "Add New Menu Item" - the WooCommerce Products pattern. The import/export
+ * pages are registered but hidden from the submenu (see admin-pages.php), so
+ * these buttons are their primary entry point.
+ *
+ * @since 3.3
+ * @return void
+ */
+function rpress_fooditem_list_header_buttons() {
+	$screen = get_current_screen();
+	if ( ! $screen || 'fooditem' !== $screen->post_type || 'edit' !== $screen->base ) {
+		return;
+	}
+	$can_import = current_user_can( 'edit_products' );
+	$can_export = current_user_can( 'export_shop_reports' );
+	if ( ! $can_import && ! $can_export ) {
+		return;
+	}
+	$import_url = esc_url( admin_url( 'edit.php?post_type=fooditem&page=rpress-menu-import' ) );
+	$export_url = esc_url( admin_url( 'edit.php?post_type=fooditem&page=rpress-menu-export' ) );
+	$buttons    = '';
+	if ( $can_import ) {
+		$buttons .= '<a href="' . $import_url . '" class="page-title-action rpress-menu-import-action">' . esc_html__( 'Import', 'restropress' ) . '</a>';
+	}
+	if ( $can_export ) {
+		$buttons .= '<a href="' . $export_url . '" class="page-title-action rpress-menu-export-action">' . esc_html__( 'Export', 'restropress' ) . '</a>';
+	}
+	?>
+	<script type="text/javascript">
+	jQuery(function ($) {
+		var $heading = $('.wrap h1.wp-heading-inline').first();
+		if (!$heading.length) { return; }
+		// Guard against double insertion (the hook can fire more than once).
+		if ($('.page-title-action.rpress-menu-import-action, .page-title-action.rpress-menu-export-action').length) { return; }
+		var $anchor = $heading.nextAll('a.page-title-action').last();
+		var html = <?php echo wp_json_encode( $buttons ); ?>;
+		if ($anchor.length) { $anchor.after(html); } else { $heading.after(html); }
+	});
+	</script>
+	<?php
+}
+add_action( 'admin_head-edit.php', 'rpress_fooditem_list_header_buttons' );

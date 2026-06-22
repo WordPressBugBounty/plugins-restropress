@@ -11,9 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function rpress_register_default_customer_views( $views ) {
 	$default_views = array(
 		'overview'  => 'rpress_customers_view',
-		'delete'    => 'rpress_customers_delete_view',
-		'notes'     => 'rpress_customer_notes_view',
-		'tools'      => 'rpress_customer_tools_view',
+		'orders'    => 'rpress_customers_view',
+		'notes'     => 'rpress_customers_view',
+		'tools'     => 'rpress_customers_view',
+		'delete'    => 'rpress_customers_view',
 	);
 	return array_merge( $views, $default_views );
 }
@@ -28,6 +29,7 @@ add_filter( 'rpress_customer_views', 'rpress_register_default_customer_views', 1
 function rpress_register_default_customer_tabs( $tabs ) {
 	$default_tabs = array(
 		'overview' => array( 'dashicon' => 'dashicons-admin-users', 'title' => esc_html_x( 'Profile', 'Customer Details tab title', 'restropress' ) ),
+		'orders'   => array( 'dashicon' => 'dashicons-cart', 'title' => esc_html_x( 'Orders', 'Customer Orders tab title', 'restropress' ) ),
 		'notes'    => array( 'dashicon' => 'dashicons-admin-comments', 'title' => esc_html_x( 'Notes', 'Customer Notes tab title', 'restropress' ) ),
 		'tools'    => array( 'dashicon' => 'dashicons-admin-tools', 'title' => esc_html_x( 'Tools', 'Customer Tools tab title', 'restropress' ) ),
 	);

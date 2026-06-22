@@ -1191,3 +1191,62 @@ function rpress_radio_image_callback($args)
 		echo '<p class="description">' . wp_kses_post($args['desc']) . '</p>';
 	}
 }
+
+/**
+ * Build display-ready dietary label chips for a menu item.
+ *
+ * Dietary labels (Vegetarian, Vegan, Gluten-free, Halal, etc.) are stored in
+ * the `dietary` taxonomy introduced in 3.3. They were editable in the admin but
+ * never surfaced on the storefront - this renders them on the menu card.
+ *
+ * @since 3.3
+ * @param int $fooditem_id Menu item ID. Defaults to the current post.
+ * @return string Chip HTML, or an empty string when there are no labels.
+ */
+function rpress_get_dietary_labels_html($fooditem_id = 0)
+{
+	$fooditem_id = $fooditem_id ? $fooditem_id : get_the_ID();
+
+	if (!$fooditem_id) {
+		return '';
+	}
+
+	// Allow themes/extensions to switch dietary display off (globally or per item).
+	if (!apply_filters('rpress_show_dietary_labels', true, $fooditem_id)) {
+		return '';
+	}
+
+	$terms = get_the_terms($fooditem_id, 'dietary');
+
+	if (empty($terms) || is_wp_error($terms)) {
+		return '';
+	}
+
+	$chips = '';
+	foreach ($terms as $term) {
+		$chips .= sprintf(
+			'<span class="rpress-dietary-label dietary-%1$s">%2$s</span>',
+			esc_attr($term->slug),
+			esc_html($term->name)
+		);
+	}
+
+	$html = '<div class="rpress_fooditem_dietary">' . $chips . '</div>';
+
+	return apply_filters('rpress_dietary_labels_html', $html, $fooditem_id, $terms);
+}
+
+/**
+ * Echo the dietary labels for a menu item.
+ *
+ * Hooked to `rpress_fooditem_after_title` so the labels render directly under
+ * the item title in both the list and grid storefront layouts.
+ *
+ * @since 3.3
+ * @return void
+ */
+function rpress_render_dietary_labels()
+{
+	echo rpress_get_dietary_labels_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in helper.
+}
+add_action('rpress_fooditem_after_title', 'rpress_render_dietary_labels', 5);

@@ -25,16 +25,16 @@ $flat_display      = rpress_get_discount_type( $discount_id ) == 'flat' ? '' : '
 $percent_display   = rpress_get_discount_type( $discount_id ) == 'percent' ? '' : ' style="display:none;"';
 $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 ?>
-<h2><?php esc_html_e( 'Edit Discount', 'restropress' ); ?></h2>
+<h2 class="screen-reader-text"><?php esc_html_e( 'Edit Discount', 'restropress' ); ?></h2>
 <?php if ( isset( $_GET['rpress_discount_updated'] ) ) : ?>
-	<div id="message" class="updated">
+	<div id="message" class="updated notice rp-notice">
 		<p><strong><?php esc_html_e( 'Discount code updated.', 'restropress' ); ?></strong></p>
 		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=rpress-discounts' ) ); ?>"><?php esc_html_e( '&larr; Back to Discounts', 'restropress' ); ?></a></p>
 	</div>
 <?php endif; ?>
-<form id="rpress-edit-discount" action="" method="post">
+<form id="rpress-edit-discount" class="rp-card rp-discount-form" action="" method="post">
 	<?php do_action( 'rpress_edit_discount_form_top', $discount_id, $discount ); ?>
-	<table class="form-table">
+	<table class="form-table rp-discount-form-table">
 		<tbody>
 			<?php do_action( 'rpress_edit_discount_form_before_name', $discount_id, $discount ); ?>
 			<tr>
@@ -42,7 +42,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-name"><?php esc_html_e( 'Name', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input name="name" required="required" id="rpress-name" type="text" value="<?php echo esc_attr( stripslashes( $discount->post_title ) ); ?>" />
+					<input name="name" required="required" id="rpress-name" class="rp-input rp-field-md" type="text" value="<?php echo esc_attr( stripslashes( $discount->post_title ) ); ?>" />
 					<p class="description"><?php esc_html_e( 'The name of this discount', 'restropress' ); ?></p>
 				</td>
 			</tr>
@@ -52,7 +52,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-code"><?php esc_html_e( 'Code', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input type="text" required="required" id="rpress-code" name="code" value="<?php echo esc_attr( rpress_get_discount_code( $discount_id ) ); ?>" pattern="[a-zA-Z0-9-_]+" />
+					<input type="text" required="required" id="rpress-code" class="rp-input rp-field-md" name="code" value="<?php echo esc_attr( rpress_get_discount_code( $discount_id ) ); ?>" pattern="[a-zA-Z0-9-_]+" />
 					<p class="description"><?php esc_html_e( 'Enter a code for this discount, such as 10PERCENT. Only alphanumeric characters are allowed.', 'restropress' ); ?></p>
 				</td>
 			</tr>
@@ -62,7 +62,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-type"><?php esc_html_e( 'Type', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<select name="type" id="rpress-type">
+					<select name="type" id="rpress-type" class="rp-select rp-field-md">
 						<option value="percent" <?php selected( rpress_get_discount_type( $discount_id ), 'percent' ); ?>><?php esc_html_e( 'Percentage', 'restropress' ); ?></option>
 						<option value="flat"<?php selected( rpress_get_discount_type( $discount_id ), 'flat' ); ?>><?php esc_html_e( 'Flat amount', 'restropress' ); ?></option>
 					</select>
@@ -75,7 +75,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-amount"><?php esc_html_e( 'Amount', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input type="text" class="rpress-price-field" required="required" id="rpress-amount" name="amount" value="<?php echo esc_attr( rpress_get_discount_amount( $discount_id ) ); ?>" />
+					<input type="text" class="rpress-price-field rp-input rp-field-sm" required="required" id="rpress-amount" name="amount" value="<?php echo esc_attr( rpress_get_discount_amount( $discount_id ) ); ?>" />
 					<p class="description rpress-amount-description flat"<?php echo esc_attr( $flat_display ); ?>><?php printf( esc_html__( 'Enter the discount amount in %s', 'restropress' ), esc_html(rpress_get_currency()) ); ?></p>
 					<p class="description rpress-amount-description percent"<?php echo esc_attr( $percent_display ); ?>><?php esc_html_e( 'Enter the discount percentage. 10 = 10%', 'restropress' ); ?></p>
 				</td>
@@ -93,6 +93,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 						$args = array(
 							'name'        => 'products[]',
 							'id'          => 'products',
+							'class'       => 'rp-select rp-field-lg',
 							'selected'    => $product_reqs,
 							'multiple'    => true,
 							'chosen'      => true,
@@ -126,7 +127,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					</p>
 					<div id="rpress-discount-product-conditions"<?php echo esc_attr( $condition_display ); ?>>
 						<p>
-							<select id="rpress-product-condition" name="product_condition">
+							<select id="rpress-product-condition" name="product_condition" class="rp-select rp-field-lg">
 							<option value="all"<?php selected( 'all', $condition ); ?>><?php printf( 
 								/* translators: Option label for selecting that the cart must contain all selected items, %s is a placeholder for the item type */
 								esc_html__( 'Cart must contain all selected %s', 'restropress' ), esc_html(rpress_get_label_plural()) );  ?></option>
@@ -161,6 +162,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					$args = array(
 						'name'        => 'excluded-products[]',
 						'id'          => 'excluded-products',
+						'class'       => 'rp-select rp-field-lg',
 						'selected'    => $excluded_products,
 						'multiple'    => true,
 						'chosen'      => true,
@@ -200,6 +202,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					$args = array(
 						'name'        => 'categories[]',
 						'id'          => 'categories',
+						'class'       => 'rp-select rp-field-lg',
 						'selected'    => $category_reqs,
 						'multiple'    => true,
 						'chosen'      => true,
@@ -275,7 +278,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-start"><?php esc_html_e( 'Start date', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input name="start" id="rpress-start" type="text" value="<?php echo esc_attr( rpress_get_discount_start_date( $discount_id ) ); ?>"  class="rpress_datepicker"/>
+					<input name="start" id="rpress-start" type="text" value="<?php echo esc_attr( rpress_get_discount_start_date( $discount_id ) ); ?>"  class="rpress_datepicker rp-input rp-field-md"/>
 					<p class="description"><?php esc_html_e( 'Enter the start date for this discount code in the format of mm/dd/yyyy. For no start date, leave blank. If entered, the discount can only be used after or on this date.', 'restropress' ); ?></p>
 				</td>
 			</tr>
@@ -285,7 +288,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-expiration"><?php esc_html_e( 'Expiration date', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input name="expiration" id="rpress-expiration" type="text" value="<?php echo esc_attr( rpress_get_discount_expiration( $discount_id ) ); ?>"  class="rpress_datepicker"/>
+					<input name="expiration" id="rpress-expiration" type="text" value="<?php echo esc_attr( rpress_get_discount_expiration( $discount_id ) ); ?>"  class="rpress_datepicker rp-input rp-field-md"/>
 					<p class="description"><?php esc_html_e( 'Enter the expiration date for this discount code in the format of mm/dd/yyyy. For no expiration, leave blank', 'restropress' ); ?></p>
 				</td>
 			</tr>
@@ -295,7 +298,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-max-uses"><?php esc_html_e( 'Max Uses', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input type="text" id="rpress-max-uses" name="max" value="<?php echo esc_attr( rpress_get_discount_max_uses( $discount_id ) ); ?>" style="width: 40px;"/>
+					<input type="text" id="rpress-max-uses" class="rp-input rp-field-sm" name="max" value="<?php echo esc_attr( rpress_get_discount_max_uses( $discount_id ) ); ?>"/>
 					<p class="description"><?php esc_html_e( 'The maximum number of times this discount can be used. Leave blank for unlimited.', 'restropress' ); ?></p>
 				</td>
 			</tr>
@@ -305,7 +308,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-min-cart-amount"><?php esc_html_e( 'Minimum Amount', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input type="text" id="rpress-min-cart-amount" name="min_price" value="<?php echo esc_attr( rpress_get_discount_min_price( $discount_id ) ); ?>" style="width: 40px;"/>
+					<input type="text" id="rpress-min-cart-amount" class="rp-input rp-field-sm" name="min_price" value="<?php echo esc_attr( rpress_get_discount_min_price( $discount_id ) ); ?>"/>
 					<p class="description"><?php esc_html_e( 'The minimum amount that must be purchased before this discount can be used. Leave blank for no minimum.', 'restropress' ); ?></p>
 				</td>
 			</tr>
@@ -315,7 +318,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-status"><?php esc_html_e( 'Status', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<select name="status" id="rpress-status">
+					<select name="status" id="rpress-status" class="rp-select rp-field-md">
 						<option value="active" <?php selected( $discount->post_status, 'active' ); ?>><?php esc_html_e( 'Active', 'restropress' ); ?></option>
 						<option value="inactive"<?php selected( $discount->post_status, 'inactive' ); ?>><?php esc_html_e( 'Inactive', 'restropress' ); ?></option>
 					</select>
@@ -340,6 +343,6 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 		<input type="hidden" name="discount-id" value="<?php echo absint( $_GET['discount'] ); ?>"/>
 		<input type="hidden" name="rpress-redirect" value="<?php echo esc_url( admin_url( 'admin.php?page=rpress-discounts&rpress-action=edit_discount&discount=' . $discount_id ) ); ?>"/>
 		<input type="hidden" name="rpress-discount-nonce" value="<?php echo esc_attr(wp_create_nonce( 'rpress_discount_nonce' )); ?>"/>
-		<input type="submit" value="<?php esc_html_e( 'Update Discount Code', 'restropress' ); ?>" class="button-primary"/>
+		<input type="submit" value="<?php esc_html_e( 'Update Discount Code', 'restropress' ); ?>" class="button button-primary rp-btn rp-btn-primary"/>
 	</p>
 </form>

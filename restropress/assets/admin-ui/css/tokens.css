@@ -1,0 +1,77 @@
+:root {
+  --rp-color-primary: #f25a24;
+  --rp-color-primary-hover: #d94b1d;
+  --rp-color-primary-soft: #fff4e8;
+  --rp-color-primary-border: #f3b384;
+
+  --rp-color-text: #1d2327;
+  --rp-color-heading: #111827;
+  --rp-color-muted: #646970;
+  --rp-color-subtle: #8c8f94;
+  --rp-color-border: #dcdcde;
+  --rp-color-border-strong: #c3c4c7;
+  --rp-color-bg: #ffffff;
+  --rp-color-bg-subtle: #f6f7f7;
+  --rp-color-bg-muted: #f0f0f1;
+
+  --rp-color-info: #2271b1;
+  --rp-color-info-hover: #135e96;
+  --rp-color-info-soft: #f0f6fc;
+  --rp-color-info-border: #c5d9ed;
+  --rp-color-success: #1f7a4d;
+  --rp-color-success-soft: #ecf7ee;
+  --rp-color-success-border: #c9efd9;
+  --rp-color-warning: #b8772b;
+  --rp-color-warning-soft: #fff4e0;
+  --rp-color-warning-border: #f0bf73;
+  --rp-color-danger: #b42318;
+  --rp-color-danger-hover: #8f1d13;
+  --rp-color-danger-soft: #fceaea;
+  --rp-color-danger-border: #efb7bf;
+  --rp-color-purple: #6b3fa0;
+  --rp-color-purple-soft: #f1ebfa;
+
+  --rp-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --rp-font-size-xs: 11px;
+  --rp-font-size-sm: 12px;
+  --rp-font-size-md: 13px;
+  --rp-font-size-lg: 15px;
+  --rp-font-size-xl: 18px;
+  --rp-font-size-title: 23px;
+
+  --rp-line-height-tight: 1.2;
+  --rp-line-height-base: 1.4;
+  --rp-line-height-readable: 1.6;
+
+  --rp-space-2xs: 2px;
+  --rp-space-xs: 4px;
+  --rp-space-sm: 8px;
+  --rp-space-md: 12px;
+  --rp-space-lg: 16px;
+  --rp-space-xl: 24px;
+  --rp-space-2xl: 32px;
+
+  --rp-radius-xs: 4px;
+  --rp-radius-sm: 6px;
+  --rp-radius-md: 8px;
+  --rp-radius-lg: 12px;
+  --rp-radius-xl: 16px;
+  --rp-radius-pill: 999px;
+
+  --rp-border-width: 1px;
+  --rp-border: var(--rp-border-width) solid var(--rp-color-border);
+  --rp-border-subtle: var(--rp-border-width) solid #eef0f2;
+
+  --rp-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --rp-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --rp-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --rp-shadow-modal: 0 24px 70px rgba(15, 23, 42, 0.28);
+
+  --rp-transition: 0.15s ease;
+  --rp-focus-ring: 0 0 0 2px rgba(34, 113, 177, 0.2);
+  --rp-focus-ring-primary: 0 0 0 2px rgba(242, 90, 36, 0.22);
+
+  --rp-z-dropdown: 1000;
+  --rp-z-sticky: 10;
+  --rp-z-modal: 100000;
+}

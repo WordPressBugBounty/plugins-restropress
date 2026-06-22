@@ -74,7 +74,14 @@ function rpress_fooditem_meta_box_save( $post_id, $post ) {
 			update_post_meta( $post_id, $field, $new_default_price_id );
 		} else {
 			if ( ! empty( $_POST[ $field ] ) ) {
-				$new = apply_filters( 'rpress_metabox_save_' . $field, sanitize_text_field( $_POST[ $field ] ) );
+				// Array fields (e.g. rpress_variable_prices) must be sanitized
+				// recursively - sanitize_text_field() flattens an array to ''
+				// and would wipe the value. The active save handler is
+				// RP_FoodItem_Meta_Boxes::save_meta_boxes(); this legacy path
+				// only runs if its nonce is present.
+				$raw  = wp_unslash( $_POST[ $field ] );
+				$clean = is_array( $raw ) ? rpress_sanitize_array( $raw ) : sanitize_text_field( $raw );
+				$new = apply_filters( 'rpress_metabox_save_' . $field, $clean );
 				update_post_meta( $post_id, $field, $new );
 			} else {
 				delete_post_meta( $post_id, $field );

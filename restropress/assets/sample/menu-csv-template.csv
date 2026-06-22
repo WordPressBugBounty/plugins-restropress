@@ -1,0 +1,4 @@
+ID,Name,Categories,Price,"Variable Price Label",Description,"Short Description","Veg / Non-Veg",Dietary,Tags,Add-ons,"Add-on Prices","Max Add-ons","Default Add-ons","Add-ons Required","Featured Image",SKU,Notes,Status,Slug,"Date Created",Author,"Order Count","Total Revenue"
+,"Margherita Pizza",Pizzas,8.00,,"Tomato, mozzarella and fresh basil.","Classic cheese pizza.",veg,Vegetarian,popular,,,,,,,PIZ-MARG,,publish,,,,,
+,"Build-Your-Own Burger","Mains > Burgers",10.00,,"Choose your sauce and size.","Customisable burger.",non_veg,Halal,,"Sauces: Ketchup, Mustard | Size: Regular, Large","Sauces: Ketchup=0.50, Mustard=0.30 | Size: Regular=0, Large=2.00","Sauces=>2 | Size=>1","Sauces=>Ketchup | Size=>Regular","Sauces=>no | Size=>yes",,BUR-BYO,,publish,,,,,
+,"Cold Brew Coffee",Beverages,"Small: 3.50 | Large: 4.50",Size,"Slow-steeped, served over ice.","Smooth iced coffee.",veg,"Vegan; Gluten-free",,,,,,,,BEV-CB,,publish,,,,,

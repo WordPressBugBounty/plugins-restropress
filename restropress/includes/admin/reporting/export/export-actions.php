@@ -17,12 +17,15 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  * @return void
  */
 function rpress_process_batch_export_fooditem() {
-	if( ! wp_verify_nonce( $_REQUEST['nonce'], 'rpress-batch-export' ) ) {
+	if( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( $_REQUEST['nonce'], 'rpress-batch-export' ) ) {
 		wp_die( esc_html__( 'Nonce verification failed', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
 	require_once RP_PLUGIN_DIR . 'includes/admin/reporting/export/class-batch-export.php';
-	$class = sanitize_text_field( $_REQUEST['class'] );
+	$class = isset( $_REQUEST['class'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['class'] ) ) : '';
 	do_action( 'rpress_batch_export_class_include', $class );
+	if ( ! rpress_is_allowed_export_class( $class ) ) {
+		wp_die( esc_html__( 'You do not have permission to run this export.', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
+	}
 	$export = new $class;
 	$export->export();
 }
@@ -187,6 +190,27 @@ add_action( 'rpress_register_batch_exporter', 'rpress_register_earnings_report_b
 function rpress_include_earnings_report_batch_processer( $class ) {
 	if ( 'RPRESS_Batch_Earnings_Report_Export' === $class ) {
 		require_once RP_PLUGIN_DIR . 'includes/admin/reporting/export/class-batch-export-earnings-report.php';
+	}
+}
+/**
+ * Register the reports intelligence batch exporter.
+ *
+ * @since 3.3
+ */
+function rpress_register_reports_intelligence_batch_export() {
+	add_action( 'rpress_batch_export_class_include', 'rpress_include_reports_intelligence_batch_processer', 10, 1 );
+}
+add_action( 'rpress_register_batch_exporter', 'rpress_register_reports_intelligence_batch_export', 10 );
+/**
+ * Loads the reports intelligence batch process if needed.
+ *
+ * @since 3.3
+ * @param string $class The class being requested to run for the batch export.
+ * @return void
+ */
+function rpress_include_reports_intelligence_batch_processer( $class ) {
+	if ( 'RPRESS_Batch_Report_Intelligence_Export' === $class ) {
+		require_once RP_PLUGIN_DIR . 'includes/admin/reporting/export/class-batch-export-report-intelligence.php';
 	}
 }
 /**

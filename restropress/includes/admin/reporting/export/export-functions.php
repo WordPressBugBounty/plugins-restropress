@@ -13,6 +13,31 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 require_once RP_PLUGIN_DIR . 'includes/admin/reporting/class-export.php';
 require_once RP_PLUGIN_DIR . 'includes/admin/reporting/export/export-actions.php';
+
+/**
+ * Validate a requested batch-export class name before instantiating it.
+ *
+ * The class name arrives from the request, so we must never instantiate it
+ * blindly: an attacker-supplied name is a PHP object-injection primitive. A
+ * legitimate exporter always extends RPRESS_Batch_Export, which keeps this
+ * open to extension-registered exporters while rejecting arbitrary classes.
+ * The export capability is also required here, up front, rather than relying
+ * on a post-instantiation can_export() check.
+ *
+ * @since 3.3
+ * @param string $class Requested export class name.
+ * @return bool True when the class is safe to instantiate for this user.
+ */
+function rpress_is_allowed_export_class( $class ) {
+	$class = is_string( $class ) ? trim( $class ) : '';
+	if ( '' === $class || ! class_exists( $class ) ) {
+		return false;
+	}
+	if ( ! is_subclass_of( $class, 'RPRESS_Batch_Export' ) ) {
+		return false;
+	}
+	return (bool) apply_filters( 'rpress_export_capability', current_user_can( 'export_shop_reports' ) );
+}
 /**
  * Process batch exports via ajax
  *
@@ -29,8 +54,13 @@ function rpress_do_ajax_export() {
 	do_action( 'rpress_batch_export_class_include', $form['rpress-export-class'] );
 	$step     = absint( $_POST['step'] );
 	$class    = sanitize_text_field( $form['rpress-export-class'] );
+	// Validate the class (exists, is a real exporter, user is capable) before
+	// instantiating - never call `new $class` on an unvalidated request value.
+	if( ! rpress_is_allowed_export_class( $class ) ) {
+		die( '-1' );
+	}
 	$export   = new $class( $step );
-	
+
 	if( ! $export->can_export() ) {
 		die( '-1' );
 	}

@@ -1203,7 +1203,7 @@ public function __set( $key, $value ) {
 		}
 		$current_args['addon_items'] = isset( $addon_data[$current_args['id']] ) ? $addon_data[$current_args['id']] : '';
 		$allowed_items = apply_filters( 'rpress_allowed_cart_item_modifications', array(
-			'item_price', 'tax', 'discount', 'quantity'
+			'item_price', 'tax', 'discount', 'quantity', 'instruction'
 		) );
 		// Remove any items we don't want to modify.
 		foreach ( $args as $key => $arg ) {
@@ -1856,6 +1856,9 @@ public function __set( $key, $value ) {
 			$cart = new RPRESS_Cart();
 			$subtotal     = 0;
 			foreach ( $cart_details as $item ) {
+				// Minimal cart rows (no precomputed subtotal) contribute their
+				// plain price instead of leaking the previous row's value.
+				$item_subtotal = isset( $item['price'] ) ? (float) $item['price'] : 0;
 				if ( isset( $item['subtotal'] ) ) {
 					$fooditem_id 		= $item['id'];
 					$quantity   		= max( 1, $item['quantity'] ); // Force quantity to 1

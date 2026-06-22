@@ -36,7 +36,6 @@ class RPRESS_Batch_Customers_Export extends RPRESS_Batch_Export {
 			'id'        	 => esc_html__( 'ID',   'restropress' ),
 			'user_id'		 => esc_html__( 'User ID',   'restropress' ),
 			'user_login'	 => esc_html__( 'User Name', 'restropress' ),
-			'user_pass' 	 => esc_html__( 'Password','restropress' ),
 			'payment_ids'	 => esc_html__('Payment IDS','restropress' ),
 			'date_created'	 => esc_html__( 'Date Created','restropress' ),
 			'name'      	 => esc_html__( 'Name',   'restropress' ),
@@ -99,7 +98,6 @@ class RPRESS_Batch_Customers_Export extends RPRESS_Batch_Export {
 						'id'          	 => $customer->id,
 						'user_id'	  	 => $customer->user_id,
 						'user_login'  	 =>$user->user_login,
-						'user_pass'	  	 =>$user->user_pass,
 						'payment_ids'	 =>$customer->payment_ids,
 						'date_created'	 =>$customer->date_created,
 						'name'        	 => $customer->name,
@@ -136,7 +134,6 @@ class RPRESS_Batch_Customers_Export extends RPRESS_Batch_Export {
 				$data[$i]['id']          	= $customer->id;
 				$data[$i]['user_id']     	= $customer->user_id;
 				$data[$i]['user_login']  	= $user->user_login;
-				$data[$i]['user_pass']   	= $user->user_pass;
 				$data[$i]['payment_ids'] 	= $customer->payment_ids;
 				$data[$i]['date_created'] 	= $customer->date_created;
 				$data[$i]['name']        	= $customer->name;

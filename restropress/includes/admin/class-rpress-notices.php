@@ -43,7 +43,7 @@ class RPRESS_Notices {
 				<p><?php printf( 
 			        /* translators: %s is the link to the settings page */
                     wp_kses( 
-                        __( 'No food items page has been configured. Visit <a href="%s">Settings</a> to set one.', 'restropress' ), 
+                        __( 'No menu items page has been configured. Visit <a href="%s">Settings</a> to set one.', 'restropress' ),
                         array( 
                             'a' => array( 'href' => array() )  // Allow only <a> tags with href attribute
                         ) 

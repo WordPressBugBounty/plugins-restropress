@@ -311,7 +311,7 @@ function rpress_reports_graph()
 							</p>
 						</div>
 					<?php endif; ?>
-					<div class="rpress-report-stat-grid">
+						<div class="rp-grid rp-grid-auto rpress-report-stat-grid">
 						<p class="rpress_graph_totals rpress-report-stat-card">
 							<span class="rpress-report-stat-label"><?php esc_html_e('Total earnings for period shown', 'restropress'); ?></span>
 							<strong class="rpress-report-stat-value"><?php echo esc_html(rpress_currency_filter(rpress_format_amount($earnings_totals))); ?></strong>

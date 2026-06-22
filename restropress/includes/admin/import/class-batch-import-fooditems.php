@@ -34,6 +34,7 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 	{
 		// Set up default field map values
 		$this->field_mapping = array(
+			'id' => '',
 			'post_title' => '',
 			'post_name' => '',
 			'post_status' => 'draft',
@@ -45,6 +46,7 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 			'categories' => '',
 			'addons' => '',
 			'tags' => '',
+			'dietary' => '',
 			'tag_mark' => '',
 			'addon_prices' => '',
 			'addon_max' => '',
@@ -146,29 +148,56 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 						$args['post_status'] = 'publish';
 					}
 				}
+				// Resolve an existing item to UPDATE rather than insert a new one.
+				// Match first by the mapped ID column, then fall back to SKU. This
+				// makes export -> edit -> re-import a true round-trip (no dupes).
+				$existing_id = $this->find_existing_fooditem($row);
+				if ($existing_id > 0) {
+					// Only update the post fields the CSV actually carried; drop
+					// empty/unmapped ones so re-importing a partial sheet never
+					// blanks an existing title, description, status, etc.
+					foreach (array('post_title', 'post_name', 'post_status', 'post_date', 'post_content', 'post_excerpt') as $maybe_empty) {
+						if (empty($args[$maybe_empty])) {
+							unset($args[$maybe_empty]);
+						}
+					}
+					// Keep the existing author unless the CSV explicitly carried one.
+					if (empty($this->field_mapping['post_author']) || empty($row[$this->field_mapping['post_author']])) {
+						unset($args['post_author']);
+					}
+					$args['ID'] = $existing_id;
+					// Rebuild add-ons from scratch on update so the keyed/positional
+					// add-on columns below don't merge on top of stale data.
+					delete_post_meta($existing_id, '_addon_items');
+				}
 				$fooditem_id = wp_insert_post($args);
 				// setup categories
 				if (!empty($this->field_mapping['categories']) && !empty($row[$this->field_mapping['categories']])) {
 					$strCategories = $row[$this->field_mapping['categories']];
-					$categories = $this->str_to_array($strCategories);
 					if (substr($strCategories, 0, 3) === " | ") {
-						$this->set_taxonomy_terms_cp($fooditem_id, $categories, 'food-category');
-
+						// Legacy nested format: " | Parent , Child".
+						$this->set_taxonomy_terms_cp($fooditem_id, $this->str_to_array($strCategories), 'food-category');
+					} elseif (false !== strpos($strCategories, '>')) {
+						// New breadcrumb format: "Mains > Burgers | Specials".
+						$this->import_category_paths($fooditem_id, $strCategories, 'food-category');
 					} else {
-
-						$this->set_taxonomy_terms($fooditem_id, $categories, 'food-category', false);
+						// Flat list ("Pizzas" or "Pizzas | Specials").
+						$this->set_taxonomy_terms($fooditem_id, $this->str_to_array($strCategories), 'food-category', false);
 					}
 
 				}
 				// setup addons
 				if (!empty($this->field_mapping['addons']) && !empty($row[$this->field_mapping['addons']])) {
 					$strAddons = $row[$this->field_mapping['addons']];
-					$addons = $this->str_to_array($strAddons);
 					if (substr($strAddons, 0, 3) === " | ") {
-
-						$this->set_taxonomy_terms_cp($fooditem_id, $addons, 'addon_category');
+						// Legacy nested format: " | Group , Item , Item".
+						$this->set_taxonomy_terms_cp($fooditem_id, $this->str_to_array($strAddons), 'addon_category');
+					} elseif (false !== strpos($strAddons, ':')) {
+						// New grouped format: "Group: Item, Item | Group2: Item".
+						$this->import_addons_grouped($fooditem_id, $strAddons);
 					} else {
-						$this->set_taxonomy_terms($fooditem_id, $addons, 'addon_category', $addons[0]);
+						$addons = $this->str_to_array($strAddons);
+						$this->set_taxonomy_terms($fooditem_id, $addons, 'addon_category', isset($addons[0]) ? $addons[0] : false);
 					}
 
 				}
@@ -176,6 +205,15 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 				if (!empty($this->field_mapping['tags']) && !empty($row[$this->field_mapping['tags']])) {
 					$tags = $this->str_to_array($row[$this->field_mapping['tags']]);
 					$this->set_taxonomy_terms($fooditem_id, $tags, 'fooditem_tag', false);
+				}
+				// setup dietary labels (Vegetarian, Vegan, Gluten-free, Halal, ...)
+				// Standardised on ; / , separators so the same value works in the
+				// onboarding spreadsheet importer too (which reserves | for columns).
+				if (!empty($this->field_mapping['dietary']) && !empty($row[$this->field_mapping['dietary']]) && taxonomy_exists('dietary')) {
+					$dietary = array_values(array_filter(array_map('trim', preg_split('/[;,]+/', $row[$this->field_mapping['dietary']]))));
+					if (!empty($dietary)) {
+						$this->set_taxonomy_terms($fooditem_id, $dietary, 'dietary', false);
+					}
 				}
 				// setup tag mark
 				if (!empty($this->field_mapping['tag_mark']) && !empty($row[$this->field_mapping['tag_mark']])) {
@@ -251,6 +289,240 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 		return $percentage;
 	}
 	/**
+	 * Find or create a term by name under a specific parent.
+	 *
+	 * Unlike a bare name lookup, this disambiguates children that share a name
+	 * across groups (e.g. "Regular" under both "Size" and "Crust").
+	 *
+	 * @since 3.3
+	 * @param string $name     Term name.
+	 * @param string $taxonomy Taxonomy.
+	 * @param int    $parent   Parent term ID.
+	 * @return int Term ID, or 0 on failure.
+	 */
+	private function ensure_term($name, $taxonomy, $parent = 0)
+	{
+		$name = trim($name);
+		if ('' === $name) {
+			return 0;
+		}
+		$existing = get_terms(array(
+			'taxonomy'   => $taxonomy,
+			'name'       => $name,
+			'parent'     => $parent,
+			'hide_empty' => false,
+			'number'     => 1,
+		));
+		if (!is_wp_error($existing) && !empty($existing)) {
+			return (int) $existing[0]->term_id;
+		}
+		$created = wp_insert_term($name, $taxonomy, array('parent' => (int) $parent));
+		if (is_wp_error($created)) {
+			// Slug collision with a differently-parented term: fall back to a name match.
+			$fallback = get_term_by('name', $name, $taxonomy);
+			return $fallback ? (int) $fallback->term_id : 0;
+		}
+		return (int) $created['term_id'];
+	}
+	/**
+	 * Import breadcrumb category paths ("Mains > Burgers | Specials").
+	 *
+	 * Each path's full chain (every ancestor plus the leaf) is created as needed
+	 * and assigned to the item, matching how the menu shows items under both the
+	 * parent and child filters.
+	 *
+	 * @since 3.3
+	 * @param int    $fooditem_id Food item ID.
+	 * @param string $raw         Raw column value.
+	 * @param string $taxonomy    Taxonomy.
+	 * @return void
+	 */
+	private function import_category_paths($fooditem_id, $raw, $taxonomy)
+	{
+		$assign = array();
+		foreach (array_filter(array_map('trim', explode('|', $raw)), 'strlen') as $path) {
+			$parent = 0;
+			foreach (array_filter(array_map('trim', explode('>', $path)), 'strlen') as $level) {
+				$term_id = $this->ensure_term($level, $taxonomy, $parent);
+				if (!$term_id) {
+					continue 2;
+				}
+				$assign[] = $term_id;
+				$parent   = $term_id;
+			}
+		}
+		if (!empty($assign)) {
+			wp_set_object_terms($fooditem_id, array_values(array_unique(array_map('absint', $assign))), $taxonomy);
+		}
+	}
+	/**
+	 * Import grouped add-ons ("Group: Item, Item | Group2: Item").
+	 *
+	 * Rebuilds the _addon_items meta (each parent category plus its child items)
+	 * and assigns every term. Prices, max, default and required are applied
+	 * afterwards by the per-column setters, matched by group name.
+	 *
+	 * @since 3.3
+	 * @param int    $fooditem_id Food item ID.
+	 * @param string $raw         Raw column value.
+	 * @return void
+	 */
+	private function import_addons_grouped($fooditem_id, $raw)
+	{
+		$addon_items = array();
+		$all_terms   = array();
+		foreach (array_filter(array_map('trim', explode('|', $raw)), 'strlen') as $group) {
+			$parts    = explode(':', $group, 2);
+			$cat_name = trim($parts[0]);
+			if ('' === $cat_name) {
+				continue;
+			}
+			$cat_id = $this->ensure_term($cat_name, 'addon_category', 0);
+			if (!$cat_id) {
+				continue;
+			}
+			$all_terms[] = $cat_id;
+			$entry = array('category' => (string) $cat_id, 'items' => array());
+			$items_str = isset($parts[1]) ? trim($parts[1]) : '';
+			if ('' !== $items_str) {
+				foreach (array_filter(array_map('trim', explode(',', $items_str)), 'strlen') as $item_name) {
+					$item_id = $this->ensure_term($item_name, 'addon_category', $cat_id);
+					if ($item_id) {
+						$entry['items'][] = (string) $item_id;
+						$all_terms[]      = $item_id;
+					}
+				}
+			}
+			$addon_items[$cat_id] = $entry;
+		}
+		if (!empty($all_terms)) {
+			wp_set_object_terms($fooditem_id, array_values(array_unique(array_map('absint', $all_terms))), 'addon_category');
+		}
+		if (!empty($addon_items)) {
+			update_post_meta($fooditem_id, '_addon_items', $addon_items);
+		}
+	}
+	/**
+	 * Locate an existing fooditem this row should update.
+	 *
+	 * Matches by the mapped ID column first, then by SKU. Returns 0 when the
+	 * row describes a brand new item.
+	 *
+	 * @since 3.3
+	 * @param array $row The CSV row.
+	 * @return int Existing fooditem ID, or 0.
+	 */
+	private function find_existing_fooditem($row)
+	{
+		// 1) Explicit ID column.
+		if (!empty($this->field_mapping['id']) && !empty($row[$this->field_mapping['id']])) {
+			$maybe_id = absint($row[$this->field_mapping['id']]);
+			if ($maybe_id > 0 && 'fooditem' === get_post_type($maybe_id)) {
+				return $maybe_id;
+			}
+		}
+		// 2) SKU column.
+		if (!empty($this->field_mapping['sku']) && !empty($row[$this->field_mapping['sku']])) {
+			$sku = sanitize_text_field($row[$this->field_mapping['sku']]);
+			if ('' !== $sku) {
+				$matches = get_posts(array(
+					'post_type'      => 'fooditem',
+					'post_status'    => 'any',
+					'posts_per_page' => 1,
+					'fields'         => 'ids',
+					'meta_query'     => array(
+						array(
+							'key'   => 'rpress_sku',
+							'value' => $sku,
+						),
+					),
+				));
+				if (!empty($matches)) {
+					return (int) $matches[0];
+				}
+			}
+		}
+		return 0;
+	}
+	/**
+	 * Parse a per-category add-on column.
+	 *
+	 * New exports key each value by category name (`Category=>value | ...`) so
+	 * values match by name regardless of order. Returns a name=>value map, or
+	 * false when the column uses the legacy positional format.
+	 *
+	 * @since 3.3
+	 * @param string $raw The raw column value.
+	 * @return array|false
+	 */
+	private function parse_keyed_addon_value($raw)
+	{
+		$segments = array_map('trim', explode(' | ', (string) $raw));
+		$map      = array();
+		$keyed    = false;
+		foreach ($segments as $segment) {
+			if (false !== strpos($segment, '=>')) {
+				$keyed = true;
+				$parts = array_map('trim', explode('=>', $segment, 2));
+				if ('' !== $parts[0]) {
+					$map[$parts[0]] = isset($parts[1]) ? $parts[1] : '';
+				}
+			}
+		}
+		return $keyed ? $map : false;
+	}
+	/**
+	 * Resolve an add-on group's category name from its meta.
+	 *
+	 * @since 3.3
+	 * @param array $food_addon One _addon_items entry.
+	 * @return string
+	 */
+	private function addon_category_name($food_addon)
+	{
+		if (empty($food_addon['category'])) {
+			return '';
+		}
+		$term = get_term(absint($food_addon['category']), 'addon_category');
+		return ($term && !is_wp_error($term)) ? trim($term->name) : '';
+	}
+	/**
+	 * Convert exported default add-on names back to item term IDs.
+	 *
+	 * The export writes default selections as item names (` : `-joined, with an
+	 * optional `Name|Price Label` for variable-priced items). The stored meta
+	 * needs the item term ID (or `itemId|Price Label`), so map each name to its
+	 * term within this add-on group. Unmatched names are kept as-is.
+	 *
+	 * @since 3.3
+	 * @param array  $food_addon The _addon_items entry (provides items[]).
+	 * @param string $value      The ` : `-joined default names.
+	 * @return array
+	 */
+	private function default_names_to_ids($food_addon, $value)
+	{
+		$name_to_id = array();
+		if (!empty($food_addon['items']) && is_array($food_addon['items'])) {
+			foreach ($food_addon['items'] as $item_id) {
+				$term = get_term(absint($item_id), 'addon_category');
+				if ($term && !is_wp_error($term)) {
+					$name_to_id[trim($term->name)] = (string) $item_id;
+				}
+			}
+		}
+		$ids = array();
+		foreach (array_filter(array_map('trim', explode(' : ', (string) $value)), 'strlen') as $token) {
+			$suffix = '';
+			if (false !== strpos($token, '|')) {
+				list($name_part, $price_part) = array_pad(explode('|', $token, 2), 2, '');
+				$suffix = '|' . $price_part;
+				$token  = trim($name_part);
+			}
+			$ids[] = (isset($name_to_id[$token]) ? $name_to_id[$token] : $token) . $suffix;
+		}
+		return $ids;
+	}
+	/**
 	 * Set up and store the addon max option for the fooditem's addon category
 	 *
 	 * @since 1.0.0
@@ -258,10 +530,24 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 	 */
 	public function set_addon_max($fooditem_id = 0, $price = '')
 	{
-		$prices = (array) explode(' | ', $price);
 		$food_addons = get_post_meta($fooditem_id, '_addon_items', true);
-
-		$data_addons = array();
+		if (!is_array($food_addons)) {
+			return;
+		}
+		$keyed = $this->parse_keyed_addon_value($price);
+		if (false !== $keyed) {
+			foreach ($food_addons as $addon_id => $food_addon) {
+				$name = $this->addon_category_name($food_addon);
+				if ('' !== $name && isset($keyed[$name]) && $keyed[$name] !== 'Not Define') {
+					$food_addon['max_addons'] = $keyed[$name];
+				}
+				$food_addons[$addon_id] = $food_addon;
+			}
+			update_post_meta($fooditem_id, '_addon_items', $food_addons);
+			return;
+		}
+		// Legacy positional format.
+		$prices = (array) explode(' | ', $price);
 		$i = 0;
 		foreach ($food_addons as $addon_id => $food_addon) {
 			// Check if the element at index $i exists and is not equal to 'Not Define'
@@ -283,10 +569,24 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 	 */
 	public function set_addon_required($fooditem_id = 0, $price = '')
 	{
-		$prices = (array) explode(' | ', $price);
 		$food_addons = get_post_meta($fooditem_id, '_addon_items', true);
-
-		$data_addons = array();
+		if (!is_array($food_addons)) {
+			return;
+		}
+		$keyed = $this->parse_keyed_addon_value($price);
+		if (false !== $keyed) {
+			foreach ($food_addons as $addon_id => $food_addon) {
+				$name = $this->addon_category_name($food_addon);
+				if ('' !== $name && isset($keyed[$name])) {
+					$food_addon['is_required'] = ('yes' === strtolower($keyed[$name])) ? 'yes' : 'no';
+				}
+				$food_addons[$addon_id] = $food_addon;
+			}
+			update_post_meta($fooditem_id, '_addon_items', $food_addons);
+			return;
+		}
+		// Legacy positional format.
+		$prices = (array) explode(' | ', $price);
 		$i = 0;
 		foreach ($food_addons as $addon_id => $food_addon) {
 			if (isset($prices[$i]) && $prices[$i] == 'yes') {
@@ -307,8 +607,24 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 	 */
 	public function set_addon_default($fooditem_id = 0, $price = '')
 	{
-		$default_per_category = (array) explode(' | ', trim($price));
 		$food_addons = get_post_meta($fooditem_id, '_addon_items', true);
+		if (!is_array($food_addons)) {
+			return;
+		}
+		$keyed = $this->parse_keyed_addon_value($price);
+		if (false !== $keyed) {
+			foreach ($food_addons as $addon_id => $food_addon) {
+				$name = $this->addon_category_name($food_addon);
+				if ('' !== $name && isset($keyed[$name])) {
+					$food_addon['default'] = $this->default_names_to_ids($food_addon, $keyed[$name]);
+				}
+				$food_addons[$addon_id] = $food_addon;
+			}
+			update_post_meta($fooditem_id, '_addon_items', $food_addons);
+			return;
+		}
+		// Legacy positional format.
+		$default_per_category = (array) explode(' | ', trim($price));
 
 		$i = 0;
 		foreach ($food_addons as $addon_id => $food_addon) {
@@ -338,7 +654,6 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 	 */
 	public function set_addon_prices($fooditem_id = 0, $price = '')
 	{
-		$prices = (array) explode(' | ', $price);
 		$variable_prices = get_post_meta($fooditem_id, 'rpress_variable_prices');
 		if (is_array($variable_prices) && count($variable_prices) == 1) {
 			$variable_prices = $variable_prices[0];
@@ -347,12 +662,76 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 		$food_addons = get_post_meta($fooditem_id, '_addon_items', true);
 		$food_addons = is_array($food_addons) ? $food_addons : array();
 
+		// New self-describing format: "Group: Item=price, Item=price | Group2: ...".
+		// The `=` never appears in the legacy positional format, so it is a safe
+		// discriminator. Prices are matched to items by group + option name.
+		if (false !== strpos($price, '=')) {
+			$by_group = array();
+			foreach (array_filter(array_map('trim', explode('|', $price)), 'strlen') as $group) {
+				$parts = explode(':', $group, 2);
+				if (count($parts) < 2) {
+					continue;
+				}
+				$cat_name = trim($parts[0]);
+				$item_map = array();
+				foreach (array_filter(array_map('trim', explode(',', $parts[1])), 'strlen') as $pair) {
+					$kv = explode('=', $pair, 2);
+					$item_name = trim($kv[0]);
+					if ('' !== $item_name) {
+						$item_map[$item_name] = isset($kv[1]) ? trim($kv[1]) : '';
+					}
+				}
+				if ('' !== $cat_name) {
+					$by_group[$cat_name] = $item_map;
+				}
+			}
+			foreach ($food_addons as $addon_id => $food_addon) {
+				$cat_name = $this->addon_category_name($food_addon);
+				if ('' === $cat_name || !isset($by_group[$cat_name]) || empty($food_addon['items'])) {
+					continue;
+				}
+				$item_map   = $by_group[$cat_name];
+				$price_data = array();
+				foreach ($food_addon['items'] as $item_id) {
+					$term      = get_term(absint($item_id), 'addon_category');
+					$item_name = ($term && !is_wp_error($term)) ? trim($term->name) : '';
+					if ('' === $item_name || !isset($item_map[$item_name])) {
+						continue;
+					}
+					$val = $item_map[$item_name];
+					if (!empty($variable_prices) && false !== strpos($val, ' : ')) {
+						// Variable-priced option: map sub-amounts to the variation names.
+						$var_prices = array_map('trim', explode(' : ', $val));
+						$var_data   = array();
+						$i = 0;
+						foreach ($variable_prices as $food_variable) {
+							if (isset($var_prices[$i], $food_variable['name'])) {
+								$var_data[str_replace(' ', '', $food_variable['name'])] = '' . $var_prices[$i];
+							}
+							$i++;
+						}
+						$price_data[$item_id] = $var_data;
+					} else {
+						$price_data[$item_id] = $val;
+					}
+				}
+				$food_addon['prices']   = $price_data;
+				$food_addons[$addon_id] = $food_addon;
+			}
+			update_post_meta($fooditem_id, '_addon_items', $food_addons);
+			return;
+		}
+
+		// Legacy positional format.
+		$prices = (array) explode(' | ', $price);
+		$price_index = 0;
+
 		foreach ($food_addons as $addon_id => $food_addon) {
 			$price = array();
 			if (isset($food_addon['items']) && is_array($food_addon['items'])) {
 				foreach ($food_addon['items'] as $key => $addonId) {
-					if (!empty($variable_prices) && isset($prices[$key])) {
-						$var_prices = array_map('trim', (array) explode(' : ', $prices[$key]));
+					if (!empty($variable_prices) && isset($prices[$price_index])) {
+						$var_prices = array_map('trim', (array) explode(' : ', $prices[$price_index]));
 						$priceVarData = array();
 						$i = 0;
 						foreach ($variable_prices as $foodVarKey => $food_variable) {
@@ -364,10 +743,11 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 						}
 						$price[$addonId] = $priceVarData;
 					} else {
-						if (isset($prices[$key])) {
-							$price[$addonId] = $prices[$key];
+						if (isset($prices[$price_index])) {
+							$price[$addonId] = $prices[$price_index];
 						}
 					}
+					$price_index++;
 				}
 			}
 			$food_addon['prices'] = $price;
@@ -535,7 +915,7 @@ class RPRESS_Batch_FoodItems_Import extends RPRESS_Batch_Import
 				}
 				$terms_array = explode(' , ', $input);
 				// Trim whitespaces from each term
-				$terms_array = array_map('trim', $terms_array);
+				$terms_array = array_values(array_filter(array_map('trim', $terms_array), 'strlen'));
 				if (empty($terms_array) || !is_array($terms_array)) {
 					// Insufficient terms to create
 					continue; // Skip

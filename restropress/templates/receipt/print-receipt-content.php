@@ -37,12 +37,15 @@ $discounts = 0;
       <?php if ( isset( $item['name'] ) ) :
       $item_cart_name = rpress_get_cart_item_name( $item );
       $item_name = isset( $item_cart_name ) ? $item_cart_name : '';
-      $item_qty = isset( $item['item_number']['quantity'] ) ? $item['item_number']['quantity'] : '';
+      $item_qty = isset( $item['item_number']['quantity'] ) ? (int) $item['item_number']['quantity'] : 1;
       $item_id = isset( $item['id'] ) ? $item['id'] : '';
-      $item_price = $item['item_price'] * $item_qty;
-      $subtotal = $subtotal + $item['subtotal'];
-      $taxes = $taxes + $item['tax'];
-      $discounts = $discounts + $item['discount'];
+      // Guard against missing keys: legacy/manually created orders may not
+      // carry item_price/subtotal/tax/discount, and on PHP 8 multiplying or
+      // adding null throws a fatal that breaks the whole receipt.
+      $item_price = ( isset( $item['item_price'] ) ? (float) $item['item_price'] : 0 ) * $item_qty;
+      $subtotal = $subtotal + ( isset( $item['subtotal'] ) ? (float) $item['subtotal'] : 0 );
+      $taxes = $taxes + ( isset( $item['tax'] ) ? (float) $item['tax'] : 0 );
+      $discounts = $discounts + ( isset( $item['discount'] ) ? (float) $item['discount'] : 0 );
       ?>
       <tr>
         <td style="padding: 4px 0; vertical-align: top;"><?php echo esc_html($item_qty); ?> x <?php echo esc_html($item_name); ?></td>
@@ -63,7 +66,7 @@ $discounts = 0;
           </tr>
         <?php endforeach; ?>
         <?php endif; ?>
-        <?php if( $item['instruction'] != '' ): ?>
+        <?php if( ! empty( $item['instruction'] ) ): ?>
           <tr>
             <td colspan="3" style="padding: 6px 0;"><b><?php echo esc_html(apply_filters( 'rpress_receipt_item_note_label', esc_html_e( 'Customer Note:&nbsp;', 'restropress' ) )); ?></b><?php echo esc_html($item['instruction']); ?></td>
           </tr>

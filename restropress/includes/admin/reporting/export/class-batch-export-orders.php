@@ -35,7 +35,7 @@ class RPRESS_Batch_File_Orders_Export extends RPRESS_Batch_Export {
 		$cols = array(
 			'date'     => esc_html__( 'Date',   'restropress' ),
 			'user'     => esc_html__( 'Ordered by', 'restropress' ),
-			'fooditem' => esc_html__( 'Food Item', 'restropress' )
+			'fooditem' => esc_html__( 'Menu Item', 'restropress' )
 		);
 		return $cols;
 	}

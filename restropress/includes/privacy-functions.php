@@ -473,7 +473,7 @@ function rpress_register_privacy_exporters( $exporters ) {
 		'callback'               => 'rpress_privacy_billing_information_exporter',
 	);
 	$exporters[] = array(
-		'exporter_friendly_name' => __( 'Food Items', 'restropress' ),
+		'exporter_friendly_name' => __( 'Menu Items', 'restropress' ),
 		'callback'               => 'rpress_privacy_file_fooditem_log_exporter',
 	);
 	$exporters[] = array(
@@ -724,7 +724,7 @@ function rpress_privacy_file_fooditem_log_exporter( $email_address = '', $page =
 				'value' => date_i18n( get_option( 'date_format' ) . ' H:i:s', strtotime( $log->post_date ) ),
 			),
 			array(
-				'name' => __( 'Food Item Name', 'restropress' ),
+				'name' => __( 'Menu Item Name', 'restropress' ),
 				'value' =>  $fooditem->get_name(),
 			),
 			array(

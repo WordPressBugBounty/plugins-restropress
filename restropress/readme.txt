@@ -3,9 +3,9 @@ Contributors: magnigenie, sagarseth9, kshirod-patel, bibhu1995
 Tags: Online ordering, Restaurant Ordering, Food Delivery, Takeaway, Restaurant Menu
 Donate link: https://paypal.me/magnigeeks
 Requires at least: 4.4
-Requires PHP: 5.5
+Requires PHP: 7.0
 Tested up to: 7.0
-Stable tag: 3.2.8.8.6
+Stable tag: 3.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
@@ -120,6 +120,86 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 👉 [Explore Pro Features & Extensions](https://restropress.com/extension/)
 
 == Changelog ==
+
+= Version 3.3(2026-06-22) =
+
+** Major New Features **
+* Added a completely redesigned Command Center Dashboard with real-time operational insights, priority queues, kitchen flow monitoring, and live service metrics.
+* Added a modern Live Orders Kanban Board with drag-and-drop order management, real-time updates, sound notifications, and status workflows.
+* Added a brand-new 5-step Onboarding Wizard with live storefront preview, progress saving, and guided restaurant setup.
+* Added permanent Menu Import & Export tools with AI, Spreadsheet, Sample Menu, and Manual creation options.
+* Added a complete Order Details Redesign with fulfillment tracking, item editing, customer details, notes timeline, and responsive layouts.
+🍔 Menu Item Editor Improvements
+* Added a completely redesigned section-based Menu Item editor.
+* Added dedicated Image & Type, Description, Category, Tags, Dietary Labels, and Add-ons sections.
+* Added improved add-on management with card-based UI and drag-and-drop support.
+* Added dietary label management directly inside the editor.
+* Improved variable pricing management and option handling.
+* Added extension hooks allowing third-party plugins to inject custom editor sections.
+📦 Availability Management
+* Added built-in item availability toggle directly in the Publish panel.
+* Added quick availability controls in the Menu Items list table.
+* Added new availability filters and extension compatibility improvements.
+📋 Orders Management Enhancements
+* Added modernized Orders screen with:
+- Interactive status pills
+- AJAX status updates
+- Advanced filtering
+- Live "time ago" indicators
+- Sticky table headers
+- Confirmation dialogs for bulk actions
+* Added separate operational and historical order views.
+* Added Needs Attention status tracking.
+* Added service-specific filtering and KPI reporting.
+* Improved privacy by masking customer phone numbers by default.
+📊 Reports & Analytics
+* Rebuilt Reports into a restaurant intelligence suite featuring:
+- Overview
+- Sales
+- Orders & Risk
+- Menu Performance
+- Customers
+- Payments & Recovery
+- Taxes
+- Export Center
+* Added period comparisons and advanced business insights.
+Improved report performance on large stores.
+🥗 Dietary Labels
+* Added new Dietary taxonomy with:
+- Vegetarian
+- Vegan
+- Gluten-Free
+- Dairy-Free
+- Nut-Free
+- Halal
+- Spicy
+* Added storefront dietary badges and filtering support.
+* Added import/export support for dietary labels.
+🔔 Notifications
+* Added built-in new-order notification sound.
+* Improved browser notifications and onboarding guidance.
+* Improved reliability of real-time order alerts.
+⚡ Performance & Reliability
+* Improved dashboard and report performance for high-volume stores.
+* Improved caching and query optimization.
+* Improved timezone handling across orders, reports, and scheduling.
+* Improved menu import workflows and duplicate prevention.
+🛠 Fixed
+* Fixed pricing mode saving issues for fixed-price menu items.
+* Fixed order notes rendering in redesigned order screens.
+* Fixed billing address saving and payment information updates.
+* Fixed Live Orders phone number display.
+* Fixed add-on loading and category creation issues.
+* Fixed store opening-hours fatal errors when opening and closing times matched.
+* Fixed duplicate menu item tags appearing on storefront cards.
+* Fixed various UI alignment, styling, and responsive layout issues.
+🔄 Renamed
+* Renamed Food Items → Menu Items throughout the admin interface.
+* Renamed Add-on Categories → Add-on Groups throughout the admin interface.
+❌ Removed
+* Removed legacy dashboard widgets.
+* Removed duplicate order management controls.
+* Removed default WordPress Menu Item metaboxes replaced by the new editor experience.
 
 = Version 3.2.8.8.6(2026-06-04) =
 * Fixed: RestroPress extensions update notification issue
@@ -275,7 +355,7 @@ Take control of your online food ordering with RestroPress — a fast, commissio
 
 == Upgrade Notice ==
 
-= 3.2.8.8.6 =
+= 3.3 =
 Please backup your website before upgrading to the latest version.
 
 == License ==

@@ -199,7 +199,8 @@ class RPRESS_Batch_Import {
 		} else {
 			$array[] = $str;
 		}
-		return array_map( 'trim', $array );
+		$array = array_map( 'trim', $array );
+		return array_values( array_filter( $array, 'strlen' ) );
 	}
 	/**
 	 * Trims a column value for preview

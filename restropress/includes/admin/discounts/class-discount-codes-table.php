@@ -88,10 +88,42 @@ class RPRESS_Discount_Codes_Table extends WP_List_Table {
 		?>
 		<p class="search-box">
 			<label class="screen-reader-text" for="<?php echo esc_attr( $input_id ) ?>"><?php echo esc_html( $text ); ?>:</label>
-			<input type="search" id="<?php echo esc_attr( $input_id)  ?>" name="s" value="<?php _admin_search_query(); ?>" />
-			<?php submit_button( $text, 'button', false, false, array('ID' => 'search-submit') ); ?>
+			<input type="search" id="<?php echo esc_attr( $input_id)  ?>" class="rp-input" name="s" value="<?php _admin_search_query(); ?>" />
+			<?php submit_button( $text, 'button rp-btn rp-btn-secondary', false, false, array('ID' => 'search-submit') ); ?>
 		</p>
 	<?php
+	}
+	/**
+	 * Gets a list of CSS classes for the table tag.
+	 *
+	 * @since 3.2.8.6.4
+	 * @return array
+	 */
+	protected function get_table_classes() {
+		$classes   = parent::get_table_classes();
+		$classes[] = 'rp-table';
+
+		if ( ! $this->has_items() ) {
+			$classes[] = 'rp-table-empty';
+		}
+
+		return array_unique( $classes );
+	}
+	/**
+	 * Render extra controls in the table navigation.
+	 *
+	 * @since 3.2.8.6.4
+	 * @param string $which The table navigation position.
+	 */
+	protected function extra_tablenav( $which ) {
+		if ( 'top' !== $which || ( empty( $_REQUEST['s'] ) && ! $this->has_items() ) ) {
+			return;
+		}
+		?>
+		<div class="alignright actions rp-table-search-action">
+			<?php $this->search_box( esc_html__( 'Search', 'restropress' ), 'rpress-discounts' ); ?>
+		</div>
+		<?php
 	}
 	/**
 	 * Retrieve the view types
@@ -212,7 +244,11 @@ class RPRESS_Discount_Codes_Table extends WP_List_Table {
 	 * @return string Displays the discount status
 	 */
 	function column_status( $item ) {
-		return rpress_get_discount_status_label( $item['ID'] );
+		return sprintf(
+			'<span class="rp-status-badge rp-discount-status status-%1$s">%2$s</span>',
+			sanitize_html_class( $item['status'] ),
+			esc_html( rpress_get_discount_status_label( $item['ID'] ) )
+		);
 	}
 	/**
 	 * Message to be displayed when there are no items
@@ -220,7 +256,42 @@ class RPRESS_Discount_Codes_Table extends WP_List_Table {
 	 * @since 1.0.6
 	 */
 	function no_items() {
-		esc_html_e( 'No discounts found.', 'restropress' );
+		$search_query = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '';
+		$status       = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
+		$is_filtered  = ! empty( $search_query ) || ! empty( $status );
+		$add_url      = admin_url( 'admin.php?page=rpress-discounts&rpress-action=add_discount' );
+		$all_url      = admin_url( 'admin.php?page=rpress-discounts' );
+
+		if ( ! empty( $search_query ) ) {
+			$title       = __( 'No discounts match your search', 'restropress' );
+			$description = __( 'Try a different search term or clear the current filters to see all discount codes.', 'restropress' );
+		} elseif ( 'active' === $status ) {
+			$title       = __( 'No active discounts', 'restropress' );
+			$description = __( 'Create a new discount code or activate an existing one when a promotion is ready.', 'restropress' );
+		} elseif ( 'inactive' === $status ) {
+			$title       = __( 'No inactive discounts', 'restropress' );
+			$description = __( 'Inactive discounts will appear here when promotions are paused or expired.', 'restropress' );
+		} else {
+			$title       = __( 'No discounts yet', 'restropress' );
+			$description = __( 'Create your first discount code to run promotions, reward customers, or recover more orders.', 'restropress' );
+		}
+		?>
+		<div class="rp-empty-state rp-empty-state-table">
+			<span class="dashicons dashicons-tickets-alt rp-empty-state-icon" aria-hidden="true"></span>
+			<strong class="rp-empty-state-title"><?php echo esc_html( $title ); ?></strong>
+			<p class="rp-empty-state-description"><?php echo esc_html( $description ); ?></p>
+			<div class="rp-empty-state-actions">
+				<a class="button button-primary rp-btn rp-btn-primary" href="<?php echo esc_url( $add_url ); ?>">
+					<?php esc_html_e( 'Add Discount', 'restropress' ); ?>
+				</a>
+				<?php if ( $is_filtered ) : ?>
+					<a class="button rp-btn rp-btn-secondary" href="<?php echo esc_url( $all_url ); ?>">
+						<?php esc_html_e( 'View All Discounts', 'restropress' ); ?>
+					</a>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
 	}
 	/**
 	 * Retrieve the bulk actions

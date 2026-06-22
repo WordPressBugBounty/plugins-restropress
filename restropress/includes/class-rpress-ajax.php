@@ -380,25 +380,57 @@ class RP_AJAX {
   */
   public static function update_order_status() {
     check_admin_referer( 'rpress-order', 'security' );
-    if ( ! empty( $_GET['status'] ) && ! empty( $_GET['payment_id'] ) ) {
-      if( ! current_user_can( 'edit_shop_payments', $_GET['payment_id'] ) ) {
+
+    $payment_id   = isset( $_REQUEST['payment_id'] ) ? absint( $_REQUEST['payment_id'] ) : 0;
+    $status       = isset( $_REQUEST['status'] )     ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
+    $statuses     = rpress_get_order_statuses();
+    $updated      = false;
+    $status_label = '';
+
+    if ( $payment_id > 0 && $status !== '' ) {
+      if ( ! current_user_can( 'edit_shop_payments', $payment_id ) ) {
         wp_die( esc_html__( 'You do not have permission to update this order', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
       }
-      $payment_id = absint( $_GET['payment_id'] );
-      $status     = sanitize_text_field( $_GET['status'] );
-      $statuses = rpress_get_order_statuses();
       if ( array_key_exists( $status, $statuses ) ) {
         rpress_update_order_status( $payment_id, $status );
+        $updated      = true;
+        $status_label = isset( $statuses[ $status ] ) ? (string) $statuses[ $status ] : $status;
       }
     }
+
     $redirect = wp_get_referer() ? wp_get_referer() : admin_url( 'admin.php?page=rpress-payment-history' );
-    
-    if( ! empty( $_GET['redirect'] ) ) {
+
+    // Legacy server-side redirect fallback (e.g. non-JS POST/GET forms).
+    if ( ! empty( $_GET['redirect'] ) ) {
       wp_safe_redirect( esc_url( $redirect ) );
       exit;
     }
-    
-    wp_send_json( [ 'redirect' => esc_url( $redirect ) ], 200 );
+
+    /**
+     * Filter whether the client should force a full page reload after the
+     * status change. Defaults to false (no reload -- the JS handler updates
+     * the row in place). Extensions that rely on server-rendered side
+     * effects can opt back into the legacy reload behaviour.
+     *
+     * @since 3.3
+     *
+     * @param bool   $force_reload  Whether to force a page reload. Default false.
+     * @param int    $payment_id    The order ID being updated.
+     * @param string $status        The new status slug.
+     */
+    $force_reload = (bool) apply_filters( 'rpress_status_change_force_reload', false, $payment_id, $status );
+
+    wp_send_json(
+      array(
+        'success'      => $updated,
+        'payment_id'   => $payment_id,
+        'status'       => $status,
+        'status_label' => $status_label,
+        'force_reload' => $force_reload,
+        'redirect'     => esc_url( $redirect ),
+      ),
+      200
+    );
   }
 
   /**
@@ -1187,8 +1219,19 @@ class RP_AJAX {
   public static function admin_order_addon_items() {
     check_ajax_referer( 'load-admin-addon', 'security' );
     $fooditem_id = isset( $_POST['fooditem_id' ] ) ? sanitize_text_field( wp_unslash( $_POST['fooditem_id'] ) ) : NULL;
+    $price_id    = isset( $_POST['price_id' ] ) ? sanitize_text_field( wp_unslash( $_POST['price_id'] ) ) : NULL;
+    $format      = isset( $_POST['format' ] ) ? sanitize_key( wp_unslash( $_POST['format'] ) ) : '';
+
+    if ( 'json' === $format ) {
+      wp_send_json_success(
+        array(
+          'groups' => ! empty( $fooditem_id ) ? rpress_get_admin_order_addon_groups( $fooditem_id, $price_id ) : array(),
+        )
+      );
+    }
+
     if( ! empty( $fooditem_id ) ) {
-      rpress_addon_items_by_fooditem( $fooditem_id );
+      rpress_addon_items_by_fooditem( $fooditem_id, $price_id );
     }
     
     rpress_die();
@@ -1632,10 +1675,17 @@ class RP_AJAX {
       $payment_status = ucfirst( $payment_status );
       $search = array( '{order_id}', '{service_type}', '{payment_status}', '{service_date}' );
       $replace = array( $payment_id, $service_type, $payment_status, $service_date );
-      $body = rpress_get_option( 'notification_body' );
-      $body = str_replace( $search, $replace, $body );
+      // Fall back to sensible copy when the title/body settings are empty,
+      // otherwise rpress_get_option() returns false and the browser renders
+      // a notification literally titled "false".
+      $title = rpress_get_option( 'notification_title' );
+      if ( '' === trim( (string) $title ) ) {
+        $title = __( 'New Order Received', 'restropress' );
+      }
+      $body = (string) rpress_get_option( 'notification_body' );
+      $body = '' !== trim( $body ) ? str_replace( $search, $replace, $body ) : sprintf( __( 'Order #%s has arrived.', 'restropress' ), $payment_id );
       $notification = array(
-        'title' => rpress_get_option( 'notification_title' ),
+        'title' => $title,
         'body'  => $body,
         'icon'  => rpress_get_option( 'notification_icon' ),
         'sound' => rpress_get_option( 'notification_sound' ),

@@ -402,13 +402,20 @@ function get_fooditem_lists($fooditem_id, $cart_key = '')
  * @since 1.0
  * @return void
  */
-function rpress_addon_items_by_fooditem($fooditem_id)
+function rpress_addon_items_by_fooditem($fooditem_id, $price_id = null)
 {
     if (empty($fooditem_id)) {
         return;
     }
     $addons = get_post_meta($fooditem_id, '_addon_items', true);
     $addon_ids = $child_ids = array();
+    $selected_price_name = '';
+    if (null !== $price_id && '' !== $price_id && rpress_has_variable_prices($fooditem_id)) {
+        $prices = rpress_get_variable_prices($fooditem_id);
+        if (isset($prices[$price_id]['name'])) {
+            $selected_price_name = (string) $prices[$price_id]['name'];
+        }
+    }
     if ($addons) {
         foreach ($addons as $addon) {
             if (!empty($addon['category'])) {
@@ -432,6 +439,16 @@ function rpress_addon_items_by_fooditem($fooditem_id)
                     $child_data = get_term_by('id', $child_addon, 'addon_category');
                     $child_addon_name = $child_data->name;
                     $child_addon_price = rpress_get_addon_data($child_data->term_id, '_price');
+                    foreach ((array) $addons as $addon) {
+                        if (
+                            '' !== $selected_price_name
+                            && isset($addon['prices'][$child_data->term_id][$selected_price_name])
+                            && '' !== $addon['prices'][$child_data->term_id][$selected_price_name]
+                        ) {
+                            $child_addon_price = $addon['prices'][$child_data->term_id][$selected_price_name];
+                            break;
+                        }
+                    }
                     $addon_price = html_entity_decode(rpress_currency_filter(rpress_format_amount($child_addon_price)));
                     ?>
                     <option data-price="<?php echo esc_attr($addon_price); ?>" data-id="$child_addon"
@@ -443,4 +460,122 @@ function rpress_addon_items_by_fooditem($fooditem_id)
             }
         }
     }
+}
+
+/**
+ * Get grouped addon data for the modern admin order item modal.
+ *
+ * Keeps the legacy option-value format used by payment saving:
+ * addon name|addon id|price|quantity.
+ *
+ * @since 3.2.0
+ * @param int        $fooditem_id Food item ID.
+ * @param int|string $price_id    Variable price ID.
+ * @return array
+ */
+function rpress_get_admin_order_addon_groups($fooditem_id, $price_id = null)
+{
+    $fooditem_id = absint($fooditem_id);
+    if (empty($fooditem_id)) {
+        return array();
+    }
+
+    $addons = get_post_meta($fooditem_id, '_addon_items', true);
+    if (empty($addons) || !is_array($addons)) {
+        return array();
+    }
+
+    $groups = array();
+
+    foreach ($addons as $addon_row) {
+        if (empty($addon_row['category'])) {
+            continue;
+        }
+
+        $parent_id = absint($addon_row['category']);
+        $parent = get_term_by('id', $parent_id, 'addon_category');
+        if (!$parent || is_wp_error($parent)) {
+            continue;
+        }
+
+        $addon_type = rpress_get_addon_data($parent_id, '_type');
+        $addon_type = 'single' === $addon_type ? 'single' : 'multiple';
+        $input_type = 'single' === $addon_type ? 'radio' : 'checkbox';
+        $item_ids = array();
+
+        if (!empty($addon_row['items']) && is_array($addon_row['items'])) {
+            $item_ids = array_map('absint', $addon_row['items']);
+        } else {
+            $children = get_terms(
+                apply_filters(
+                    'rp_addon_category',
+                    array(
+                        'taxonomy' => 'addon_category',
+                        'parent'   => $parent_id,
+                        'fields'   => 'ids',
+                    )
+                )
+            );
+            if (!is_wp_error($children) && is_array($children)) {
+                $item_ids = array_map('absint', $children);
+            }
+        }
+
+        $item_ids = array_values(array_unique(array_filter($item_ids)));
+        if (empty($item_ids)) {
+            continue;
+        }
+
+        usort(
+            $item_ids,
+            function ($a, $b) {
+                $pos_a = get_term_meta($a, 'addon_position', true);
+                $pos_b = get_term_meta($b, 'addon_position', true);
+                $pos_a = '' === $pos_a ? PHP_INT_MAX : absint($pos_a);
+                $pos_b = '' === $pos_b ? PHP_INT_MAX : absint($pos_b);
+                return $pos_a <=> $pos_b;
+            }
+        );
+
+        $default_values = !empty($addon_row['default']) && is_array($addon_row['default']) ? $addon_row['default'] : array();
+        $prices = rpress_has_variable_prices($fooditem_id) ? rpress_get_variable_prices($fooditem_id) : array();
+        $price_name = '';
+        if ('' !== (string) $price_id && isset($prices[$price_id]['name'])) {
+            $price_name = (string) $prices[$price_id]['name'];
+        }
+
+        $items = array();
+        foreach ($item_ids as $item_id) {
+            $item = get_term_by('id', $item_id, 'addon_category');
+            if (!$item || is_wp_error($item)) {
+                continue;
+            }
+
+            $addon_price = rpress_dynamic_addon_price($fooditem_id, $item_id, $parent_id, '' !== (string) $price_id ? $price_id : null);
+            $addon_price = is_numeric($addon_price) ? (float) $addon_price : 0;
+            $default_key = '' !== $price_name ? $item_id . '|' . $price_name : (string) $item_id;
+
+            $items[] = array(
+                'id'        => $item_id,
+                'name'      => $item->name,
+                'price'     => rpress_format_amount($addon_price),
+                'formatted' => wp_strip_all_tags(rpress_currency_filter(rpress_format_amount($addon_price))),
+                'value'     => $item->name . '|' . $item_id . '|' . rpress_format_amount($addon_price) . '|1',
+                'selected'  => in_array($default_key, $default_values, true),
+            );
+        }
+
+        $groups[] = array(
+            'id'          => $parent_id,
+            'name'        => $parent->name,
+            'type'        => $addon_type,
+            'input_type'  => $input_type,
+            'required'    => isset($addon_row['is_required']) && 'yes' === $addon_row['is_required'],
+            'min'         => isset($addon_row['min_addons']) ? absint($addon_row['min_addons']) : 0,
+            'max'         => isset($addon_row['max_addons']) ? absint($addon_row['max_addons']) : 0,
+            'items'       => $items,
+        );
+    }
+
+    return $groups;
 }

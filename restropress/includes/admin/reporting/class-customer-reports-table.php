@@ -128,7 +128,7 @@ class RPRESS_Customer_Reports_Table extends WP_List_Table {
 			'email'     	=> esc_html__( 'Email', 'restropress' ),
 			'num_purchases' => esc_html__( 'Purchases', 'restropress' ),
 			'amount_spent'  => esc_html__( 'Total Spent', 'restropress' ),
-			'fooditems'		=> esc_html__( 'Food Items', 'restropress' )
+			'fooditems'		=> esc_html__( 'Menu Items', 'restropress' )
 		);
 		return apply_filters( 'rpress_report_customer_columns', $columns );
 	}

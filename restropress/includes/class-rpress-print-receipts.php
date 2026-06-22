@@ -70,11 +70,23 @@ class RPRESS_Print_Receipts {
   public function add_print_column( $columns ) {
     
     $new_columns = ( is_array( $columns ) ) ? $columns : array();
-    $get_settings = self::get_settings();
-    if( isset( $get_settings['enable_printing'] ) )
+    if( self::is_printing_enabled() )
       $new_columns['print'] = __( 'Print', 'restropress' );
     
     return $new_columns;
+  }
+
+  /**
+   * Check whether receipt printing is enabled.
+   *
+   * Printing is enabled by default for new installs. A saved disabled value
+   * still turns it off.
+   *
+   * @since 3.3
+   * @return bool
+   */
+  public static function is_printing_enabled() {
+    return '1' === (string) rpress_get_option( 'enable_printing', '1' );
   }
   /**
    * Check whether print action should be available with selected order
@@ -85,12 +97,26 @@ class RPRESS_Print_Receipts {
    * @return bool
    */
   public function check_print_action_available( $payment_id ) {
-    
+    return self::is_print_action_available( $payment_id );
+  }
+
+  /**
+   * Check whether print action should be available with selected order.
+   *
+   * This static wrapper lets admin screens respect print settings without
+   * instantiating another receipt object and registering duplicate hooks.
+   *
+   * @since 3.3
+   * @param int $payment_id Payment/order ID.
+   * @return bool
+   */
+  public static function is_print_action_available( $payment_id ) {
+
     $current_status = rpress_get_order_status( $payment_id );
     $get_settings = self::get_settings();
     $print_status = isset( $get_settings['order_print_status'] ) ? $get_settings['order_print_status'] : array();
     
-    if ( isset( $get_settings['enable_printing'] ) && array_key_exists( $current_status, $print_status ) ) {
+    if ( self::is_printing_enabled() && array_key_exists( $current_status, $print_status ) ) {
       return true;
     } else {
       return false;
@@ -119,6 +145,10 @@ class RPRESS_Print_Receipts {
    * @param int $payment_id 
    */
   public function add_meta_box( $payment_id ) {
+    if ( isset( $_GET['page'], $_GET['view'] ) && 'rpress-payment-history' === sanitize_text_field( wp_unslash( $_GET['page'] ) ) && 'view-order-details' === sanitize_text_field( wp_unslash( $_GET['view'] ) ) ) {
+      return;
+    }
+
     if ( $this->check_print_action_available( $payment_id ) ) :
       echo '<div style="display: none;" class="print-display-area" id="print-display-area-' . esc_attr( $payment_id ) . '"></div>';
       echo '<button type="button" data-payment-id="' . esc_attr( $payment_id ) . '" class="button rp_print_now">'
@@ -157,11 +187,12 @@ class RPRESS_Print_Receipts {
     $printing_font = isset( $print_settings['order_printing_font'] ) ?$print_settings['order_printing_font']:'Arial, Helvetica, sans-serif';
     // Store Logo / Name
     $image_path = isset( $print_settings['store_logo'] ) ? $print_settings['store_logo'] : '';
-    if( $image_path != '' ) {
-      $image_type = pathinfo( $image_path, PATHINFO_EXTENSION );
-      $image_data = file_get_contents( $image_path );
-      $base64_img = 'data:image/'.$image_type.';base64,'.base64_encode( $image_data );
-      $store_logo = '<img style="height: 75px; width:auto; margin: 0px auto 10px; display:block;" src="'.$base64_img.'">';
+    if ( $image_path != '' ) {
+      // Reference the logo by URL and let the browser load it at print time.
+      // The previous approach read the file and inlined it as base64, which
+      // required allow_url_fopen and produced a >1MB data URI that could exceed
+      // wp_kses/PCRE limits and blank out the entire receipt.
+      $store_logo = '<img style="height: 75px; width:auto; margin: 0px auto 10px; display:block;" src="' . esc_url( $image_path ) . '">';
     } else {
       $store_logo = get_bloginfo( 'name' );
     }

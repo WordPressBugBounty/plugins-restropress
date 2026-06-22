@@ -366,24 +366,105 @@ function rpress_get_registered_settings()
 						'name' => esc_html__('Store Address', 'restropress'),
 						'desc' => esc_html__('Enter your complete Store Address', 'restropress'),
 					),
+					'store_city' => array(
+						'id' => 'store_city',
+						'name' => esc_html__('City', 'restropress'),
+						'desc' => esc_html__('Used for delivery zones, tax and receipts.', 'restropress'),
+						'type' => 'text',
+						'size' => 'regular',
+					),
+					'store_postcode' => array(
+						'id' => 'store_postcode',
+						'name' => esc_html__('Postcode / ZIP', 'restropress'),
+						'desc' => esc_html__('Used for delivery zones, tax and receipts.', 'restropress'),
+						'type' => 'text',
+						'size' => 'regular',
+					),
+					'store_phone' => array(
+						'id' => 'store_phone',
+						'name' => esc_html__('Restaurant Phone', 'restropress'),
+						'desc' => esc_html__('Public contact number shown on receipts and used for customer callbacks.', 'restropress'),
+						'type' => 'text',
+						'size' => 'regular',
+					),
+					'enable_food_type' => array(
+						'id' => 'enable_food_type',
+						'name' => esc_html__('Show Veg / Non-veg marks', 'restropress'),
+						'desc' => esc_html__('Display the green/red Veg & Non-veg marker on menu items. Common in India and similar markets; off by default. Dietary labels stay available worldwide regardless.', 'restropress'),
+						'type' => 'checkbox',
+					),
 				),
 				//API settings
 				'api' => array(
 					'api_settings' => array(
 						'id' => 'api_settings',
-						'name' => '<h3>' . esc_html__('API Settings', 'restropress') . '</h3>',
+						'name' => '<h3>' . esc_html__('Developer API', 'restropress') . '</h3>',
 						'desc' => '',
 						'type' => 'header',
-						'tooltip_title' => esc_html__('API Settings', 'restropress'),
-						'tooltip_desc' => esc_html__('This would be the all necessary settings for API', 'restropress'),
+						'tooltip_title' => esc_html__('Developer API', 'restropress'),
+						'tooltip_desc' => esc_html__('REST API access for custom apps, integrations, and developer workflows.', 'restropress'),
+					),
+					'api_overview' => array(
+						'id' => 'api_overview',
+						'name' => esc_html__('What is available', 'restropress'),
+						'desc' => sprintf(
+							'<p>%1$s</p><p>%2$s</p><p>%3$s</p>',
+							esc_html__('The Developer API is for custom apps, mobile apps, POS/KDS integrations, reporting tools, and other systems that need to work with RestroPress data through the WordPress REST API.', 'restropress'),
+							sprintf(
+								/* translators: 1: REST API namespace URL. */
+								esc_html__('RestroPress REST endpoints are registered under %1$s and protected endpoints require an authenticated WordPress user with the right permissions.', 'restropress'),
+								'<strong>' . esc_html(rest_url('rp/v1')) . '</strong>'
+							),
+							esc_html__('This page does not create an app, generate credentials automatically, or make order/customer data public by itself.', 'restropress')
+						),
+						'type' => 'descriptive_text',
 					),
 					'activate_api' => array(
 						'id' => 'activate_api',
-						'name' => esc_html__('Activate API', 'restropress'),
+						'name' => esc_html__('Enable Token Endpoint', 'restropress'),
 						'desc' => sprintf(
-							esc_html__('Enable API for access all endpoint.', 'restropress')
+							/* translators: 1: REST API auth endpoint URL. */
+							esc_html__('Allow logged-in, authorized users to request a RestroPress token from %1$s. This does not control the normal WordPress REST API routes.', 'restropress'),
+							esc_html(rest_url('rp/v1/auth'))
 						),
 						'type' => 'checkbox',
+					),
+					'api_next_steps' => array(
+						'id' => 'api_next_steps',
+						'name' => esc_html__('Recommended connection flow', 'restropress'),
+						'desc' => sprintf(
+							'<p><strong>%1$s</strong><br>%2$s</p><p><strong>%3$s</strong><br>%4$s<br>%5$s</p><p><strong>%6$s</strong><br>%7$s</p><p><a href="%8$s">%9$s</a> &nbsp; <a href="%10$s" target="_blank" rel="noopener noreferrer">%11$s</a></p>',
+							esc_html__('1. Choose the WordPress user the integration should act as.', 'restropress'),
+							esc_html__('Use the least-privileged user that still has permission to access the data or actions the integration needs.', 'restropress'),
+							esc_html__('2. Create a WordPress Application Password.', 'restropress'),
+							sprintf(
+								/* translators: 1: User profile URL. */
+								esc_html__('Open %1$s, find Application Passwords, add a name for the integration, and copy the generated password immediately.', 'restropress'),
+								'<a href="' . esc_url(get_edit_user_link(get_current_user_id())) . '">' . esc_html__('your WordPress user profile', 'restropress') . '</a>'
+							),
+							esc_html__('External apps can then authenticate with the WordPress username and Application Password using HTTP Basic Authentication.', 'restropress'),
+							esc_html__('3. Call the RestroPress REST endpoints.', 'restropress'),
+							esc_html__('The current API includes food items, orders, cart, customers, reports, services/status/tax helpers, categories, and add-ons under the rp/v1 namespace.', 'restropress'),
+							esc_url(get_edit_user_link(get_current_user_id())),
+							esc_html__('Open User Profile', 'restropress'),
+							esc_url('https://documenter.getpostman.com/view/14761886/2s9YsFCYrf'),
+							esc_html__('View REST API Postman documentation', 'restropress')
+						),
+						'type' => 'descriptive_text',
+					),
+					'api_token_endpoint' => array(
+						'id' => 'api_token_endpoint',
+						'name' => esc_html__('About the token endpoint', 'restropress'),
+						'desc' => sprintf(
+							'<p>%1$s</p><p>%2$s</p>',
+							sprintf(
+								/* translators: 1: REST API auth endpoint URL. */
+								esc_html__('The token endpoint is %1$s.', 'restropress'),
+								'<strong>' . esc_html(rest_url('rp/v1/auth')) . '</strong>'
+							),
+							esc_html__('Current protected REST controllers check the authenticated WordPress user and their capabilities. For most server-to-server integrations, WordPress Application Passwords are the clearest and most reliable authentication path.', 'restropress')
+						),
+						'type' => 'descriptive_text',
 					),
 				),
 				//Currency Settings Here
@@ -505,6 +586,33 @@ function rpress_get_registered_settings()
 						'name' => esc_html__('Notification Length', 'restropress'),
 						'desc' => esc_html__('Time in seconds, "0" = Default notification length', 'restropress'),
 						'type' => 'number',
+					),
+					'live_orders_poll_interval' => array(
+						'id'   => 'live_orders_poll_interval',
+						'name' => esc_html__('Live Orders refresh interval', 'restropress'),
+						'desc' => esc_html__('How often the Live Orders kanban polls for new orders, in seconds. Lower = more responsive, higher = lighter on the server. Allowed range: 10–300.', 'restropress'),
+						'type' => 'number',
+						'min'  => 10,
+						'max'  => 300,
+						'std'  => 30,
+					),
+					'live_orders_default_view' => array(
+						'id'   => 'live_orders_default_view',
+						'name' => esc_html__('Open Live Orders by default', 'restropress'),
+						'desc' => esc_html__('When checked, the Orders menu link goes straight to the Live Orders kanban instead of the historical list. Useful for kitchen / counter staff.', 'restropress'),
+						'type' => 'checkbox',
+					),
+					'orders_show_phone' => array(
+						'id'      => 'orders_show_phone',
+						'name'    => esc_html__('Show customer phone in orders list', 'restropress'),
+						'desc'    => esc_html__('Controls how the customer phone number appears in the Order column of the orders list. Defaults to the full number so staff can quickly contact customers; choose a masked or hidden option for shared screens.', 'restropress'),
+						'type'    => 'radio',
+						'options' => array(
+							'full'   => esc_html__('Show full number', 'restropress'),
+							'last4'  => esc_html__('Last 4 digits only', 'restropress'),
+							'hidden' => esc_html__('Hide phone', 'restropress'),
+						),
+						'std'     => 'full',
 					),
 				),
 				//Delivery Settings Starts Here
@@ -691,6 +799,7 @@ function rpress_get_registered_settings()
 						'name' => esc_html__('Enable Printing Option', 'restropress'),
 						'desc' => esc_html__('Check this option to enable printing of invoice', 'restropress'),
 						'type' => 'checkbox',
+						'std' => '1',
 					),
 
 					'store_logo' => array(
@@ -879,7 +988,7 @@ function rpress_get_registered_settings()
 					'disable_category_menu' => array(
 						'id' => 'disable_category_menu',
 						'name' => esc_html__('Disable Category Menu', 'restropress'),
-						'desc' => esc_html__('Disable Category Menu In Food Item Page', 'restropress'),
+						'desc' => esc_html__('Disable Category Menu In Menu Item Page', 'restropress'),
 						'type' => 'checkbox',
 					),
 					'old_ui_ux' => array(
@@ -917,7 +1026,7 @@ function rpress_get_registered_settings()
 					'add_button_visibility' => array(
 						'id' => 'add_button_visibility',
 						'name' => esc_html__('Add Button', 'restropress'),
-						'desc' => esc_html__('Choose whether to show or hide the add button on frontend food items.', 'restropress'),
+						'desc' => esc_html__('Choose whether to show or hide the add button on frontend menu items.', 'restropress'),
 						'type' => 'select',
 						'options' => array(
 							'show' => esc_html__('Show', 'restropress'),
@@ -948,8 +1057,8 @@ function rpress_get_registered_settings()
 					),
 					'template' => array(
 						'id' => 'template',
-						'name' => __('Food Item Template', 'restropress'),
-						'desc' => __('Choose a layout template for the food item.', 'restropress'),
+						'name' => __('Menu Item Template', 'restropress'),
+						'desc' => __('Choose a layout template for the menu item.', 'restropress'),
 						'type' => 'radio_image',
 						'options' => array(
 							'list' => array(
@@ -1293,7 +1402,146 @@ function rpress_get_registered_settings()
 		$rpress_settings['misc']['button_text']['buy_now_text']['tooltip_title'] = esc_html__('Buy Now Disabled', 'restropress');
 		$rpress_settings['misc']['button_text']['buy_now_text']['tooltip_desc'] = esc_html__('Buy Now buttons are only available for stores that have a single supported gateway active and that do not use taxes.', 'restropress');
 	}
+	$rpress_settings['general'] = rpress_reorganize_general_settings($rpress_settings['general']);
 	return apply_filters('rpress_registered_settings', $rpress_settings);
+}
+
+/**
+ * Reorganize General settings into restaurant-operation sections.
+ *
+ * Existing option IDs and callbacks stay unchanged; only the section grouping changes.
+ *
+ * @since 3.3
+ *
+ * @param array $settings General settings.
+ * @return array
+ */
+function rpress_reorganize_general_settings($settings)
+{
+	$move = function (&$source, $ids) {
+		$items = array();
+		foreach ($ids as $id) {
+			foreach ($source as $section => $fields) {
+				if (isset($fields[$id])) {
+					$items[$id] = $fields[$id];
+					unset($source[$section][$id]);
+					break;
+				}
+			}
+		}
+		return $items;
+	};
+
+	$original = $settings;
+	$reorganized = array(
+		'store_setup' => $move($settings, array(
+			'page_settings',
+			'food_items_page',
+			'purchase_page',
+			'success_page',
+			'failure_page',
+			'order_history_page',
+			'login_redirect_page',
+			'locale_settings',
+			'base_country',
+			'base_state',
+			'store_address',
+		)),
+		'ordering_rules' => $move($settings, array(
+			'order_settings',
+			'allow_minimum_order',
+			'minimum_order_price',
+			'minimum_order_price_pickup',
+			'minimum_order_error',
+			'minimum_order_error_pickup',
+			'rp_reorder',
+		)),
+		'service_hours' => $move($settings, array(
+			'enable_service',
+			'default_service',
+			'store_time_format',
+			'wordpress_time',
+			'enable_asap_option',
+			'delivery_asap_text',
+			'pickup_asap_text',
+			'enable_asap_option_only',
+			'enable_always_open',
+			'open_time',
+			'close_time',
+			'prep_time',
+			'expire_service_cookie',
+			'store_closed_msg',
+		)),
+		'live_orders' => $move($settings, array(
+			'enable_order_notification',
+			'notification_title',
+			'notification_body',
+			'notification_sound',
+			'notification_sound_loop',
+			'notification_icon',
+			'notification_duration',
+			'live_orders_poll_interval',
+			'live_orders_default_view',
+			'orders_show_phone',
+			'order_auto_accepted',
+		)),
+		'checkout' => $move($settings, array(
+			'login_method',
+			'enforce_ssl',
+			'enable_cart_saving',
+		)),
+		'money_order_numbers' => $move($settings, array(
+			'currency',
+			'currency_position',
+			'currency_value_type',
+			'thousands_separator',
+			'decimal_separator',
+			'enable_skus',
+			'enable_sequential',
+			'sequential_prefix',
+			'sequential_postfix',
+		)),
+		'printing' => $move($settings, array(
+			'print_receipts',
+			'enable_printing',
+			'store_logo',
+			'order_print_status',
+			'order_printing_font',
+			'paper_size',
+			'footer_area_content',
+			'complementary_close',
+		)),
+		'developer_api' => $move($settings, array(
+			'api_settings',
+			'api_overview',
+			'activate_api',
+			'api_next_steps',
+			'api_token_endpoint',
+		)),
+	);
+
+	$legacy_section_map = array(
+		'main'               => 'store_setup',
+		'api'                => 'developer_api',
+		'currency'           => 'money_order_numbers',
+		'accounting'         => 'money_order_numbers',
+		'order_notification' => 'live_orders',
+		'service_options'    => 'service_hours',
+		'checkout_options'   => 'checkout',
+		'print_receipts'     => 'printing',
+	);
+
+	foreach ($settings as $section => $fields) {
+		if (!empty($fields)) {
+			if (isset($legacy_section_map[$section])) {
+				$reorganized[$legacy_section_map[$section]] = array_merge($reorganized[$legacy_section_map[$section]], $fields);
+			} else {
+				$reorganized[$section] = $fields;
+			}
+		}
+	}
+
+	return !empty(array_filter($reorganized)) ? $reorganized : $original;
 }
 /**
  * Settings Sanitization
@@ -1700,14 +1948,14 @@ function rpress_get_registered_settings_sections()
 	}
 	$sections = array(
 		'general' => apply_filters('rpress_settings_sections_general', array(
-			'main' => esc_html__('General', 'restropress'),
-			'api' => esc_html__('API', 'restropress'),
-			'currency' => esc_html__('Currency', 'restropress'),
-			'accounting' => esc_html__('Accounting', 'restropress'),
-			'order_notification' => esc_html__('Order Notification', 'restropress'),
-			'service_options' => esc_html__('Service Options', 'restropress'),
-			'checkout_options' => esc_html__('Checkout Options', 'restropress'),
-			'print_receipts' => esc_html__('Print Receipt', 'restropress'),
+			'store_setup' => esc_html__('Store Setup', 'restropress'),
+			'ordering_rules' => esc_html__('Ordering Rules', 'restropress'),
+			'service_hours' => esc_html__('Service & Hours', 'restropress'),
+			'live_orders' => esc_html__('Live Orders', 'restropress'),
+			'checkout' => esc_html__('Checkout', 'restropress'),
+			'money_order_numbers' => esc_html__('Money & Order Numbers', 'restropress'),
+			'printing' => esc_html__('Printing', 'restropress'),
+			'developer_api' => esc_html__('Developer API', 'restropress'),
 		)),
 		'gateways' => apply_filters('rpress_settings_sections_gateways', array(
 			'main' => esc_html__('General', 'restropress'),
@@ -1788,7 +2036,7 @@ function rpress_header_callback($args)
  */
 function rpress_checkbox_callback($args)
 {
-	$rpress_option = rpress_get_option($args['id']);
+	$rpress_option = rpress_get_option($args['id'], $args['std']);
 
 	if (isset($args['faux']) && true === $args['faux']) {
 		$name = '';
@@ -2544,8 +2792,8 @@ function rpress_upload_callback($args)
 	}
 	$class = rpress_sanitize_html_class($args['field_class']);
 	$size = (isset($args['size']) && !is_null($args['size'])) ? $args['size'] : 'regular';
-	$html = '<input type="text" class="' . sanitize_html_class($size) . '-text" id="rpress_settings[' . rpress_sanitize_key($args['id']) . ']" class="' . $class . '" name="rpress_settings[' . esc_attr($args['id']) . ']" value="' . esc_attr(stripslashes($value)) . '"/>';
-	$html .= '<span>&nbsp;<input type="button" class="rpress_settings_upload_button button-secondary" value="' . esc_html__('Upload File', 'restropress') . '"/></span>';
+	$html = '<input type="text" class="' . sanitize_html_class($size) . '-text ' . esc_attr($class) . ' rp-input" id="rpress_settings[' . rpress_sanitize_key($args['id']) . ']" name="rpress_settings[' . esc_attr($args['id']) . ']" value="' . esc_attr(stripslashes($value)) . '"/>';
+	$html .= '<span>&nbsp;<input type="button" class="rpress_settings_upload_button button button-secondary rp-btn rp-btn-secondary" value="' . esc_html__('Upload File', 'restropress') . '"/></span>';
 	$html .= '<label for="rpress_settings[' . rpress_sanitize_key($args['id']) . ']"> ' . wp_kses_post($args['desc']) . '</label>';
 	echo wp_kses(
 		apply_filters('rpress_after_setting_output', $html, $args),
@@ -3148,7 +3396,7 @@ function rpress_add_setting_tooltip($html, $args)
 	if (!empty($args['tooltip_title']) && !empty($args['tooltip_desc'])) {
 		// Combine tooltip title + description safely for the title attribute
 		$title_text = sprintf(
-			'%s — %s',
+			'%s - %s',
 			wp_strip_all_tags($args['tooltip_title']),
 			wp_strip_all_tags($args['tooltip_desc'])
 		);

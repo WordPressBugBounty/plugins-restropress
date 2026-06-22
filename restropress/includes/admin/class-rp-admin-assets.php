@@ -15,6 +15,20 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
    */
   class RP_Admin_Assets {
     /**
+     * Admin UI design-system stylesheet handles in dependency order.
+     *
+     * @var array
+     */
+    protected $admin_ui_style_handles = array(
+      'rpress-admin-ui-tokens',
+      'rpress-admin-ui-base',
+      'rpress-admin-ui-layout',
+      'rpress-admin-ui-components',
+      'rpress-admin-ui-utilities',
+      'rpress-admin-ui-screens',
+    );
+
+    /**
      * Hook in tabs.
      */
     public function __construct() {
@@ -28,6 +42,157 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       add_action( 'wp_ajax_revenue_graph_filter', array( $this, 'revenue_graph_filter' ) );
       add_action( 'wp_ajax_customers_data_filter', array( $this, 'customers_data_filter') );
     }
+
+    /**
+     * Convert a WordPress PHP date format into a jQuery UI datepicker format.
+     *
+     * @since 3.3
+     *
+     * @param string $format WordPress date format.
+     * @return string
+     */
+    protected static function wp_date_format_to_jquery_ui( $format ) {
+      $replacements = array(
+        'd' => 'dd',
+        'j' => 'd',
+        'm' => 'mm',
+        'n' => 'm',
+        'F' => 'MM',
+        'M' => 'M',
+        'Y' => 'yy',
+        'y' => 'y',
+      );
+
+      return strtr( $format, $replacements );
+    }
+
+    /**
+     * Build a readable placeholder from the WordPress date format.
+     *
+     * @since 3.3
+     *
+     * @param string $format WordPress date format.
+     * @return string
+     */
+    protected static function wp_date_format_placeholder( $format ) {
+      $replacements = array(
+        'd' => 'dd',
+        'j' => 'd',
+        'm' => 'mm',
+        'n' => 'm',
+        'F' => 'Month',
+        'M' => 'Mon',
+        'Y' => 'yyyy',
+        'y' => 'yy',
+      );
+
+      return strtr( $format, $replacements );
+    }
+
+    /**
+     * Determine whether the current admin screen belongs to RestroPress.
+     *
+     * @since 3.3
+     *
+     * @param string $screen_id Current screen ID.
+     * @return bool
+     */
+    protected function is_rpress_admin_screen( $screen_id = '' ) {
+      $page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+
+      if ( '' !== $page && ( 0 === strpos( $page, 'rpress' ) || 'restropress' === $page ) ) {
+        return true;
+      }
+
+      if ( in_array( $screen_id, array( 'fooditem', 'edit-fooditem' ), true ) ) {
+        return true;
+      }
+
+      return (
+        0 === strpos( $screen_id, 'restropress_page_' )
+        || 0 === strpos( $screen_id, 'fooditem_page_' )
+      );
+    }
+
+    /**
+     * Register the reusable RestroPress admin UI system assets.
+     *
+     * @since 3.3
+     *
+     * @return void
+     */
+    protected function register_admin_ui_assets() {
+      $css_dir = RP_PLUGIN_URL . 'assets/admin-ui/css/';
+      $js_dir  = RP_PLUGIN_URL . 'assets/admin-ui/js/';
+      $css_path = RP_PLUGIN_DIR . 'assets/admin-ui/css/';
+      $js_path  = RP_PLUGIN_DIR . 'assets/admin-ui/js/';
+
+      $styles = array(
+        'rpress-admin-ui-tokens'     => array( 'file' => 'tokens.css', 'deps' => array() ),
+        'rpress-admin-ui-base'       => array( 'file' => 'base.css', 'deps' => array( 'rpress-admin-ui-tokens' ) ),
+        'rpress-admin-ui-layout'     => array( 'file' => 'layout.css', 'deps' => array( 'rpress-admin-ui-base' ) ),
+        'rpress-admin-ui-components' => array( 'file' => 'components.css', 'deps' => array( 'rpress-admin-ui-layout' ) ),
+        'rpress-admin-ui-utilities'  => array( 'file' => 'utilities.css', 'deps' => array( 'rpress-admin-ui-components' ) ),
+        'rpress-admin-ui-screens'    => array( 'file' => 'screens.css', 'deps' => array( 'rpress-admin-ui-utilities' ) ),
+      );
+
+      foreach ( $styles as $handle => $style ) {
+        $style_file = $css_path . $style['file'];
+        $style_version = file_exists( $style_file ) ? filemtime( $style_file ) : RP_VERSION;
+
+        wp_register_style( $handle, $css_dir . $style['file'], $style['deps'], $style_version );
+      }
+
+      $script_file = $js_path . 'admin-ui.js';
+      $script_version = file_exists( $script_file ) ? filemtime( $script_file ) : RP_VERSION;
+
+      wp_register_script( 'rpress-admin-ui', $js_dir . 'admin-ui.js', array( 'jquery', 'jquery-ui-datepicker' ), $script_version, true );
+    }
+
+    /**
+     * Enqueue the reusable RestroPress admin UI system assets.
+     *
+     * @since 3.3
+     *
+     * @return void
+     */
+    protected function enqueue_admin_ui_assets() {
+      $this->register_admin_ui_assets();
+
+      foreach ( $this->admin_ui_style_handles as $handle ) {
+        wp_enqueue_style( $handle );
+      }
+
+      wp_enqueue_script( 'rpress-admin-ui' );
+      wp_localize_script(
+        'rpress-admin-ui',
+        'rpressAdminUI',
+        array(
+          'dateRange' => array(
+            'format' => 'YYYY-MM-DD',
+            'displayFormat' => self::wp_date_format_to_jquery_ui( get_option( 'date_format' ) ),
+            'datePlaceholder' => self::wp_date_format_placeholder( get_option( 'date_format' ) ),
+            'separator' => ' - ',
+            'firstDay' => (int) get_option( 'start_of_week', 1 ),
+            'startLabel' => esc_html__( 'Start', 'restropress' ),
+            'endLabel' => esc_html__( 'End', 'restropress' ),
+            'applyLabel' => esc_html__( 'Apply', 'restropress' ),
+            'cancelLabel' => esc_html__( 'Cancel', 'restropress' ),
+            'customRangeLabel' => esc_html__( 'Custom Range', 'restropress' ),
+            'ranges' => array(
+              'today'      => esc_html__( 'Today', 'restropress' ),
+              'yesterday'  => esc_html__( 'Yesterday', 'restropress' ),
+              'this_week'  => esc_html__( 'This Week', 'restropress' ),
+              'last_7'     => esc_html__( 'Last 7 Days', 'restropress' ),
+              'last_30'    => esc_html__( 'Last 30 Days', 'restropress' ),
+              'this_month' => esc_html__( 'This Month', 'restropress' ),
+              'last_month' => esc_html__( 'Last Month', 'restropress' ),
+            ),
+          ),
+        )
+      );
+    }
+
     /**
      * Enqueue styles.
      */
@@ -36,14 +201,18 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       $screen    = get_current_screen();
       $screen_id = $screen ? $screen->id : '';
       $suffix       = '';
+      $admin_css_file = RP_PLUGIN_DIR . 'assets/css/admin.css';
+      $admin_css_version = file_exists( $admin_css_file ) ? filemtime( $admin_css_file ) : RP_VERSION;
       // Register admin styles.
       wp_register_style( 'rpress_admin_icon_styles', RP_PLUGIN_URL . '/assets/css/admin-icons.css', array(), RP_VERSION );
-      wp_register_style( 'rpress_admin_styles', RP_PLUGIN_URL . 'assets/css/admin.css', array('select2'), RP_VERSION );
+      wp_deregister_style( 'rpress_admin_styles' );
+      wp_register_style( 'rpress_admin_styles', RP_PLUGIN_URL . 'assets/css/admin.css', array('select2'), $admin_css_version );
       wp_register_style( 'select2', RP_PLUGIN_URL . 'assets/css/select2.min.css', array(), RP_VERSION );
       wp_register_style( 'toast', RP_PLUGIN_URL . '/assets/css/jquery.toast.css', array(), RP_VERSION );
       wp_register_style( 'timepicker', RP_PLUGIN_URL . 'assets/css/jquery.timepicker.css', array(), RP_VERSION );
       wp_register_style( 'jquery-chosen', RP_PLUGIN_URL .'assets/css/chosen.min.css', array(), RP_VERSION );
       wp_register_style( 'backbone-modal', RP_PLUGIN_URL .'assets/css/rpress-backbone-modal.css', array(), RP_VERSION );
+      $this->register_admin_ui_assets();
       $ui_style = ( 'classic' == get_user_option( 'admin_color' ) ) ? 'classic' : 'fresh';
       wp_register_style( 'jquery-ui-css', RP_PLUGIN_URL . 'assets/css/jquery-ui-'. $ui_style . '.min.css' );
       wp_enqueue_style( 'jquery-ui-css' );
@@ -57,11 +226,41 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       // Sitewide Admin Icons.
       wp_enqueue_style( 'rpress_admin_icon_styles' );
 
-      if ( isset( $_GET['page'] ) && $_GET['page'] === 'rpress-setup' ) {
-        wp_register_style( 'rpress-admin-home', RP_PLUGIN_URL . 'assets/css/admin-home.css', '', RP_VERSION );
+      if ( $this->is_rpress_admin_screen( $screen_id ) ) {
+        $this->enqueue_admin_ui_assets();
+      }
+
+      // The onboarding wizard AND the standalone Menu Items -> Import screen
+      // share the same view + JS, so both load the home assets.
+      $current_page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+      if ( in_array( $current_page, array( 'rpress-setup', 'rpress-menu-import' ), true ) ) {
+        $home_css_file = RP_PLUGIN_DIR . 'assets/css/admin-home.css';
+        $home_js_file  = RP_PLUGIN_DIR . 'assets/js/admin-home.js';
+        $home_css_version = file_exists( $home_css_file ) ? filemtime( $home_css_file ) : RP_VERSION;
+        $home_js_version  = file_exists( $home_js_file ) ? filemtime( $home_js_file ) : RP_VERSION;
+        wp_register_style( 'rpress-admin-home', RP_PLUGIN_URL . 'assets/css/admin-home.css', array(), $home_css_version );
         wp_enqueue_style( 'rpress-admin-home' );
-        wp_register_script( 'rpress-home', RP_PLUGIN_URL . 'assets/js/admin-home.js', array( 'jquery' ), RP_VERSION );
+        wp_enqueue_media(); // Per-item photo picker on the menu review screen.
+        wp_register_script( 'rpress-home', RP_PLUGIN_URL . 'assets/js/admin-home.js', array( 'jquery' ), $home_js_version, true );
         wp_enqueue_script( 'rpress-home' );
+        wp_localize_script(
+          'rpress-home',
+          'rpressOnboarding',
+          array(
+            'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
+            'nonce'             => wp_create_nonce( 'rpress_onboarding' ),
+            'getStatesNonce'    => wp_create_nonce( 'rpress_get_states_nonce' ),
+            'savedText'         => esc_html__( 'Saved. Moving to the next setup area.', 'restropress' ),
+            'importedText'      => esc_html__( 'Menu parsed. Review every item before publishing.', 'restropress' ),
+            'missingImportText' => esc_html__( 'Upload and review a menu before publishing.', 'restropress' ),
+            'errorText'         => esc_html__( 'Something went wrong. Please try again.', 'restropress' ),
+            'nextText'          => esc_html__( 'Save and continue', 'restropress' ),
+            'finishText'        => esc_html__( 'Finish & go live', 'restropress' ),
+            'launchedText'      => esc_html__( 'Setup complete', 'restropress' ),
+            'publishedText'     => esc_html__( 'menu items published.', 'restropress' ),
+            'csvReadyText'      => esc_html__( 'Ready to import — click “Upload & map columns”.', 'restropress' ),
+          )
+        );
       }
     }
     /**
@@ -74,6 +273,10 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       $rp_screen_id = sanitize_title( esc_html__( 'RestroPress', 'restropress' ) );
       $suffix       = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
       $admin_deps   = array( 'jquery', 'jquery-tata-toast', 'timepicker', 'jquery-form',  'jquery-ui-tooltip' );
+      $this->register_admin_ui_assets();
+      if ( $this->is_rpress_admin_screen( $screen_id ) ) {
+        $admin_deps[] = 'rpress-admin-ui';
+      }
       wp_register_script( 'jquery-tiptip', RP_PLUGIN_URL . 'assets/js/jquery-tiptip/jquery.tipTip' . $suffix . '.js', array( 'jquery' ), RP_VERSION, true );
       wp_register_script( 'select2', RP_PLUGIN_URL . 'assets/js/select2/select2' . $suffix . '.js', array( 'jquery' ), RP_VERSION, true );
       wp_register_script( 'jquery-blockui', RP_PLUGIN_URL . 'assets/js/jquery-blockui/jquery.blockUI' . $suffix . '.js', array( 'jquery' ), RP_VERSION, true );
@@ -85,9 +288,6 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       wp_register_script( 'rp-admin', RP_PLUGIN_URL . 'assets/js/admin/rp-admin.js', $admin_deps, RP_VERSION );
       wp_register_script( 'jquery-chosen', RP_PLUGIN_URL . 'assets/js/jquery-chosen/chosen.jquery' . $suffix . '.js', array( 'jquery' ), RP_VERSION );
       wp_register_script( 'admin-dashboard', RP_PLUGIN_URL . 'assets/js/admin/admin-dashboard.js', array( 'jquery','rp-backbone-modal' ), RP_VERSION, true );
-      wp_register_script('moment-js', 'https://cdn.jsdelivr.net/momentjs/latest/moment.min.js', array('jquery'), null, true);
-      wp_register_script('daterangepicker-js', 'https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js', array('jquery', 'moment-js'), null, true);
-      wp_register_style('daterangepicker-css', 'https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css');
       wp_register_script( 'admin-dashboard-chart', 'https://cdn.canvasjs.com/canvasjs.min.js', array( 'jquery' ), RP_VERSION, true );
       wp_enqueue_script( 'jquery-chosen' );
       wp_enqueue_script( 'jquery-form' );
@@ -97,13 +297,11 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       wp_enqueue_script( 'select2' );
       wp_enqueue_script( 'media-upload' );
       wp_enqueue_script( 'thickbox' );
-      wp_enqueue_script('moment-js');
-      wp_enqueue_script('daterangepicker-js');
-      wp_enqueue_style('daterangepicker-css');
       wp_enqueue_script( 'admin-dashboard' );
       wp_enqueue_script( 'admin-dashboard-chart' );
        
       $is_custom_cordinates_enabled = !empty( rpress_get_option( 'use_custom_latlng' ) ) ? 'yes' : 'no';
+      $wp_date_format = get_option( 'date_format' );
       $admin_params = array(
         'ajaxurl'                     => rpress_get_ajax_url(),
         'please_wait'                 => esc_html__( 'Please Wait...', 'restropress' ),
@@ -120,7 +318,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         'use_custom_cordinates'       => $is_custom_cordinates_enabled,
         'post_id'                     => isset( $post->ID ) ? $post->ID : null,
         'rpress_version'              => RP_VERSION,
-        'add_new_fooditem'            => esc_html__( 'Add New Food Item', 'restropress' ),
+        'add_new_fooditem'            => esc_html__( 'Add New Menu Item', 'restropress' ),
         'use_this_file'               => esc_html__( 'Use This File', 'restropress' ),
         'quick_edit_warning'          => esc_html__( 'Sorry, not available for variable priced products.', 'restropress' ),
         'delete_payment'              => esc_html__( 'Are you sure you wish to delete this payment?', 'restropress' ),
@@ -147,6 +345,8 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         'currency_decimals'           => rpress_currency_decimal_filter(),
         'decimal_separator'           => esc_attr( rpress_get_option( 'decimal_separator', '.' )),
         'thousands_separator'         => esc_attr( rpress_get_option( 'thousands_separator', ',' )),
+        'date_format'                 => self::wp_date_format_to_jquery_ui( $wp_date_format ),
+        'date_placeholder'            => self::wp_date_format_placeholder( $wp_date_format ),
         'new_media_ui'                => apply_filters( 'rpress_use_35_media_ui', 1 ),
         'remove_text'                 => esc_html__( 'Remove', 'restropress' ),
         'type_to_search'              => esc_html__( 'Type to search', 'restropress' ),
@@ -201,12 +401,23 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           'load_addon_nonce'      => wp_create_nonce( 'load-addon' ),
           'delete_pricing'        => esc_js( __( 'Are you sure you want to remove this?', 'restropress' ) ),
           'delete_new_category'   => esc_js( __( 'Are you sure to delete this category?', 'restropress' ) ),
-          'select_addon_category' => esc_js( __( 'Please select addon category first.', 'restropress' ) ),
+          'select_addon_category' => esc_js( __( 'Please select an add-on group first.', 'restropress' ) ),
           'addon_category_already_selected' => esc_js( __( 'Addon category already selected.', 'restropress' ) ),
+          'set_image'    => esc_js( __( 'Set Food Image', 'restropress' ) ),
+          'change_image' => esc_js( __( 'Change Image', 'restropress' ) ),
+          'image_title'  => esc_js( __( 'Select Food Image', 'restropress' ) ),
+          'image_button' => esc_js( __( 'Use as food image', 'restropress' ) ),
+          'option_single' => esc_js( __( '1 option', 'restropress' ) ),
+          'option_plural' => esc_js( __( 'options', 'restropress' ) ),
+          'group_single'    => esc_js( __( '1 group', 'restropress' ) ),
+          'group_plural'    => esc_js( __( 'groups', 'restropress' ) ),
+          'variable_empty'  => esc_js( __( 'No options yet - click "+ Add Option" to add sizes or variants.', 'restropress' ) ),
         );
         wp_localize_script( 'rp-admin-fooditem-meta-boxes', 'fooditem_meta_boxes', $params );
       }
-      if ( $screen_id == 'restropress_page_rpress-payment-history' || $screen_id == 'restropress_page_rpress-dashboard' ) {
+      $current_page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+      if ( $screen_id == 'restropress_page_rpress-payment-history' || $screen_id == 'restropress_page_rpress-dashboard' || in_array( $current_page, array( 'rpress-payment-history', 'rpress-dashboard' ), true ) ) {
+        wp_enqueue_script( 'rpress-admin-ui' );
         wp_enqueue_script( 'rpress-orders' );
         wp_localize_script(
           'rpress-orders',
@@ -217,7 +428,66 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
             'order_nonce'   => wp_create_nonce( 'rpress-order' ),
           )
         );
-        
+
+        // Shared orders stylesheet + filter / quick-edit JS (covers Phase A-C
+        // status pills, filter chips, etc. - previously unenqueued).
+        wp_enqueue_style(
+          'rpress-admin-payments',
+          RP_PLUGIN_URL . 'assets/css/admin-payments.css',
+          array( 'rpress_admin_styles', 'rpress-admin-ui-screens' ),
+          RP_VERSION
+        );
+        wp_enqueue_script( 'jquery-chosen' );
+        wp_enqueue_script(
+          'rpress-admin-payments',
+          RP_PLUGIN_URL . 'assets/js/admin-payments.js',
+          array( 'jquery', 'jquery-chosen' ),
+          RP_VERSION,
+          true
+        );
+
+        // Command Center live refresh - dashboard page only.
+        if ( 'rpress-dashboard' === $current_page || 'restropress_page_rpress-dashboard' === $screen_id ) {
+          wp_enqueue_script(
+            'rpress-command-center',
+            RP_PLUGIN_URL . 'assets/js/admin/rp-command-center.js',
+            array( 'jquery' ),
+            RP_VERSION,
+            true
+          );
+          wp_localize_script(
+            'rpress-command-center',
+            'rpCommandCenter',
+            array(
+              'ajax_url' => admin_url( 'admin-ajax.php' ),
+              'nonce'    => wp_create_nonce( 'rpress-command-center' ),
+              'interval' => (int) apply_filters( 'rpress_command_center_refresh_interval', 30 ) * 1000,
+              'i18n'     => array(
+                'expired'     => __( 'Session expired. Click Refresh to reload the page.', 'restropress' ),
+                'unreachable' => __( 'Live updates paused after repeated errors. Click Refresh to reload the page.', 'restropress' ),
+              ),
+            )
+          );
+        }
+
+        // Live Orders kanban - on ?view=live, or when Orders defaults to Live.
+        $current_view = isset( $_GET['view'] ) ? sanitize_text_field( wp_unslash( $_GET['view'] ) ) : '';
+        $is_live_orders_view = ( 'live' === $current_view || ( '' === $current_view && rpress_get_option( 'live_orders_default_view' ) ) );
+        if ( $is_live_orders_view && $screen_id === 'restropress_page_rpress-payment-history' ) {
+          wp_enqueue_style(
+            'rpress-admin-live-orders',
+            RP_PLUGIN_URL . 'assets/css/admin-live-orders.css',
+            array( 'rpress-admin-payments' ),
+            RP_VERSION
+          );
+          wp_enqueue_script(
+            'rpress-admin-live-orders',
+            RP_PLUGIN_URL . 'assets/js/admin/rp-live-orders.js',
+            array( 'jquery', 'jquery-ui-sortable', 'rpress-orders' ),
+            RP_VERSION,
+            true
+          );
+        }
       }
       
       wp_enqueue_script( 'rp-admin' );
@@ -334,12 +604,22 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
      */
     public function register_styles() {
       global $post;
+      $screen    = get_current_screen();
+      $screen_id = $screen ? $screen->id : '';
       $js_dir  = RP_PLUGIN_URL . 'assets/js/';
       $css_dir = RP_PLUGIN_URL . 'assets/css/';
       // Use minified libraries if SCRIPT_DEBUG is turned off
       $suffix = '';
-      wp_register_style( 'rpress-admin', $css_dir . 'rpress-admin' . $suffix . '.css', array(), RP_VERSION);
+      $this->register_admin_ui_assets();
+      $admin_deps = $this->is_rpress_admin_screen( $screen_id ) ? array( 'rpress-admin-ui-screens' ) : array();
+      $admin_style_file = RP_PLUGIN_DIR . 'assets/css/rpress-admin' . $suffix . '.css';
+      $admin_style_version = file_exists( $admin_style_file ) ? filemtime( $admin_style_file ) : RP_VERSION;
+      wp_deregister_style( 'rpress-admin' );
+      wp_register_style( 'rpress-admin', $css_dir . 'rpress-admin' . $suffix . '.css', $admin_deps, $admin_style_version);
       wp_enqueue_style('rpress-admin');
+      if ( $this->is_rpress_admin_screen( $screen_id ) ) {
+        wp_enqueue_script( 'rpress-admin-ui' );
+      }
       if ( isset( $_GET['section'] ) && $_GET['section'] == 'order_notifications' ) {
         wp_add_inline_style( 'rpress-admin', 'input#submit { visibility: hidden; }' );
       }
@@ -368,26 +648,13 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
       $svg_images_url = esc_url( RP_PLUGIN_URL . 'assets/svg/restropress-icon.svg' );
       $screen = get_current_screen();
     
-    // Ensure we're on the fooditem post type listing page
-    if ($screen->id == 'edit-fooditem') {
+    // The Menu Items list Import/Export buttons are now rendered by
+    // rpress_fooditem_list_header_buttons() (dashboard-columns.php), pointing
+    // at the dedicated Menu Items import/export pages. The previous injection
+    // here linked to the old Tools/Reports locations and built the href with
+    // esc_url() inside a JS string, so the encoded "&#038;" was treated as a
+    // literal fragment and the links landed on the wrong page.
     ?>
-    <script type="text/javascript">
-    jQuery(document).ready(function($) {
-        const importBtn = $('<a>')
-            .addClass('page-title-action')
-            .attr('href', '<?php echo esc_url( admin_url('admin.php?page=rpress-tools&tab=import_export') ); ?>')
-            .text('<?php esc_html_e( 'Import', 'restropress' ); ?>')
-
-        const exportBtn = $('<a>')
-            .addClass('page-title-action')
-            .attr('href', '<?php echo esc_url( admin_url('admin.php?page=rpress-reports&tab=export') ); ?>')
-            .text('<?php esc_html_e( 'Export', 'restropress' ); ?>');
-
-        // Append buttons after "Add New"
-        $('.wrap .page-title-action').last().after(exportBtn).after(importBtn);
-    });
-    </script>
-    <?php } ?>
       <style type="text/css" media="screen">
         #dashboard_right_now .fooditem-count:before {
           background-image: url(<?php echo esc_url( $svg_images_url ); ?>);
@@ -1810,8 +2077,13 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
     
       $step     = absint( $_POST['step'] );
       $class    = sanitize_text_field( $form['rpress-export-class'] );
+      // Validate the class (exists, is a real exporter, user is capable)
+      // before instantiating - never call `new $class` on a raw request value.
+      if( ! function_exists( 'rpress_is_allowed_export_class' ) || ! rpress_is_allowed_export_class( $class ) ) {
+        die( '-1' );
+      }
       $export   = new $class( $step );
-      
+
       if( ! $export->can_export() ) {
         die( '-1' );
       }

@@ -181,8 +181,8 @@ class RP_Addon_Sorting
         $screen->add_help_tab(
             array(
                 'id' => 'rp_addon_sorting_help_tab',
-                'title' => __('Addon Category Ordering', 'restropress'),
-                'content' => '<p>' . __('To reposition an addon category in the list, simply drag & drop it into the desired position. Each time you reposition a category, the data will update in the database and on the front end of your site.', 'restropress') . '</p>',
+                'title' => __('Add-on Group Ordering', 'restropress'),
+                'content' => '<p>' . __('To reposition an add-on group in the list, simply drag & drop it into the desired position. Each time you reposition a group, the data will update in the database and on the front end of your site.', 'restropress') . '</p>',
             )
         );
     }

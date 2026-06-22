@@ -149,7 +149,8 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 				'accepted'   => '#008000',
 				'processing' => '#808000',
 				'ready'      => '#00FF00',
-				'transit'    => '#800080',
+				'transit'    => '#f5a623',
+				'out_for_delivery' => '#4a90e2',
 				'cancelled'  => '#FF0000',
 				'completed'  => '#FFFF00',
 			);

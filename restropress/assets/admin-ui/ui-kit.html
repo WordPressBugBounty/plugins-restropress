@@ -1,0 +1,2926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestroPress Admin UI Kit</title>
+
+  <!-- Dashicons from WordPress CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dashicons@3.0.0/css/dashicons.min.css">
+
+  <!-- UI Kit -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/utilities.css">
+  <link rel="stylesheet" href="css/screens.css">
+
+  <style>
+    /* ── Showcase chrome (not part of the kit) ─────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #f0f0f1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      color: #1d2327;
+    }
+
+    /* Sidebar nav */
+    .kit-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .kit-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 220px;
+      overflow-y: auto;
+      background: #1d2327;
+      padding: 0 0 24px;
+      z-index: 200;
+    }
+
+    .kit-nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 16px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .kit-nav-brand span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: #f25a24;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .kit-nav-section {
+      margin-top: 16px;
+      padding: 0 16px 4px;
+      color: rgba(255,255,255,0.35);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .kit-nav a {
+      display: block;
+      padding: 7px 16px;
+      color: rgba(255,255,255,0.65);
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      border-radius: 0;
+      transition: color 0.12s, background 0.12s;
+    }
+
+    .kit-nav a:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .kit-nav a.active {
+      color: #f25a24;
+    }
+
+    .kit-main {
+      margin-left: 220px;
+      flex: 1;
+      padding: 32px 40px 80px;
+      max-width: calc(100vw - 220px);
+    }
+
+    /* Section headings */
+    .kit-section {
+      margin-bottom: 56px;
+      scroll-margin-top: 24px;
+    }
+
+    .kit-section-title {
+      margin: 0 0 4px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1d2327;
+      letter-spacing: -0.02em;
+    }
+
+    .kit-section-desc {
+      margin: 0 0 24px;
+      color: #646970;
+      font-size: 13px;
+      line-height: 1.5;
+      border-bottom: 1px solid #dcdcde;
+      padding-bottom: 16px;
+    }
+
+    .kit-subsection {
+      margin-bottom: 32px;
+    }
+
+    .kit-subsection-title {
+      margin: 0 0 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #8c8f94;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    /* Demo canvas */
+    .kit-demo {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 20px;
+      background: #fff;
+      border: 1px solid #dcdcde;
+      border-radius: 8px;
+    }
+
+    .kit-demo.kit-demo-dark {
+      background: #1d2327;
+    }
+
+    .kit-demo.kit-demo-stack {
+      flex-direction: column;
+    }
+
+    .kit-demo.kit-demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    /* Token swatches */
+    .kit-swatch-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .kit-swatch {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 100px;
+    }
+
+    .kit-swatch-color {
+      height: 48px;
+      border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .kit-swatch-label {
+      font-size: 10px;
+      color: #646970;
+      font-weight: 600;
+    }
+
+    .kit-swatch-value {
+      font-size: 10px;
+      color: #8c8f94;
+      font-family: ui-monospace, monospace;
+    }
+
+    /* Token table */
+    .kit-token-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .kit-token-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: #f6f7f7;
+      border: 1px solid #dcdcde;
+      color: #646970;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .kit-token-table td {
+      padding: 8px 12px;
+      border: 1px solid #dcdcde;
+      vertical-align: middle;
+    }
+
+    .kit-token-table tr:hover td {
+      background: #f9f9f9;
+    }
+
+    .kit-token-name {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: #d94b1d;
+    }
+
+    .kit-token-preview {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.08);
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .kit-spacing-preview {
+      display: inline-block;
+      height: 12px;
+      background: #f25a24;
+      border-radius: 2px;
+      opacity: 0.6;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .kit-radius-preview {
+      display: inline-block;
+      width: 40px;
+      height: 24px;
+      background: #f25a24;
+      opacity: 0.3;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .kit-shadow-preview {
+      display: inline-block;
+      width: 40px;
+      height: 24px;
+      background: #fff;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    /* Page title for layout demos */
+    .wp-admin { background: transparent !important; }
+
+    /* Ensure rp-admin-scope font renders in showcase */
+    .rp-admin-scope {
+      font-size: 13px;
+    }
+
+    /* Divider between sub-examples */
+    .kit-divider {
+      height: 1px;
+      background: #f0f0f1;
+      margin: 16px 0;
+      width: 100%;
+    }
+
+    /* Code label */
+    .kit-code {
+      display: inline-block;
+      padding: 1px 6px;
+      background: #f6f7f7;
+      border: 1px solid #dcdcde;
+      border-radius: 4px;
+      font-family: ui-monospace, monospace;
+      font-size: 10px;
+      color: #d94b1d;
+    }
+  </style>
+</head>
+<body class="wp-admin">
+
+<!-- ── Sidebar Nav ──────────────────────────────────────────────────────── -->
+<div class="kit-shell">
+<nav class="kit-nav">
+  <div class="kit-nav-brand">
+    <span>R</span> UI Kit
+  </div>
+
+  <div class="kit-nav-section">Foundations</div>
+  <a href="#tokens-color">Color Tokens</a>
+  <a href="#tokens-type">Typography Tokens</a>
+  <a href="#tokens-spacing">Spacing &amp; Radius</a>
+  <a href="#tokens-shadow">Shadows &amp; Z-index</a>
+
+  <div class="kit-nav-section">Components</div>
+  <a href="#buttons">Buttons</a>
+  <a href="#badges">Badges &amp; Status</a>
+  <a href="#cards">Cards</a>
+  <a href="#forms">Form Controls</a>
+  <a href="#toggle">Toggle Switch</a>
+  <a href="#filters">Filters &amp; Search</a>
+  <a href="#tabs">Tabs</a>
+  <a href="#tables">Tables</a>
+  <a href="#notices">Notices</a>
+  <a href="#empty-states">Empty States</a>
+  <a href="#modals">Modals</a>
+  <a href="#date-range">Date Range</a>
+
+  <div class="kit-nav-section">Layout</div>
+  <a href="#page-header">Page Header</a>
+  <a href="#grid">Grid System</a>
+
+  <div class="kit-nav-section">Utilities</div>
+  <a href="#utilities">Utility Classes</a>
+  <a href="#class-reference">Class Reference</a>
+
+  <div class="kit-nav-section">Screens</div>
+  <a href="#screen-orders">Orders KPI</a>
+  <a href="#screen-orders-date">Orders Date Row</a>
+  <a href="#screen-customer-detail">Customer Detail</a>
+  <a href="#screen-reports">Reports</a>
+  <a href="#screen-tools">Tools</a>
+  <a href="#screen-settings">Settings Panel</a>
+  <a href="#screen-discounts">Discounts</a>
+  <a href="#screen-extensions">Extensions</a>
+</nav>
+
+<!-- ── Main Content ─────────────────────────────────────────────────────── -->
+<main class="kit-main">
+
+  <div style="margin-bottom: 40px;">
+    <h1 style="margin: 0 0 4px; font-size: 30px; font-weight: 800; letter-spacing: -0.03em;">RestroPress Admin UI Kit</h1>
+    <p style="margin: 0; color: #646970; font-size: 14px;">A complete reference of every token, component, and pattern in the system.</p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       FOUNDATIONS — COLOR TOKENS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="tokens-color">
+    <h2 class="kit-section-title">Color Tokens</h2>
+    <p class="kit-section-desc">All colors are defined as CSS custom properties on <code>:root</code>. Use the token name, never the raw hex.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Brand / Primary</div>
+      <div class="kit-swatch-row">
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-primary);"></div>
+          <div class="kit-swatch-label">--rp-color-primary</div>
+          <div class="kit-swatch-value">#f25a24</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-primary-hover);"></div>
+          <div class="kit-swatch-label">--rp-color-primary-hover</div>
+          <div class="kit-swatch-value">#d94b1d</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-primary-soft);"></div>
+          <div class="kit-swatch-label">--rp-color-primary-soft</div>
+          <div class="kit-swatch-value">#fff4e8</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-primary-border);"></div>
+          <div class="kit-swatch-label">--rp-color-primary-border</div>
+          <div class="kit-swatch-value">#f3b384</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Neutrals / Text / Surface</div>
+      <div class="kit-swatch-row">
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-text);"></div>
+          <div class="kit-swatch-label">--rp-color-text</div>
+          <div class="kit-swatch-value">#1d2327</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-heading);"></div>
+          <div class="kit-swatch-label">--rp-color-heading</div>
+          <div class="kit-swatch-value">#111827</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-muted);"></div>
+          <div class="kit-swatch-label">--rp-color-muted</div>
+          <div class="kit-swatch-value">#646970</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-subtle);"></div>
+          <div class="kit-swatch-label">--rp-color-subtle</div>
+          <div class="kit-swatch-value">#8c8f94</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-border);"></div>
+          <div class="kit-swatch-label">--rp-color-border</div>
+          <div class="kit-swatch-value">#dcdcde</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-border-strong);"></div>
+          <div class="kit-swatch-label">--rp-color-border-strong</div>
+          <div class="kit-swatch-value">#c3c4c7</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-bg); border: 1px solid #dcdcde;"></div>
+          <div class="kit-swatch-label">--rp-color-bg</div>
+          <div class="kit-swatch-value">#ffffff</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-bg-subtle);"></div>
+          <div class="kit-swatch-label">--rp-color-bg-subtle</div>
+          <div class="kit-swatch-value">#f6f7f7</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-bg-muted);"></div>
+          <div class="kit-swatch-label">--rp-color-bg-muted</div>
+          <div class="kit-swatch-value">#f0f0f1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Semantic — Info</div>
+      <div class="kit-swatch-row">
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-info);"></div>
+          <div class="kit-swatch-label">--rp-color-info</div>
+          <div class="kit-swatch-value">#2271b1</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-info-hover);"></div>
+          <div class="kit-swatch-label">--rp-color-info-hover</div>
+          <div class="kit-swatch-value">#135e96</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-info-soft);"></div>
+          <div class="kit-swatch-label">--rp-color-info-soft</div>
+          <div class="kit-swatch-value">#f0f6fc</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-info-border);"></div>
+          <div class="kit-swatch-label">--rp-color-info-border</div>
+          <div class="kit-swatch-value">#c5d9ed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Semantic — Success</div>
+      <div class="kit-swatch-row">
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-success);"></div>
+          <div class="kit-swatch-label">--rp-color-success</div>
+          <div class="kit-swatch-value">#1f7a4d</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-success-soft);"></div>
+          <div class="kit-swatch-label">--rp-color-success-soft</div>
+          <div class="kit-swatch-value">#ecf7ee</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-success-border);"></div>
+          <div class="kit-swatch-label">--rp-color-success-border</div>
+          <div class="kit-swatch-value">#c9efd9</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Semantic — Warning</div>
+      <div class="kit-swatch-row">
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-warning);"></div>
+          <div class="kit-swatch-label">--rp-color-warning</div>
+          <div class="kit-swatch-value">#b8772b</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-warning-soft);"></div>
+          <div class="kit-swatch-label">--rp-color-warning-soft</div>
+          <div class="kit-swatch-value">#fff4e0</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-warning-border);"></div>
+          <div class="kit-swatch-label">--rp-color-warning-border</div>
+          <div class="kit-swatch-value">#f0bf73</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Semantic — Danger</div>
+      <div class="kit-swatch-row">
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-danger);"></div>
+          <div class="kit-swatch-label">--rp-color-danger</div>
+          <div class="kit-swatch-value">#b42318</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-danger-hover);"></div>
+          <div class="kit-swatch-label">--rp-color-danger-hover</div>
+          <div class="kit-swatch-value">#8f1d13</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-danger-soft);"></div>
+          <div class="kit-swatch-label">--rp-color-danger-soft</div>
+          <div class="kit-swatch-value">#fceaea</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-danger-border);"></div>
+          <div class="kit-swatch-label">--rp-color-danger-border</div>
+          <div class="kit-swatch-value">#efb7bf</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Semantic — Purple</div>
+      <div class="kit-swatch-row">
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-purple);"></div>
+          <div class="kit-swatch-label">--rp-color-purple</div>
+          <div class="kit-swatch-value">#6b3fa0</div>
+        </div>
+        <div class="kit-swatch">
+          <div class="kit-swatch-color" style="background: var(--rp-color-purple-soft);"></div>
+          <div class="kit-swatch-label">--rp-color-purple-soft</div>
+          <div class="kit-swatch-value">#f1ebfa</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       FOUNDATIONS — TYPOGRAPHY
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="tokens-type">
+    <h2 class="kit-section-title">Typography Tokens</h2>
+    <p class="kit-section-desc">System font stack with a 6-step size scale. All sizes are in pixels to match WordPress admin conventions.</p>
+
+    <div class="kit-demo kit-demo-stack rp-admin-scope">
+      <div style="font-size: var(--rp-font-size-title); font-weight: 700; color: var(--rp-color-heading); line-height: var(--rp-line-height-tight);">
+        Title — 23px <span style="font-size: 11px; font-weight: 400; color: var(--rp-color-subtle); font-family: monospace;">--rp-font-size-title</span>
+      </div>
+      <div style="font-size: var(--rp-font-size-xl); font-weight: 600; color: var(--rp-color-heading); line-height: var(--rp-line-height-tight);">
+        XL — 18px <span style="font-size: 11px; font-weight: 400; color: var(--rp-color-subtle); font-family: monospace;">--rp-font-size-xl</span>
+      </div>
+      <div style="font-size: var(--rp-font-size-lg); font-weight: 600; color: var(--rp-color-text); line-height: var(--rp-line-height-base);">
+        LG — 15px <span style="font-size: 11px; font-weight: 400; color: var(--rp-color-subtle); font-family: monospace;">--rp-font-size-lg</span>
+      </div>
+      <div style="font-size: var(--rp-font-size-md); color: var(--rp-color-text); line-height: var(--rp-line-height-base);">
+        MD — 13px (body default) <span style="font-size: 11px; color: var(--rp-color-subtle); font-family: monospace;">--rp-font-size-md</span>
+      </div>
+      <div style="font-size: var(--rp-font-size-sm); color: var(--rp-color-muted); line-height: var(--rp-line-height-base);">
+        SM — 12px (labels, captions) <span style="font-size: 11px; color: var(--rp-color-subtle); font-family: monospace;">--rp-font-size-sm</span>
+      </div>
+      <div style="font-size: var(--rp-font-size-xs); font-weight: 700; color: var(--rp-color-muted); text-transform: uppercase; letter-spacing: 0.06em; line-height: var(--rp-line-height-base);">
+        XS — 11px (eyebrows, table headers) <span style="font-size: 11px; font-weight: 400; color: var(--rp-color-subtle); font-family: monospace; text-transform: none; letter-spacing: 0;">--rp-font-size-xs</span>
+      </div>
+
+      <div class="kit-divider"></div>
+
+      <div style="font-size: var(--rp-font-size-md); color: var(--rp-color-text); line-height: var(--rp-line-height-tight);">
+        Line height tight — 1.2 &nbsp;<span style="font-size: 11px; color: var(--rp-color-subtle); font-family: monospace;">--rp-line-height-tight</span>
+      </div>
+      <div style="font-size: var(--rp-font-size-md); color: var(--rp-color-text); line-height: var(--rp-line-height-base);">
+        Line height base — 1.4 &nbsp;<span style="font-size: 11px; color: var(--rp-color-subtle); font-family: monospace;">--rp-line-height-base</span>
+      </div>
+      <div style="font-size: var(--rp-font-size-md); color: var(--rp-color-text); line-height: var(--rp-line-height-readable);">
+        Line height readable — 1.6 &nbsp;<span style="font-size: 11px; color: var(--rp-color-subtle); font-family: monospace;">--rp-line-height-readable</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       FOUNDATIONS — SPACING & RADIUS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="tokens-spacing">
+    <h2 class="kit-section-title">Spacing &amp; Border Radius</h2>
+    <p class="kit-section-desc">An 8-step spacing scale built on a 4px base. Five radius steps from sharp to pill.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Spacing Scale</div>
+      <table class="kit-token-table">
+        <thead><tr><th>Token</th><th>Value</th><th>Visual</th></tr></thead>
+        <tbody>
+          <tr><td class="kit-token-name">--rp-space-2xs</td><td>2px</td><td><div class="kit-spacing-preview" style="width: 2px;"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-space-xs</td><td>4px</td><td><div class="kit-spacing-preview" style="width: 4px;"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-space-sm</td><td>8px</td><td><div class="kit-spacing-preview" style="width: 8px;"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-space-md</td><td>12px</td><td><div class="kit-spacing-preview" style="width: 12px;"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-space-lg</td><td>16px</td><td><div class="kit-spacing-preview" style="width: 16px;"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-space-xl</td><td>24px</td><td><div class="kit-spacing-preview" style="width: 24px;"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-space-2xl</td><td>32px</td><td><div class="kit-spacing-preview" style="width: 32px;"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Border Radius</div>
+      <table class="kit-token-table">
+        <thead><tr><th>Token</th><th>Value</th><th>Visual</th></tr></thead>
+        <tbody>
+          <tr><td class="kit-token-name">--rp-radius-xs</td><td>4px</td><td><div class="kit-radius-preview" style="border-radius: var(--rp-radius-xs);"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-radius-sm</td><td>6px</td><td><div class="kit-radius-preview" style="border-radius: var(--rp-radius-sm);"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-radius-md</td><td>8px</td><td><div class="kit-radius-preview" style="border-radius: var(--rp-radius-md);"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-radius-lg</td><td>12px</td><td><div class="kit-radius-preview" style="border-radius: var(--rp-radius-lg);"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-radius-xl</td><td>16px</td><td><div class="kit-radius-preview" style="border-radius: var(--rp-radius-xl);"></div></td></tr>
+          <tr><td class="kit-token-name">--rp-radius-pill</td><td>999px</td><td><div class="kit-radius-preview" style="border-radius: var(--rp-radius-pill);"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       FOUNDATIONS — SHADOWS & Z-INDEX
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="tokens-shadow">
+    <h2 class="kit-section-title">Shadows, Transitions &amp; Z-index</h2>
+    <p class="kit-section-desc">Four shadow levels for elevation. Named z-index layers prevent stacking conflicts.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Shadows</div>
+      <div class="kit-demo" style="gap: 24px; padding: 32px;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <div style="width: 80px; height: 50px; background: #fff; border-radius: 6px; box-shadow: var(--rp-shadow-xs);"></div>
+          <code class="kit-code">shadow-xs</code>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <div style="width: 80px; height: 50px; background: #fff; border-radius: 6px; box-shadow: var(--rp-shadow-sm);"></div>
+          <code class="kit-code">shadow-sm</code>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <div style="width: 80px; height: 50px; background: #fff; border-radius: 6px; box-shadow: var(--rp-shadow-md);"></div>
+          <code class="kit-code">shadow-md</code>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <div style="width: 80px; height: 50px; background: #fff; border-radius: 6px; box-shadow: var(--rp-shadow-modal);"></div>
+          <code class="kit-code">shadow-modal</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 20px;">
+      <div class="kit-subsection-title">Z-index Layers</div>
+      <table class="kit-token-table">
+        <thead><tr><th>Token</th><th>Value</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td class="kit-token-name">--rp-z-sticky</td><td>10</td><td>Sticky table headers, toolbars</td></tr>
+          <tr><td class="kit-token-name">--rp-z-dropdown</td><td>1000</td><td>Dropdowns, popovers</td></tr>
+          <tr><td class="kit-token-name">--rp-z-modal</td><td>100000</td><td>Modals, overlays</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 20px;">
+      <div class="kit-subsection-title">Focus Rings &amp; Transition</div>
+      <table class="kit-token-table">
+        <thead><tr><th>Token</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td class="kit-token-name">--rp-transition</td><td>0.15s ease</td></tr>
+          <tr><td class="kit-token-name">--rp-focus-ring</td><td>0 0 0 2px rgba(34,113,177,0.2)</td></tr>
+          <tr><td class="kit-token-name">--rp-focus-ring-primary</td><td>0 0 0 2px rgba(242,90,36,0.22)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — BUTTONS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="buttons">
+    <h2 class="kit-section-title">Buttons</h2>
+    <p class="kit-section-desc">All buttons use <code>.rp-btn</code> as the base class plus a variant modifier. Combine with WP's <code>.button</code> class when inside WP forms.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Variants</div>
+      <div class="kit-demo rp-admin-scope">
+        <button class="button rp-btn rp-btn-primary">Primary</button>
+        <button class="button rp-btn rp-btn-secondary">Secondary</button>
+        <button class="button rp-btn rp-btn-outline">Outline</button>
+        <button class="button rp-btn rp-btn-danger">Danger</button>
+        <button class="button rp-btn rp-btn-success">Success</button>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Sizes</div>
+      <div class="kit-demo rp-admin-scope" style="align-items: center;">
+        <button class="button rp-btn rp-btn-primary rp-btn-large">Large</button>
+        <button class="button rp-btn rp-btn-primary">Default</button>
+        <button class="button rp-btn rp-btn-primary rp-btn-small">Small</button>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">With Icons</div>
+      <div class="kit-demo rp-admin-scope">
+        <button class="button rp-btn rp-btn-primary">
+          <span class="dashicons dashicons-plus-alt2"></span> Add Item
+        </button>
+        <button class="button rp-btn rp-btn-secondary">
+          <span class="dashicons dashicons-download"></span> Export
+        </button>
+        <button class="button rp-btn rp-btn-danger">
+          <span class="dashicons dashicons-trash"></span> Delete
+        </button>
+        <button class="button rp-btn rp-btn-icon" title="Edit">
+          <span class="dashicons dashicons-edit"></span>
+        </button>
+        <button class="button rp-btn rp-btn-icon rp-btn-secondary" title="View">
+          <span class="dashicons dashicons-visibility"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Disabled State</div>
+      <div class="kit-demo rp-admin-scope">
+        <button class="button rp-btn rp-btn-primary is-disabled" disabled>Primary Disabled</button>
+        <button class="button rp-btn rp-btn-secondary is-disabled" disabled>Secondary Disabled</button>
+        <button class="button rp-btn rp-btn-danger is-disabled" disabled>Danger Disabled</button>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Icon Actions (inline table actions)</div>
+      <div class="kit-demo rp-admin-scope">
+        <button class="rp-icon-action" title="Edit"><span class="dashicons dashicons-edit"></span></button>
+        <button class="rp-icon-action" title="View"><span class="dashicons dashicons-visibility"></span></button>
+        <button class="rp-icon-action" title="Print"><span class="dashicons dashicons-printer"></span></button>
+        <button class="rp-icon-action" title="Delete"><span class="dashicons dashicons-trash"></span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — BADGES & STATUS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="badges">
+    <h2 class="kit-section-title">Badges &amp; Status</h2>
+    <p class="kit-section-desc"><code>.rp-status-badge</code> includes a dot indicator. <code>.rp-badge</code> is the same shape without the dot — for counts and labels.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Status Badges (with dot)</div>
+      <div class="kit-demo rp-admin-scope">
+        <span class="rp-status-badge is-info">Processing</span>
+        <span class="rp-status-badge is-success">Completed</span>
+        <span class="rp-status-badge is-warning">Pending</span>
+        <span class="rp-status-badge is-danger">Cancelled</span>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Plain Badges (no dot)</div>
+      <div class="kit-demo rp-admin-scope">
+        <span class="rp-badge is-info">Info</span>
+        <span class="rp-badge is-success">Active</span>
+        <span class="rp-badge is-warning">Expiring</span>
+        <span class="rp-badge is-danger">Failed</span>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Discount Status Badges</div>
+      <div class="kit-demo rp-admin-scope">
+        <span class="rp-status-badge rp-discount-status status-active">Active</span>
+        <span class="rp-status-badge rp-discount-status status-inactive">Inactive</span>
+        <span class="rp-status-badge rp-discount-status status-expired">Expired</span>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Reports Status Pills</div>
+      <div class="kit-demo rp-admin-scope">
+        <span class="rp-reports-status-pill is-success">Completed</span>
+        <span class="rp-reports-status-pill is-warning">Pending</span>
+        <span class="rp-reports-status-pill is-info">Processing</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — CARDS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="cards">
+    <h2 class="kit-section-title">Cards</h2>
+    <p class="kit-section-desc">Cards are the primary surface for grouping content. Use <code>.rp-card</code> as the base. Metric cards extend with icon + stats layout.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Base Card</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-card" style="padding: 16px; min-width: 280px;">
+          <div class="rp-card-header">
+            <div>
+              <strong style="font-size: var(--rp-font-size-md); color: var(--rp-color-heading);">Card Title</strong>
+              <p class="rp-card-subtitle">Supporting description text goes here.</p>
+            </div>
+            <button class="button rp-btn rp-btn-secondary rp-btn-small">Action</button>
+          </div>
+          <p style="margin: 0; color: var(--rp-color-muted); font-size: var(--rp-font-size-md);">Card body content lives here. Any layout is valid inside a card.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Metric Cards</div>
+      <p class="kit-section-desc">Simple metric card structure: icon, label, and value only. Screen-specific KPI cards add subtitles, deltas, and footers later.</p>
+      <div class="kit-demo rp-admin-scope" style="gap: 10px;">
+        <div class="rp-card rp-metric-card tone-blue" style="min-width: 200px;">
+          <div class="rp-metric-icon tone-blue"><span class="dashicons dashicons-cart"></span></div>
+          <div>
+            <div style="font-size: var(--rp-font-size-sm); color: var(--rp-color-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Total Orders</div>
+            <div style="font-size: 22px; font-weight: 700; color: var(--rp-color-heading); line-height: 1.1; margin-top: 2px;">1,248</div>
+          </div>
+        </div>
+        <div class="rp-card rp-metric-card tone-green" style="min-width: 200px;">
+          <div class="rp-metric-icon tone-green"><span class="dashicons dashicons-money-alt"></span></div>
+          <div>
+            <div style="font-size: var(--rp-font-size-sm); color: var(--rp-color-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Revenue</div>
+            <div style="font-size: 22px; font-weight: 700; color: var(--rp-color-heading); line-height: 1.1; margin-top: 2px;">$24,800</div>
+          </div>
+        </div>
+        <div class="rp-card rp-metric-card tone-amber" style="min-width: 200px;">
+          <div class="rp-metric-icon tone-amber"><span class="dashicons dashicons-clock"></span></div>
+          <div>
+            <div style="font-size: var(--rp-font-size-sm); color: var(--rp-color-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Avg. Time</div>
+            <div style="font-size: 22px; font-weight: 700; color: var(--rp-color-heading); line-height: 1.1; margin-top: 2px;">18 min</div>
+          </div>
+        </div>
+        <div class="rp-card rp-metric-card tone-purple" style="min-width: 200px;">
+          <div class="rp-metric-icon tone-purple"><span class="dashicons dashicons-groups"></span></div>
+          <div>
+            <div style="font-size: var(--rp-font-size-sm); color: var(--rp-color-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Customers</div>
+            <div style="font-size: 22px; font-weight: 700; color: var(--rp-color-heading); line-height: 1.1; margin-top: 2px;">342</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Danger Zone Card</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-card rp-danger-zone" style="padding: 16px; max-width: 460px;">
+          <strong style="color: var(--rp-color-danger); font-size: var(--rp-font-size-md);">Danger Zone</strong>
+          <p style="margin: 6px 0 12px; color: var(--rp-color-text); font-size: var(--rp-font-size-sm);">This action is permanent and cannot be undone. All customer data will be removed.</p>
+          <button class="button rp-btn rp-btn-danger rp-btn-small">Delete Customer</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — FORMS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="forms">
+    <h2 class="kit-section-title">Form Controls</h2>
+    <p class="kit-section-desc">All native inputs, selects, and textareas are normalized inside <code>.rp-admin-scope</code>. Explicit classes <code>.rp-input</code> and <code>.rp-select</code> work outside the scope.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Text Inputs</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-form-group" style="max-width: 360px;">
+          <label for="demo-text">Customer Name</label>
+          <input type="text" id="demo-text" class="rp-input" placeholder="Enter name…">
+        </div>
+        <div class="rp-form-group" style="max-width: 360px;">
+          <label for="demo-email">Email Address</label>
+          <input type="email" id="demo-email" class="rp-input" placeholder="hello@example.com">
+          <p class="rp-help-text">Used for order receipts and notifications.</p>
+        </div>
+        <div class="rp-form-group" style="max-width: 360px;">
+          <label for="demo-search">Search</label>
+          <input type="search" id="demo-search" class="rp-input" placeholder="Search orders…">
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Help Text</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-form-group" style="max-width: 360px;">
+          <label for="demo-minimum-order">Minimum Order Amount</label>
+          <input type="number" id="demo-minimum-order" class="rp-input rp-field-sm" value="10">
+          <p class="rp-help-text">Orders below this amount will not be accepted. Set to 0 to disable.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Select</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-form-group" style="max-width: 280px;">
+          <label for="demo-select">Order Status</label>
+          <select id="demo-select" class="rp-select">
+            <option>All Statuses</option>
+            <option>Completed</option>
+            <option>Processing</option>
+            <option>Cancelled</option>
+            <option>Refunded</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Textarea</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-form-group" style="max-width: 480px;">
+          <label for="demo-ta">Order Notes</label>
+          <textarea id="demo-ta" rows="4" style="width: 100%;"></textarea>
+          <p class="rp-help-text">Notes are visible to the customer in the receipt email.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Checkbox &amp; Radio</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <label class="rp-checkbox-inline">
+          <input type="checkbox" checked> Enable live order notifications
+        </label>
+        <label class="rp-checkbox-inline">
+          <input type="checkbox"> Send SMS alerts
+        </label>
+        <label class="rp-checkbox-inline">
+          <input type="radio" name="fulfil" checked> Pickup
+        </label>
+        <label class="rp-checkbox-inline">
+          <input type="radio" name="fulfil"> Delivery
+        </label>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Field Width Helpers</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div>
+          <input type="text" class="rp-input rp-field-sm" placeholder="SM — 96px">
+        </div>
+        <div>
+          <input type="text" class="rp-input rp-field-md" placeholder="MD — 360px">
+        </div>
+        <div>
+          <input type="text" class="rp-input rp-field-lg" placeholder="LG — 520px">
+        </div>
+        <div>
+          <input type="text" class="rp-input rp-field-wp" placeholder="WP — min(420px, 100%)">
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Form Actions Row</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-form-actions">
+          <button class="button button-primary rp-btn rp-btn-primary">Save Changes</button>
+          <button class="button rp-btn rp-btn-secondary">Cancel</button>
+          <a href="#" style="margin-left: auto; color: var(--rp-color-danger); font-size: var(--rp-font-size-sm);">Delete record</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — TOGGLE
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="toggle">
+    <h2 class="kit-section-title">Toggle Switch</h2>
+    <p class="kit-section-desc"><code>.rp-toggle</code> is the compact on/off control used for extension license activation states. It uses a native checkbox plus a <code>.slider</code> span.</p>
+
+    <div class="kit-demo rp-admin-scope" style="gap: 24px; align-items: center;">
+      <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+        <span class="rp-extension-license-status">
+          <label class="rp-toggle">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </span>
+        <span style="font-size: 13px; color: #646970;">Disabled</span>
+      </label>
+
+      <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+        <span class="rp-extension-license-status">
+          <label class="rp-toggle">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </span>
+        <span style="font-size: 13px; color: #1d2327;">Enabled</span>
+      </label>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — FILTERS & SEARCH
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="filters">
+    <h2 class="kit-section-title">Filters &amp; Search</h2>
+    <p class="kit-section-desc">Composable filter bar patterns used across Orders, Customers, and Discounts screens.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Filter Chips (status quick-filter)</div>
+      <div class="kit-demo rp-admin-scope">
+        <a href="#" class="rp-filter-chip is-active">All Orders <span style="margin-left: 4px; opacity: 0.6;">1,248</span></a>
+        <a href="#" class="rp-filter-chip">Completed <span style="margin-left: 4px; opacity: 0.6;">890</span></a>
+        <a href="#" class="rp-filter-chip">Processing <span style="margin-left: 4px; opacity: 0.6;">142</span></a>
+        <a href="#" class="rp-filter-chip">Pending <span style="margin-left: 4px; opacity: 0.6;">38</span></a>
+        <a href="#" class="rp-filter-chip">Cancelled <span style="margin-left: 4px; opacity: 0.6;">178</span></a>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Filter Bar</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-filter-bar">
+          <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <select class="rp-select" style="max-width: 160px;">
+              <option>All Statuses</option>
+              <option>Completed</option>
+              <option>Processing</option>
+            </select>
+            <select class="rp-select" style="max-width: 160px;">
+              <option>All Gateways</option>
+              <option>Cash on Delivery</option>
+              <option>Stripe</option>
+            </select>
+            <button class="button rp-btn rp-btn-secondary rp-btn-small">Filter</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Filter Topbar (dropdown + search)</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-filters-topbar">
+          <div class="rp-filters-controls">
+            <div class="rp-filter-dropdown">
+              <span class="rp-filter-dropdown-label">Status</span>
+              <select class="rp-filter-dropdown-select">
+                <option>Any</option>
+                <option>Completed</option>
+                <option>Processing</option>
+              </select>
+            </div>
+            <div class="rp-filter-dropdown">
+              <span class="rp-filter-dropdown-label">Gateway</span>
+              <select class="rp-filter-dropdown-select">
+                <option>Any</option>
+                <option>Cash on Delivery</option>
+                <option>Stripe</option>
+              </select>
+            </div>
+          </div>
+          <div class="rp-filters-search">
+            <span class="dashicons dashicons-search rp-filters-search-icon"></span>
+            <input type="search" placeholder="Search by order ID, customer…" class="rp-input">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Advanced Filters Panel</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-filters-topbar">
+          <div class="rp-filters-controls">
+            <button type="button" class="button rp-btn rp-btn-secondary rp-filters-more-toggle is-open">
+              <span class="dashicons dashicons-filter"></span> More Filters
+            </button>
+          </div>
+          <div class="rp-filters-shortcuts">
+            <a href="#" class="rp-filter-chip">Today</a>
+            <a href="#" class="rp-filter-chip is-active">This Week</a>
+            <a href="#" class="rp-filter-chip">This Month</a>
+          </div>
+        </div>
+        <div class="rp-filters-advanced">
+          <div class="rp-grid rp-grid-filter rp-filters-advanced-grid">
+            <div class="rp-filter-field">
+              <label>Service Type</label>
+              <select class="rp-select"><option>All Services</option><option>Pickup</option><option>Delivery</option></select>
+            </div>
+            <div class="rp-filter-field">
+              <label>Payment Status</label>
+              <select class="rp-select"><option>Any</option><option>Paid</option><option>Pending</option></select>
+            </div>
+            <div class="rp-filter-field">
+              <label>Order Status</label>
+              <select class="rp-select"><option>Any</option><option>Completed</option><option>Cancelled</option></select>
+            </div>
+          </div>
+          <div class="rp-filters-advanced-actions">
+            <button class="button button-primary rp-btn rp-btn-primary rp-btn-small">Apply Filters</button>
+            <button class="button rp-btn rp-btn-secondary rp-btn-small">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Active Filter Chips (applied filters)</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-filters-active" style="border-top: 0; margin: 0; padding: 0;">
+          <span class="rp-filters-active-label">Filters:</span>
+          <a href="#" class="rp-filter-chip rp-filter-active-chip is-active">
+            Status: Completed <span class="dashicons dashicons-no-alt"></span>
+          </a>
+          <a href="#" class="rp-filter-chip rp-filter-active-chip is-active">
+            Gateway: Stripe <span class="dashicons dashicons-no-alt"></span>
+          </a>
+          <a href="#" class="rp-filter-clear-all">Clear all</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Date Chips</div>
+      <div class="kit-demo rp-admin-scope">
+        <a href="#" class="rp-datechip">Today</a>
+        <a href="#" class="rp-datechip is-active">This Week</a>
+        <a href="#" class="rp-datechip">Last 7 Days</a>
+        <a href="#" class="rp-datechip">This Month</a>
+        <a href="#" class="rp-datechip">Last Month</a>
+        <a href="#" class="rp-datechip">Custom Range…</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — TABS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="tabs">
+    <h2 class="kit-section-title">Tabs</h2>
+    <p class="kit-section-desc">Used on Settings, Reports, and customer detail pages. Supports both <code>.rp-tab</code> and WP's native <code>.nav-tab</code> class.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Standard Tabs</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack" style="padding-bottom: 0; overflow: hidden;">
+        <ul class="rp-tabs" style="margin: 0;">
+          <li><a href="#" class="rp-tab is-active">General</a></li>
+          <li><a href="#" class="rp-tab">Payments</a></li>
+          <li><a href="#" class="rp-tab">Notifications</a></li>
+          <li><a href="#" class="rp-tab">Advanced</a></li>
+        </ul>
+        <div style="padding: 16px; background: var(--rp-color-bg); border: 1px solid var(--rp-color-border); border-top: 0; border-radius: 0 0 6px 6px;">
+          <p style="margin: 0; color: var(--rp-color-muted);">Tab panel content renders here.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Tabs with Icons</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack" style="padding-bottom: 0;">
+        <ul class="rp-tabs" style="margin: 0;">
+          <li><a href="#" class="rp-tab is-active"><span class="dashicons dashicons-chart-bar"></span> Overview</a></li>
+          <li><a href="#" class="rp-tab"><span class="dashicons dashicons-cart"></span> Orders</a></li>
+          <li><a href="#" class="rp-tab"><span class="dashicons dashicons-food"></span> Menu</a></li>
+          <li><a href="#" class="rp-tab"><span class="dashicons dashicons-groups"></span> Customers</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Attached Tabs</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack" style="padding-bottom: 0;">
+        <div class="rp-tabs-shell rp-tabs-attached">
+          <ul class="rp-tabs" style="margin: 0;">
+            <li><a href="#" class="rp-tab is-active">General</a></li>
+            <li><a href="#" class="rp-tab">Payments</a></li>
+            <li><a href="#" class="rp-tab">Notifications</a></li>
+          </ul>
+        </div>
+        <div class="rp-tabs-panel">
+          <div class="rp-card" style="padding: 16px; border-top-left-radius: 0;">
+            Tab panel content — card connects directly to the active tab above.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — TABLES
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="tables">
+    <h2 class="kit-section-title">Tables</h2>
+    <p class="kit-section-desc">RestroPress uses WordPress's native <code>.wp-list-table</code> inside <code>.rp-admin-scope</code> for automatic styling. The <code>.rp-table</code> class is available for custom tables.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">List Table with Toolbar</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-table-toolbar rp-list-table-toolbar">
+          <div class="rp-table-toolbar-primary">
+            <select class="rp-select" style="max-width: 150px;">
+              <option>Bulk actions</option>
+              <option>Mark completed</option>
+              <option>Move to trash</option>
+            </select>
+            <button class="button rp-btn rp-btn-secondary rp-btn-small">Apply</button>
+          </div>
+          <div class="rp-table-toolbar-secondary">
+            <button class="button rp-btn rp-btn-primary rp-btn-small">
+              <span class="dashicons dashicons-plus-alt2"></span> Add New
+            </button>
+          </div>
+        </div>
+        <table class="wp-list-table widefat fixed striped rp-table" style="margin: 0;">
+          <thead>
+            <tr>
+              <th style="width: 20px;"><input type="checkbox"></th>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td><strong>#1042</strong></td>
+              <td>Arun Sharma</td>
+              <td style="color: var(--rp-color-muted);">May 30, 2026</td>
+              <td style="font-weight: 600;">$38.50</td>
+              <td><span class="rp-status-badge is-success">Completed</span></td>
+              <td>
+                <button class="rp-icon-action" title="View"><span class="dashicons dashicons-visibility"></span></button>
+                <button class="rp-icon-action" title="Print"><span class="dashicons dashicons-printer"></span></button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td><strong>#1041</strong></td>
+              <td>Priya Menon</td>
+              <td style="color: var(--rp-color-muted);">May 30, 2026</td>
+              <td style="font-weight: 600;">$22.00</td>
+              <td><span class="rp-status-badge is-info">Processing</span></td>
+              <td>
+                <button class="rp-icon-action" title="View"><span class="dashicons dashicons-visibility"></span></button>
+                <button class="rp-icon-action" title="Print"><span class="dashicons dashicons-printer"></span></button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td><strong>#1040</strong></td>
+              <td>Daniel Okonkwo</td>
+              <td style="color: var(--rp-color-muted);">May 29, 2026</td>
+              <td style="font-weight: 600;">$61.00</td>
+              <td><span class="rp-status-badge is-warning">Pending</span></td>
+              <td>
+                <button class="rp-icon-action" title="View"><span class="dashicons dashicons-visibility"></span></button>
+                <button class="rp-icon-action" title="Print"><span class="dashicons dashicons-printer"></span></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 20px;">
+      <div class="kit-subsection-title">Empty Table State</div>
+      <div class="kit-demo rp-admin-scope">
+        <table class="wp-list-table widefat rp-table rp-table-empty" style="width: 100%;">
+          <tbody>
+            <tr><td>
+              <div class="rp-empty-state rp-empty-state-table">
+                <span class="rp-empty-state-icon dashicons dashicons-cart"></span>
+                <span class="rp-empty-state-title">No orders found</span>
+                <p class="rp-empty-state-description">No orders match your current filters. Try adjusting the date range or status.</p>
+                <div class="rp-empty-state-actions">
+                  <button class="button rp-btn rp-btn-secondary rp-btn-small">Clear Filters</button>
+                </div>
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 20px;">
+      <div class="kit-subsection-title">Table Scroll Wrapper</div>
+      <p class="kit-section-desc">Wide report tables must sit inside <code>.rp-table-scroll</code> so narrow WordPress admin viewports scroll horizontally instead of breaking the layout.</p>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-table-scroll" style="width: 100%;">
+          <table class="wp-list-table widefat fixed striped rp-table rp-reports-table" style="min-width: 860px; margin: 0;">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Orders</th>
+                <th>Gross Sales</th>
+                <th>Refunds</th>
+                <th>Net Revenue</th>
+                <th>Average Order</th>
+                <th>Conversion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>May 30, 2026</td>
+                <td>82</td>
+                <td>$2,460.00</td>
+                <td>$0.00</td>
+                <td>$2,460.00</td>
+                <td>$30.00</td>
+                <td>14.2%</td>
+              </tr>
+              <tr>
+                <td>May 29, 2026</td>
+                <td>74</td>
+                <td>$2,018.00</td>
+                <td>$42.00</td>
+                <td>$1,976.00</td>
+                <td>$26.70</td>
+                <td>12.8%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — NOTICES
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="notices">
+    <h2 class="kit-section-title">Notices</h2>
+    <p class="kit-section-desc"><code>.rp-notice</code> is the in-context inline notice. The system currently has one built-in variant (info). Semantic variants below use token overrides directly.</p>
+
+    <div class="kit-demo rp-admin-scope kit-demo-stack">
+      <div class="rp-notice">
+        <span class="dashicons dashicons-info-outline"></span>
+        <span>Your order export is ready. <a href="#">Download it here</a> before it expires in 24 hours.</span>
+      </div>
+
+      <div class="rp-notice" style="border-color: var(--rp-color-success-border); border-left-color: var(--rp-color-success); background: var(--rp-color-success-soft);">
+        <span class="dashicons dashicons-yes-alt" style="color: var(--rp-color-success);"></span>
+        <span>Settings saved successfully.</span>
+      </div>
+
+      <div class="rp-notice" style="border-color: var(--rp-color-warning-border); border-left-color: var(--rp-color-warning); background: var(--rp-color-warning-soft);">
+        <span class="dashicons dashicons-warning" style="color: var(--rp-color-warning);"></span>
+        <span>Your SSL certificate expires in 7 days. Renew it to keep payments secure.</span>
+      </div>
+
+      <div class="rp-notice" style="border-color: var(--rp-color-danger-border); border-left-color: var(--rp-color-danger); background: var(--rp-color-danger-soft);">
+        <span class="dashicons dashicons-dismiss" style="color: var(--rp-color-danger);"></span>
+        <span>Payment gateway connection failed. Check your API credentials.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — EMPTY STATES
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="empty-states">
+    <h2 class="kit-section-title">Empty States</h2>
+    <p class="kit-section-desc">Used when a page or table has no content. Standard variant and compact variant.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Standard Empty State</div>
+      <div class="kit-demo rp-admin-scope" style="background: var(--rp-color-bg-subtle); justify-content: center;">
+        <div class="rp-empty-state">
+          <span class="rp-empty-state-icon dashicons dashicons-tag"></span>
+          <span class="rp-empty-state-title">No discount codes yet</span>
+          <p class="rp-empty-state-description">Create your first discount code to start offering deals to your customers at checkout.</p>
+          <div class="rp-empty-state-actions">
+            <button class="button button-primary rp-btn rp-btn-primary">
+              <span class="dashicons dashicons-plus-alt2"></span> Add Discount Code
+            </button>
+            <button class="button rp-btn rp-btn-secondary">Learn More</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 20px;">
+      <div class="kit-subsection-title">Compact Empty State</div>
+      <div class="kit-demo rp-admin-scope" style="background: var(--rp-color-bg-subtle); justify-content: center;">
+        <div class="rp-empty-state rp-empty-state-compact">
+          <span class="rp-empty-state-icon dashicons dashicons-groups"></span>
+          <span class="rp-empty-state-title">No customers found</span>
+          <p class="rp-empty-state-description">Try a different search term or clear your filters.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — MODALS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="modals">
+    <h2 class="kit-section-title">Modals</h2>
+    <p class="kit-section-desc">The kit styles WP Backbone modals via <code>.rp-modal .rp-backbone-modal-content</code>. The token <code>--rp-shadow-modal</code> and <code>--rp-radius-xl</code> define the surface.</p>
+
+    <div class="kit-demo rp-admin-scope" style="background: var(--rp-color-bg-muted); justify-content: center; padding: 32px;">
+      <div style="
+        background: var(--rp-color-bg);
+        border-radius: var(--rp-radius-xl);
+        box-shadow: var(--rp-shadow-modal);
+        width: min(480px, 100%);
+        overflow: hidden;
+      ">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: var(--rp-border);">
+          <strong style="font-size: var(--rp-font-size-lg); color: var(--rp-color-heading);">Order #1042 Details</strong>
+          <button class="rp-icon-action"><span class="dashicons dashicons-no-alt"></span></button>
+        </div>
+        <div style="padding: 20px;">
+          <p style="margin: 0 0 12px; color: var(--rp-color-muted);">Review the full order before updating the status.</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div>
+              <div style="font-size: var(--rp-font-size-xs); font-weight: 700; text-transform: uppercase; color: var(--rp-color-subtle);">Customer</div>
+              <div style="margin-top: 3px; font-weight: 600;">Arun Sharma</div>
+            </div>
+            <div>
+              <div style="font-size: var(--rp-font-size-xs); font-weight: 700; text-transform: uppercase; color: var(--rp-color-subtle);">Total</div>
+              <div style="margin-top: 3px; font-weight: 700; font-size: var(--rp-font-size-lg);">$38.50</div>
+            </div>
+          </div>
+          <span class="rp-status-badge is-info">Processing</span>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: var(--rp-border); background: var(--rp-color-bg-subtle);">
+          <button class="button rp-btn rp-btn-secondary">Close</button>
+          <button class="button button-primary rp-btn rp-btn-primary">Mark Completed</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COMPONENTS — DATE RANGE
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="date-range">
+    <h2 class="kit-section-title">Date Range Popover</h2>
+    <p class="kit-section-desc">The date range popover is rendered and positioned by <code>admin-ui.js</code>. This shows the static markup and styles.</p>
+
+    <div class="kit-demo rp-admin-scope" style="background: var(--rp-color-bg-muted); padding: 32px; justify-content: center;">
+      <div class="rp-date-range-popover" style="position: relative; display: block;">
+        <div class="rp-date-range-popover-fields">
+          <label>
+            <span>Start</span>
+            <input type="text" class="rp-input rp-date-range-start" placeholder="YYYY-MM-DD" value="2026-05-01">
+          </label>
+          <label>
+            <span>End</span>
+            <input type="text" class="rp-input rp-date-range-end" placeholder="YYYY-MM-DD" value="2026-05-30">
+          </label>
+        </div>
+        <div class="rp-date-range-popover-actions">
+          <button type="button" class="button rp-btn rp-btn-secondary rp-date-range-cancel">Cancel</button>
+          <button type="button" class="button button-primary rp-btn rp-btn-primary rp-date-range-apply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       LAYOUT — PAGE HEADER
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="page-header">
+    <h2 class="kit-section-title">Page Header</h2>
+    <p class="kit-section-desc"><code>.rp-page-header</code> is the top chrome for every admin screen — title, subtitle, and action buttons.</p>
+
+    <div class="kit-demo rp-admin-scope kit-demo-stack">
+      <div class="rp-page-header">
+        <div class="rp-page-header-main">
+          <h1 class="rp-page-title">Orders</h1>
+          <p class="rp-page-subtitle">Manage and track all customer orders placed through your restaurant.</p>
+        </div>
+        <div class="rp-page-actions">
+          <button class="button rp-btn rp-btn-secondary">
+            <span class="dashicons dashicons-download"></span> Export
+          </button>
+          <button class="button button-primary rp-btn rp-btn-primary">
+            <span class="dashicons dashicons-plus-alt2"></span> Add Order
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">With eyebrow label (Reports style)</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-page-header rp-reports-header">
+          <div class="rp-page-header-main">
+            <p class="rp-page-eyebrow" style="margin: 0 0 4px; color: var(--rp-color-muted); font-size: var(--rp-font-size-xs); font-weight: 700; text-transform: uppercase;">Analytics</p>
+            <h1 class="rp-page-title">Sales Report</h1>
+            <p class="rp-page-subtitle">Revenue and order trends for the selected period.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       LAYOUT — GRID SYSTEM
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="grid">
+    <h2 class="kit-section-title">Grid System</h2>
+    <p class="kit-section-desc">CSS Grid-based layout helpers. All collapse to single column at 782px. Named grids for specific screen patterns.</p>
+
+    <style>
+      .kit-grid-cell {
+        padding: 12px;
+        background: var(--rp-color-primary-soft);
+        border: 1px dashed var(--rp-color-primary-border);
+        border-radius: var(--rp-radius-sm);
+        color: var(--rp-color-primary-hover);
+        font-size: 11px;
+        font-weight: 600;
+        text-align: center;
+      }
+    </style>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">rp-grid rp-grid-2</div>
+      <div class="rp-grid rp-grid-2">
+        <div class="kit-grid-cell">Col 1</div>
+        <div class="kit-grid-cell">Col 2</div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">rp-grid rp-grid-3</div>
+      <div class="rp-grid rp-grid-3">
+        <div class="kit-grid-cell">Col 1</div>
+        <div class="kit-grid-cell">Col 2</div>
+        <div class="kit-grid-cell">Col 3</div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">rp-grid rp-grid-4</div>
+      <div class="rp-grid rp-grid-4">
+        <div class="kit-grid-cell">Col 1</div>
+        <div class="kit-grid-cell">Col 2</div>
+        <div class="kit-grid-cell">Col 3</div>
+        <div class="kit-grid-cell">Col 4</div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">rp-grid rp-grid-auto (auto-fit, min 190px)</div>
+      <div class="rp-grid rp-grid-auto">
+        <div class="kit-grid-cell">Auto</div>
+        <div class="kit-grid-cell">Auto</div>
+        <div class="kit-grid-cell">Auto</div>
+        <div class="kit-grid-cell">Auto</div>
+        <div class="kit-grid-cell">Auto</div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">rp-grid rp-grid-main-sidebar (1.5fr + 0.75fr, min 320px sidebar)</div>
+      <div class="rp-grid rp-grid-main-sidebar">
+        <div class="kit-grid-cell" style="min-height: 60px;">Main content</div>
+        <div class="kit-grid-cell" style="min-height: 60px;">Sidebar</div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">rp-grid rp-grid-command-strip (auto-fit, min 150px — KPI row)</div>
+      <div class="rp-grid rp-grid-command-strip">
+        <div class="kit-grid-cell">KPI 1</div>
+        <div class="kit-grid-cell">KPI 2</div>
+        <div class="kit-grid-cell">KPI 3</div>
+        <div class="kit-grid-cell">KPI 4</div>
+        <div class="kit-grid-cell">KPI 5</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       UTILITIES
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="utilities">
+    <h2 class="kit-section-title">Utility Classes</h2>
+    <p class="kit-section-desc">Single-purpose helpers for inline layout adjustments. Prefer these over inline styles.</p>
+
+    <table class="kit-token-table">
+      <thead>
+        <tr><th>Class</th><th>CSS rule</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="kit-token-name">.rp-u-flex</td><td>display: flex</td></tr>
+        <tr><td class="kit-token-name">.rp-u-inline-flex</td><td>display: inline-flex</td></tr>
+        <tr><td class="kit-token-name">.rp-u-items-center</td><td>align-items: center</td></tr>
+        <tr><td class="kit-token-name">.rp-u-justify-between</td><td>justify-content: space-between</td></tr>
+        <tr><td class="kit-token-name">.rp-u-wrap</td><td>flex-wrap: wrap</td></tr>
+        <tr><td class="kit-token-name">.rp-u-gap-xs</td><td>gap: 4px</td></tr>
+        <tr><td class="kit-token-name">.rp-u-gap-sm</td><td>gap: 8px</td></tr>
+        <tr><td class="kit-token-name">.rp-u-gap-md</td><td>gap: 12px</td></tr>
+        <tr><td class="kit-token-name">.rp-u-gap-lg</td><td>gap: 16px</td></tr>
+        <tr><td class="kit-token-name">.rp-u-mt-0</td><td>margin-top: 0</td></tr>
+        <tr><td class="kit-token-name">.rp-u-mb-0</td><td>margin-bottom: 0</td></tr>
+        <tr><td class="kit-token-name">.rp-u-muted</td><td>color: var(--rp-color-muted)</td></tr>
+        <tr><td class="kit-token-name">.rp-u-text-right</td><td>text-align: right</td></tr>
+        <tr><td class="kit-token-name">.rp-u-nowrap</td><td>white-space: nowrap</td></tr>
+        <tr><td class="kit-token-name">.rp-u-min-0</td><td>min-width: 0</td></tr>
+        <tr><td class="kit-token-name">.rp-muted-text</td><td>color: var(--rp-color-muted)</td></tr>
+        <tr><td class="kit-token-name">.rp-field-sm</td><td>width: 100%; max-width: 96px</td></tr>
+        <tr><td class="kit-token-name">.rp-field-md</td><td>width: 100%; max-width: 360px</td></tr>
+        <tr><td class="kit-token-name">.rp-field-lg</td><td>width: 100%; max-width: 520px</td></tr>
+        <tr><td class="kit-token-name">.rp-field-wp</td><td>width: min(420px, 100%)</td></tr>
+        <tr><td class="kit-token-name">.rp-field-full</td><td>width: 100%; max-width: 100%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="kit-subsection" style="margin-top: 20px;">
+      <div class="kit-subsection-title">Internal / JS State Classes</div>
+      <p class="kit-section-desc">These classes are implementation states or root wrappers. They are listed for reference and do not need standalone visual demos.</p>
+      <table class="kit-token-table">
+        <thead>
+          <tr><th>Class</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="kit-token-name">.rp-admin-scope</td><td>Root scope wrapper applied once per RestroPress admin page.</td></tr>
+          <tr><td class="kit-token-name">.rp-admin-ui-ready</td><td>Added to <code>html</code> by <code>admin-ui.js</code> after initialization.</td></tr>
+          <tr><td class="kit-token-name">.rp-table-empty</td><td>Applied when table empty-state styling is active.</td></tr>
+          <tr><td class="kit-token-name">.rp-reports-custom-date</td><td>JS-controlled custom range trigger.</td></tr>
+          <tr><td class="kit-token-name">.rp-reports-custom-apply</td><td>JS-controlled custom range apply action.</td></tr>
+          <tr><td class="kit-token-name">.rp-filters-search-submit</td><td>Hidden submit fallback shown only by specific JS contexts.</td></tr>
+          <tr><td class="kit-token-name">.is-open</td><td>State class for open advanced filters toggle.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       CLASS REFERENCE
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="class-reference">
+    <h2 class="kit-section-title">Class Reference</h2>
+    <p class="kit-section-desc">Static index of UI-kit classes from the six CSS files plus <code>rp-</code> classes currently used by the validated RestroPress admin PHP screens. Use the visual component sections above for reusable patterns; use this index to avoid inventing duplicate class names.</p>
+    <div class="kit-demo" style="display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start;">
+        <code class="kit-code">.is-active</code>
+        <code class="kit-code">.is-amber</code>
+        <code class="kit-code">.is-blue</code>
+        <code class="kit-code">.is-cancelled</code>
+        <code class="kit-code">.is-completed</code>
+        <code class="kit-code">.is-danger</code>
+        <code class="kit-code">.is-disabled</code>
+        <code class="kit-code">.is-down</code>
+        <code class="kit-code">.is-failed</code>
+        <code class="kit-code">.is-flat</code>
+        <code class="kit-code">.is-green</code>
+        <code class="kit-code">.is-info</code>
+        <code class="kit-code">.is-late</code>
+        <code class="kit-code">.is-open</code>
+        <code class="kit-code">.is-red</code>
+        <code class="kit-code">.is-refunded</code>
+        <code class="kit-code">.is-success</code>
+        <code class="kit-code">.is-up</code>
+        <code class="kit-code">.is-warning</code>
+        <code class="kit-code">.level-1</code>
+        <code class="kit-code">.level-2</code>
+        <code class="kit-code">.level-3</code>
+        <code class="kit-code">.level-4</code>
+        <code class="kit-code">.rp-add-update-elements</code>
+        <code class="kit-code">.rp-addin-item-inner-wrap</code>
+        <code class="kit-code">.rp-addon-info</code>
+        <code class="kit-code">.rp-addon-main-wrap</code>
+        <code class="kit-code">.rp-admin-scope</code>
+        <code class="kit-code">.rp-admin-ui-ready</code>
+        <code class="kit-code">.rp-backbone-modal</code>
+        <code class="kit-code">.rp-backbone-modal-content</code>
+        <code class="kit-code">.rp-badge</code>
+        <code class="kit-code">.rp-bottleneck-list</code>
+        <code class="kit-code">.rp-btn</code>
+        <code class="kit-code">.rp-btn-danger</code>
+        <code class="kit-code">.rp-btn-icon</code>
+        <code class="kit-code">.rp-btn-large</code>
+        <code class="kit-code">.rp-btn-outline</code>
+        <code class="kit-code">.rp-btn-primary</code>
+        <code class="kit-code">.rp-btn-secondary</code>
+        <code class="kit-code">.rp-btn-small</code>
+        <code class="kit-code">.rp-btn-success</code>
+        <code class="kit-code">.rp-cancel-section</code>
+        <code class="kit-code">.rp-card</code>
+        <code class="kit-code">.rp-card-header</code>
+        <code class="kit-code">.rp-card-subtitle</code>
+        <code class="kit-code">.rp-checkbox-inline</code>
+        <code class="kit-code">.rp-command-center</code>
+        <code class="kit-code">.rp-command-grid</code>
+        <code class="kit-code">.rp-command-grid-secondary</code>
+        <code class="kit-code">.rp-command-grid-thirds</code>
+        <code class="kit-code">.rp-command-kicker</code>
+        <code class="kit-code">.rp-command-panel</code>
+        <code class="kit-code">.rp-command-service-badge</code>
+        <code class="kit-code">.rp-command-side</code>
+        <code class="kit-code">.rp-command-title</code>
+        <code class="kit-code">.rp-command-topline</code>
+        <code class="kit-code">.rp-command-updated</code>
+        <code class="kit-code">.rp-customer-actions</code>
+        <code class="kit-code">.rp-customer-agreement-list</code>
+        <code class="kit-code">.rp-customer-agreements</code>
+        <code class="kit-code">.rp-customer-avatar</code>
+        <code class="kit-code">.rp-customer-contact-card</code>
+        <code class="kit-code">.rp-customer-contact-list</code>
+        <code class="kit-code">.rp-customer-content</code>
+        <code class="kit-code">.rp-customer-crm</code>
+        <code class="kit-code">.rp-customer-detail-page</code>
+        <code class="kit-code">.rp-customer-edit-address</code>
+        <code class="kit-code">.rp-customer-extension-stats</code>
+        <code class="kit-code">.rp-customer-hero</code>
+        <code class="kit-code">.rp-customer-hero-main</code>
+        <code class="kit-code">.rp-customer-identity</code>
+        <code class="kit-code">.rp-customer-main-grid</code>
+        <code class="kit-code">.rp-customer-metrics</code>
+        <code class="kit-code">.rp-customer-name</code>
+        <code class="kit-code">.rp-customer-note-form</code>
+        <code class="kit-code">.rp-customer-notes-layout</code>
+        <code class="kit-code">.rp-customer-notes-list</code>
+        <code class="kit-code">.rp-customer-profile-form</code>
+        <code class="kit-code">.rp-customer-section</code>
+        <code class="kit-code">.rp-customer-service-edit</code>
+        <code class="kit-code">.rp-customer-shell</code>
+        <code class="kit-code">.rp-customer-stats</code>
+        <code class="kit-code">.rp-customers-header</code>
+        <code class="kit-code">.rp-customers-list-page</code>
+        <code class="kit-code">.rp-customers-page</code>
+        <code class="kit-code">.rp-danger-zone</code>
+        <code class="kit-code">.rp-date-custom-actions</code>
+        <code class="kit-code">.rp-date-custom-fields</code>
+        <code class="kit-code">.rp-date-custom-panel</code>
+        <code class="kit-code">.rp-date-range-edit</code>
+        <code class="kit-code">.rp-date-range-popover</code>
+        <code class="kit-code">.rp-date-range-popover-actions</code>
+        <code class="kit-code">.rp-date-range-popover-fields</code>
+        <code class="kit-code">.rp-date-range-preset</code>
+        <code class="kit-code">.rp-datechip</code>
+        <code class="kit-code">.rp-delta-down</code>
+        <code class="kit-code">.rp-delta-flat</code>
+        <code class="kit-code">.rp-delta-up</code>
+        <code class="kit-code">.rp-discount-form</code>
+        <code class="kit-code">.rp-discount-form-page</code>
+        <code class="kit-code">.rp-discount-form-table</code>
+        <code class="kit-code">.rp-discount-status</code>
+        <code class="kit-code">.rp-discounts-header</code>
+        <code class="kit-code">.rp-discounts-list-page</code>
+        <code class="kit-code">.rp-discounts-page</code>
+        <code class="kit-code">.rp-edit-panel</code>
+        <code class="kit-code">.rp-edit-panel-customer</code>
+        <code class="kit-code">.rp-edit-panel-customer-select</code>
+        <code class="kit-code">.rp-edit-panel-footer</code>
+        <code class="kit-code">.rp-edit-panel-new-customer</code>
+        <code class="kit-code">.rp-edit-panel-service</code>
+        <code class="kit-code">.rp-edit-section</code>
+        <code class="kit-code">.rp-empty-state</code>
+        <code class="kit-code">.rp-empty-state-actions</code>
+        <code class="kit-code">.rp-empty-state-compact</code>
+        <code class="kit-code">.rp-empty-state-description</code>
+        <code class="kit-code">.rp-empty-state-icon</code>
+        <code class="kit-code">.rp-empty-state-table</code>
+        <code class="kit-code">.rp-empty-state-title</code>
+        <code class="kit-code">.rp-extension-actions</code>
+        <code class="kit-code">.rp-extension-card</code>
+        <code class="kit-code">.rp-extension-card-body</code>
+        <code class="kit-code">.rp-extension-card-footer</code>
+        <code class="kit-code">.rp-extension-card-header</code>
+        <code class="kit-code">.rp-extension-card-inner</code>
+        <code class="kit-code">.rp-extension-card-title-wrap</code>
+        <code class="kit-code">.rp-extension-description</code>
+        <code class="kit-code">.rp-extension-image</code>
+        <code class="kit-code">.rp-extension-license-form</code>
+        <code class="kit-code">.rp-extension-license-status</code>
+        <code class="kit-code">.rp-extension-price</code>
+        <code class="kit-code">.rp-extension-title</code>
+        <code class="kit-code">.rp-extensions-grid</code>
+        <code class="kit-code">.rp-extensions-page</code>
+        <code class="kit-code">.rp-extensions-toolbar</code>
+        <code class="kit-code">.rp-field-full</code>
+        <code class="kit-code">.rp-field-lg</code>
+        <code class="kit-code">.rp-field-md</code>
+        <code class="kit-code">.rp-field-sm</code>
+        <code class="kit-code">.rp-field-wp</code>
+        <code class="kit-code">.rp-filter-active-chip</code>
+        <code class="kit-code">.rp-filter-bar</code>
+        <code class="kit-code">.rp-filter-chip</code>
+        <code class="kit-code">.rp-filter-clear-all</code>
+        <code class="kit-code">.rp-filter-dropdown</code>
+        <code class="kit-code">.rp-filter-dropdown-label</code>
+        <code class="kit-code">.rp-filter-dropdown-select</code>
+        <code class="kit-code">.rp-filter-field</code>
+        <code class="kit-code">.rp-filter-value</code>
+        <code class="kit-code">.rp-filters</code>
+        <code class="kit-code">.rp-filters-active</code>
+        <code class="kit-code">.rp-filters-active-label</code>
+        <code class="kit-code">.rp-filters-advanced</code>
+        <code class="kit-code">.rp-filters-advanced-actions</code>
+        <code class="kit-code">.rp-filters-advanced-grid</code>
+        <code class="kit-code">.rp-filters-controls</code>
+        <code class="kit-code">.rp-filters-more-toggle</code>
+        <code class="kit-code">.rp-filters-search</code>
+        <code class="kit-code">.rp-filters-search-icon</code>
+        <code class="kit-code">.rp-filters-search-submit</code>
+        <code class="kit-code">.rp-filters-shortcuts</code>
+        <code class="kit-code">.rp-filters-topbar</code>
+        <code class="kit-code">.rp-flow-lane</code>
+        <code class="kit-code">.rp-flow-lanes</code>
+        <code class="kit-code">.rp-focusable</code>
+        <code class="kit-code">.rp-form-actions</code>
+        <code class="kit-code">.rp-form-group</code>
+        <code class="kit-code">.rp-grid</code>
+        <code class="kit-code">.rp-grid-2</code>
+        <code class="kit-code">.rp-grid-24</code>
+        <code class="kit-code">.rp-grid-3</code>
+        <code class="kit-code">.rp-grid-4</code>
+        <code class="kit-code">.rp-grid-5</code>
+        <code class="kit-code">.rp-grid-6</code>
+        <code class="kit-code">.rp-grid-auto</code>
+        <code class="kit-code">.rp-grid-command-strip</code>
+        <code class="kit-code">.rp-grid-filter</code>
+        <code class="kit-code">.rp-grid-main-sidebar</code>
+        <code class="kit-code">.rp-grid-profile</code>
+        <code class="kit-code">.rp-grid-sidebar-360</code>
+        <code class="kit-code">.rp-health-</code>
+        <code class="kit-code">.rp-help-text</code>
+        <code class="kit-code">.rp-icon-action</code>
+        <code class="kit-code">.rp-input</code>
+        <code class="kit-code">.rp-insight-list</code>
+        <code class="kit-code">.rp-issue-badge</code>
+        <code class="kit-code">.rp-kpi-card</code>
+        <code class="kit-code">.rp-license-deactivate-inner</code>
+        <code class="kit-code">.rp-list-table-form</code>
+        <code class="kit-code">.rp-list-table-toolbar</code>
+        <code class="kit-code">.rp-live-column</code>
+        <code class="kit-code">.rp-live-column-body</code>
+        <code class="kit-code">.rp-live-column-count</code>
+        <code class="kit-code">.rp-live-column-empty</code>
+        <code class="kit-code">.rp-live-column-header</code>
+        <code class="kit-code">.rp-live-column-title</code>
+        <code class="kit-code">.rp-live-column-tone-</code>
+        <code class="kit-code">.rp-live-filter-chip</code>
+        <code class="kit-code">.rp-live-filters</code>
+        <code class="kit-code">.rp-live-kanban</code>
+        <code class="kit-code">.rp-live-kpi</code>
+        <code class="kit-code">.rp-live-kpi-</code>
+        <code class="kit-code">.rp-live-kpi-count</code>
+        <code class="kit-code">.rp-live-kpi-label</code>
+        <code class="kit-code">.rp-live-kpis</code>
+        <code class="kit-code">.rp-live-orders</code>
+        <code class="kit-code">.rp-live-orders-audio</code>
+        <code class="kit-code">.rp-live-orders-wrap</code>
+        <code class="kit-code">.rp-live-pageheader</code>
+        <code class="kit-code">.rp-live-pause</code>
+        <code class="kit-code">.rp-live-pause-label</code>
+        <code class="kit-code">.rp-live-refresh</code>
+        <code class="kit-code">.rp-live-search</code>
+        <code class="kit-code">.rp-live-search-input</code>
+        <code class="kit-code">.rp-live-service-filter</code>
+        <code class="kit-code">.rp-live-sound-label</code>
+        <code class="kit-code">.rp-live-sound-overlay</code>
+        <code class="kit-code">.rp-live-sound-overlay-inner</code>
+        <code class="kit-code">.rp-live-sound-toggle</code>
+        <code class="kit-code">.rp-live-status</code>
+        <code class="kit-code">.rp-live-status-dot</code>
+        <code class="kit-code">.rp-live-status-main</code>
+        <code class="kit-code">.rp-live-status-text</code>
+        <code class="kit-code">.rp-live-toolbar</code>
+        <code class="kit-code">.rp-live-toolbar-left</code>
+        <code class="kit-code">.rp-live-toolbar-right</code>
+        <code class="kit-code">.rp-menu-empty</code>
+        <code class="kit-code">.rp-metric-card</code>
+        <code class="kit-code">.rp-metric-icon</code>
+        <code class="kit-code">.rp-metric-label</code>
+        <code class="kit-code">.rp-metric-value</code>
+        <code class="kit-code">.rp-mini-stats</code>
+        <code class="kit-code">.rp-modal</code>
+        <code class="kit-code">.rp-muted-text</code>
+        <code class="kit-code">.rp-notice</code>
+        <code class="kit-code">.rp-now-metric</code>
+        <code class="kit-code">.rp-now-strip</code>
+        <code class="kit-code">.rp-operator-kpis</code>
+        <code class="kit-code">.rp-order-add-item-card</code>
+        <code class="kit-code">.rp-order-billing-empty</code>
+        <code class="kit-code">.rp-order-billing-toggle</code>
+        <code class="kit-code">.rp-order-cancel-edit</code>
+        <code class="kit-code">.rp-order-content-panel</code>
+        <code class="kit-code">.rp-order-copy-key</code>
+        <code class="kit-code">.rp-order-customer-instruction</code>
+        <code class="kit-code">.rp-order-danger-delete</code>
+        <code class="kit-code">.rp-order-danger-zone</code>
+        <code class="kit-code">.rp-order-detail-actions</code>
+        <code class="kit-code">.rp-order-detail-back</code>
+        <code class="kit-code">.rp-order-detail-badge</code>
+        <code class="kit-code">.rp-order-detail-button</code>
+        <code class="kit-code">.rp-order-detail-card</code>
+        <code class="kit-code">.rp-order-detail-cards</code>
+        <code class="kit-code">.rp-order-detail-header-main</code>
+        <code class="kit-code">.rp-order-detail-list</code>
+        <code class="kit-code">.rp-order-detail-print</code>
+        <code class="kit-code">.rp-order-detail-receipt</code>
+        <code class="kit-code">.rp-order-detail-row</code>
+        <code class="kit-code">.rp-order-detail-save</code>
+        <code class="kit-code">.rp-order-detail-secondary-link</code>
+        <code class="kit-code">.rp-order-detail-service</code>
+        <code class="kit-code">.rp-order-detail-summary</code>
+        <code class="kit-code">.rp-order-detail-title</code>
+        <code class="kit-code">.rp-order-detail-title-row</code>
+        <code class="kit-code">.rp-order-details-page</code>
+        <code class="kit-code">.rp-order-edit</code>
+        <code class="kit-code">.rp-order-edit-actions</code>
+        <code class="kit-code">.rp-order-edit-item-thumb</code>
+        <code class="kit-code">.rp-order-edit-item-thumb-placeholder</code>
+        <code class="kit-code">.rp-order-edit-toggle</code>
+        <code class="kit-code">.rp-order-fulfilment-action</code>
+        <code class="kit-code">.rp-order-fulfilment-change</code>
+        <code class="kit-code">.rp-order-header</code>
+        <code class="kit-code">.rp-order-item-actions</code>
+        <code class="kit-code">.rp-order-item-addons</code>
+        <code class="kit-code">.rp-order-item-base-name</code>
+        <code class="kit-code">.rp-order-item-close</code>
+        <code class="kit-code">.rp-order-item-copy</code>
+        <code class="kit-code">.rp-order-item-field</code>
+        <code class="kit-code">.rp-order-item-id</code>
+        <code class="kit-code">.rp-order-item-instruction</code>
+        <code class="kit-code">.rp-order-item-key</code>
+        <code class="kit-code">.rp-order-item-main</code>
+        <code class="kit-code">.rp-order-item-mobile-addons</code>
+        <code class="kit-code">.rp-order-item-modal</code>
+        <code class="kit-code">.rp-order-item-modal-apply</code>
+        <code class="kit-code">.rp-order-item-modal-fooditem</code>
+        <code class="kit-code">.rp-order-item-modal-instruction</code>
+        <code class="kit-code">.rp-order-item-modal-price</code>
+        <code class="kit-code">.rp-order-item-modal-qty</code>
+        <code class="kit-code">.rp-order-item-modal-subtotal</code>
+        <code class="kit-code">.rp-order-item-modal-title</code>
+        <code class="kit-code">.rp-order-item-modal-trigger</code>
+        <code class="kit-code">.rp-order-item-modal-variation</code>
+        <code class="kit-code">.rp-order-item-mode</code>
+        <code class="kit-code">.rp-order-item-money</code>
+        <code class="kit-code">.rp-order-item-muted</code>
+        <code class="kit-code">.rp-order-item-qty</code>
+        <code class="kit-code">.rp-order-item-read-row</code>
+        <code class="kit-code">.rp-order-item-thumb</code>
+        <code class="kit-code">.rp-order-item-thumb-placeholder</code>
+        <code class="kit-code">.rp-order-items-count</code>
+        <code class="kit-code">.rp-order-items-edit</code>
+        <code class="kit-code">.rp-order-items-edit-list</code>
+        <code class="kit-code">.rp-order-items-edit-toolbar</code>
+        <code class="kit-code">.rp-order-items-edit-toolbar-actions</code>
+        <code class="kit-code">.rp-order-items-heading</code>
+        <code class="kit-code">.rp-order-items-helper</code>
+        <code class="kit-code">.rp-order-items-read</code>
+        <code class="kit-code">.rp-order-items-table</code>
+        <code class="kit-code">.rp-order-items-table-head</code>
+        <code class="kit-code">.rp-order-items-title</code>
+        <code class="kit-code">.rp-order-items-total-box</code>
+        <code class="kit-code">.rp-order-items-total-final</code>
+        <code class="kit-code">.rp-order-items-totals</code>
+        <code class="kit-code">.rp-order-items-totals-spacer</code>
+        <code class="kit-code">.rp-order-main-grid</code>
+        <code class="kit-code">.rp-order-next-submit</code>
+        <code class="kit-code">.rp-order-note-body</code>
+        <code class="kit-code">.rp-order-note-composer</code>
+        <code class="kit-code">.rp-order-note-content</code>
+        <code class="kit-code">.rp-order-note-delete</code>
+        <code class="kit-code">.rp-order-note-dot</code>
+        <code class="kit-code">.rp-order-note-entry</code>
+        <code class="kit-code">.rp-order-note-meta</code>
+        <code class="kit-code">.rp-order-notes-empty</code>
+        <code class="kit-code">.rp-order-notes-layout</code>
+        <code class="kit-code">.rp-order-notes-timeline</code>
+        <code class="kit-code">.rp-order-payment-billing</code>
+        <code class="kit-code">.rp-order-payment-card</code>
+        <code class="kit-code">.rp-order-payment-key-value</code>
+        <code class="kit-code">.rp-order-payment-row</code>
+        <code class="kit-code">.rp-order-payment-status-badge</code>
+        <code class="kit-code">.rp-order-payment-subheading</code>
+        <code class="kit-code">.rp-order-placed-time</code>
+        <code class="kit-code">.rp-order-preview</code>
+        <code class="kit-code">.rp-order-read</code>
+        <code class="kit-code">.rp-order-receipt-email-picker</code>
+        <code class="kit-code">.rp-order-section</code>
+        <code class="kit-code">.rp-order-section-header</code>
+        <code class="kit-code">.rp-order-section-heading</code>
+        <code class="kit-code">.rp-order-section-heading-main</code>
+        <code class="kit-code">.rp-order-shell</code>
+        <code class="kit-code">.rp-order-side-panel</code>
+        <code class="kit-code">.rp-order-status-copy</code>
+        <code class="kit-code">.rp-order-status-current-badge</code>
+        <code class="kit-code">.rp-order-status-dot</code>
+        <code class="kit-code">.rp-order-status-panel</code>
+        <code class="kit-code">.rp-order-status-read</code>
+        <code class="kit-code">.rp-order-status-step</code>
+        <code class="kit-code">.rp-order-status-track</code>
+        <code class="kit-code">.rp-order-summary-body</code>
+        <code class="kit-code">.rp-order-summary-card</code>
+        <code class="kit-code">.rp-order-summary-icon</code>
+        <code class="kit-code">.rp-order-summary-label</code>
+        <code class="kit-code">.rp-order-summary-total</code>
+        <code class="kit-code">.rp-order-top-alert</code>
+        <code class="kit-code">.rp-orders-action</code>
+        <code class="kit-code">.rp-orders-action-list</code>
+        <code class="kit-code">.rp-orders-action-live</code>
+        <code class="kit-code">.rp-orders-datechips</code>
+        <code class="kit-code">.rp-orders-daterow</code>
+        <code class="kit-code">.rp-orders-daterow-label</code>
+        <code class="kit-code">.rp-orders-kpi-body</code>
+        <code class="kit-code">.rp-orders-kpi-card</code>
+        <code class="kit-code">.rp-orders-kpi-delta</code>
+        <code class="kit-code">.rp-orders-kpi-footer</code>
+        <code class="kit-code">.rp-orders-kpi-icon</code>
+        <code class="kit-code">.rp-orders-kpi-info</code>
+        <code class="kit-code">.rp-orders-kpi-label</code>
+        <code class="kit-code">.rp-orders-kpi-period</code>
+        <code class="kit-code">.rp-orders-kpi-row</code>
+        <code class="kit-code">.rp-orders-kpi-subtitle</code>
+        <code class="kit-code">.rp-orders-kpi-value</code>
+        <code class="kit-code">.rp-orders-list-wrap</code>
+        <code class="kit-code">.rp-orders-pageheader</code>
+        <code class="kit-code">.rp-orders-pageheader-actions</code>
+        <code class="kit-code">.rp-orders-pageheader-titles</code>
+        <code class="kit-code">.rp-orders-pastnotice</code>
+        <code class="kit-code">.rp-orders-pastnotice-close</code>
+        <code class="kit-code">.rp-orders-pastnotice-text</code>
+        <code class="kit-code">.rp-orders-subtitle</code>
+        <code class="kit-code">.rp-orders-title</code>
+        <code class="kit-code">.rp-page-actions</code>
+        <code class="kit-code">.rp-page-eyebrow</code>
+        <code class="kit-code">.rp-page-header</code>
+        <code class="kit-code">.rp-page-header-main</code>
+        <code class="kit-code">.rp-page-header-titles</code>
+        <code class="kit-code">.rp-page-subtitle</code>
+        <code class="kit-code">.rp-page-title</code>
+        <code class="kit-code">.rp-page-title-icon</code>
+        <code class="kit-code">.rp-panel-actions</code>
+        <code class="kit-code">.rp-panel-header</code>
+        <code class="kit-code">.rp-panel-subheading</code>
+        <code class="kit-code">.rp-payment-chip</code>
+        <code class="kit-code">.rp-priority-panel</code>
+        <code class="kit-code">.rp-priority-table</code>
+        <code class="kit-code">.rp-priority-table-wrap</code>
+        <code class="kit-code">.rp-readiness-card</code>
+        <code class="kit-code">.rp-readiness-grid</code>
+        <code class="kit-code">.rp-recovery-grid</code>
+        <code class="kit-code">.rp-report-compare</code>
+        <code class="kit-code">.rp-report-order-status</code>
+        <code class="kit-code">.rp-report-payment</code>
+        <code class="kit-code">.rp-report-range</code>
+        <code class="kit-code">.rp-report-service</code>
+        <code class="kit-code">.rp-reports-bar-list</code>
+        <code class="kit-code">.rp-reports-bar-row</code>
+        <code class="kit-code">.rp-reports-bar-track</code>
+        <code class="kit-code">.rp-reports-chart</code>
+        <code class="kit-code">.rp-reports-coming-next</code>
+        <code class="kit-code">.rp-reports-custom-apply</code>
+        <code class="kit-code">.rp-reports-custom-date</code>
+        <code class="kit-code">.rp-reports-customer-email</code>
+        <code class="kit-code">.rp-reports-customers-grid</code>
+        <code class="kit-code">.rp-reports-customers-table</code>
+        <code class="kit-code">.rp-reports-dot</code>
+        <code class="kit-code">.rp-reports-export-card</code>
+        <code class="kit-code">.rp-reports-export-card-head</code>
+        <code class="kit-code">.rp-reports-export-form</code>
+        <code class="kit-code">.rp-reports-export-grid</code>
+        <code class="kit-code">.rp-reports-export-intro</code>
+        <code class="kit-code">.rp-reports-export-meta</code>
+        <code class="kit-code">.rp-reports-export-secondary-head</code>
+        <code class="kit-code">.rp-reports-filter</code>
+        <code class="kit-code">.rp-reports-filter-actions</code>
+        <code class="kit-code">.rp-reports-grid-line</code>
+        <code class="kit-code">.rp-reports-header</code>
+        <code class="kit-code">.rp-reports-heatmap</code>
+        <code class="kit-code">.rp-reports-insights</code>
+        <code class="kit-code">.rp-reports-intelligence</code>
+        <code class="kit-code">.rp-reports-intelligence-filter</code>
+        <code class="kit-code">.rp-reports-kpi-grid-five</code>
+        <code class="kit-code">.rp-reports-kpi-grid-seven</code>
+        <code class="kit-code">.rp-reports-kpi-grid-six</code>
+        <code class="kit-code">.rp-reports-legend</code>
+        <code class="kit-code">.rp-reports-line</code>
+        <code class="kit-code">.rp-reports-menu-grid</code>
+        <code class="kit-code">.rp-reports-menu-grid-secondary</code>
+        <code class="kit-code">.rp-reports-menu-hero</code>
+        <code class="kit-code">.rp-reports-menu-table</code>
+        <code class="kit-code">.rp-reports-metric</code>
+        <code class="kit-code">.rp-reports-metric-body</code>
+        <code class="kit-code">.rp-reports-metric-label</code>
+        <code class="kit-code">.rp-reports-mini-list</code>
+        <code class="kit-code">.rp-reports-orders-risk-grid</code>
+        <code class="kit-code">.rp-reports-page</code>
+        <code class="kit-code">.rp-reports-panel</code>
+        <code class="kit-code">.rp-reports-payments-grid</code>
+        <code class="kit-code">.rp-reports-period-card</code>
+        <code class="kit-code">.rp-reports-period-edit</code>
+        <code class="kit-code">.rp-reports-period-heading</code>
+        <code class="kit-code">.rp-reports-recovery-table</code>
+        <code class="kit-code">.rp-reports-risk-panel</code>
+        <code class="kit-code">.rp-reports-risk-table</code>
+        <code class="kit-code">.rp-reports-rush-corner</code>
+        <code class="kit-code">.rp-reports-rush-heatmap</code>
+        <code class="kit-code">.rp-reports-rush-hour</code>
+        <code class="kit-code">.rp-reports-sales-grid</code>
+        <code class="kit-code">.rp-reports-sales-trend</code>
+        <code class="kit-code">.rp-reports-status-day</code>
+        <code class="kit-code">.rp-reports-status-pill</code>
+        <code class="kit-code">.rp-reports-status-stack</code>
+        <code class="kit-code">.rp-reports-status-timeline</code>
+        <code class="kit-code">.rp-reports-table</code>
+        <code class="kit-code">.rp-reports-taxes-table</code>
+        <code class="kit-code">.rp-rush-bar</code>
+        <code class="kit-code">.rp-rush-chart</code>
+        <code class="kit-code">.rp-section</code>
+        <code class="kit-code">.rp-select</code>
+        <code class="kit-code">.rp-service-date-time-row</code>
+        <code class="kit-code">.rp-service-details</code>
+        <code class="kit-code">.rp-service-edit-fields</code>
+        <code class="kit-code">.rp-service-split</code>
+        <code class="kit-code">.rp-service-time</code>
+        <code class="kit-code">.rp-settings-form</code>
+        <code class="kit-code">.rp-settings-header</code>
+        <code class="kit-code">.rp-settings-page</code>
+        <code class="kit-code">.rp-settings-panel</code>
+        <code class="kit-code">.rp-settings-sections</code>
+        <code class="kit-code">.rp-shift-health</code>
+        <code class="kit-code">.rp-status-badge</code>
+        <code class="kit-code">.rp-status-chip</code>
+        <code class="kit-code">.rp-store-</code>
+        <code class="kit-code">.rp-store-actions</code>
+        <code class="kit-code">.rp-store-status</code>
+        <code class="kit-code">.rp-tab</code>
+        <code class="kit-code">.rp-table</code>
+        <code class="kit-code">.rp-table-empty</code>
+        <code class="kit-code">.rp-table-scroll</code>
+        <code class="kit-code">.rp-table-search-action</code>
+        <code class="kit-code">.rp-table-toolbar</code>
+        <code class="kit-code">.rp-table-toolbar-primary</code>
+        <code class="kit-code">.rp-table-toolbar-secondary</code>
+        <code class="kit-code">.rp-tabs</code>
+        <code class="kit-code">.rp-tabs-attached</code>
+        <code class="kit-code">.rp-tabs-flush-bottom</code>
+        <code class="kit-code">.rp-tabs-panel</code>
+        <code class="kit-code">.rp-tabs-shell</code>
+        <code class="kit-code">.rp-toggle</code>
+        <code class="kit-code">.rp-tool-card</code>
+        <code class="kit-code">.rp-tools-header</code>
+        <code class="kit-code">.rp-tools-health-table</code>
+        <code class="kit-code">.rp-tools-page</code>
+        <code class="kit-code">.rp-tools-panels</code>
+        <code class="kit-code">.rp-top-items</code>
+        <code class="kit-code">.rp-u-flex</code>
+        <code class="kit-code">.rp-u-gap-lg</code>
+        <code class="kit-code">.rp-u-gap-md</code>
+        <code class="kit-code">.rp-u-gap-sm</code>
+        <code class="kit-code">.rp-u-gap-xs</code>
+        <code class="kit-code">.rp-u-inline-flex</code>
+        <code class="kit-code">.rp-u-items-center</code>
+        <code class="kit-code">.rp-u-justify-between</code>
+        <code class="kit-code">.rp-u-mb-0</code>
+        <code class="kit-code">.rp-u-min-0</code>
+        <code class="kit-code">.rp-u-mt-0</code>
+        <code class="kit-code">.rp-u-muted</code>
+        <code class="kit-code">.rp-u-nowrap</code>
+        <code class="kit-code">.rp-u-text-right</code>
+        <code class="kit-code">.rp-u-wrap</code>
+        <code class="kit-code">.status-active</code>
+        <code class="kit-code">.status-expired</code>
+        <code class="kit-code">.status-inactive</code>
+        <code class="kit-code">.tone-amber</code>
+        <code class="kit-code">.tone-blue</code>
+        <code class="kit-code">.tone-green</code>
+        <code class="kit-code">.tone-purple</code>
+        <code class="kit-code">.tone-red</code>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SCREENS — ORDERS KPI
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="screen-orders">
+    <h2 class="kit-section-title">Screen: Orders KPI Row</h2>
+    <p class="kit-section-desc">The KPI strip at the top of the Orders screen. Each card has an icon, value, delta indicator, and subtitle.</p>
+
+    <div class="kit-demo rp-admin-scope kit-demo-stack">
+      <div class="rp-grid rp-grid-command-strip rp-orders-kpi-row">
+
+        <div class="rp-card rp-metric-card tone-blue">
+          <div class="rp-orders-kpi-icon tone-blue"><span class="dashicons dashicons-cart"></span></div>
+          <div class="rp-orders-kpi-body">
+            <p class="rp-orders-kpi-label">Total Orders</p>
+            <h3 class="rp-orders-kpi-value">1,248</h3>
+            <p class="rp-orders-kpi-subtitle">All time</p>
+            <div class="rp-orders-kpi-footer">
+              <span class="rp-orders-kpi-delta is-up">
+                <span class="dashicons dashicons-arrow-up-alt2"></span> 12%
+              </span>
+              <span class="rp-orders-kpi-period">vs last month</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rp-card rp-metric-card tone-green">
+          <div class="rp-orders-kpi-icon tone-green"><span class="dashicons dashicons-money-alt"></span></div>
+          <div class="rp-orders-kpi-body">
+            <p class="rp-orders-kpi-label">Revenue</p>
+            <h3 class="rp-orders-kpi-value">$24,800</h3>
+            <p class="rp-orders-kpi-subtitle">This month</p>
+            <div class="rp-orders-kpi-footer">
+              <span class="rp-orders-kpi-delta is-up">
+                <span class="dashicons dashicons-arrow-up-alt2"></span> 8%
+              </span>
+              <span class="rp-orders-kpi-period">vs last month</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rp-card rp-metric-card tone-amber">
+          <div class="rp-orders-kpi-icon tone-amber"><span class="dashicons dashicons-clock"></span></div>
+          <div class="rp-orders-kpi-body">
+            <p class="rp-orders-kpi-label">Avg. Prep Time</p>
+            <h3 class="rp-orders-kpi-value">18 min</h3>
+            <p class="rp-orders-kpi-subtitle">Last 30 days</p>
+            <div class="rp-orders-kpi-footer">
+              <span class="rp-orders-kpi-delta is-down">
+                <span class="dashicons dashicons-arrow-down-alt2"></span> 2 min
+              </span>
+              <span class="rp-orders-kpi-period">vs last month</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rp-card rp-metric-card tone-purple">
+          <div class="rp-orders-kpi-icon tone-purple"><span class="dashicons dashicons-groups"></span></div>
+          <div class="rp-orders-kpi-body">
+            <p class="rp-orders-kpi-label">New Customers</p>
+            <h3 class="rp-orders-kpi-value">342</h3>
+            <p class="rp-orders-kpi-subtitle">This month</p>
+            <div class="rp-orders-kpi-footer">
+              <span class="rp-orders-kpi-delta is-flat">
+                <span class="dashicons dashicons-minus"></span> 0%
+              </span>
+              <span class="rp-orders-kpi-period">vs last month</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SCREENS — ORDERS DATE ROW
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="screen-orders-date">
+    <h2 class="kit-section-title">Screen: Orders Date Row</h2>
+    <p class="kit-section-desc">Date quick-select pattern used on Orders. It is separate from normal filter chips because it controls the operational order window.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Date Row &amp; Chips</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-orders-daterow">
+          <span class="rp-orders-daterow-label">Showing</span>
+          <div class="rp-orders-datechips">
+            <a href="#" class="rp-datechip">Today</a>
+            <a href="#" class="rp-datechip">Yesterday</a>
+            <a href="#" class="rp-datechip is-active">This Week</a>
+            <a href="#" class="rp-datechip">Last 7 Days</a>
+            <a href="#" class="rp-datechip">Custom Range</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Custom Date Panel</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-date-custom-panel">
+          <div class="rp-date-custom-fields rp-grid rp-grid-2">
+            <div class="rp-form-group">
+              <label>Start Date</label>
+              <input type="text" class="rp-input" value="2026-05-01">
+            </div>
+            <div class="rp-form-group">
+              <label>End Date</label>
+              <input type="text" class="rp-input" value="2026-05-30">
+            </div>
+          </div>
+          <div class="rp-date-custom-actions">
+            <button class="button rp-btn rp-btn-secondary rp-btn-small">Cancel</button>
+            <button class="button button-primary rp-btn rp-btn-primary rp-btn-small">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Past Orders Notice</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-notice">
+          <span class="dashicons dashicons-clock" aria-hidden="true"></span>
+          <span class="rp-orders-pastnotice-text">You are viewing past orders from May 1–30, 2026.</span>
+          <button type="button" class="rp-icon-action rp-orders-pastnotice-close" aria-label="Dismiss notice">
+            <span class="dashicons dashicons-no-alt"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SCREENS — CUSTOMER DETAIL
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="screen-customer-detail">
+    <h2 class="kit-section-title">Screen: Customer Detail</h2>
+    <p class="kit-section-desc">Restaurant CRM layout for customer profile, metrics, contact details, notes, and related operational context.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Customer Hero</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-card rp-customer-hero" style="width: 100%;">
+          <div class="rp-customer-hero-main">
+            <div class="rp-customer-avatar">PN</div>
+            <div class="rp-customer-identity">
+              <h3 class="rp-customer-name">Priya Nair</h3>
+              <p style="margin: 4px 0 0; color: var(--rp-color-muted);">priya.nair@example.com</p>
+            </div>
+          </div>
+          <div class="rp-customer-actions">
+            <button class="button rp-btn rp-btn-secondary rp-btn-small"><span class="dashicons dashicons-edit"></span> Edit</button>
+            <button class="button rp-btn rp-btn-danger rp-btn-small"><span class="dashicons dashicons-trash"></span> Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Customer Metrics</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-customer-metrics">
+          <div class="rp-card rp-metric-card"><span class="rp-metric-label">Total Orders</span><strong class="rp-metric-value">24</strong></div>
+          <div class="rp-card rp-metric-card"><span class="rp-metric-label">Revenue</span><strong class="rp-metric-value">$1,248</strong></div>
+          <div class="rp-card rp-metric-card"><span class="rp-metric-label">Avg. Order</span><strong class="rp-metric-value">$52</strong></div>
+          <div class="rp-card rp-metric-card"><span class="rp-metric-label">Member Since</span><strong class="rp-metric-value">2024</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Contact List &amp; Stats</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <dl class="rp-customer-contact-list" style="max-width: 560px;">
+          <dt>Email</dt><dd>priya.nair@example.com</dd>
+          <dt>Phone</dt><dd>+91 98765 43210</dd>
+          <dt>Address</dt><dd>12 Market Road, Kochi</dd>
+        </dl>
+        <div class="rp-customer-stats">
+          <a href="#">24 orders</a>
+          <a href="#">3 refunds</a>
+          <a href="#">8 delivery orders</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Notes Form &amp; Notes Layout</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-customer-notes-layout" style="width: 100%;">
+          <div class="rp-card" style="padding: 16px;">
+            <div class="rp-customer-note-form">
+              <label for="customer-note-demo">Internal Note</label>
+              <textarea id="customer-note-demo" class="rp-input" rows="4" placeholder="Add a staff-only customer note…"></textarea>
+              <button class="button button-primary rp-btn rp-btn-primary rp-btn-small">Add Note</button>
+            </div>
+          </div>
+          <aside class="rp-card" style="padding: 16px;">
+            <strong>Context</strong>
+            <p class="rp-help-text">Frequent pickup customer. Prefers mild spice.</p>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SCREENS — REPORTS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="screen-reports">
+    <h2 class="kit-section-title">Screen: Reports</h2>
+    <p class="kit-section-desc">Report-specific components — metric cards, bar lists, heatmap cells, and the intelligence filter.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Reports Metric Cards</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-grid rp-grid-4" style="width: 100%;">
+          <div class="rp-card rp-reports-metric tone-blue">
+            <div class="rp-metric-icon tone-blue"><span class="dashicons dashicons-chart-line"></span></div>
+            <div class="rp-reports-metric-body">
+              <div class="rp-reports-metric-label">Revenue</div>
+              <strong>$24,800</strong>
+              <small>+8% vs last period</small>
+            </div>
+          </div>
+          <div class="rp-card rp-reports-metric tone-green">
+            <div class="rp-metric-icon tone-green"><span class="dashicons dashicons-cart"></span></div>
+            <div class="rp-reports-metric-body">
+              <div class="rp-reports-metric-label">Orders</div>
+              <strong>1,248</strong>
+              <small class="rp-delta-up">+12%</small>
+            </div>
+          </div>
+          <div class="rp-card rp-reports-metric tone-amber">
+            <div class="rp-metric-icon tone-amber"><span class="dashicons dashicons-food"></span></div>
+            <div class="rp-reports-metric-body">
+              <div class="rp-reports-metric-label">Items Sold</div>
+              <strong>4,901</strong>
+              <small class="rp-delta-down">−3%</small>
+            </div>
+          </div>
+          <div class="rp-card rp-reports-metric tone-purple">
+            <div class="rp-metric-icon tone-purple"><span class="dashicons dashicons-groups"></span></div>
+            <div class="rp-reports-metric-body">
+              <div class="rp-reports-metric-label">Customers</div>
+              <strong>342</strong>
+              <small class="rp-delta-flat">No change</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Bar List</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-reports-bar-list" style="width: 100%; max-width: 480px;">
+          <div class="rp-reports-bar-row">
+            <span>Margherita Pizza</span>
+            <div class="rp-reports-bar-track"><i style="width: 88%;"></i></div>
+            <strong>$4,320</strong>
+          </div>
+          <div class="rp-reports-bar-row">
+            <span>Chicken Burger</span>
+            <div class="rp-reports-bar-track"><i style="width: 72%;"></i></div>
+            <strong>$3,540</strong>
+          </div>
+          <div class="rp-reports-bar-row">
+            <span>Veg Biryani</span>
+            <div class="rp-reports-bar-track"><i style="width: 55%;"></i></div>
+            <strong>$2,700</strong>
+          </div>
+          <div class="rp-reports-bar-row">
+            <span>Pasta Arrabbiata</span>
+            <div class="rp-reports-bar-track"><i style="width: 38%;"></i></div>
+            <strong>$1,860</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Monthly Heatmap</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-reports-heatmap" style="width: 100%;">
+          <span class="level-1"><small>Jan</small><strong>$1.2k</strong></span>
+          <span class="level-2"><small>Feb</small><strong>$1.8k</strong></span>
+          <span class="level-3"><small>Mar</small><strong>$2.4k</strong></span>
+          <span class="level-4"><small>Apr</small><strong>$3.1k</strong></span>
+          <span class="level-3"><small>May</small><strong>$2.8k</strong></span>
+          <span class="level-2"><small>Jun</small><strong>$2.1k</strong></span>
+          <span class="level-1"><small>Jul</small><strong>$1.5k</strong></span>
+          <span class="level-2"><small>Aug</small><strong>$1.9k</strong></span>
+          <span class="level-3"><small>Sep</small><strong>$2.6k</strong></span>
+          <span class="level-4"><small>Oct</small><strong>$3.4k</strong></span>
+          <span class="level-3"><small>Nov</small><strong>$2.9k</strong></span>
+          <span class="level-4"><small>Dec</small><strong>$3.8k</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Intelligence Filter</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-grid rp-grid-filter rp-reports-intelligence-filter">
+          <div class="rp-filter-field">
+            <label>Period</label>
+            <select class="rp-select">
+              <option>This Month</option>
+              <option>Last 30 Days</option>
+              <option>Last Month</option>
+              <option>Custom</option>
+            </select>
+          </div>
+          <div class="rp-filter-field">
+            <label>Location</label>
+            <select class="rp-select">
+              <option>All Locations</option>
+              <option>Downtown</option>
+              <option>Airport</option>
+            </select>
+          </div>
+          <div class="rp-filter-field">
+            <label>Category</label>
+            <select class="rp-select">
+              <option>All Categories</option>
+              <option>Pizza</option>
+              <option>Burgers</option>
+            </select>
+          </div>
+          <div class="rp-filter-field">
+            <label>Gateway</label>
+            <select class="rp-select">
+              <option>All Gateways</option>
+              <option>Cash</option>
+              <option>Stripe</option>
+            </select>
+          </div>
+          <div class="rp-filter-field">
+            <label>Total</label>
+            <div class="rp-filter-value">$24,800</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Period Cards</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-grid rp-grid-2" style="width: 100%;">
+          <div class="rp-card rp-reports-period-card">
+            <div class="rp-reports-period-heading">This Period</div>
+            <strong>$24,800</strong>
+            <span class="rp-delta-up">↑ 12% vs last period</span>
+          </div>
+          <div class="rp-card rp-reports-period-card">
+            <div class="rp-reports-period-heading">Last Period</div>
+            <strong>$22,120</strong>
+            <span class="rp-delta-flat">— baseline</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Status Timeline</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-reports-status-timeline">
+          <div class="rp-reports-status-day"><div class="rp-reports-status-stack"><i class="is-completed" style="height: 70%;"></i><i class="is-late" style="height: 18%;"></i><i class="is-cancelled" style="height: 12%;"></i></div><span>Mon</span></div>
+          <div class="rp-reports-status-day"><div class="rp-reports-status-stack"><i class="is-completed" style="height: 82%;"></i><i class="is-late" style="height: 10%;"></i><i class="is-cancelled" style="height: 8%;"></i></div><span>Tue</span></div>
+          <div class="rp-reports-status-day"><div class="rp-reports-status-stack"><i class="is-completed" style="height: 62%;"></i><i class="is-late" style="height: 26%;"></i><i class="is-cancelled" style="height: 12%;"></i></div><span>Wed</span></div>
+          <div class="rp-reports-status-day"><div class="rp-reports-status-stack"><i class="is-completed" style="height: 76%;"></i><i class="is-late" style="height: 14%;"></i><i class="is-cancelled" style="height: 10%;"></i></div><span>Thu</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Rush Hour Heatmap</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-reports-rush-heatmap" style="width: 100%;">
+          <span class="rp-reports-rush-corner"></span>
+          <span class="rp-reports-rush-hour">10</span><span class="rp-reports-rush-hour">11</span><span class="rp-reports-rush-hour">12</span><span class="rp-reports-rush-hour">13</span><span class="rp-reports-rush-hour">18</span><span class="rp-reports-rush-hour">19</span>
+          <strong>Mon</strong><i class="level-1"></i><i class="level-2"></i><i class="level-4"></i><i class="level-3"></i><i class="level-2"></i><i class="level-1"></i>
+          <strong>Tue</strong><i class="level-2"></i><i class="level-3"></i><i class="level-4"></i><i class="level-4"></i><i class="level-3"></i><i class="level-2"></i>
+          <strong>Wed</strong><i class="level-1"></i><i class="level-2"></i><i class="level-3"></i><i class="level-2"></i><i class="level-4"></i><i class="level-3"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Line Chart</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-reports-chart">
+          <svg viewBox="0 0 600 180" role="img" aria-label="Revenue and orders trend">
+            <line class="rp-reports-grid-line" x1="0" y1="40" x2="600" y2="40"></line>
+            <line class="rp-reports-grid-line" x1="0" y1="90" x2="600" y2="90"></line>
+            <line class="rp-reports-grid-line" x1="0" y1="140" x2="600" y2="140"></line>
+            <path class="rp-reports-line is-blue" d="M0 130 C80 90, 120 110, 180 70 S320 80, 380 42 S520 60, 600 30"></path>
+            <path class="rp-reports-line is-green" d="M0 150 C90 120, 150 125, 210 92 S340 96, 430 64 S540 82, 600 54"></path>
+          </svg>
+        </div>
+        <div class="rp-reports-legend">
+          <span><i class="rp-reports-dot is-blue"></i> Revenue</span>
+          <span><i class="rp-reports-dot is-green"></i> Orders</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Mini List</div>
+      <div class="kit-demo rp-admin-scope">
+        <ol class="rp-reports-mini-list" style="width: 100%; max-width: 420px;">
+          <li><span>Margherita Pizza</span><strong>$4,320</strong></li>
+          <li><span>Chicken Burger</span><strong>$3,540</strong></li>
+          <li><span>Veg Biryani</span><strong>$2,700</strong></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Export Cards</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-grid rp-grid-2" style="width: 100%;">
+          <div class="rp-card rp-reports-export-card">
+            <div class="rp-reports-export-card-head">
+              <h3>Orders Export</h3>
+              <p>Download order rows for accounting and operations.</p>
+            </div>
+            <dl class="rp-reports-export-meta">
+              <dt>Format</dt><dd>CSV</dd>
+              <dt>Fields</dt><dd>Order, customer, total, status</dd>
+            </dl>
+            <form class="rp-reports-export-form"><button class="button rp-btn rp-btn-secondary rp-btn-small">Export Orders</button></form>
+          </div>
+          <div class="rp-card rp-reports-export-card">
+            <div class="rp-reports-export-card-head">
+              <h3>Customers Export</h3>
+              <p>Export contact and lifetime order summary.</p>
+            </div>
+            <dl class="rp-reports-export-meta">
+              <dt>Format</dt><dd>CSV</dd>
+              <dt>Fields</dt><dd>Name, email, orders, value</dd>
+            </dl>
+            <form class="rp-reports-export-form"><button class="button rp-btn rp-btn-secondary rp-btn-small">Export Customers</button></form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection" style="margin-top: 16px;">
+      <div class="kit-subsection-title">Risk Panels &amp; Delta Utilities</div>
+      <div class="kit-demo rp-admin-scope kit-demo-stack">
+        <div class="rp-grid rp-grid-3" style="width: 100%;">
+          <div class="rp-card rp-reports-risk-panel tone-green"><strong>Healthy</strong><p>Rush delays are below target.</p></div>
+          <div class="rp-card rp-reports-risk-panel tone-amber"><strong>Watch</strong><p>Pickup time is trending higher.</p></div>
+          <div class="rp-card rp-reports-risk-panel tone-red"><strong>Risk</strong><p>Cancelled orders need review.</p></div>
+        </div>
+        <table class="kit-token-table">
+          <tbody>
+            <tr><td class="rp-delta-up">↑ 12% vs last period</td><td>Positive movement</td></tr>
+            <tr><td class="rp-delta-down">↓ 3% vs last period</td><td>Negative movement</td></tr>
+            <tr><td class="rp-delta-flat">— 0% vs last period</td><td>No meaningful movement</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SCREENS — TOOLS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="screen-tools">
+    <h2 class="kit-section-title">Screen: Tools Page</h2>
+    <p class="kit-section-desc">Tools use restrained cards and WordPress postboxes so utility screens still feel native to wp-admin.</p>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Tool Cards</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-tools-page rp-grid rp-grid-2" style="width: 100%;">
+          <div class="rp-card rp-tool-card">
+            <h3>Re-send Receipts</h3>
+            <p>Send customer receipt emails again after support requests.</p>
+            <button class="button rp-btn rp-btn-secondary rp-btn-small">Open Tool</button>
+          </div>
+          <div class="rp-card rp-tool-card">
+            <h3>Recount Stats</h3>
+            <p>Recalculate order totals and customer lifetime values.</p>
+            <button class="button rp-btn rp-btn-secondary rp-btn-small">Run Tool</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-subsection">
+      <div class="kit-subsection-title">Tools Postbox</div>
+      <div class="kit-demo rp-admin-scope">
+        <div class="rp-tools-page postbox" style="width: 100%; max-width: 560px;">
+          <h3 class="hndle">System Info</h3>
+          <div class="inside">
+            <p>WordPress-native postboxes are normalized inside the tools page without replacing the underlying WP structure.</p>
+            <button class="button rp-btn rp-btn-secondary rp-btn-small">Download Info</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SCREENS — SETTINGS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="screen-settings">
+    <h2 class="kit-section-title">Screen: Settings Panel</h2>
+    <p class="kit-section-desc">The <code>.rp-settings-panel</code> wraps WordPress's native <code>form-table</code> and overrides its styling with kit tokens. Section nav uses pill chips via <code>.subsubsub</code>.</p>
+
+    <div class="kit-demo rp-admin-scope kit-demo-stack">
+      <div class="rp-settings-sections">
+        <ul class="subsubsub">
+          <li><a href="#" class="current">General</a></li>
+          <li><a href="#">Payments</a></li>
+          <li><a href="#">Emails</a></li>
+          <li><a href="#">Taxes</a></li>
+          <li><a href="#">Advanced</a></li>
+        </ul>
+      </div>
+      <div class="rp-card rp-settings-panel">
+        <table class="form-table rp-discount-form-table">
+          <tbody>
+            <tr>
+              <th><label for="s-name">Restaurant Name</label></th>
+              <td>
+                <input type="text" id="s-name" class="rp-input rp-field-wp" value="The Spice Garden">
+                <p class="description">Shown on receipts and the order page.</p>
+              </td>
+            </tr>
+            <tr>
+              <th><label for="s-currency">Currency</label></th>
+              <td>
+                <select id="s-currency" class="rp-select rp-field-wp">
+                  <option selected>USD — US Dollar</option>
+                  <option>EUR — Euro</option>
+                  <option>GBP — British Pound</option>
+                  <option>INR — Indian Rupee</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th><label>Order Notifications</label></th>
+              <td>
+                <label class="rp-checkbox-inline">
+                  <input type="checkbox" checked> Enable browser push notifications
+                </label>
+                <p class="description">Plays a sound and shows a badge when new orders arrive.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="submit" style="margin-top: 16px; padding: 0;">
+          <button class="button button-primary rp-btn rp-btn-primary">Save Settings</button>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SCREENS — DISCOUNTS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="screen-discounts">
+    <h2 class="kit-section-title">Screen: Discount Form</h2>
+    <p class="kit-section-desc">The add/edit discount form uses <code>.rp-discount-form</code> and <code>.rp-discount-form-table</code> for its layout.</p>
+
+    <div class="kit-demo rp-admin-scope kit-demo-stack">
+      <div class="rp-card rp-discount-form" style="max-width: 700px; padding: 20px;">
+        <table class="form-table rp-discount-form-table">
+          <tbody>
+            <tr>
+              <th><label for="d-name">Discount Name</label></th>
+              <td>
+                <input type="text" id="d-name" class="rp-input rp-field-wp" placeholder="e.g. Summer Sale">
+              </td>
+            </tr>
+            <tr>
+              <th><label for="d-code">Discount Code</label></th>
+              <td>
+                <input type="text" id="d-code" class="rp-input rp-field-md" placeholder="SUMMER20">
+                <p class="description">Customers enter this at checkout.</p>
+                <span class="rpress-discount-demo">SUMMER20</span>
+              </td>
+            </tr>
+            <tr>
+              <th><label for="d-type">Discount Type</label></th>
+              <td>
+                <select id="d-type" class="rp-select rp-field-md">
+                  <option>Percentage</option>
+                  <option>Flat Amount</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th><label for="d-amount">Amount</label></th>
+              <td>
+                <input type="number" id="d-amount" class="rp-input rp-field-sm" value="20">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="margin-top: 16px; padding: 0;">
+          <input type="submit" value="Add Discount Code" class="button button-primary rp-btn rp-btn-primary">
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SCREENS — EXTENSIONS
+  ════════════════════════════════════════════════════════════════════════ -->
+  <section class="kit-section" id="screen-extensions">
+    <h2 class="kit-section-title">Screen: Extensions / Add-ons</h2>
+    <p class="kit-section-desc">Extension cards use a flex column layout with a footer that pins actions to the bottom regardless of description length.</p>
+
+    <div class="kit-demo rp-admin-scope">
+      <div class="rp-grid rp-extensions-grid" style="width: 100%;">
+
+        <div class="rp-card rp-extension-card">
+          <div class="rp-extension-card-inner">
+            <div class="rp-extension-card-header">
+              <div class="rp-extension-card-title-wrap">
+                <h3 class="rp-extension-title">Table Reservations</h3>
+                <span class="rp-badge is-success">Active</span>
+              </div>
+            </div>
+            <div class="rp-extension-image">
+              <div style="width: 100%; height: 100%; background: linear-gradient(135deg, var(--rp-color-primary-soft), var(--rp-color-info-soft));"></div>
+            </div>
+            <div class="rp-extension-card-body">
+              <p class="rp-extension-description">
+                <span>Allow customers to book tables directly from your website. Includes confirmation emails and a management dashboard.</span>
+              </p>
+            </div>
+            <div class="rp-extension-card-footer">
+              <div class="rp-extension-actions">
+                <span class="rp-extension-price">$49 / year</span>
+                <button class="button rp-btn rp-btn-secondary rp-btn-small">Manage License</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rp-card rp-extension-card">
+          <div class="rp-extension-card-inner">
+            <div class="rp-extension-card-header">
+              <div class="rp-extension-card-title-wrap">
+                <h3 class="rp-extension-title">SMS Notifications</h3>
+                <span class="rp-badge is-warning">Inactive</span>
+              </div>
+            </div>
+            <div class="rp-extension-image">
+              <div style="width: 100%; height: 100%; background: linear-gradient(135deg, var(--rp-color-warning-soft), var(--rp-color-purple-soft));"></div>
+            </div>
+            <div class="rp-extension-card-body">
+              <p class="rp-extension-description">
+                <span>Send real-time SMS updates to customers when their order status changes.</span>
+              </p>
+            </div>
+            <div class="rp-extension-card-footer">
+              <div class="rp-extension-license-form">
+                <input type="text" class="rp-input" placeholder="Enter license key…">
+                <button class="button rp-btn rp-btn-primary rp-btn-small">Activate</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rp-card rp-extension-card">
+          <div class="rp-extension-card-inner">
+            <div class="rp-extension-card-header">
+              <div class="rp-extension-card-title-wrap">
+                <h3 class="rp-extension-title">Advanced Reporting</h3>
+                <span class="rp-badge is-info">Free</span>
+              </div>
+            </div>
+            <div class="rp-extension-image">
+              <div style="width: 100%; height: 100%; background: linear-gradient(135deg, var(--rp-color-info-soft), var(--rp-color-success-soft));"></div>
+            </div>
+            <div class="rp-extension-card-body">
+              <p class="rp-extension-description">
+                <span>Detailed analytics including hourly rush heatmaps, menu performance, and customer lifetime value.</span>
+              </p>
+            </div>
+            <div class="rp-extension-card-footer">
+              <div class="rp-extension-actions">
+                <span class="rp-extension-price">Included</span>
+                <a href="#" class="button rp-btn rp-btn-primary rp-btn-small">Install</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+  // Highlight active nav link on scroll
+  (function () {
+    var sections = document.querySelectorAll('.kit-section[id]');
+    var links = document.querySelectorAll('.kit-nav a');
+
+    function onScroll() {
+      var scrollY = window.scrollY + 80;
+      var current = '';
+
+      sections.forEach(function (s) {
+        if (s.offsetTop <= scrollY) current = s.id;
+      });
+
+      links.forEach(function (a) {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }());
+</script>
+
+</body>
+</html>

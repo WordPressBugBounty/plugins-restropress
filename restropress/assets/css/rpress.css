@@ -3196,6 +3196,13 @@ ul.rpress-category-lists .rpress-category-item.current a{
 	padding: 20px 15px 40px;
 }
 
+/* When the cart is empty the summary area has no content but still rendered as a
+   white box (white bg + 8px padding) over the empty-cart background - a stray
+   strip below the "choose an item" message. Hide it so the empty state is even. */
+.rpress-section .rpress-sidebar-cart-wrap.empty-cart .rpress-cart-summary-area {
+	display: none;
+}
+
 @media only screen and (max-width: 767px) {
 	.rpress-section .rpress-sidebar-cart-wrap {
 		max-height: 300px;
@@ -3265,6 +3272,25 @@ ul.rpress-category-lists .rpress-category-item.current a{
     width: auto;
     text-align: center;
 /*     margin-bottom: 3px; */
+}
+/* Dietary labels (Vegetarian, Vegan, Gluten-free, Halal, etc.) on the menu card. */
+.rpress_fooditem_dietary {
+	margin-top: 8px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+}
+.rpress_fooditem_dietary span.rpress-dietary-label {
+	padding: 2px 8px;
+	font-size: 11px;
+	line-height: 16px;
+	border: 1px solid #cfe8d6;
+	background-color: #f1f9f3;
+	color: #2f7d46;
+	border-radius: 100px;
+	display: inline-block;
+	white-space: nowrap;
+	text-align: center;
 }
 .rpress-cart .cat_icon img {
 	width: 16px;
@@ -7199,6 +7225,7 @@ width: 32px;
 .rpress-section .pn-ProductNav_Link {
 	flex: 0 0 auto;
 	margin: 0;
+	padding: 0 4px;
 }
 
 @media only screen and (max-width: 1024px) {
@@ -7273,7 +7300,7 @@ width: 32px;
 		display: inline-flex !important;
 		flex-wrap: nowrap;
 		align-items: center;
-		gap: 6px;
+		gap: 12px;
 		min-width: max-content;
 	}
 
@@ -7543,9 +7570,16 @@ width: 32px;
 	}
 
 	.rpress-section .rpress_fooditems_grid,
-	.rpress-section .rpress_fooditems_list,
-	.rpress-section .rpress-grid-main-wrap {
+	.rpress-section .rpress_fooditems_list {
 		padding-bottom: 110px;
+	}
+
+	/* Each category section only needs modest separation. Previously every
+	   .rpress-grid-main-wrap carried 110px padding-bottom, which left a huge
+	   empty gap between every category on mobile. The bottom scroll room for the
+	   last category is provided by the grid/list container's padding above. */
+	.rpress-section .rpress-grid-main-wrap {
+		padding-bottom: 24px;
 	}
 
 	.rpress-section div.rpress_fooditems_grid .rpress_fooditem.rpress-list .rpress_fooditem_inner {

@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.2.8.8.6';
+	public $version = '3.3';
 	/**
 	 * The single instance of the class.
 	 *
@@ -291,6 +291,7 @@ final class RestroPress
 		 */
 		include_once RP_PLUGIN_DIR . 'includes/class-rpress-shortcodes.php';
 		include_once RP_PLUGIN_DIR . 'includes/shortcodes/class-shortcode-fooditems.php';
+		require_once RP_PLUGIN_DIR . 'includes/admin/fooditems/availability.php';
 		if ($this->is_request('admin') || (defined('WP_CLI') && WP_CLI)) {
 			/**
 			 * Migrating 3.0 Features to 2.x
@@ -303,11 +304,14 @@ final class RestroPress
 			require_once RP_PLUGIN_DIR . 'includes/admin/class-rpress-notices.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/admin-pages.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/dashboard-widgets.php';
+			require_once RP_PLUGIN_DIR . 'includes/admin/dashboard/class-rpress-command-center-dashboard.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/fooditems/dashboard-columns.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/customers/customers.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/customers/customer-functions.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/customers/customer-actions.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/fooditems/metabox.php';
+			require_once RP_PLUGIN_DIR . 'includes/admin/fooditems/description.php';
+			require_once RP_PLUGIN_DIR . 'includes/admin/fooditems/taxonomies.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/fooditems/contextual-help.php';
 			// Add admin discount codes
 			require_once RP_PLUGIN_DIR . 'includes/admin/discounts/discount-actions.php';
@@ -317,6 +321,7 @@ final class RestroPress
 			require_once RP_PLUGIN_DIR . 'includes/admin/import/import-functions.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/payments/actions.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/payments/payments-history.php';
+			require_once RP_PLUGIN_DIR . 'includes/admin/payments/class-live-orders.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/payments/contextual-help.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/reporting/contextual-help.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/reporting/export/export-functions.php';
@@ -324,6 +329,7 @@ final class RestroPress
 			require_once RP_PLUGIN_DIR . 'includes/admin/reporting/class-rpress-graph.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/reporting/class-rpress-pie-graph.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/reporting/graphing.php';
+			require_once RP_PLUGIN_DIR . 'includes/admin/home/class-rpress-onboarding.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/settings/display-settings.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/settings/contextual-help.php';
 			require_once RP_PLUGIN_DIR . 'includes/admin/tools.php';
