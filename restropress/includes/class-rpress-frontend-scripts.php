@@ -206,7 +206,7 @@ class RP_Frontend_Scripts
       'rp-reorder' => array(
         'src' => self::get_asset_url('assets/js/frontend/rp-reorder.js'),
         'deps' => array('jquery'),
-        'version' => RP_VERSION,
+        'version' => file_exists(RP_PLUGIN_DIR . 'assets/js/frontend/rp-reorder.js') ? (string) filemtime(RP_PLUGIN_DIR . 'assets/js/frontend/rp-reorder.js') : RP_VERSION,
       )
     );
     foreach ($register_scripts as $name => $props) {

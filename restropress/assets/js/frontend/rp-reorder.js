@@ -58,4 +58,25 @@ jQuery(function ($) {
           }
         })
     });
+
+    // Handle clicks on checkout/add more items buttons inside reorder modal
+    $(document).on('click', '#rpressModal .rp-detils-content-view a', function (e) {
+        e.preventDefault();
+        var href = $(this).attr('href');
+        if (href) {
+            if (typeof MicroModal !== 'undefined' && typeof MicroModal.close === 'function') {
+                try {
+                    MicroModal.close('rpressModal');
+                } catch (err) {}
+            } else {
+                $('#rpressModal')
+                    .removeClass('is-open show-order-details rpress-order-details-context')
+                    .attr('aria-hidden', 'true');
+                $('html, body')
+                    .removeClass('modal-open')
+                    .css('overflow', '');
+            }
+            window.location.href = href;
+        }
+    });
 });

@@ -2209,8 +2209,6 @@ div.restropress-addons-all .restropress-addon-item {
 	-webkit-flex-wrap: wrap;
 	-ms-flex-wrap: wrap;
 	flex-wrap: wrap;
-	margin-right: -.5rem;
-	margin-left: -.5rem
 }
 .restropress-addon-img-wrap img {
 	width: 100%;
@@ -2218,7 +2216,7 @@ div.restropress-addons-all .restropress-addon-item {
 	max-width: 100%;
 	vertical-align: top;
 	object-fit: cover;
-	height: 70px;
+	height: 100%;
 	border-radius:8px;
 }
 .rpress-purchased-wrap {

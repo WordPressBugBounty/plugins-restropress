@@ -2107,7 +2107,9 @@ body.restropress_page_rpress-payment-history .ui-datepicker {
 }
 
 .rp-extensions-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  /* auto-fill (not auto-fit) so a single card in a filtered view keeps its
+     column width instead of stretching to the full row width. */
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   align-items: stretch;
   margin: 0 0 var(--rp-space-xl);
   padding: 0;

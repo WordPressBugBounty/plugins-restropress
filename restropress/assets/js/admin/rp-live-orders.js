@@ -35,8 +35,9 @@
 		var knownOrderIds   = ( cfg.initialIds || [] ).slice();
 		var lastPolledAt    = Date.now();
 		var soundOn         = ( storageGet( 'rp_live_orders_sound' ) !== 'off' );
-		var audioUnlocked   = false;
-		var audioContext    = null;
+		var audioUnlocked     = false;
+		var audioContext      = null;
+		var overlayDismissed  = false; // Once user clicks, never re-show the overlay.
 		var pendingTitleFlash = null;
 		var isPaused        = false;
 		var isPolling       = false;
@@ -150,7 +151,10 @@
 					$soundOverlay.attr( 'hidden', true );
 				} ).catch( function () {
 					unlockInFlight = false;
-					$soundOverlay.attr( 'hidden', false );
+					// Only show the overlay if the user has never explicitly dismissed it.
+					if ( ! overlayDismissed ) {
+						$soundOverlay.attr( 'hidden', false );
+					}
 				} );
 				return;
 			}
@@ -168,7 +172,10 @@
 				} ).catch( function () {
 					audio.volume = baseVolume;
 					unlockInFlight = false;
-					$soundOverlay.attr( 'hidden', false );
+					// Only show the overlay if the user has never explicitly dismissed it.
+					if ( ! overlayDismissed ) {
+						$soundOverlay.attr( 'hidden', false );
+					}
 				} );
 			} else {
 				audio.volume = baseVolume;
@@ -178,8 +185,22 @@
 			}
 		}
 
-		// On first user gesture anywhere on the page, attempt to unlock audio.
-		$( document ).one( 'click keydown', function () {
+		// Clicking the overlay hides it immediately, then attempts audio unlock.
+		// The overlay will NOT reappear even if audio unlock fails (overlayDismissed).
+		$soundOverlay.on( 'click', function () {
+			overlayDismissed = true;
+			$soundOverlay.attr( 'hidden', true );
+			tryUnlockAudio();
+		} );
+
+		// Any user gesture anywhere on the page: hide overlay immediately and
+		// attempt audio unlock. Using .on() (not .one()) keeps the handler
+		// active across multiple interactions.
+		$( document ).on( 'click keydown', function () {
+			if ( ! overlayDismissed ) {
+				overlayDismissed = true;
+				$soundOverlay.attr( 'hidden', true );
+			}
 			if ( soundOn && ! audioUnlocked ) {
 				tryUnlockAudio();
 			}

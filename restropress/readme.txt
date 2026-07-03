@@ -2,207 +2,224 @@
 Contributors: magnigenie, sagarseth9, kshirod-patel, bibhu1995
 Tags: Online ordering, Restaurant Ordering, Food Delivery, Takeaway, Restaurant Menu
 Donate link: https://paypal.me/magnigeeks
-Requires at least: 4.4
-Requires PHP: 7.0
+Requires at least: 6.0
+Requires PHP: 7.4
 Tested up to: 7.0
-Stable tag: 3.3
+Stable tag: 3.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-RestroPress is a Food Ordering System for WordPress which will help the restaurant owners to sell their food online.
+Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
 
 == Description ==
-**Turn your WordPress site into a powerful online food ordering system — no technical skills required.**
 
-RestroPress lets restaurants, cloud kitchens, and food businesses accept **pickup and delivery** orders directly on their own website. Built with simplicity and scalability in mind, it’s the easiest way to start accepting online orders — **without paying commissions** to third-party platforms.
+**RestroPress turns your WordPress site into a complete online food ordering system, so you keep 100% of every order.**
 
----
+No commissions. No per order fees. No WooCommerce required. Restaurants, cloud kitchens, cafes, and food businesses use RestroPress to take pickup, delivery, and dine-in orders directly on their own website and pay nothing to third party apps.
 
-## 🎥 Watch RestroPress In Action
+Set up your menu in minutes with the new AI powered onboarding wizard, then run your whole service from one live dashboard.
 
-[youtube https://www.youtube.com/watch?v=CGVpXYw6JDQ]
+[Try the live demo](https://demo.restropress.com) or [watch the 2 minute video](https://www.youtube.com/watch?v=CGVpXYw6JDQ).
 
-[Try Demo](https://demo.restropress.com)
+= Why restaurants switch to RestroPress =
 
----
+* **Keep everything you earn.** Third party platforms can take 15% to 30% of every order. RestroPress takes 0%.
+* **Own your customers and your data.** Orders, contacts, and history stay on your site, not on someone else's app.
+* **No WooCommerce, no bloat.** A fast, standalone ordering system built only for food.
+* **Live from day one.** A guided setup wizard and AI menu import get you taking orders the same afternoon.
 
-## 🍽️ Who Is RestroPress For?
+= Set up in minutes, not days (new in 3.3) =
 
-* Local Restaurants and Cafes
-* Takeout / Takeaway Businesses
-* Bakeries, Pizza Shops, Burger Shops
-* Grocery Stores, Florists, Farmers Markets
-* Specialty Stores, Fruit & Vegetable Shops
-* Laundry Services
+* **AI menu import.** Upload a PDF, a photo, or a spreadsheet of your menu and let AI turn it into items, prices, sizes, and add-ons for you to review.
+* **Guided onboarding wizard.** Simple step by step setup for your restaurant profile, menu, service options, and payments.
+* **Smart upload checks.** If you upload something that is not a menu, RestroPress tells you before it imports anything.
 
----
+= Run your whole service from one screen =
 
-## 🚩 Problems We Solve
+* **Live Orders board.** A real time view of new, accepted, preparing, ready, and out for delivery orders.
+* **Command Center dashboard.** See store status, live load, late orders, unpaid orders, and a priority queue of what needs attention right now.
+* **Automatic kitchen ticket printing.** Send new orders straight to your printer.
+* **Kitchen Display System.** Keep the kitchen in sync with the KDS app.
 
-Tired of managing complex or expensive online ordering systems? RestroPress provides:
+= Take orders the way your customers want =
 
-* Freedom from WooCommerce or other bulky plugins
-* A **fully commission-free** solution to reduce operational costs
-* Simplified order management with **real-time tracking and notifications**
-* Unlimited orders with a **scalable system** that grows with your business
-* Streamlined operations — custom menus, automated printing, delivery tools
-* Better customer communication via SMS, WhatsApp, and email updates
+* Pickup, delivery, and dine-in, all from one menu.
+* QR code table ordering with the Dine-In extension.
+* Scheduled orders and pre orders for later pickup or delivery.
+* Delivery fees and zones based on location.
 
----
+= Get paid your way =
 
-## ✨ Benefits of Choosing RestroPress
+* PayPal, Stripe, and Cash on Delivery built in.
+* Many more gateways available as extensions, including Square, Mollie, Paytm, PayU, and PhonePe.
+* Premium POS integrations with Clover and Square for in store payments.
 
-* **Completely Free with Unlimited Orders:** No commission, no subscription fees—maximize your profits.
-* **Standalone Solution:** Fast, lightweight, and independent from WooCommerce.
-* **All-in-One Management:** Manage orders, print tickets automatically, and track delivery efficiently.
-* **Boost Customer Engagement:** Automated notifications keep customers informed every step of the way.
-* **Built for Growth:** Add locations, customize menus, and integrate premium POS systems like Clover and Square.
-* **Dine-In and Delivery Made Easy:** QR code ordering for dine-in and flexible delivery fees based on location.
-* **Mobile & Desktop Ready:** Use our apps and desktop POS to stay in control anytime, anywhere.
-* **Save Time with Automation:** Auto-print orders, set holiday schedules, and reduce manual work.
+= Everything you need, out of the box =
 
----
+* Unlimited orders on every site, always free.
+* Build your menu in a clean, modern editor: categories, add-ons, modifiers, variable pricing, and dietary labels, all in one place.
+* Veg, non-veg, and dietary labels on the storefront.
+* Customer accounts with order history and one tap reorder.
+* Automatic creation of cart, checkout, and account pages.
+* Mobile responsive storefront that looks great on any device.
+* Email, SMS, and WhatsApp notifications (via extensions) for customers and staff.
+* Full REST API to build your own apps and integrations.
+* Translation ready, with Italian and Dutch bundled and more from the community.
 
-## 🛠️ Key Features
+= Who is it for =
 
-* Accept unlimited pickup and delivery orders directly from your website
-* Customizable menus with addons and modifiers for flexible offerings
-* Multiple payment gateways: PayPal, Stripe hosted checkout, Cash on Delivery, and more
-* Customer dashboard to view order history and quickly reorder
-* Real-time order management with live status updates for admins
-* Automatic creation of essential pages (cart, checkout, account) with shortcodes
-* Mobile responsive design for seamless ordering on any device
-* Email and SMS notifications(extension) to keep customers and staff informed
-* Delivery management with flexible fees and zones
-* QR code ordering for dine-in customers (via Dine-In extension)
-* Integration with popular POS systems (Clover, Square) for smooth payments
-* REST API support to build custom integrations and apps
+* Restaurants, cafes, and cloud kitchens
+* Takeaway and takeout businesses
+* Pizza shops, burger joints, and bakeries
+* Grocery, fruit and vegetable, and specialty food stores
 
----
+= Grow with extensions and apps =
 
-## ⚙️ Extensions and Apps
+* **Customer App** for a branded ordering experience
+* **Driver App** to manage your delivery team
+* **Order Tracking App** for real time updates
+* **KDS App** for the kitchen
+* **POS for mobile and desktop** to handle in store and online orders in one place
+* **Dine-In, Multi Location, Inventory, Tips, Pre Order, and Time Based Menu**, plus many more
 
-Expand your RestroPress system with powerful add-ons:
+[Explore all extensions](https://restropress.com/extension/)
 
-* **Driver App:** Manage your delivery team efficiently
-* **Customer App:** Smooth, branded ordering experience for customers
-* **Order Tracking App:** Real-time order tracking for customers
-* **KDS App:** Kitchen Display System to streamline kitchen workflow
-* **Dine-In Ordering:** QR code-based table ordering system
-* **POS System (Mobile & Desktop):** Unified order management for in-store and online
-* **Clover & Square Integrations:** Seamless payment processing with premium POS systems
+= Built for developers =
 
-& More — [Explore all extensions](https://restropress.com/extension/)
+RestroPress ships with a full REST API (since version 3.0) so you can build custom apps, kiosks, and integrations on top of your ordering system. [Read the REST API docs](https://docs.restropress.com/docs/rest-api/authentication/).
 
----
+= Get started today =
 
-## 📚 Resources
+Take control of your online ordering and stop paying commissions. [Download RestroPress](https://wordpress.org/plugins/restropress/) and start taking orders today.
 
-* [Official Website](https://restropress.com)
-* [Documentation](https://docs.restropress.com)
-* [Join Our Facebook Group](https://facebook.com/groups/restropress.official)
-* [YouTube Channel](https://www.youtube.com/@restropress)
-* [Demo Page](https://demo.restropress.com)
+[Website](https://restropress.com) | [Documentation](https://docs.restropress.com) | [Live demo](https://demo.restropress.com) | [Facebook group](https://facebook.com/groups/restropress.official) | [YouTube](https://www.youtube.com/@restropress)
 
----
+== Installation ==
 
-## 🧩 Build Your Own Custom Solution/Apps
+RestroPress sets itself up in minutes.
 
-RestroPress supports **REST API** (since version 3.0), allowing developers to build custom apps and integrations.
-[Learn more about the REST API](https://docs.restropress.com/docs/rest-api/authentication/)
+1. In your WordPress admin, go to Plugins, then Add New, and search for "RestroPress".
+2. Click Install Now, then Activate.
+3. Follow the guided setup wizard to add your restaurant details, import your menu (PDF, photo, spreadsheet, or AI import), choose pickup and delivery options, and connect payments.
+4. Your cart, checkout, and account pages are created for you. Add the menu to any page and start taking orders.
 
----
+Prefer a manual install:
 
-## 🚀 Get Started Today
+1. Download the plugin zip from WordPress.org.
+2. Go to Plugins, Add New, Upload Plugin, and choose the zip.
+3. Install, activate, and run the setup wizard.
 
-Take control of your online food ordering with RestroPress — a fast, commission-free, and fully customizable system designed for your business.
+== Frequently Asked Questions ==
 
-👉 [Download Now](https://wordpress.org/plugins/restropress/)
-👉 [Explore Pro Features & Extensions](https://restropress.com/extension/)
+= Does RestroPress charge any commission or per order fees? =
+No. RestroPress is commission free. You keep 100% of every order. There are no per order fees and no forced subscription to take orders.
+
+= Do I need WooCommerce? =
+No. RestroPress is a standalone food ordering system. It does not require WooCommerce or any other ecommerce plugin.
+
+= Which payment methods are supported? =
+PayPal, Stripe, and Cash on Delivery are built in. Many more gateways are available as extensions, including Square, Mollie, Paytm, PayU, and PhonePe.
+
+= Can I offer pickup, delivery, and dine-in? =
+Yes. Pickup and delivery work out of the box, and you can add QR code dine-in ordering with the Dine-In extension.
+
+= Can customers schedule orders for later? =
+Yes. Customers can place orders for a future date and time, for both pickup and delivery.
+
+= Is there a limit on the number of orders? =
+No. RestroPress supports unlimited orders on every site, for free.
+
+= Can I import my existing menu? =
+Yes. Use the AI menu import to upload a PDF, photo, or spreadsheet, or import a CSV directly. You review everything before it goes live.
+
+= Does it work on mobile? =
+Yes. The storefront is fully mobile responsive, and dedicated customer, driver, and order tracking apps are available.
+
+= Can I run more than one location? =
+Yes, with the Multi Location extension.
+
+= Is RestroPress translation ready? =
+Yes. RestroPress is fully translation ready and ships with Italian and Dutch translations, with more available from the community.
+
+= Where can I get help? =
+Read the [documentation](https://docs.restropress.com), join the [Facebook community](https://facebook.com/groups/restropress.official), or open a thread in the WordPress.org support forum.
+
+== Screenshots ==
+
+1. Guided onboarding wizard with AI menu import, for a setup in minutes.
+2. Live Orders board: a real time view of every active order from new to out for delivery.
+3. Command Center dashboard with store status, live load, late orders, and the priority queue.
+4. Section based food item editor with add-ons, modifiers, and variable pricing.
+5. Mobile responsive storefront menu with pickup, delivery, and dine-in.
+6. Streamlined checkout with built in payment options.
+7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
 
-= Version 3.3(2026-06-22) =
+= Version 3.3.1 (2026-07-03) =
+* Fixed: Live orders sound overlay cannot be closed/dismissed on live sites where autoplay is blocked by browser policies.
+* Improved: Added filemtime versioning to live orders JS/CSS files to prevent stale browser-cache behavior.
+* Fixed: Reorder popup navigation buttons (Add more items / Checkout Now) not functioning on click.
 
-** Major New Features **
-* Added a completely redesigned Command Center Dashboard with real-time operational insights, priority queues, kitchen flow monitoring, and live service metrics.
-* Added a modern Live Orders Kanban Board with drag-and-drop order management, real-time updates, sound notifications, and status workflows.
-* Added a brand-new 5-step Onboarding Wizard with live storefront preview, progress saving, and guided restaurant setup.
-* Added permanent Menu Import & Export tools with AI, Spreadsheet, Sample Menu, and Manual creation options.
-* Added a complete Order Details Redesign with fulfillment tracking, item editing, customer details, notes timeline, and responsive layouts.
-🍔 Menu Item Editor Improvements
-* Added a completely redesigned section-based Menu Item editor.
-* Added dedicated Image & Type, Description, Category, Tags, Dietary Labels, and Add-ons sections.
-* Added improved add-on management with card-based UI and drag-and-drop support.
-* Added dietary label management directly inside the editor.
-* Improved variable pricing management and option handling.
-* Added extension hooks allowing third-party plugins to inject custom editor sections.
-📦 Availability Management
-* Added built-in item availability toggle directly in the Publish panel.
-* Added quick availability controls in the Menu Items list table.
-* Added new availability filters and extension compatibility improvements.
-📋 Orders Management Enhancements
-* Added modernized Orders screen with:
-- Interactive status pills
-- AJAX status updates
-- Advanced filtering
-- Live "time ago" indicators
-- Sticky table headers
-- Confirmation dialogs for bulk actions
-* Added separate operational and historical order views.
-* Added Needs Attention status tracking.
-* Added service-specific filtering and KPI reporting.
-* Improved privacy by masking customer phone numbers by default.
-📊 Reports & Analytics
-* Rebuilt Reports into a restaurant intelligence suite featuring:
-- Overview
-- Sales
-- Orders & Risk
-- Menu Performance
-- Customers
-- Payments & Recovery
-- Taxes
-- Export Center
-* Added period comparisons and advanced business insights.
-Improved report performance on large stores.
-🥗 Dietary Labels
-* Added new Dietary taxonomy with:
-- Vegetarian
-- Vegan
-- Gluten-Free
-- Dairy-Free
-- Nut-Free
-- Halal
-- Spicy
-* Added storefront dietary badges and filtering support.
-* Added import/export support for dietary labels.
-🔔 Notifications
-* Added built-in new-order notification sound.
-* Improved browser notifications and onboarding guidance.
-* Improved reliability of real-time order alerts.
-⚡ Performance & Reliability
-* Improved dashboard and report performance for high-volume stores.
-* Improved caching and query optimization.
-* Improved timezone handling across orders, reports, and scheduling.
-* Improved menu import workflows and duplicate prevention.
-🛠 Fixed
-* Fixed pricing mode saving issues for fixed-price menu items.
-* Fixed order notes rendering in redesigned order screens.
-* Fixed billing address saving and payment information updates.
-* Fixed Live Orders phone number display.
-* Fixed add-on loading and category creation issues.
-* Fixed store opening-hours fatal errors when opening and closing times matched.
-* Fixed duplicate menu item tags appearing on storefront cards.
-* Fixed various UI alignment, styling, and responsive layout issues.
-🔄 Renamed
-* Renamed Food Items → Menu Items throughout the admin interface.
-* Renamed Add-on Categories → Add-on Groups throughout the admin interface.
-❌ Removed
-* Removed legacy dashboard widgets.
-* Removed duplicate order management controls.
-* Removed default WordPress Menu Item metaboxes replaced by the new editor experience.
+= Version 3.3 (2026-06-11) =
+RestroPress 3.3 is a major update: a guided setup wizard with AI menu import, a real time Live Orders board, a redesigned operations Dashboard, a cleaner Orders screen and order editor, dietary labels on your menu, faster Reports, and easier menu import and export.
 
-= Version 3.2.8.8.6(2026-06-04) =
-* Fixed: RestroPress extensions update notification issue
+* **Guided setup wizard with AI menu import**
+    * New step by step setup (restaurant profile, menu, how you sell, payments, go live) with a live preview of your storefront as you build it.
+    * AI menu import: upload a PDF, photo, or spreadsheet and AI reads it into items, prices, sizes, and add-ons for you to review before publishing. Works with built-in WordPress AI, OpenAI, or Google Gemini.
+    * One-click sample menus (Cafe & Bakery, Pizzeria, Burger Diner, Healthy Kitchen) to get started instantly, plus a manual build option.
+    * RestroPress now warns you when an uploaded file does not look like a menu, before it imports anything.
+* **Live Orders board (new)**
+    * A real time board of every active order across columns: New, Accepted, Preparing, Ready, and Out for Delivery.
+    * New orders slide in with a sound alert and a flashing browser tab so busy staff never miss one.
+    * Drag a card to another column to change its status, or use the single clear next-step button (Accept, Start, Ready, Dispatch, Complete).
+    * Filter by Pickup, Delivery, or Dine-in. The board refreshes on its own, and an optional setting makes Live Orders the default Orders view.
+* **Redesigned Dashboard**
+    * The Dashboard is now an operations command center built for restaurant managers: store status, live order load, late orders, unpaid orders, and a priority queue of what needs attention right now.
+    * Panels refresh automatically every 30 seconds.
+* **Redesigned Orders screen**
+    * Cleaner list with click-to-change status pills (no page reload), date shortcut chips, a "time since ordered" label, and a sticky header.
+    * Switches automatically between a Today operations view and a Past Orders view with sales totals when you pick a date range.
+    * Revenue now counts cash orders correctly, refunds show clearly in red, and customer phone numbers can be masked to the last 4 digits for screens in public view.
+* **Redesigned order details**
+    * A clearer single-order screen: summary cards, a fulfilment status track with a one-click next step, a notes timeline, and billing details.
+    * Edit order items (sizes, add-ons, quantities) right on the page, with the total kept in sync automatically.
+* **Smarter menu item editor**
+    * A cleaner, section-based editor with separate short (menu card) and full (order popup) descriptions, combined Category, Tags & Dietary, and a redesigned add-ons area.
+    * Built-in availability toggle: mark an item Sold Out from the editor or the list with no extra extension needed. Sold-out items show a clear badge on your storefront.
+* **Dietary labels and food type**
+    * New dietary labels (Vegetarian, Vegan, Gluten-free, Dairy-free, Nut-free, Halal, Kosher, Spicy) that you set per item and that now show as chips on your storefront menu.
+    * Veg / Non-veg marks are now an optional setting, aimed at India and similar markets.
+* **Faster, clearer Reports**
+    * Reports rebuilt into focused views: Overview, Sales, Orders & Risk, Menu, Customers, Payments & Recovery, Taxes, and Export, each with a previous-period comparison.
+    * Revenue and late-order numbers now agree across the Dashboard, Orders, and Reports.
+    * Reports load much faster on large stores.
+* **Easier menu import and export**
+    * Menu import is now a permanent screen at Menu Items > Import (AI, spreadsheet, or sample menu), not just a one-time onboarding step.
+    * Menu export lets you pick exactly which columns to include and produces a clean, readable CSV that imports straight back in.
+    * Settings import and export moved to Settings > Misc, and Tools is now focused on maintenance only.
+* **Clearer new-order alerts**
+    * A loud built-in alert sound now ships by default, so new-order notifications are no longer silent until you upload your own.
+    * Clearer guidance on how desktop alerts work, plus more reliable playback.
+* **Renamed for clarity**
+    * "Food Items" is now "Menu Items" throughout the admin. Your URLs, shortcodes, and data are unchanged.
+    * "Add-on Category" is now "Add-on Group" (sometimes called a modifier group in POS systems). Only the labels changed.
+* **Fixes and improvements**
+    * Fixed: fixed-price items no longer switch themselves to variable pricing when saved.
+    * Fixed: the setup wizard now saves your chosen service type (Pickup, Delivery, or both) instead of always storing "Pickup only".
+    * Fixed: finishing setup no longer puts your store into payment test mode by mistake.
+    * Fixed: a storefront and dashboard crash when a store's opening and closing times were equal or inverted.
+    * Fixed: menu item tags could show twice on a storefront card in one layout; they now show once.
+    * Fixed: the print icon in the order quick-view is now aligned with its label.
+    * Improved: Live Orders cards show the customer phone correctly, add-on and category names with apostrophes no longer break, and many smaller admin polish fixes.
+* **For developers**
+    * New food item editor section hooks and a Live Orders extension surface (columns, time window, query args) let add-ons plug into the redesigned screens.
+    * Order count, late-order, and cash-gateway logic is now shared and filterable for consistency across screens.
+    * Full REST API support continues for building custom apps and integrations.
+
+= Version 3.2.8.8.6(2026-06-09) =
+* Updated: Plugin version bump to 3.2.8.8.6
+* Fixed: Email template order notes now strip encoded HTML tags before rendering so labels such as `<strong>` no longer show in `{order_note}`.
+* Fixed: Special instruction labels in food item email lists now render bold markup without exposing raw `<strong>` tags.
 
 = Version 3.2.8.8.5(2026-06-03) =
 * Updated: Plugin version bump to 3.2.8.8.5
@@ -217,9 +234,8 @@ Improved report performance on large stores.
 * Fixed: Future pre-order dates are no longer blocked by the current-day closed state when valid future slots exist.
 * Fixed: Display-format service dates such as d/m/Y are parsed safely before slot and order validation.
 
-= Version 3.2.8.8.1(2026-05-14) =
+= Version 3.2.8.8.1(2026-05-13) =
 * Updated: Plugin version bump to 3.2.8.8.1
-* Updated: Optimized the memory allocation
 * Fixed: Delivery schedule now ignores stale/past service slots instead of falling back to unavailable times.
 * Improved: Listing cart totals, submit button styles, plain-text button behavior, and checkout coupon field layout.
 * Added: Cart sidebar fee render filter so extensions can own their own fee display rows.
@@ -256,15 +272,16 @@ Improved report performance on large stores.
 * Fixed: Confirmation page live order statuses now use the updated GIF set for accepted, pending, preparing food, delivered, delivery boy, cancelled, and ready statuses.
 * Improved: Frontend section backgrounds, labels, links, dashboard controls, checkout panels, order-history cards, and receipt surfaces now inherit dynamic Theme Color tones.
 * Fixed: Dynamic Theme Color CSS is now scoped to RestroPress frontend elements only, preventing WordPress theme, WordPress element, and third-party plugin color overrides.
+* Code Cleanup
+
+= Version 3.2.8.6.3(2026-05-02) =
+* Updated: Plugin version bump to 3.2.8.6.3
 * Added: Customer table now includes bulk actions to move customers to trash, restore trashed customers, or delete permanently.
 * Added: Customer list now shows `All` and `Trash` views with status-aware row actions.
 * Fixed: Deleting a customer now moves the customer to trash instead of permanently deleting by default.
 * Improved: Customer notices now include move-to-trash and restore confirmations.
 * Improved: Existing customer records with matching email are automatically restored when new orders are created for that email.
 * Code Cleanup
-
-= Version 3.2.8.6.2.1(2026-05-07) =
-* Fixed: Food category remove issue fixed for admin dashboard
 
 = Version 3.2.8.6.2(2026-04-24) =
 * Updated: Plugin version bump to 3.2.8.6.2
@@ -280,82 +297,181 @@ Improved report performance on large stores.
 * Security: Escaped Orders admin payment-history links generated from query arguments to prevent reflected admin XSS via crafted URLs.
 * Code Cleanup
 
-= 3.2.8.6 (2026-04-11) =
-* Updated: Version bump
-* Fixed: Mobile & tablet layout alignment issues (service buttons, search input, summary row)
-* Fixed: Checkout UI alignment (Place Order button, total row consistency)
-* Fixed: Mobile UI issues (circular add button, delivery/pickup tabs consistency)
-* Fixed: Category navigation and sticky overlap issues across list/grid views
-* Fixed: Category navigation targeting and active state sync on mobile
-* Fixed: Admin order counts and filters (status, service type, paid state handling)
-* Fixed: Order badge/count now excludes deleted/trash records
-* Improved: Theme color consistency across service selection and checkout actions
-* Improved: Quantity controls styling in item popup
-* Improved: Category scroll positioning using dynamic sticky header offsets
-* Improved: Frontend asset versioning using filemtime to prevent cache issues
-* Misc: Code cleanup and minor improvements
+= Version 3.2.8.6(2026-04-10) =
+* Updated: Plugin version bump to 3.2.8.6
+* Fixed: Mobile/tablet order-online layout alignment for service buttons, search input, and summary row (date/time/Edit) rendering.
+* Fixed: Checkout Place Order button now follows full input width for responsive views.
+* Fixed: Checkout total row alignment to keep total label/amount consistent with form/button edges.
+* Improved: Theme-color sync for service-type selected states and key checkout actions (including discount/apply and update actions).
+* Improved: Quantity +/- controls in item popup now keep neutral background and hover behavior while using theme color on border/radius outline only.
+* Fixed: Mobile list-view circle add button now keeps a perfect circular shape with centered icon rendering.
+* Fixed: Checkout Delivery/Pickup tabs on mobile now maintain consistent tab height and full-width active background fill.
+* Fixed: Sticky category overlap layering issue in list/grid navigation.
+* Fixed: Admin orders list/count filters now stay synchronized (status, service type, and order status conditions).
+* Fixed: Admin sidebar order badge and order counts now ignore deleted/trash records and count only valid `rpress_payment` posts.
+* Fixed: Paid tab highlighting/count handling now correctly maps `paid` and `publish` states in order views.
+* Fixed: List-view category navigation now lands on the correct selected category instead of showing previous-category items under the heading.
+* Fixed: Mobile action-menu and horizontal category clicks now resolve to the correct section target and keep active-category states in sync.
+* Improved: Category scrolling now uses dynamic sticky-header offsets for more reliable landing positions across desktop and mobile.
+* Improved: Frontend `rp-frontend.js` enqueue version now includes filemtime to reduce stale browser-cache behavior during updates.
+* Code Cleanup
 
-= 3.2.8.5 (2026-04-07) =
-* Added: Legacy UI/UX toggle for service selection flow
-* Fixed: Service date/time sync issues across modal & checkout
-* Improved: Old UI popup styling, layout, and theme color sync
-* Improved: REST services endpoint now returns only enabled service types
-* Code cleanup
+= Version 3.2.8.5(2026-04-07) =
+* Updated: Plugin version bump to 3.2.8.5
+* Added: New admin setting `Old RestroPress UI/UX` to enable legacy service-selection modal flow before add-to-cart.
+* Fixed: Service date/time updates now prioritize active modal/checkout selections before cookie fallbacks to prevent stale time overwrite.
+* Fixed: Delivery/Pickup selection synchronization across modal and checkout refresh flows for both old and current UI paths.
+* Added: New core helper `rpress_get_enabled_service_types()` and updated service enablement checks to honor configured service mode.
+* Improved: REST services endpoint now returns only enabled service types.
+* Fixed: Removed duplicate PayPal helper declarations in `paypal-standard.php` to prevent fatal redeclare errors.
+* Fixed: Old UI service popup now guarantees a visible active tab/pane and no longer hides selected service label text behind legacy overlay pseudo-elements.
+* Fixed: Checkout service selector now expands to full width when only one service type is enabled.
+* Improved: Old UI service popup controls now use consistent rectangular styling with aligned full-width fields and buttons.
+* Improved: Old UI popup service date/time labels now align left and date/time inputs show calendar/clock icons consistently.
+* Improved: Old UI service-tab and popup action colors now follow the configured Theme Color dynamically.
+* Improved: Old UI popup visual overrides are now strictly scoped to old UI mode and no longer impact the default popup UI.
+* Improved: When Old UI/UX is disabled, the default datetime popup hides service-type tabs and keeps the primary Update action color synced with Theme Color.
+* Code Cleanup
 
-= 3.2.8.4.1 (2026-04-06) =
-* Fixed: PayPal redirect handling for safe checkout flow
+= Version 3.2.8.4.1(2026-04-06) =
 
-= 3.2.8.4 (2026-03-28) =
-* Fixed: Checkout gateway sync issues
-* Security: Hardened DB queries and SQL handling
-* Security: Addressed PluginCheck warnings
-* Fixed: Mobile cart UI and checkout responsiveness
-* Improved: Sticky cart and category navigation UX
-* Code cleanup
+* Fixed: PayPal checkout/connect redirects now allow PayPal hosts in WordPress safe redirects to prevent fallback redirect to wp-admin.
 
-= 3.2.8.3 (2026-03-26) =
-* Fixed: Date/time sync and formatting issues
-* Fixed: Add-to-cart behavior for closed store
-* Security: CSRF and XSS protections implemented
-* Improved: UI enhancements for service summary
+= Version 3.2.8.4(2026-03-28) =
+* Updated: Plugin version bump to 3.2.8.4
+* Fixed: Checkout gateway state now keeps hidden `rpress-gateway` synced with selected payment mode during gateway switch and final submit.
+* Fixed: Hardened direct DB query paths with prepared/typed placeholders in customer, discount, session, payment, tax, and stats handlers.
+* Fixed: Reworked dynamic `IN (...)` query construction to sanitized array + placeholder flow for scanner-safe SQL execution.
+* Fixed: Removed unescaped `payment_ids` usage in customer-user disconnect flow and enforced integer-only payment IDs before update query.
+* Fixed: Replaced transient/session batch delete raw SQL assembly with prepared option-name placeholder queries.
+* Fixed: Updated legacy earnings/tax aggregation queries to prepared statements for safer post ID handling.
+* Fixed: Updated discount status cleanup bulk updates to prepared integer placeholder queries for posts/postmeta.
+* Fixed: Updated yearly tax/earnings aggregate query paths to prepared statements in tax and payment stats/functions.
+* Security: Addressed latest PluginCheck `DirectDB.UnescapedDBParameter` findings reported in March 28 security scan.
+* Security: Continued hardening for redirect and DB static-analysis warnings without changing frontend UX/UI behavior.
+* Maintenance: Synced release notes with internal `CHANGELOG_DEV.md` tracked fixes for faster future follow-up.
+* Fixed: Mobile and tablet food listing layout now keeps cart access visible and usable without scrolling to page bottom.
+* Fixed: Sticky mobile cart summary now updates quantity/total reliably on add, update, remove, and clear-cart AJAX actions.
+* Fixed: Checkout page responsive structure now stacks service/cart/form sections correctly across tablet and mobile widths.
+* Fixed: Checkout mobile/tablet flow now keeps the cart/service panel above the form section for quicker cart visibility.
+* Fixed: Category strip now renders in a stable single-row pattern with horizontal overflow handling in both list and grid modes.
+* Fixed: Grid view category-strip wrappers now follow the same inline/scroll behavior as list view.
+* Fixed: Category popup trigger layering conflict introduced by one-line strip styling, so menu popup opens reliably again.
+* Fixed: Category strip now remains sticky while scrolling and respects WordPress admin-bar offsets.
+* Improved: Mobile/tablet category and sticky-cart spacing/position tuning for cleaner ordering UX.
+* Code Cleanup
 
-= 3.2.8.2 (2026-03-25) =
-* Fixed: Grid layout issues on tablets
-* Improved: Date-time popup UX
-* Code cleanup
+= Version 3.2.8.3(2026-03-26) =
+* Updated: Plugin version bump to 3.2.8.3
+* Fixed: Delivery/Pickup summary date now always follows WordPress date format across listing, popup, and checkout.
+* Fixed: Summary date/time now syncs immediately from modal selection and keeps formatted output after refresh.
+* Fixed: Checkout and modal date/time/location fields now use full-width responsive controls.
+* Fixed: Closed-state summary now hides invalid date/time and prevents stale Edit exposure for invalid schedule states.
+* Fixed: Add-to-cart popup no longer opens when service is closed; close notice is shown instead.
+* Improved: Open-store flow now always exposes Edit so customers can update schedule quickly.
+* Improved: Summary location icon UI modernized with animated glow pulse for clearer branch indicator.
+* Added: "Change location" quick link in closed branch state to reopen schedule popup and switch branch directly.
+* Security: Hardened customer dashboard profile update with strict nonce presence and verification to mitigate CSRF account-update attempts.
+* Security: Replaced inline dashboard post-submit JavaScript redirects with `wp_safe_redirect` to prevent reflected redirect/XSS injection vectors.
+* Security: Sanitized REST order/cart text payloads and escaped admin delivery-address rendering to mitigate stored XSS vectors (CVE-2025-69017 path).
+* Code Cleanup
 
-= 3.2.8.1 (2026-03-23) =
-* Fixed: Delivery validation logic
-* Fixed: Modal and overlay issues
-* Security: API token generation hardened
-* Improved: Elementor compatibility
+= Version 3.2.8.2(2026-03-25) =
+* Updated: Plugin version bump to 3.2.8.2
+* Fixed: Grid view responsive layout issues for tablet widths (770px to 991px) to prevent half-width/broken food cards
+* Fixed: Listing service summary row structure and icon hooks for cleaner location/date-time/Edit alignment
+* Improved: Date-time edit popup heading/content structure for clearer schedule update flow
+* Code Cleanup
 
-= 3.2.8 (2026-03-13) =
-* Fixed: Service state synchronization issues
-* Improved: Service-state handling logic
-* Security: Vulnerability fixes
-* Code cleanup
+= Version 3.2.8.1(2026-03-23) =
+* Updated: Plugin version bump to 3.2.8.1
+* Fixed: Add-to-cart address/zip validation now runs only for Delivery service, so Pickup with a selected branch no longer triggers unnecessary force-popup flow.
+* Fixed: Core datetime popup now renders service date controls before service time controls for consistent ordering across service switches.
+* Fixed: Food item popup now displays full item description content without 2-line truncation.
+* Fixed: Service-switch modal refresh now updates only the listing service summary and no longer overwrites popup address controls.
+* Improved: Delivery/Pickup service summary row keeps location, date/time, and Edit action aligned inline for consistent tab-row UI.
+* Improved: Delivery schedule popup structure/copy refinement for clearer service-edit flow without UX regressions.
+* Improved: Elementor builder shortcode detection for checkout and RestroPress page checks (supports `_elementor_data`)
+* Fixed: Stale modal/overlay lock state that could block clicks on Order Online and Checkout pages
+* Fixed: Datetime edit action now falls back to legacy service-options popup when datetime modal markup is unavailable
+* Improved: Missing service-time flow opens service selection directly instead of showing empty closed-message error toast
+* Fixed: Category scroll handler safety checks for invalid links/sections to avoid frontend JS interruptions
+* Security: Hardened add-on license AJAX actions with capability checks and strict option-key validation
+* Security: Restricted API token generation endpoint access to authenticated users with valid user-edit permissions
+* Security: Replaced weak time-based API/cart token generation with cryptographically secure random tokens
+* Security: Removed internal remote token-generation request path and now generates signed user API tokens locally
+* Fixed: Default Services setting now applies correctly when Choose Services is set to Both Delivery and Pickup
+* Fixed: Single-service mode (Delivery Only/Pickup Only) now always enforces the enabled service and ignores default-service fallback
+* Improved: Elementor builder compatibility for checkout and RestroPress page detection by scanning saved `_elementor_data` shortcode content
+* Fixed: Stale frontend modal/overlay lock state that could block clicks on Order Online and Checkout pages
+* Fixed: Datetime edit flow now falls back to legacy service options popup when datetime modal markup is unavailable
+* Improved: Missing service-time flow now opens service selection directly instead of showing blank/empty closed-message toast
+* Fixed: Category scrolling handler now safely skips invalid links/sections to prevent frontend JS interruptions
 
-= 3.2.7 (2026-03-09) =
-* Fixed: Add-on migration issues
-* Improved: Safe migration logic
-* Code cleanup
+= Version 3.2.8(2026-03-13) =
+* Updated: Plugin version bump to 3.2.8
+* Updated: Readme metadata and changelog synchronization
+* Fixed: Service type, date, and time state now stay synchronized across order-online, popup, and checkout flows
+* Fixed: Datetime edit popup now keeps the Update action available when service timing controls are editable
+* Fixed: Shared service context now validates store-open state against the normalized service date to avoid mismatched closed messages
+* Improved: Frontend service-state handling cleanup without UI or UX changes
+* Fixed: Vulnerabilities issues
+* Code Cleanup
 
-= 3.2.6 (2026-03-04) =
-* Fixed: Store timing validation issues
-* Fixed: PayPal sandbox and checkout issues
-* Added: Realtime order tracking & notifications
-* Improved: Service-time handling logic
-* Code cleanup
+= Version 3.2.7(2026-03-09) =
+* Fixed: Protected add-on item setup and price mappings from being overwritten during legacy migration
+* Fixed: Legacy add-on migration now runs only when true legacy data is detected
+* Fixed: Migration guard added for modern versions (`>= 2.6`) to prevent unintended migration reruns
+* Improved: Legacy migration now fills missing add-on meta safely without replacing existing term price/type values
+* Code Cleanup
 
-= 3.2.5 (2026-02-26) =
+= Version 3.2.6(2026-03-04) =
+* Fixed: Checkout service time restore now targets the active service tab and no longer overwrites both delivery and pickup selects with a single cookie value
+* Fixed: Core slot-expiry validation now runs only when Order Time Intervals and Limits runtime is loaded, preventing false "Selected time slot is no longer available" errors when the addon is inactive
+* Fixed: Store open/close validation now supports both 12-hour and 24-hour time formats and handles overnight windows reliably
+* Fixed: "Enable Always Order Option" is now the only path that keeps the store open all day, and equal open/close values no longer behave like always-open
+* Fixed: Frontend store status checks now match core validation to prevent false midnight "store open" behavior
+* Fixed: Early translation loading notice issues
+* Fixed: Gateway initialization flow for translation compatibility
+* Fixed: PHP warning/deprecated compatibility issues
+* Fixed: PayPal Connect OAuth redirect/auth flow for one-click account connection
+* Fixed: PayPal account details sync and merchant account display in gateway settings
+* Fixed: PayPal Standard checkout payload/merchant validation stability in sandbox mode
+* Fixed: Sandbox PayPal checkout errors by adding safe test-mode currency fallback for unsupported INR flows
+* Fixed: Add-to-cart button alignment at thumbnail bottom-center for all button shapes
+* Fixed: Grid view card layout issues for food items without thumbnail images
+* Fixed: Grid view spacing/alignment issues for food items without thumbnail and description
+* Added: Modern ecommerce-style order confirmation page layout (without functional regressions)
+* Added: Realtime order status updates on confirmation page (websocket-first with fallback support)
+* Added: Status-specific animated GIF support for confirmation status block
+* Added: Browser push notifications for order status changes (including cross-page watcher support)
+* Added: Auto-clear order tracking for completed/cancelled/failed statuses with final notification
+* Added: Guided Realtime Updates settings section under Misc for easier websocket setup
+* Improved: Realtime configuration now supports admin settings with backward-compatible constant fallback
+* Fixed: Service time is now hidden across frontend views when disabled from Order Time, Interval & Limits settings
+* Fixed: Empty service-time rows are removed from receipt and order details templates when no service time is available
+* Fixed: Order Online header now shows selected service time correctly when slots are enabled, while still respecting disabled-time settings
+* Fixed: List view Order Online header now keeps service-time visible using selected-time fallback when cookie time is empty
+* Improved: Service context now safely clears disabled service-time values before template rendering
+* Code Cleanup
+
+= Version 3.2.5(2026-02-26) =
 * Added: Taxonomy sorting feature
-* Fixed: Cart and service switching issues
-* Code cleanup
+* Fixed: Cart items count issue
+* Fixed: Cart item quantity update issue
+* Fixed: Service type switch issue
+* Fixed: Blank cookies data validation
+* Fixed: Ajax basis modal dom manipulation
+* Code Cleanup
 
 == Upgrade Notice ==
 
-= 3.3 =
+= 3.3.1 =
+A major update: a guided setup wizard with AI menu import, a real time Live Orders board, a redesigned Dashboard and Orders screen, a built-in Sold Out toggle, dietary labels on your menu, and faster Reports. "Food Items" is now labelled "Menu Items" throughout the admin (your links, shortcodes, and data keep working). Please back up your site before upgrading.
+
+= 3.2.8.8.6 =
+
+= 3.2.8.8.1 =
 Please backup your website before upgrading to the latest version.
 
 == License ==
@@ -363,3 +479,4 @@ This program is free software; you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 For full details, please visit http://www.gnu.org/licenses/gpl-2.0.html
 For more information and support, visit the [RestroPress website](https://www.restropress.com/).
+

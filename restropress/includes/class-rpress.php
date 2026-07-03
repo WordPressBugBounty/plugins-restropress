@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.3';
+	public $version = '3.3.1';
 	/**
 	 * The single instance of the class.
 	 *

@@ -474,17 +474,19 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         $current_view = isset( $_GET['view'] ) ? sanitize_text_field( wp_unslash( $_GET['view'] ) ) : '';
         $is_live_orders_view = ( 'live' === $current_view || ( '' === $current_view && rpress_get_option( 'live_orders_default_view' ) ) );
         if ( $is_live_orders_view && $screen_id === 'restropress_page_rpress-payment-history' ) {
+          $lo_css = RP_PLUGIN_DIR . 'assets/css/admin-live-orders.css';
+          $lo_js  = RP_PLUGIN_DIR . 'assets/js/admin/rp-live-orders.js';
           wp_enqueue_style(
             'rpress-admin-live-orders',
             RP_PLUGIN_URL . 'assets/css/admin-live-orders.css',
             array( 'rpress-admin-payments' ),
-            RP_VERSION
+            file_exists( $lo_css ) ? (string) filemtime( $lo_css ) : RP_VERSION
           );
           wp_enqueue_script(
             'rpress-admin-live-orders',
             RP_PLUGIN_URL . 'assets/js/admin/rp-live-orders.js',
             array( 'jquery', 'jquery-ui-sortable', 'rpress-orders' ),
-            RP_VERSION,
+            file_exists( $lo_js ) ? (string) filemtime( $lo_js ) : RP_VERSION,
             true
           );
         }
