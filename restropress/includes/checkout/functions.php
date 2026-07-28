@@ -34,6 +34,11 @@ function rpress_is_checkout() {
 		$is_checkout = true;
 	}
 
+	// The Cart & Checkout block (3.4) counts the same as the shortcode.
+	if ( ! $is_checkout && isset( $content ) && function_exists( 'has_block' ) && has_block( 'rpress/checkout', $content ) ) {
+		$is_checkout = true;
+	}
+
 	// Elementor stores shortcode widget content in _elementor_data (JSON), not post_content.
 	if ( ! $is_checkout && isset( $wp_query->queried_object ) && is_object( $wp_query->queried_object ) ) {
 		if ( function_exists( 'rpress_post_has_shortcode_content' ) && rpress_post_has_shortcode_content( $wp_query->queried_object, 'fooditem_checkout' ) ) {

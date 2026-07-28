@@ -12,8 +12,15 @@ defined('ABSPATH') || exit;
 $template = rpress_get_option('template', 'list');
 $is_old_ui_ux = ! empty( rpress_get_option( 'old_ui_ux' ) );
 ?>
-<div class="rpress-section rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
+<div class="rpress-section rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12<?php echo $is_old_ui_ux ? '' : ' rpress-menu-v2'; ?>">
 	<?php
+	/**
+	 * Renders above the menu toolbar. Template packs hook their store
+	 * header band here.
+	 *
+	 * @since 3.4
+	 */
+	do_action( 'rpress_menu_page_top' );
 
 	$shortcode_atts = RP_Shortcode_Fooditems::$atts;
 	$category_ids = $all_terms = $query = $exclude_terms = array();
@@ -25,17 +32,15 @@ $is_old_ui_ux = ! empty( rpress_get_option( 'old_ui_ux' ) );
 			$categories = explode(',', $shortcode_atts['category_menu']);
 		}
 		foreach ($categories as $category) {
-			$is_id = is_int($category) && !empty($category);
-			if ($is_id) {
-				$term_id = $category;
-			} else {
-				$term = get_term_by('slug', $category, 'food-category');
-				if (!$term) {
-					continue;
-				}
-				$term_id = $term->term_id;
+			$category = trim($category);
+			// Accept term ids (the block category picker sends ids) or slugs.
+			$term = is_numeric($category)
+				? get_term_by('id', (int) $category, 'food-category')
+				: get_term_by('slug', $category, 'food-category');
+			if (!$term) {
+				continue;
 			}
-			$category_ids[] = $term_id;
+			$category_ids[] = $term->term_id;
 		}
 	}
 	$category_params = array(
@@ -45,7 +50,20 @@ $is_old_ui_ux = ! empty( rpress_get_option( 'old_ui_ux' ) );
 		'category_menu' => !empty($shortcode_atts['category_menu']) ? true : false,
 		'excluded_category' => !empty($shortcode_atts['category_exclude']) ? $shortcode_atts['category_exclude'] : '',
 	);
+	// The scrollable category navs read this global; set it BEFORE they render
+	// so the nav honors the same include/exclude filters as the item sections.
+	global $data;
+	$data = $category_params;
 	?>
+
+	<?php
+	// Category rail renders as a full-width band on top (direct child of the
+	// .rpress-menu-v2 flex container, above the [menu grid | cart] row). The
+	// toolbar + mobile nav stay inside the menu column where they were.
+	?>
+	<div class="desktop-scroll-menu">
+		<?php rpress_get_template_part($template . '/scrollable-categories'); ?>
+	</div>
 
 	<div class="rpress_fooditems_grid rp-col-lg-8 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
 		<div class="mobile-scroll-menu">
@@ -64,9 +82,6 @@ $is_old_ui_ux = ! empty( rpress_get_option( 'old_ui_ux' ) );
 			<div class="rpress-option-col rpress-search-wrap">
 				<?php do_action('before_fooditems_list'); ?>
 			</div>
-		</div>
-		<div class="desktop-scroll-menu">
-			<?php rpress_get_template_part($template . '/scrollable-categories'); ?>
 		</div>
 		<?php
 		$get_categories = rpress_get_categories($category_params);

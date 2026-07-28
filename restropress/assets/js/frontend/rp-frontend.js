@@ -320,6 +320,21 @@ jQuery(function ($) {
     $('body').removeClass('rp-old-ui-ux-enabled');
   }
 
+  // The delivery zip / postcode field (from the Delivery Fee extension) is a
+  // plain text input, so the browser paints its address-autofill control (the
+  // stray "..." box) inside the schedule popup. Turn autofill off on those
+  // fields so the input stays clean. Re-run on focus in case the field is
+  // injected after load.
+  function rpDisableZipAutofill(scope) {
+    $(scope || document)
+      .find('input#rp_delivery_zone, input[name="rp_delivery_zone"], #rpress-postcode, #rpress_postcode, input[name="rpress_postcode"]')
+      .attr({ autocomplete: 'off', 'data-lpignore': 'true', 'data-1p-ignore': 'true' });
+  }
+  rpDisableZipAutofill();
+  $(document).on('focusin', 'input#rp_delivery_zone, input[name="rp_delivery_zone"]', function () {
+    $(this).attr({ autocomplete: 'off', 'data-lpignore': 'true', 'data-1p-ignore': 'true' });
+  });
+
   function rp_has_rpress_interactive_ui() {
     return $('#rpressDateTime, #rpressModal, #rpress_checkout_wrap, .rpress-section').length > 0;
   }
@@ -1794,8 +1809,15 @@ jQuery(function ($) {
       });
     });
   // Update Cart
+  // The whole cart item body is a role="button" edit trigger; Enter/Space fire it.
   $('.rpress-sidebar-cart')
-    .on('click', 'a.rpress-edit-from-cart', function (e) {
+    .on('keydown', '.rpress-edit-from-cart', function (e) {
+      if (e.which === 13 || e.which === 32) {
+        e.preventDefault();
+        $(this).trigger('click');
+      }
+    })
+    .on('click', '.rpress-edit-from-cart', function (e) {
       e.preventDefault();
       var _self = $(this);
       _self.parents('.rpress-cart-item')
@@ -2181,9 +2203,9 @@ jQuery(function ($) {
                 .replaceWith(function () {
                   let obj = $(html);
                   obj.attr('data-cart-key', response.cart_key);
-                  obj.find("a.rpress-edit-from-cart")
+                  obj.find(".rpress-edit-from-cart")
                     .attr("data-cart-item", response.cart_key);
-                  obj.find("a.rpress-edit-from-cart")
+                  obj.find(".rpress-edit-from-cart")
                     .attr("data-remove-item", response.cart_key);
                   obj.find("a.rpress_remove_from_cart")
                     .attr("data-cart-item", response.cart_key);
@@ -2213,6 +2235,82 @@ jQuery(function ($) {
       }
     }
   });
+
+  // --- Sidebar cart quantity stepper -------------------------------------
+  // The − / value / + control on each sidebar cart line. +/− hit the
+  // rpress_cart_item_quantity AJAX (keyed by cart_key, preserves add-ons); at
+  // qty 1 the − morphs into a trash and reuses the existing remove flow.
+  function rpSetStepperState($stepper) {
+    var q = parseInt($stepper.find('.rp-qty-val').text(), 10) || 1;
+    $stepper.toggleClass('is-one', q <= 1);
+  }
+  function rpSyncSteppers(scope) {
+    $(scope || document).find('.rpress-qty-stepper').each(function () {
+      rpSetStepperState($(this));
+    });
+  }
+  function rpApplyCartItemResponse(response) {
+    if (!response || typeof response.cart_item !== 'string' || response.cart_item === '') {
+      return;
+    }
+    var $new = $(response.cart_item);
+    $new.attr('data-cart-key', response.cart_key);
+    var $old = $('ul.rpress-cart > li.rpress-cart-item[data-cart-key="' + response.cart_key + '"]').first();
+    if ($old.length) {
+      $old.replaceWith($new);
+    }
+    rpSyncSteppers($new);
+    if (typeof response.cart_summary === 'string') {
+      rp_refresh_sidebar_cart_summary(response.cart_summary);
+    }
+    rp_update_mobile_cart_summary(response.total, response.cart_quantity);
+    $(document.body).trigger('rpress_items_updated', [response]);
+  }
+  function rpChangeCartQty($stepper, newQty) {
+    if ($stepper.hasClass('rp-qty-busy')) { return; }
+    $stepper.addClass('rp-qty-busy');
+    $.ajax({
+      type: 'POST',
+      url: rp_scripts.ajaxurl,
+      dataType: 'json',
+      xhrFields: { withCredentials: true },
+      data: {
+        action: 'rpress_cart_item_quantity',
+        cart_key: $stepper.attr('data-cart-key'),
+        quantity: newQty,
+        security: rp_scripts.update_cart_item_nonce
+      },
+      success: function (response) {
+        $stepper.removeClass('rp-qty-busy');
+        rpApplyCartItemResponse(response);
+      },
+      error: function () {
+        $stepper.removeClass('rp-qty-busy');
+      }
+    });
+  }
+  $('body').on('click', '.rpress-qty-stepper .rp-qty-inc', function (e) {
+    e.preventDefault();
+    var $stepper = $(this).closest('.rpress-qty-stepper');
+    var q = parseInt($stepper.find('.rp-qty-val').text(), 10) || 1;
+    rpChangeCartQty($stepper, q + 1);
+  });
+  $('body').on('click', '.rpress-qty-stepper .rp-qty-dec', function (e) {
+    e.preventDefault();
+    var $stepper = $(this).closest('.rpress-qty-stepper');
+    var q = parseInt($stepper.find('.rp-qty-val').text(), 10) || 1;
+    if (q <= 1) {
+      $stepper.closest('.rpress-cart-item').find('.rpress-remove-from-cart').trigger('click');
+      return;
+    }
+    rpChangeCartQty($stepper, q - 1);
+  });
+  $(function () { rpSyncSteppers(document); });
+  $(document.body).on('rpress_items_updated rpress_cart_item_removed rpress_cart_item_added', function () {
+    rpSyncSteppers(document);
+  });
+  // -----------------------------------------------------------------------
+
   // Add Service Date and Time
   $('body')
     .on('click', '.rpress-delivery-opt-update', function (e) {
@@ -2739,7 +2837,7 @@ jQuery(function ($) {
     })
   });
   // Remove Item from Cart
-  $('.rpress-cart')
+  $(document)
     .on('click', '.rpress-remove-from-cart', function (event) {
       if ($('.rpress-remove-from-cart')
         .length == 1 && !confirm(rp_scripts.confirm_empty_cart)) {
@@ -2766,13 +2864,9 @@ jQuery(function ($) {
         success: function (response) {
           if (response.removed) {
             // Remove the $this cart item
-            $('.rpress-cart .rpress-cart-item')
-              .each(function () {
-                $(this)
-                  .find("[data-cart-item='" + item + "']")
-                  .parents('.rpress-cart-item')
-                  .remove();
-              });
+            $("[data-cart-item='" + item + "']")
+              .closest('.rpress-cart-item, .rpress_cart_item')
+              .remove();
             // Check to see if the purchase form(s) for this fooditem is present on this page
             if ($('[id^=rpress_purchase_' + id + ']')
               .length) {
@@ -2817,8 +2911,10 @@ jQuery(function ($) {
                     cart_wrapper.addClass('cart-empty')
                     cart_wrapper.removeClass('cart-not-empty');
                   }
-                  $(this)
-                    .append('<li class="cart_item empty">' + rpress_scripts.empty_cart_message + '</li>');
+                  if ($(this).is('ul')) {
+                    $(this)
+                      .append('<li class="cart_item empty">' + rpress_scripts.empty_cart_message + '</li>');
+                  }
                 });
             }
             $(document.body)
@@ -4194,11 +4290,17 @@ jQuery(function ($) {
       }
     })
 
+  var rpressClearingFees = false;
   $(document).on('click', 'a.rpress_cart_remove_item_btn', function (e) {
     var btnCount = $('.rpress_cart_remove_item_btn').length;
 
     // Check if there's only one element
-    if (btnCount === 1) {
+    if (btnCount === 1 && !rpressClearingFees) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      var $btn = $(this);
+      rpressClearingFees = true;
+
       var postData = {
         action: 'rpress_remove_fees_after_empty_cart',
         security: rp_scripts.clear_cart_nonce,
@@ -4212,11 +4314,10 @@ jQuery(function ($) {
         url: rpress_global_vars.ajaxurl,
         success: function (response) {
           // Trigger a click event on the same button
-          $('a.rpress_cart_remove_item_btn').click();
+          $btn.click();
         }
       }).fail(function (data) {
-        if (window.console && window.console.log) {
-        }
+        rpressClearingFees = false;
       });
     }
   });
@@ -4350,6 +4451,28 @@ jQuery(document).ready(function ($) {
   $(window).on('load pageshow resize', rp_sync_mobile_cart_bar_state);
   $(document.body).on('rpress_items_updated rpress_quantity_updated rpress_cart_item_removed rpress_checked_slots', function () {
     setTimeout(rp_sync_mobile_cart_bar_state, 20);
+  });
+
+  $(document.body).on('rpress_cart_item_removed', function (event, response) {
+    var isCheckout = false;
+    if (typeof rp_scripts !== 'undefined' && rp_scripts.is_checkout === '1') {
+      isCheckout = true;
+    } else if (typeof rpress_scripts !== 'undefined' && rpress_scripts.is_checkout === '1') {
+      isCheckout = true;
+    }
+
+    if (isCheckout) {
+      if (response && response.cart_quantity == 0) {
+        var pleaseWaitText = (typeof rp_scripts !== 'undefined' && rp_scripts.please_wait) ? rp_scripts.please_wait : 'Please Wait...';
+        $('#rpress_checkout_wrap').html('<div class="rpress-empty-cart-loading" style="text-align:center; padding: 50px 0;"><div class="rpress-loading-spinner" style="border: 4px solid rgba(0,0,0,.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #ED5575; animation: spin 1s linear infinite; margin: 0 auto 15px auto;"></div><p>' + pleaseWaitText + '</p></div>');
+        if (!$('#rpress-spinner-style').length) {
+          $('head').append('<style id="rpress-spinner-style">@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>');
+        }
+        window.location.reload();
+      } else {
+        $(document.body).trigger('rp-refresh-checkout-service.rpress');
+      }
+    }
   });
 
   // Handle tab switching and cookie update on service tab click
@@ -5352,8 +5475,11 @@ jQuery(document).ready(function ($) {
     var $sidebar = $('.sticky-sidebar');
 
     if ($(window).width() > 991 && $menu.length > 0) {
-      // Fixed offset from top
-      var stickyTop = 0;
+      // Fixed offset from top — clear the WP admin bar when it's fixed (logged
+      // in), else the fixed nav sits behind it. Absolute admin bar (≤600px) or
+      // logged out reports 0.
+      var $adminBar = $('#wpadminbar');
+      var stickyTop = ($adminBar.length && $adminBar.css('position') === 'fixed') ? ($adminBar.outerHeight() || 0) : 0;
 
       var menuOffset = $menu.offset().top;
 

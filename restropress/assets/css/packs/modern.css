@@ -1,0 +1,1281 @@
+/**
+ * Modern template pack skin.
+ *
+ * Image-forward delivery-app look (design: Modern Pack Menu handoff).
+ * Loads AFTER rpress-menu.css; every rule is scoped under body.rp-pack-modern
+ * so it out-specifies the base menu skin without touching other packs.
+ *
+ * Settings contract: brand color arrives as --rpc-primary via the token
+ * pipeline (merchant primary_color wins when changed). Add-button colors and
+ * shape arrive as --rpc-addbtn-* and shape rules printed after this file, so
+ * merchant choices always beat the pack defaults used as var() fallbacks here.
+ *
+ * @since 3.4
+ */
+
+/* ------------------------------------------------------------------ */
+/* Page                                                                 */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 {
+	font-family: var(--rpc-font-body) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Store header band                                                    */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 .rp-store-header {
+	flex-basis: 100%;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
+	flex-wrap: wrap;
+	margin: 0 0 20px;
+	padding: 20px 24px;
+	background: #fff;
+	border-radius: 16px;
+	box-shadow: 0 2px 12px rgba(25, 25, 25, .08);
+}
+body.rp-pack-modern .rp-store-header-main { display: flex; align-items: center; gap: 16px; min-width: 0; }
+body.rp-pack-modern .rp-store-id { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+body.rp-pack-modern .rp-store-name { font: 800 26px/1.1 var(--rpc-font-display); color: var(--rpc-ink); }
+body.rp-pack-modern .rp-store-meta { font: 600 13.5px var(--rpc-font-body); }
+body.rp-pack-modern .rp-store-meta.is-open { color: var(--rpc-veg); }
+body.rp-pack-modern .rp-store-meta.is-closed { color: var(--rpc-nonveg); }
+body.rp-pack-modern .rp-store-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+body.rp-pack-modern .rp-store-chip {
+	background: var(--rpc-surface);
+	border-radius: 999px;
+	padding: 8px 14px;
+	font: 600 13px var(--rpc-font-body);
+	color: var(--rpc-body);
+	white-space: nowrap;
+}
+@media (max-width: 640px) {
+	body.rp-pack-modern .rpress-menu-v2 .rp-store-header { padding: 16px; }
+	body.rp-pack-modern .rp-store-name { font-size: 22px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Toolbar: service tabs + schedule pill + search                       */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 ul.order-online-servicetabs {
+	background: var(--rpc-surface) !important;
+	border: 0 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 ul.order-online-servicetabs .nav-link {
+	font-weight: 600 !important;
+	color: var(--rpc-muted) !important;
+}
+body.rp-pack-modern .rpress-menu-v2 ul.order-online-servicetabs .nav-link.active {
+	background: var(--rpc-primary) !important;
+	color: #fff !important;
+	font-weight: 700 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_order-address-wrap {
+	border: 1px solid var(--rpc-border-strong) !important;
+	border-radius: 999px !important;
+	background: #fff !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress-search-wrap #rpress-food-search {
+	border: 1px solid var(--rpc-border-strong) !important;
+	border-radius: 999px !important;
+	background-color: #fff !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress-search-wrap #rpress-food-search:focus {
+	border-color: var(--rpc-primary) !important;
+	box-shadow: 0 0 0 2px var(--rpc-primary-tint-border) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sticky category rail: pill chips instead of underline tabs           */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Wrapper {
+	border-bottom: 1px solid var(--rpc-border-subtle) !important;
+	padding: 8px 0 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link {
+	position: relative; /* sit above the sliding pill */
+	z-index: 1;
+	padding: 8px 15px !important;
+	margin-right: 8px !important;
+	border-radius: 999px !important;
+	/* Category labels use the website's default (system) font, not the pack's
+	   Nunito Sans — a cleaner, native match for the sliding-pill nav. */
+	font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+	font-weight: 600 !important;
+	font-size: 13px !important;
+	color: var(--rpc-ink) !important;
+	transition: color .2s ease;
+}
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link:hover { color: var(--rpc-primary) !important; }
+/* Active chip has no background of its own — the sliding pill provides it. */
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link.mnuactive,
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link.active {
+	background: transparent !important;
+	color: var(--rpc-primary) !important;
+	box-shadow: none !important;
+}
+/* Sliding active pill: the legacy indicator repurposed. The scroll JS already
+   sets its width + translateX to the active chip (in #pnProductNavContents'
+   coordinate space); style it as a filled pill behind the chips and give it a
+   springy transition so it glides — the "moving bubble" between categories. */
+body.rp-pack-modern .rpress-menu-v2 #pnProductNavContents { position: relative; }
+body.rp-pack-modern .rpress-menu-v2 #pnIndicator,
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Indicator {
+	display: block !important;
+	position: absolute !important;
+	top: 4px;
+	left: 0;
+	height: calc(100% - 8px) !important;
+	margin: 0 !important;
+	background: var(--rpc-primary-tint) !important;
+	border: 1px solid var(--rpc-primary-tint-border) !important;
+	border-radius: 999px !important;
+	z-index: 0;
+	pointer-events: none;
+	transition: transform .32s cubic-bezier(.34, 1.28, .44, 1), width .32s cubic-bezier(.34, 1.28, .44, 1);
+}
+/* No hamburger dropdown in the mockup: the rail alone carries categories */
+body.rp-pack-modern .rpress-menu-v2 .cd-dropdown-wrapper { display: none !important; }
+/* Desktop scroll arrows OVERLAY the rail edges (translucent, frosted) rather
+   than reserving a flanking slot — so the first category starts at the very
+   left with no gap. The scroll JS fades the left arrow out at scroll 0, so
+   nothing covers the first chip until you actually scroll; when it appears it
+   sits over the edge with a translucent effect (the chip shows faintly behind).*/
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Wrapper {
+	position: relative !important;
+	display: block !important;
+	width: 100% !important;
+}
+body.rp-pack-modern .rpress-menu-v2 #pnProductNav {
+	width: 100% !important;
+	min-width: 0 !important;
+	-webkit-mask-image: none !important;
+	mask-image: none !important;
+}
+/* Class selectors, not #pnAdvancerLeft/Right: the mobile rail duplicates the
+   markup with #pnAdvancerLeftMobile/RightMobile ids, so id rules miss it —
+   its arrows sat at top:0 and both chevrons pointed right. */
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer_Left,
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer_Right {
+	position: absolute !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	z-index: 5;
+}
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer_Left { left: 0 !important; }
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer_Right { right: 0 !important; }
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer {
+	flex: none !important;
+	width: 34px !important;
+	height: 34px !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 1px solid var(--rpc-border-strong) !important;
+	border-radius: 999px !important;
+	/* Translucent frosted button so the chip it overlaps shows faintly behind. */
+	background: rgba(255, 255, 255, .8) !important;
+	-webkit-backdrop-filter: blur(3px);
+	backdrop-filter: blur(3px);
+	box-shadow: 0 1px 8px rgba(25, 25, 25, .14) !important;
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+}
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer:hover { border-color: var(--rpc-muted) !important; background: rgba(255, 255, 255, .95) !important; }
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer[style*="opacity: 0"] { pointer-events: none; }
+/* The shipped chevron SVG arrives without its viewBox, so its 1024-unit path
+   never fits the box: hide it and draw the chevron with a mask instead.
+   (Extra selector depth: legacy .order-online .rpress-section .make-me-sticky
+   .pn-Advancer_Icon forces display:block with four classes.) */
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer svg,
+body.rp-pack-modern .rpress-menu-v2 .make-me-sticky .pn-Advancer .pn-Advancer_Icon { display: none !important; }
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer::before {
+	content: "";
+	display: block;
+	width: 13px;
+	height: 13px;
+	background-color: var(--rpc-ink);
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 5l7 7-7 7' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 5l7 7-7 7' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+body.rp-pack-modern .rpress-menu-v2 .pn-Advancer_Left::before { transform: rotate(180deg); }
+
+/* ------------------------------------------------------------------ */
+/* Section headers                                                      */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 h5.rpress-cat,
+body.rp-pack-modern .rpress-menu-v2 .rpress-element-title .rpress-cat,
+body.rp-pack-modern .rpress-menu-v2 .rpress-element-title h5 {
+	font: 800 22px var(--rpc-font-display) !important;
+	color: var(--rpc-ink) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cards: shared chrome                                                 */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner {
+	/* Hairline border (matches the cart / search box) instead of a shadow. */
+	border: 1px solid var(--rpc-border-subtle) !important;
+	border-radius: 16px !important;
+	box-shadow: none !important;
+	transition: transform .18s ease, border-color .18s ease;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner:hover {
+	transform: translateY(-2px);
+	border-color: var(--rpc-border-strong) !important;
+	box-shadow: none !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditem_title,
+body.rp-pack-modern .rpress-menu-v2 .food-title {
+	font: 700 16px/1.25 var(--rpc-font-body) !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress-price-holder,
+body.rp-pack-modern .rpress-menu-v2 .rpress-price-holder * {
+	font: 800 15px var(--rpc-font-body) !important;
+}
+
+/* Veg / non-veg dot: inherits the Classic placement (floated top-right)
+   from rpress-menu.css; no override here. */
+
+/* Tag chips: quiet surface pills (dietary), tint stays for Bestseller */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditem_tags .fooditem_tag,
+body.rp-pack-modern .rpress-menu-v2 span.fooditem_tag {
+	background: var(--rpc-surface) !important;
+	border: 0 !important;
+	color: var(--rpc-body) !important;
+	font: 600 12px var(--rpc-font-body) !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditem_tags .fooditem_tag.bestseller {
+	background: var(--rpc-primary-tint) !important;
+	border: 1px solid var(--rpc-primary-tint-border) !important;
+	color: var(--rpc-ink) !important;
+	font-weight: 700 !important;
+}
+
+/* Sold out: dark pill on a washed image */
+body.rp-pack-modern .rpress-menu-v2 .rp-soldout-badge {
+	background: rgba(25, 25, 25, .78) !important;
+	color: #fff !important;
+	border-radius: 999px !important;
+	font: 700 12px var(--rpc-font-body) !important;
+	padding: 6px 15px !important;
+}
+
+/* Add button: pack defaults via var() fallbacks; merchant settings win */
+body.rp-pack-modern .rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart {
+	width: 36px !important;
+	height: 36px !important;
+	border: 0 !important;
+	background: var(--rpc-addbtn-bg, var(--rpc-primary-tint)) !important;
+	color: var(--rpc-addbtn-color, var(--rpc-primary)) !important;
+	box-shadow: 0 3px 10px rgba(25, 25, 25, .14) !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart:hover {
+	background: var(--rpc-addbtn-bg-hover, var(--rpc-primary)) !important;
+	color: #fff !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Grid variant: photo on top, full bleed                               */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_grid .rpress_fooditem .rpress_fooditem_inner {
+	flex-direction: column !important;
+	gap: 0 !important;
+	padding: 0 !important;
+	overflow: hidden;
+}
+/* Image column becomes the full-width hero */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_grid .rpress_fooditem .rpress_fooditem_inner > .rp-col-md-4 {
+	width: 100% !important;
+	flex: none !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_grid .rpress_fooditem .rpress_fooditem_inner > .rp-col-md-4 .rpress-thumbnail-holder {
+	width: 100% !important;
+	height: auto !important;
+	aspect-ratio: 16 / 10;
+	border-radius: 16px 16px 0 0 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_grid .rpress_fooditem .rpress_fooditem_inner > .rp-col-md-4 .rpress-thumbnail-holder img {
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: cover !important;
+	border-radius: 16px 16px 0 0 !important;
+}
+/* Content block gets the padding the card shell gave up */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_grid .rpress_fooditem .rpress_fooditem_inner > .rp-col-md-8 {
+	padding: 14px 16px 16px !important;
+	width: 100% !important;
+}
+/* No-image grid card: plain text card, padding intact */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_grid .rpress_fooditem .rp-no-img { padding: 0 !important; }
+
+/* ------------------------------------------------------------------ */
+/* List dish row (ListCard design handoff)                              */
+/* Card override supplies: content column [name+dot, desc, badges,      */
+/* price] and image column [photo, add button / sold-out].              */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem_inner {
+	display: flex !important;
+	gap: 14px !important;
+	align-items: flex-start !important;
+	padding: 16px !important;
+}
+/* Content column: vertical stack, 6px rhythm */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-col-md-8 {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	width: auto !important;
+	padding: 0 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-title-holder {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 6px !important;
+	margin: 0 !important;
+}
+/* Name row: veg dot inline, then single-line ellipsised name */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row {
+	display: flex !important;
+	align-items: center !important;
+	gap: 7px !important;
+	min-width: 0;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .vegbg,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .non_vegbg {
+	position: static !important;
+	float: none !important;
+	flex: none !important;
+	margin: 0 !important;
+	width: 15px !important;
+	height: 15px !important;
+	border-radius: 4px !important;
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	background: #fff !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .vegbg { border: 2px solid var(--rpc-veg) !important; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .non_vegbg { border: 2px solid var(--rpc-nonveg) !important; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .veg_sub { width: 6px !important; height: 6px !important; border-radius: 999px !important; background: var(--rpc-veg) !important; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .non_vegsub { width: 6px !important; height: 6px !important; border-radius: 999px !important; background: var(--rpc-nonveg) !important; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row h3,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .food-title {
+	margin: 0 !important;
+	font: 700 16px/1.25 var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+/* Description */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem_excerpt {
+	margin: 0 !important;
+	font: 400 13.5px/1.4 var(--rpc-font-body) !important;
+	color: var(--rpc-muted) !important;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem_excerpt p { margin: 0 !important; }
+/* Badge row: tags then dietary, styled distinctly */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-badge-row {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	gap: 6px !important;
+	margin: 0 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-badge-row .rpress_fooditem_tags,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-badge-row .rpress_fooditem_dietary {
+	display: contents !important;
+}
+/* Tags = tint badge (e.g. Bestseller). position:static resets a legacy rule
+   that floats some tag slugs (e.g. position:fixed) out of flow. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-badge-row .fooditem_tag {
+	position: static !important;
+	inset: auto !important;
+	float: none !important;
+	margin: 0 !important;
+	padding: 3px 9px !important;
+	border-radius: 999px !important;
+	background: var(--rpc-primary-tint) !important;
+	border: 1px solid var(--rpc-primary-tint-border) !important;
+	color: var(--rpc-ink) !important;
+	font: 700 12px var(--rpc-font-body) !important;
+	text-transform: none !important;
+}
+/* Dietary = quiet surface chip */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-badge-row .rpress-dietary-label {
+	position: static !important;
+	float: none !important;
+	margin: 0 !important;
+	padding: 3px 9px !important;
+	border-radius: 999px !important;
+	background: var(--rpc-surface) !important;
+	border: 0 !important;
+	color: var(--rpc-body) !important;
+	font: 600 12px var(--rpc-font-body) !important;
+}
+/* Price */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder {
+	display: block !important;
+	margin: 2px 0 0 !important;
+	padding: 0 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder * {
+	font: 800 15px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+}
+
+/* Image column + add button */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-col-md-4 {
+	flex: none !important;
+	width: auto !important;
+	padding: 0 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-list-view-image-wrapper {
+	position: relative !important;
+	display: block !important;
+	width: 116px;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-thumbnail-holder,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-thumbnail-holder img {
+	width: 116px !important;
+	height: 116px !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	border-radius: 12px !important;
+	object-fit: cover !important;
+}
+/* Sold-out photo: grayscale + white wash + centred pill */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .product_not_available .rpress-thumbnail-holder img { filter: grayscale(1); }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .product_not_available .rpress-thumbnail-holder::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: rgba(255, 255, 255, .55);
+	border-radius: 12px;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-soldout-badge {
+	position: absolute !important;
+	top: 50% !important;
+	left: 50% !important;
+	transform: translate(-50%, -50%) !important;
+	z-index: 2;
+	background: rgba(25, 25, 25, .78) !important;
+	color: #fff !important;
+	font: 700 11px var(--rpc-font-body) !important;
+	padding: 5px 11px !important;
+	border-radius: 999px !important;
+	white-space: nowrap;
+}
+/* No-photo card: no image box, add button (or sold-out pill) centred right */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-no-img .rpress-list-view-image-wrapper {
+	width: auto;
+	align-self: center;
+	display: flex;
+	align-items: center;
+}
+/* No-photo available: hide the empty holder. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-no-img .rpress-thumbnail-holder { display: none !important; }
+/* No-photo sold-out: the JS badge lives in the holder, so keep it visible but
+   stripped to a bare badge container (no grey box), badge as a static pill. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .product_not_available .rp-no-img .rpress-thumbnail-holder {
+	display: inline-flex !important;
+	width: auto !important;
+	height: auto !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	background: none !important;
+	border: 0 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .product_not_available .rp-no-img .rp-soldout-badge {
+	position: static !important;
+	top: auto !important;
+	left: auto !important;
+	transform: none !important;
+	padding: 6px 12px !important;
+}
+
+/* Add button sits on the photo (bottom-right). Its SHAPE and COLOURS come from
+   the Styles settings (menu_add_button_styles) + the base menu button — so it
+   follows the merchant's choice exactly like the Classic pack. The pack only
+   owns placement and a shadow so the button reads on the photo. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem_buy_button { margin: 0 !important; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list:not(.rp-no-img) .rpress-list-view-image-wrapper .rpress_fooditem_buy_button {
+	position: absolute !important;
+	left: 50% !important;
+	right: auto !important;
+	bottom: 8px !important;
+	transform: translateX(-50%) !important;
+	z-index: 3;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list:not(.rp-no-img) .rpress_purchase_submit_wrapper a.rpress-add-to-cart {
+	box-shadow: 0 3px 12px rgba(25, 25, 25, .28) !important;
+}
+/* ------------------------------------------------------------------ */
+/* List card — updated mockup: larger card + photo, add button on the    */
+/* photo, dietary pill on top, price in the primary colour.              */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem_inner {
+	gap: 18px !important;
+	padding: 12px 20px !important;
+}
+/* Content stacks in the mockup order: dietary → name → description → price. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-title-holder { gap: 8px !important; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-badge-row { order: 1; margin: 0 0 2px !important; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row { order: 2; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem_excerpt { order: 3; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder { order: 4; }
+/* The dietary pill carries the veg/non-veg cue, so drop the tiny inline dot. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .vegbg,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .non_vegbg { display: none !important; }
+/* Dietary label = coloured pill (green veg / red non-veg) instead of the quiet
+   surface chip. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-badge-row .rpress-dietary-label {
+	padding: 4px 11px !important;
+	background: rgba(46, 158, 79, .12) !important;
+	color: var(--rpc-veg) !important;
+	font: 700 12px var(--rpc-font-body) !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .product_not_available .rp-badge-row .rpress-dietary-label,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-badge-row .rpress-dietary-label.non-veg {
+	background: rgba(214, 51, 31, .10) !important;
+	color: var(--rpc-nonveg) !important;
+}
+/* Bigger name + description */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row h3,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rp-name-row .food-title {
+	font: 800 19px/1.25 var(--rpc-font-display) !important;
+	white-space: normal !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem_excerpt {
+	font: 400 14.5px/1.45 var(--rpc-font-body) !important;
+}
+/* Price in the primary colour, larger */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder { margin: 4px 0 0 !important; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder * {
+	font: 800 20px var(--rpc-font-display) !important;
+	color: var(--rpc-primary) !important;
+}
+/* Bigger photo */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-list-view-image-wrapper { width: 148px; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-thumbnail-holder,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-thumbnail-holder img {
+	width: 148px !important;
+	height: 148px !important;
+	border-radius: 14px !important;
+}
+/* Mobile: shrink the photo so the card fits the viewport. Must stay AFTER the
+   148px block above — same specificity + !important, so order decides. */
+@media (max-width: 640px) {
+	body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-list-view-image-wrapper,
+	body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-thumbnail-holder,
+	body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-thumbnail-holder img {
+		width: 96px !important;
+		height: 96px !important;
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* Sidebar cart                                                         */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 .rpress-sidebar-main-wrap,
+body.rp-pack-modern .rpress-menu-v2 .rpress-sidebar-cart-wrap {
+	background: #fff !important;
+	/* Hairline border (matches the search box) instead of a drop shadow. */
+	border: 1px solid var(--rpc-border-subtle) !important;
+	border-radius: 16px !important;
+	box-shadow: none !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress-sidebar-cart .item-order h4 {
+	font: 800 18px var(--rpc-font-display) !important;
+	color: var(--rpc-ink) !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress-cart-head-count {
+	font: 600 13.5px var(--rpc-font-body) !important;
+	color: var(--rpc-muted) !important;
+}
+/* Separator on the top-level cart lines only (> ), not the nested add-on rows
+   — a descendant match drew an odd line above every add-on. */
+body.rp-pack-modern .rpress-menu-v2 ul.rpress-cart > .rpress-cart-item {
+	border-top: 1px solid var(--rpc-border-subtle) !important;
+	border-bottom: 0 !important;
+}
+/* Checkout CTA: full pill in the primary color */
+body.rp-pack-modern .rpress-menu-v2 .rpress-cart-summary-area a,
+body.rp-pack-modern .rpress-menu-v2 .rpress-sidebar-cart .cart-checkout-btn,
+body.rp-pack-modern .rpress-menu-v2 .rpress-sidebar-cart a[href*="checkout"] {
+	border-radius: 999px !important;
+	background: var(--rpc-primary) !important;
+	color: #fff !important;
+	font: 800 15px var(--rpc-font-body) !important;
+	border: 0 !important;
+	transition: background .15s ease;
+}
+body.rp-pack-modern .rpress-menu-v2 .rpress-cart-summary-area a:hover,
+body.rp-pack-modern .rpress-menu-v2 .rpress-sidebar-cart a[href*="checkout"]:hover {
+	background: var(--rpc-primary-hover, var(--rpc-primary-press)) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Category display                                                     */
+/* Grid: top chip rail (styled above). List: left pill sidebar per the  */
+/* list-view design handoff; the top rail is hidden.                    */
+/* ------------------------------------------------------------------ */
+
+/* List view uses the left sidebar, so hide the mobile-menu top rail on
+   desktop (it stays available on mobile via base CSS). */
+@media (min-width: 881px) {
+	body.rp-pack-modern .rpress-menu-v2 .rpress-mobile-menu-wrap { display: none !important; }
+}
+
+/* Two-column content inside the list: sidebar (sticky) + items. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 24px !important;
+}
+/* The legacy float clearfix ::after becomes a phantom flex item here, adding a
+   second 24px gap after the items column (so the card→cart space looked wider
+   than category→card). The flex layout doesn't need it. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list::before,
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list::after { display: none !important; }
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .cat-lists {
+	display: block !important;
+	flex: none !important;
+	width: 240px !important;
+	max-width: 240px !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	position: sticky !important;
+	top: 24px !important;
+	float: none !important;
+}
+/* flex-basis 0 (not auto) so the items column fills ALL remaining width — with
+   basis:auto it sized to the cards and left a ~24px gap on its right, making the
+   card→cart space wider than the category→card space. */
+body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list > .rp-col-lg-8 {
+	flex: 1 1 0 !important;
+	width: auto !important;
+	max-width: none !important;
+	min-width: 0 !important;
+	padding: 0 !important;
+	float: none !important;
+}
+@media (max-width: 880px) {
+	body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list { flex-direction: column !important; }
+	body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .cat-lists {
+		width: 100% !important;
+		max-width: none !important;
+		position: static !important;
+	}
+}
+
+/* Sidebar chrome: bare column, no card/shadow (the mockup sidebar is not a
+   card). Legacy .sticky-sidebar/.cat-lists paint a white box + shadow. */
+body.rp-pack-modern .rpress-menu-v2 .cat-lists,
+body.rp-pack-modern .rpress-menu-v2 .cat-lists .rpress-filter-wrapper,
+body.rp-pack-modern .rpress-menu-v2 .cat-lists .rpress-categories-menu {
+	background: none !important;
+	background-color: transparent !important;
+	border: 0 !important;
+	padding: 0 !important;
+	box-shadow: none !important;
+	border-radius: 0 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .cat-lists .rp-cat-heading {
+	display: block;
+	padding: 0 6px 10px;
+	font: 500 11px 'IBM Plex Mono', var(--rpc-font-body) !important;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: #8A817B;
+}
+body.rp-pack-modern .rpress-menu-v2 .cat-lists ul.rpress-category-lists {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 2px !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	list-style: none !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .cat-lists li.rpress-category-item {
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	list-style: none !important;
+	background: none !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link {
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+	width: 100% !important;
+	padding: 10px 14px !important;
+	border: 0 !important;
+	border-radius: 12px !important;
+	background: transparent !important;
+	color: #494949 !important;
+	font: 600 14px/1.3 var(--rpc-font-body) !important;
+	text-align: left !important;
+	text-decoration: none !important;
+	transition: background .15s ease, color .15s ease;
+}
+/* The Classic active/current indicator draws an ::after that, as a flex child,
+   plus the row gap shoved the count ~12px left on the selected row only. */
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link::before,
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link::after { display: none !important; content: none !important; }
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link .rp-cat-label { flex: 1 1 auto; text-align: left; }
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link .rp-cat-count {
+	flex: none;
+	font: 700 12px var(--rpc-font-body) !important;
+	color: #A79D96 !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link:hover {
+	background: var(--rpc-surface) !important;
+	color: var(--rpc-ink) !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link.active,
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link.rpress-active,
+body.rp-pack-modern .rpress-menu-v2 .cat-lists li.active a.rpress-category-link {
+	background: var(--rpc-primary-tint) !important;
+	color: var(--rpc-primary) !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link.active .rp-cat-count,
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link.rpress-active .rp-cat-count,
+body.rp-pack-modern .rpress-menu-v2 .cat-lists li.active a.rpress-category-link .rp-cat-count {
+	color: var(--rpc-primary) !important;
+}
+body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link:focus-visible {
+	outline: 2px solid var(--rpc-primary) !important;
+	outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Item customization modal (#rpressModal)                              */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern #rpressModal {
+	--rp-checkout-accent: var(--rpc-primary); /* unified radios pick up the pack primary */
+}
+body.rp-pack-modern #rpressModal .modal__overlay,
+body.rp-pack-modern #rpressDateTime .modal__overlay {
+	background: rgba(25, 25, 25, .5) !important;
+}
+body.rp-pack-modern #rpressModal .modal__container,
+body.rp-pack-modern #rpressDateTime .modal__container {
+	border-radius: 20px !important;
+	overflow: hidden;
+	box-shadow: 0 24px 60px rgba(25, 25, 25, .32) !important;
+	font-family: var(--rpc-font-body) !important;
+}
+/* Flex column bounded to the viewport so the footer (qty + Add to cart) is
+   always pinned and never pushed off-screen. The default scroll region is a
+   hardcoded 70vh, which combined with a 16:9 hero photo + header + footer
+   overflows a short viewport and drops the footer below the fold. Make the
+   whole nesting chain a flex column and let the option list flex to fill
+   whatever space is left, capping the modal at 90vh. */
+/* The WHOLE modal scrolls (hero photo included) with the footer pinned to the
+   bottom, rather than a fixed hero + inner-scrolling option list. padding-top:0
+   removes the gap that sat above the image. */
+body.rp-pack-modern #rpressModal .modal__container {
+	display: flex !important;
+	flex-direction: column !important;
+	max-height: 90vh !important;
+	overflow-y: auto !important;
+	padding-top: 0 !important;
+}
+body.rp-pack-modern #rpressModal .rp-modern-hero,
+body.rp-pack-modern #rpressModal .modal__header { flex: 0 0 auto !important; }
+body.rp-pack-modern #rpressModal .modal__container > .rp-col-lg-12,
+body.rp-pack-modern #rpressModal .modal__container > .rp-col-lg-12 > .rp-row,
+body.rp-pack-modern #rpressModal .modal__container > .rp-col-lg-12 > .rp-row > .rp-col-lg-12 {
+	flex: 0 0 auto !important;
+	min-height: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+body.rp-pack-modern #rpressModal .addon-modal-overlap-bg {
+	flex: 0 0 auto !important;
+	min-height: 0 !important;
+	max-height: none !important;
+	overflow-y: visible !important;
+}
+/* Footer pinned to the bottom of the scrolling modal. */
+body.rp-pack-modern #rpressModal .modal__footer {
+	position: sticky !important;
+	bottom: 0 !important;
+	z-index: 3 !important;
+	flex: 0 0 auto !important;
+}
+body.rp-pack-modern #rpressModal .modal__close,
+body.rp-pack-modern #rpressDateTime .modal__close {
+	width: 32px !important;
+	height: 32px !important;
+	border-radius: 999px !important;
+	background: #fff !important;
+	color: var(--rpc-ink) !important;
+	border: 0 !important;
+	box-shadow: 0 2px 8px rgba(25, 25, 25, .2) !important;
+	line-height: 1 !important;
+}
+body.rp-pack-modern #rpressModal .modal__close:hover,
+body.rp-pack-modern #rpressDateTime .modal__close:hover { background: var(--rpc-surface) !important; }
+/* The close button is an empty element; legacy CSS drew it with a background
+   image that the white pill replaces, so supply the glyph. */
+body.rp-pack-modern #rpressModal .modal__close::before,
+body.rp-pack-modern #rpressDateTime .modal__close::before {
+	content: "\2715" !important;
+	font: 600 14px/1 var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+}
+
+/* Hero: full-bleed photo at the very top, close button overlapping its
+   corner (the photo-overlay exception to the no-absolute rule). With no
+   photo the hero collapses and the button anchors to the container top. */
+body.rp-pack-modern #rpressModal .modal__container { position: relative; }
+body.rp-pack-modern #rpressModal .rp-modern-hero { line-height: 0; overflow: hidden; }
+/* Ratio lives on the box, not the img: replaced elements keep falling back
+   to their intrinsic ratio. Collapses when the image is hidden (no photo).
+   Capped so a tall photo can't swallow the option list on short viewports. */
+body.rp-pack-modern #rpressModal .rp-modern-hero:not(:has(img.item-image[hidden])) {
+	aspect-ratio: 16 / 9;
+	max-height: 34vh;
+}
+body.rp-pack-modern #rpressModal .rp-modern-hero img.item-image {
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: cover !important;
+	border-radius: 0 !important;
+	margin: 0 !important;
+	display: block;
+}
+body.rp-pack-modern #rpressModal .rp-modern-hero img.item-image[hidden] { display: none !important; }
+body.rp-pack-modern #rpressModal .rp-modern-hero .modal__close {
+	position: absolute !important;
+	top: 12px !important;
+	right: 12px !important;
+	z-index: 3;
+}
+body.rp-pack-modern #rpressModal .modal__header {
+	padding: 16px 24px 0 !important;
+	margin: 0 !important;
+	border: 0 !important;
+	background: #fff !important;
+}
+/* Old shell fallback: image inside the content section stays styled */
+/* Block (not the inherited flex) so the description fills the row instead of
+   shrinking to its text width. */
+body.rp-pack-modern #rpressModal .modal__image-section { padding: 0 !important; display: block !important; width: 100% !important; }
+body.rp-pack-modern #rpressModal .modal__image-section .item-description {
+	padding: 6px 24px 0;
+	margin: 0 !important;
+	width: 100%;
+	box-sizing: border-box;
+}
+body.rp-pack-modern #rpressModal .modal__title {
+	font: 800 20px var(--rpc-font-display) !important;
+	color: var(--rpc-ink) !important;
+}
+body.rp-pack-modern #rpressModal img.item-image {
+	width: 100% !important;
+	aspect-ratio: 16 / 9;
+	height: auto !important;
+	object-fit: cover !important;
+	border-radius: 0 !important;
+}
+body.rp-pack-modern #rpressModal .item-description {
+	font: 400 13.5px/1.5 var(--rpc-font-body) !important;
+	color: var(--rpc-muted) !important;
+}
+
+/* Option group headers: name left, requirement reads as a quiet pill */
+body.rp-pack-modern #rpressModal .rpress-addon-category,
+body.rp-pack-modern #rpressModal h6.rpress-addon-category {
+	font: 700 15px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+}
+body.rp-pack-modern #rpressModal .rp-addon-required {
+	background: var(--rpc-primary-tint) !important;
+	color: var(--rpc-primary) !important;
+	border: 0 !important;
+	border-radius: 999px !important;
+	font: 600 12px var(--rpc-font-body) !important;
+	padding: 3px 10px !important;
+}
+body.rp-pack-modern #rpressModal .rp-min-addon,
+body.rp-pack-modern #rpressModal .rp-max-addon {
+	font: 600 12px var(--rpc-font-body) !important;
+	color: var(--rpc-muted) !important;
+}
+
+/* Consistent 24px gutter: the legacy .rp-row/.row grid inside the modal
+   carries -12px side margins which, with the wrapper padding zeroed for the
+   flex column, bled every field 12px past the container edge while the
+   title sat at 24px. */
+body.rp-pack-modern #rpressModal .rp-row,
+body.rp-pack-modern #rpressModal .row,
+body.rp-pack-modern #rpressModal .rpress-popup-actions {
+	margin-left: 0 !important;
+	margin-right: 0 !important;
+}
+body.rp-pack-modern #rpressModal .modal-body {
+	margin: 4px 0 0 !important;
+	padding: 0 24px 16px !important;
+}
+body.rp-pack-modern #rpressModal .modal__image-section { padding: 0 !important; margin: 0 !important; }
+
+/* Price-option rows: .food-item-list is the real row (radio label left,
+   price right); the hover, separator and padding live there so the whole
+   row reads as one target. */
+body.rp-pack-modern #rpressModal .food-item-list {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 12px;
+	/* Same vertical rhythm for radio and checkbox rows: the padding lives on
+	   the row; the inner label (radio rows only) contributes none. */
+	padding: 12px 6px !important;
+	margin: 0 !important;
+	border-top: 1px solid var(--rpc-border-subtle);
+	border-radius: 8px;
+	transition: background .15s ease;
+}
+body.rp-pack-modern #rpressModal .food-item-list:hover { background: var(--rpc-surface); }
+/* Addons can be tied to a variation (.list_{priceId}); the frontend JS marks
+   only the selected variation's rows .active. The display:flex above forces
+   EVERY row visible, which showed every variation's addons at once. Restore
+   the base hide for non-active addon rows (variation rows are always .active,
+   so this never touches the price options). */
+body.rp-pack-modern #rpressModal .rp-addons-data-wrapper .food-item-list:not(.active) {
+	display: none !important;
+}
+body.rp-pack-modern #rpressModal .food-item-list .cat_price {
+	flex: none;
+	font: 600 13px var(--rpc-font-body) !important;
+	color: var(--rpc-muted) !important;
+}
+
+/* Option rows (addon groups; inside .food-item-list only the label part) */
+body.rp-pack-modern #rpressModal .radio-container,
+body.rp-pack-modern #rpressModal .checkbox-container {
+	display: flex !important;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	padding: 12px 6px !important;
+	margin: 0 !important;
+	border-top: 1px solid var(--rpc-border-subtle);
+	border-radius: 8px;
+	cursor: pointer;
+	transition: background .15s ease;
+}
+body.rp-pack-modern #rpressModal .radio-container:hover,
+body.rp-pack-modern #rpressModal .checkbox-container:hover { background: var(--rpc-surface); }
+/* Inside a .food-item-list row the label is just the radio + name: no own
+   border/hover (the row has them), and it shares the row instead of
+   stretching under the price. */
+body.rp-pack-modern #rpressModal .food-item-list .radio-container,
+body.rp-pack-modern #rpressModal .food-item-list .checkbox-container {
+	flex: 1 1 auto;
+	width: auto;
+	border-top: 0 !important;
+	padding: 0 !important;
+	border-radius: 0;
+}
+body.rp-pack-modern #rpressModal .food-item-list .radio-container:hover,
+body.rp-pack-modern #rpressModal .food-item-list .checkbox-container:hover { background: transparent; }
+/* The legacy custom-control skin (black square/dot) never matches the kit:
+   the styled inputs are the controls. */
+body.rp-pack-modern #rpressModal .control__indicator { display: none !important; }
+
+/* Selection controls, one kit: 18px, 2px neutral border unchecked; checked
+   goes primary. Radio = ring + dot, checkbox = fill + white check. */
+body.rp-pack-modern #rpressModal .food-item-list input[type="radio"],
+body.rp-pack-modern #rpressModal .radio-container input[type="radio"] {
+	width: 18px !important;
+	height: 18px !important;
+	min-width: 18px !important;
+	border: 2px solid var(--rpc-border-strong) !important;
+	background: #fff !important;
+	margin: 0 !important;
+}
+body.rp-pack-modern #rpressModal .food-item-list input[type="radio"]:checked,
+body.rp-pack-modern #rpressModal .radio-container input[type="radio"]:checked {
+	border-color: var(--rpc-primary) !important;
+	background: radial-gradient(circle at center, var(--rpc-primary) 0 4.5px, #fff 5px) !important;
+}
+
+/* Checkboxes: rounded square, primary fill + white check (they sit inside
+   .food-item-list rows, not .radio-container) */
+body.rp-pack-modern #rpressModal .food-item-list input[type="checkbox"],
+body.rp-pack-modern #rpressModal .addons-wrapper input[type="checkbox"],
+body.rp-pack-modern #rpressModal .radio-container input[type="checkbox"] {
+	-webkit-appearance: none !important;
+	appearance: none !important;
+	width: 18px !important;
+	height: 18px !important;
+	min-width: 18px !important;
+	margin: 0 !important;
+	border: 2px solid var(--rpc-border-strong) !important;
+	border-radius: 6px !important;
+	background: #fff !important;
+	cursor: pointer;
+	display: inline-block !important;
+	/* Legacy hides the real input behind its .control__indicator skin; with
+	   the skin gone the input IS the control. */
+	opacity: 1 !important;
+	visibility: visible !important;
+	position: relative !important;
+	left: auto !important;
+	top: auto !important;
+	/* Legacy sets z-index:-1 on the native checkbox; the row's :hover background
+	   then paints over it and the box vanishes. Keep it above the row bg. */
+	z-index: 1 !important;
+	transition: border-color .15s ease, background .15s ease;
+}
+body.rp-pack-modern #rpressModal .food-item-list input[type="checkbox"]:checked,
+body.rp-pack-modern #rpressModal .addons-wrapper input[type="checkbox"]:checked,
+body.rp-pack-modern #rpressModal .radio-container input[type="checkbox"]:checked {
+	background: var(--rpc-primary) !important;
+	border-color: var(--rpc-primary) !important;
+}
+body.rp-pack-modern #rpressModal .food-item-list input[type="checkbox"]:checked::before,
+body.rp-pack-modern #rpressModal .addons-wrapper input[type="checkbox"]:checked::before,
+body.rp-pack-modern #rpressModal .radio-container input[type="checkbox"]:checked::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: #fff;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 13l4 4 10-10' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px 11px no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 13l4 4 10-10' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px 11px no-repeat;
+}
+
+/* Special instructions */
+body.rp-pack-modern #rpressModal textarea {
+	border: 1px solid var(--rpc-border-strong) !important;
+	border-radius: 12px !important;
+	padding: 12px 14px !important;
+	font: 400 13.5px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+}
+body.rp-pack-modern #rpressModal textarea:focus {
+	border-color: var(--rpc-primary) !important;
+	box-shadow: 0 0 0 2px var(--rpc-primary-tint-border) !important;
+	outline: none !important;
+}
+
+/* Footer: stepper pill + full pill CTA on one aligned row */
+body.rp-pack-modern #rpressModal .modal__footer {
+	border-top: 1px solid var(--rpc-border-subtle) !important;
+	background: #fff !important;
+	padding: 14px 20px !important;
+}
+body.rp-pack-modern #rpressModal .rpress-popup-actions {
+	display: flex !important;
+	align-items: center !important;
+	gap: 12px;
+	padding: 0 !important;
+}
+body.rp-pack-modern #rpressModal .rpress-popup-actions > .rp-col-md-4 {
+	flex: none !important;
+	width: auto !important;
+	padding: 0 !important;
+}
+body.rp-pack-modern #rpressModal .rpress-popup-actions > .rpress-popup-submit-wrap {
+	flex: 1 1 auto !important;
+	width: auto !important;
+	padding: 0 !important;
+}
+body.rp-pack-modern #rpressModal .rpress-popup-submit-wrap a.submit-fooditem-button {
+	width: 100% !important;
+	margin: 0 !important;
+}
+body.rp-pack-modern #rpressModal .btn-count { margin: 0 !important; }
+/* Legacy builds this as a 46px-wide VERTICAL stepper: fixed width on
+   .btn-count and absolutely positioned +/- wraps stacked over the qty box.
+   Selector depth matches the legacy id+classes rules so the horizontal
+   pill wins. */
+body.rp-pack-modern #rpressModal .rpress-popup-actions .btn-count,
+body.rp-pack-modern #rpressModal .btn-count {
+	display: inline-flex !important;
+	align-items: center;
+	background: var(--rpc-surface) !important;
+	border: 0 !important;
+	border-radius: 999px !important;
+	height: 48px !important;
+	width: auto !important;
+	min-width: 0 !important;
+	max-width: none !important;
+	flex: none !important;
+	padding: 0 6px !important;
+	position: static !important;
+}
+body.rp-pack-modern #rpressModal .rpress-popup-actions .btn-count .qtyminus-wrap,
+body.rp-pack-modern #rpressModal .rpress-popup-actions .btn-count .qtyplus-wrap,
+body.rp-pack-modern #rpressModal .rpress-popup-actions .btn-count .qty-num-wrap {
+	position: static !important;
+	inset: auto !important;
+	top: auto !important;
+	right: auto !important;
+	bottom: auto !important;
+	left: auto !important;
+}
+/* One centered row: legacy gives the qty input a 175px width and the +/-
+   buttons a 34px bottom padding, which threw all three off-baseline. */
+body.rp-pack-modern #rpressModal .btn-count > div {
+	float: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	height: 44px;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+}
+body.rp-pack-modern #rpressModal .btn-count input[type="button"],
+body.rp-pack-modern #rpressModal .qtyminus-wrap input,
+body.rp-pack-modern #rpressModal .qtyplus-wrap input {
+	width: 30px !important;
+	height: 44px !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: transparent !important;
+	color: var(--rpc-primary) !important;
+	font: 800 18px/1 var(--rpc-font-body) !important;
+	text-align: center !important;
+	box-shadow: none !important;
+}
+body.rp-pack-modern #rpressModal .qty-num-wrap input.qty {
+	width: 34px !important;
+	height: 44px !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: transparent !important;
+	font: 800 15px/1 var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+	text-align: center !important;
+}
+body.rp-pack-modern #rpressModal a.submit-fooditem-button {
+	border-radius: 999px !important;
+	background: var(--rpc-primary) !important;
+	color: #fff !important;
+	font: 800 15px var(--rpc-font-body) !important;
+	min-height: 48px;
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	border: 0 !important;
+	transition: background .15s ease;
+}
+body.rp-pack-modern #rpressModal a.submit-fooditem-button:hover { background: var(--rpc-primary-hover) !important; }
+
+/* Validation error state: danger banner treatment from the mockup */
+body.rp-pack-modern #rpressModal .rpress-addon-category.rp-addon-error {
+	color: #D6331F !important;
+	background: #FBE3DF !important;
+	border: 0 !important;
+	border-radius: 8px !important;
+}
+body.rp-pack-modern #rpressModal .rp-min-addon.rp-addon-error,
+body.rp-pack-modern #rpressModal .rp-max-addon.rp-addon-error { color: #D6331F !important; }
+
+/* ------------------------------------------------------------------ */
+/* Schedule modal (#rpressDateTime)                                     */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern #rpressDateTime #rpressDateTime-title {
+	font: 800 20px var(--rpc-font-display) !important;
+	color: var(--rpc-ink) !important;
+}
+body.rp-pack-modern #rpressDateTime .rpress-popup-subtext {
+	font: 400 13.5px/1.5 var(--rpc-font-body) !important;
+	color: var(--rpc-muted) !important;
+}
+body.rp-pack-modern #rpressDateTime .rpress-time-preference-wrap,
+body.rp-pack-modern #rpressDateTime .bg-gray { background: #fff !important; }
+body.rp-pack-modern #rpressDateTime input[type="text"],
+body.rp-pack-modern #rpressDateTime select {
+	border: 1px solid var(--rpc-border-strong) !important;
+	border-radius: 12px !important;
+	font-family: var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+}
+/* Both selects arrive with different chrome: the date one keeps the native
+   arrow, the time one carries a clock icon plus a second custom chevron.
+   Normalize to one identical chevron and matching padding on both. */
+body.rp-pack-modern #rpressDateTime select {
+	-webkit-appearance: none !important;
+	-moz-appearance: none !important;
+	appearance: none !important;
+	height: 44px !important;
+	padding: 0 40px 0 14px !important;
+	font-size: 14px !important;
+	background-color: #fff !important;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%23767676' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+	background-repeat: no-repeat !important;
+	background-position: right 14px center !important;
+	background-size: 14px 14px !important;
+}
+body.rp-pack-modern #rpressDateTime input[type="text"]:focus,
+body.rp-pack-modern #rpressDateTime select:focus {
+	border-color: var(--rpc-primary) !important;
+	box-shadow: 0 0 0 2px var(--rpc-primary-tint-border) !important;
+	outline: none !important;
+}
+/* Field labels + rows: consistent gap above each control */
+body.rp-pack-modern #rpressDateTime .delivery-time-text,
+body.rp-pack-modern #rpressDateTime .pickup-time-text {
+	font: 600 13px var(--rpc-font-body) !important;
+	color: var(--rpc-body) !important;
+	margin: 0 0 6px !important;
+}
+body.rp-pack-modern #rpressDateTime .rpress-service-date-row,
+body.rp-pack-modern #rpressDateTime .rpress-service-hours-row { margin-bottom: 16px !important; }
+body.rp-pack-modern #rpressDateTime .rpress-service-hours-row { margin-bottom: 0 !important; }
+body.rp-pack-modern #rpressDateTime .rpress-editaddress-submit-btn {
+	border-radius: 999px !important;
+	background: var(--rpc-primary) !important;
+	color: #fff !important;
+	font: 800 14px var(--rpc-font-body) !important;
+	border: 0 !important;
+	padding: 12px 26px !important;
+}
+body.rp-pack-modern #rpressDateTime .rpress-editaddress-submit-btn:hover { background: var(--rpc-primary-hover) !important; }
+body.rp-pack-modern #rpressDateTime .rpress-editaddress-cancel-btn {
+	border-radius: 999px !important;
+	background: #fff !important;
+	color: var(--rpc-body) !important;
+	border: 1px solid var(--rpc-border-strong) !important;
+	font: 600 14px var(--rpc-font-body) !important;
+	padding: 12px 22px !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Focus visibility                                                     */
+/* ------------------------------------------------------------------ */
+body.rp-pack-modern .rpress-menu-v2 a:focus-visible,
+body.rp-pack-modern .rpress-menu-v2 button:focus-visible,
+body.rp-pack-modern .rpress-menu-v2 input:focus-visible,
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link:focus-visible {
+	outline: 2px solid var(--rpc-primary) !important;
+	outline-offset: 2px;
+}
+
+/* Rail chips show item counts, mockup-style: "Burgers (6)" */
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Count {
+	display: inline !important;
+	margin-left: 4px;
+	font-weight: 600;
+	opacity: .75;
+}

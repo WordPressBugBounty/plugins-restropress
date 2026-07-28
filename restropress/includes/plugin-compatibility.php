@@ -167,3 +167,39 @@ function rpress_rsssl_remove_mixed_content_filter() {
 	}
 }
 add_action( 'plugins_loaded', 'rpress_rsssl_remove_mixed_content_filter', 999 );
+
+/**
+ * Weglot URL translation support
+ *
+ * Ensures language prefix is preserved for checkout, success, and failed transaction URIs.
+ *
+ * @since 3.4.2
+ * @param string $url The URL to translate
+ * @return string The translated URL
+ */
+function rpress_weglot_translate_url( $url ) {
+	if ( function_exists( 'weglot_get_service' ) && function_exists( 'weglot_get_current_language' ) && function_exists( 'weglot_get_original_language' ) ) {
+		try {
+			$current_language = weglot_get_current_language();
+			$original_language = weglot_get_original_language();
+			if ( $current_language !== $original_language ) {
+				$request_url_services = weglot_get_service( 'Request_Url_Service_Weglot' );
+				$language_services    = weglot_get_service( 'Language_Service_Weglot' );
+				if ( $request_url_services && $language_services ) {
+					$wg_url   = $request_url_services->create_url_object( $url );
+					$language = $language_services->get_language_from_internal( $current_language );
+					if ( $wg_url && $language ) {
+						return $wg_url->getForLanguage( $language );
+					}
+				}
+			}
+		} catch ( Exception $e ) {
+			// Do nothing and return original URL
+		}
+	}
+	return $url;
+}
+add_filter( 'rpress_get_checkout_uri', 'rpress_weglot_translate_url', 999 );
+add_filter( 'rpress_get_success_page_uri', 'rpress_weglot_translate_url', 999 );
+add_filter( 'rpress_get_failed_transaction_uri', 'rpress_weglot_translate_url', 999 );
+add_filter( 'rpress_get_lostpassword_url', 'rpress_weglot_translate_url', 999 );

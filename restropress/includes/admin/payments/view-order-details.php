@@ -371,7 +371,17 @@ $order_title_extras = ob_get_clean();
 												<span
 													class="label"><?php esc_html_e('Change status', 'restropress'); ?></span>
 												<select name="rpress_order_status" class="medium-text">
-													<?php foreach (rpress_get_order_statuses() as $key => $status): ?>
+													<?php
+													// Scope to the statuses valid for this order's service type; always
+													// keep the current status visible even if it is off-list (legacy).
+													$dropdown_statuses = function_exists('rpress_get_order_statuses_for_service')
+														? rpress_get_order_statuses_for_service($service_type)
+														: rpress_get_order_statuses();
+													if (!isset($dropdown_statuses[$order_status])) {
+														$fallback_label = rpress_get_order_status_label($order_status);
+														$dropdown_statuses[$order_status] = $fallback_label ? $fallback_label : ucfirst((string) $order_status);
+													}
+													foreach ($dropdown_statuses as $key => $status): ?>
 														<option value="<?php echo esc_attr($key); ?>" <?php selected($order_status, $key, true); ?>>
 															<?php echo esc_html($status); ?>
 														</option>

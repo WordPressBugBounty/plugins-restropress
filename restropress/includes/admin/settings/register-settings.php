@@ -201,6 +201,191 @@ add_action('admin_init', 'rpress_register_settings');
  * @since 1.0
  * @return array
  */
+/**
+ * One-line upgrade nudge shown under a free-tier setting when the related
+ * paid extension is not active. Links to the extension's page (defaulting
+ * to the in-plugin Extensions listing). Never call this when the extension
+ * is active: paying customers should not see ads.
+ *
+ * @since 3.4
+ * @param string $message What the paid extension adds.
+ * @param string $url     Where "View extension" should link. Defaults to the
+ *                        in-plugin Extensions page.
+ * @return string
+ */
+function rpress_settings_upsell_nudge($message, $url = '')
+{
+	if (empty($url)) {
+		$url = admin_url('admin.php?page=rpress-extensions');
+	}
+	return '<span class="rpress-upsell-nudge">'
+		. esc_html($message) . ' '
+		. '<a href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer">'
+		. esc_html__('View extension', 'restropress') . ' &rarr;</a></span>';
+}
+
+/**
+ * Weekly store hours grid (free tier): one open/close pair plus a Closed
+ * toggle per day of the week. Stored as store_hours[1..7][open|close|closed].
+ *
+ * @since 3.4
+ * @param array $args Field arguments.
+ * @return void
+ */
+function rpress_store_hours_callback($args)
+{
+	$value        = rpress_get_option('store_hours', array());
+	$legacy_open  = !empty(rpress_get_option('open_time')) ? rpress_get_option('open_time') : '9:00am';
+	$legacy_close = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '10:00pm';
+	$days         = array(
+		1 => __('Monday', 'restropress'),
+		2 => __('Tuesday', 'restropress'),
+		3 => __('Wednesday', 'restropress'),
+		4 => __('Thursday', 'restropress'),
+		5 => __('Friday', 'restropress'),
+		6 => __('Saturday', 'restropress'),
+		7 => __('Sunday', 'restropress'),
+	);
+
+	// Div-based grid on purpose: table markup here would inherit the settings
+	// screen's generic .form-table th/td styling (240px header cells).
+	$html = '<div class="rpress-store-hours-grid">';
+	$html .= '<div class="rpress-hours-head">'
+		. '<span>' . esc_html__('Day', 'restropress') . '</span>'
+		. '<span>' . esc_html__('Open', 'restropress') . '</span>'
+		. '<span>' . esc_html__('Close', 'restropress') . '</span>'
+		. '<span>' . esc_html__('Closed', 'restropress') . '</span>'
+		. '<span></span>'
+		. '</div>';
+	$first = true;
+	foreach ($days as $day_number => $day_label) {
+		$day    = isset($value[$day_number]) && is_array($value[$day_number]) ? $value[$day_number] : array();
+		$open   = !empty($day['open']) ? $day['open'] : $legacy_open;
+		$close  = !empty($day['close']) ? $day['close'] : $legacy_close;
+		$closed = !empty($day['closed']);
+		$base   = 'rpress_settings[store_hours][' . $day_number . ']';
+		$html .= '<div class="rpress-hours-row' . ($closed ? ' is-closed' : '') . '">';
+		$html .= '<span class="rpress-hours-day">' . esc_html($day_label) . '</span>';
+		$html .= '<span><input type="text" class="rpress_timings rpress-hours-time" name="' . esc_attr($base) . '[open]" value="' . esc_attr($open) . '" autocomplete="off"/></span>';
+		$html .= '<span><input type="text" class="rpress_timings rpress-hours-time" name="' . esc_attr($base) . '[close]" value="' . esc_attr($close) . '" autocomplete="off"/></span>';
+		$html .= '<span class="rpress-hours-closed-cell"><input type="checkbox" class="rpress-hours-closed" name="' . esc_attr($base) . '[closed]" value="1"' . checked($closed, true, false) . '/></span>';
+		$html .= '<span>' . ($first ? '<button type="button" class="rpress-hours-copy-all">' . esc_html__('Copy to all days', 'restropress') . '</button>' : '') . '</span>';
+		$html .= '</div>';
+		$first = false;
+	}
+	$html .= '</div>';
+	$html .= '<p class="description">' . wp_kses_post($args['desc']) . '</p>';
+
+	echo wp_kses($html, array(
+		'div' => array('class' => true),
+		'span' => array('class' => true),
+		'p' => array('class' => true),
+		'a' => array('href' => true),
+		'button' => array('type' => true, 'class' => true),
+		'input' => array('type' => true, 'class' => true, 'name' => true, 'value' => true, 'checked' => true, 'autocomplete' => true),
+	));
+}
+
+/**
+ * Sanitize the weekly hours grid.
+ *
+ * @since 3.4
+ * @param mixed $value Raw submitted value.
+ * @return array
+ */
+function rpress_settings_sanitize_store_hours_type($value)
+{
+	if (!is_array($value)) {
+		return array();
+	}
+	$clean = array();
+	foreach ($value as $day_number => $day) {
+		$day_number = (int) $day_number;
+		if ($day_number < 1 || $day_number > 7 || !is_array($day)) {
+			continue;
+		}
+		$clean[$day_number] = array(
+			'open'  => isset($day['open']) ? sanitize_text_field($day['open']) : '',
+			'close' => isset($day['close']) ? sanitize_text_field($day['close']) : '',
+		);
+		if (!empty($day['closed'])) {
+			$clean[$day_number]['closed'] = '1';
+		}
+	}
+	return $clean;
+}
+add_filter('rpress_settings_sanitize_store_hours', 'rpress_settings_sanitize_store_hours_type');
+
+/**
+ * Holiday dates field (free tier): up to five dates when the store is
+ * closed all day. Stored as basic_holidays[] of Y-m-d strings.
+ *
+ * @since 3.4
+ * @param array $args Field arguments.
+ * @return void
+ */
+function rpress_holiday_dates_callback($args)
+{
+	$value = rpress_get_option('basic_holidays', array());
+	if (!is_array($value)) {
+		$value = array();
+	}
+	$value = array_slice(array_values(array_filter($value)), 0, 5);
+
+	$html = '<div class="rpress-holidays" data-max="5">';
+	$html .= '<div class="rpress-holiday-chips">';
+	foreach ($value as $date) {
+		$timestamp = rpress_get_wp_timestamp($date);
+		$label     = false !== $timestamp ? wp_date(get_option('date_format'), $timestamp, rpress_get_wp_timezone()) : $date;
+		$html .= '<span class="rpress-holiday-chip">' . esc_html($label)
+			. '<button type="button" class="rpress-holiday-remove" aria-label="' . esc_attr__('Remove holiday', 'restropress') . '">&times;</button>'
+			. '<input type="hidden" name="rpress_settings[basic_holidays][]" value="' . esc_attr($date) . '"/></span>';
+	}
+	$html .= '</div>';
+	$html .= '<div class="rpress-holiday-adder">';
+	$html .= '<input type="date" class="rpress-holiday-new"/> ';
+	$html .= '<button type="button" class="button rpress-holiday-add">' . esc_html__('Add holiday', 'restropress') . '</button> ';
+	$html .= '<span class="rpress-holiday-count description"></span>';
+	$html .= '</div>';
+	$html .= '<p class="description">' . wp_kses_post($args['desc']) . '</p>';
+	$html .= '</div>';
+
+	echo wp_kses($html, array(
+		'div' => array('class' => true, 'data-max' => true),
+		'span' => array('class' => true),
+		'button' => array('type' => true, 'class' => true, 'aria-label' => true),
+		'input' => array('type' => true, 'class' => true, 'name' => true, 'value' => true),
+		'p' => array('class' => true),
+		'a' => array('href' => true),
+	));
+}
+
+/**
+ * Sanitize the holiday dates list: valid Y-m-d only, five at most.
+ *
+ * @since 3.4
+ * @param mixed $value Raw submitted value.
+ * @return array
+ */
+function rpress_settings_sanitize_holiday_dates_type($value)
+{
+	if (!is_array($value)) {
+		return array();
+	}
+	$clean = array();
+	foreach ($value as $date) {
+		$date = sanitize_text_field($date);
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+			$clean[] = $date;
+		}
+		if (count($clean) >= 5) {
+			break;
+		}
+	}
+	return array_values(array_unique($clean));
+}
+add_filter('rpress_settings_sanitize_holiday_dates', 'rpress_settings_sanitize_holiday_dates_type');
+
 function rpress_get_registered_settings()
 {
 	/**
@@ -729,13 +914,9 @@ function rpress_get_registered_settings()
 						'std' => '30',
 						'allow_blank' => false,
 					),
-					'expire_service_cookie' => array(
-						'id' => 'expire_service_cookie',
-						'name' => esc_html__('Service Cookies Expire Time', 'restropress'),
-						'desc' => esc_html__('Enter value (in minutes) after which the cookies will be expired.', 'restropress'),
-						'type' => 'number',
-						'std' => '30',
-					),
+					// expire_service_cookie retired from the UI in 3.4: the service
+					// choice cookies expire after a saved value if one exists, else
+					// 90 minutes (see class-rpress-frontend-scripts.php).
 					'store_closed_msg' => array(
 						'id' => 'store_closed_msg',
 						'name' => esc_html__('Store closed message', 'restropress'),
@@ -757,6 +938,32 @@ function rpress_get_registered_settings()
 						'type' => 'checkbox',
 					),
 				),
+				// Basic flat delivery fee (free tier). The Delivery Fee extension
+				// owns this section entirely when it is active.
+				'delivery_fee' => rpress_flat_delivery_fee_active() ? array(
+					'flat_delivery_fee_header' => array(
+						'id' => 'flat_delivery_fee_header',
+						'name' => '<h3>' . esc_html__('Delivery Fee', 'restropress') . '</h3>',
+						'desc' => '',
+						'type' => 'header',
+					),
+					'flat_delivery_fee' => array(
+						'id' => 'flat_delivery_fee',
+						'name' => esc_html__('Flat delivery fee', 'restropress'),
+						'desc' => esc_html__('Charged on every delivery order. Leave empty or 0 to not charge a delivery fee.', 'restropress'),
+						'type' => 'number',
+						'size' => 'small',
+						'step' => '0.01',
+						'min' => 0,
+						'std' => '',
+					),
+					'flat_delivery_fee_upsell' => array(
+						'id' => 'flat_delivery_fee_upsell',
+						'name' => '',
+						'desc' => rpress_settings_upsell_nudge(__('Need postcode zones, distance-based pricing, or free delivery above a minimum order? The Delivery Fee extension adds all of that.', 'restropress'), 'https://www.restropress.com/downloads/delivery-fees/'),
+						'type' => 'descriptive_text',
+					),
+				) : array(),
 				//Checkout Options
 				'checkout_options' => array(
 					'login_method' => array(
@@ -959,74 +1166,70 @@ function rpress_get_registered_settings()
 			'rpress_settings_styles',
 			array(
 				'main' => array(
-					'disable_styles' => array(
-						'id' => 'disable_styles',
-						'name' => esc_html__('Disable Styles', 'restropress'),
-						'desc' => esc_html__('Check this to disable all included styling of buttons, checkout fields, and all other elements.', 'restropress'),
+					/* The template pack selector and Menu Layout are prepended by
+					   RPRESS_Template_Packs::register_settings(), so this array
+					   starts inside the Template section. Field order here is the
+					   order merchants read the page in. */
+					'primary_color' => array(
+						'id' => 'primary_color',
+						'name' => esc_html__('Theme Color', 'restropress'),
+						'desc' => esc_html__('Main accent color used across the storefront for buttons, links, and active highlights.', 'restropress'),
+						'type' => 'color',
+						'std' => '#ED5575',
+					),
+					'menu_display_header' => array(
+						'id' => 'menu_display_header',
+						'name' => '<strong>' . esc_html__('Menu Display', 'restropress') . '</strong>',
+						'desc' => esc_html__('How items and categories appear on the food menu.', 'restropress'),
+						'type' => 'header',
+					),
+					'enable_tags_display' => array(
+						'id' => 'enable_tags_display',
+						'name' => esc_html__('Show Tags', 'restropress'),
+						'desc' => esc_html__('Show each item\'s tags (e.g. Spicy, New, Bestseller) as badges on the menu.', 'restropress'),
 						'type' => 'checkbox',
-						'tooltip_title' => esc_html__('Disabling Styles', 'restropress'),
-						'tooltip_desc' => esc_html__("If your theme has a complete custom CSS file for RestroPress, you may wish to disable our default styles. This is not recommended unless you're sure your theme has a complete custom CSS.", 'restropress'),
 					),
 					'enable_image_placeholder' => array(
 						'id' => 'enable_image_placeholder',
-						'name' => esc_html__('Enable Image Placeholder', 'restropress'),
-						'desc' => esc_html__('Check this to enable showing placeholders where item image is not available.', 'restropress'),
+						'name' => esc_html__('Image Placeholder', 'restropress'),
+						'desc' => esc_html__('Show a placeholder image when an item has no photo.', 'restropress'),
 						'type' => 'checkbox',
 					),
 					'enable_food_image_popup' => array(
 						'id' => 'enable_food_image_popup',
 						'name' => esc_html__('Food Image Popup', 'restropress'),
-						'desc' => esc_html__('If you want people to click on the food images to view the full food image then enable this.', 'restropress'),
-						'type' => 'checkbox',
-					),
-					'enable_tags_display' => array(
-						'id' => 'enable_tags_display',
-						'name' => esc_html__('Show Tags', 'restropress'),
-						'desc' => esc_html__('Enable showing the items tags in menu page.', 'restropress'),
+						'desc' => esc_html__('Let customers click a food item photo to open it full-size in a lightbox.', 'restropress'),
 						'type' => 'checkbox',
 					),
 					'disable_category_menu' => array(
 						'id' => 'disable_category_menu',
-						'name' => esc_html__('Disable Category Menu', 'restropress'),
-						'desc' => esc_html__('Disable Category Menu In Menu Item Page', 'restropress'),
+						'name' => esc_html__('Category Menu', 'restropress'),
+						'desc' => esc_html__('Hide the category navigation bar that appears above the food menu.', 'restropress'),
 						'type' => 'checkbox',
-					),
-					'old_ui_ux' => array(
-						'id' => 'old_ui_ux',
-						'name' => esc_html__('Old RestroPress UI/UX', 'restropress'),
-						'desc' => esc_html__('Enable legacy service-selection modal flow on food listing pages before adding items to cart.', 'restropress'),
-						'type' => 'checkbox',
-					),
-					'button_header' => array(
-						'id' => 'button_header',
-						'name' => '<strong>' . esc_html__('Buttons', 'restropress') . '</strong>',
-						'desc' => esc_html__('Options for add to cart and purchase buttons', 'restropress'),
-						'type' => 'header',
 					),
 					"mobile_menu_display_enable" => [
 						'id' => "mobile_menu_display_enable",
-						'name' => esc_html__('Mobile menu button', 'restropress'),
-						'desc' => esc_html__('Enable this option to show the mobile menu; disable it to hide the menu.', 'restropress'),
+						'name' => esc_html__('Category Button (Mobile)', 'restropress'),
+						'desc' => esc_html__('Show a floating button that opens the category list on small screens.', 'restropress'),
 						'type' => 'checkbox',
 					],
+					'button_header' => array(
+						'id' => 'button_header',
+						'name' => '<strong>' . esc_html__('Buttons', 'restropress') . '</strong>',
+						'desc' => esc_html__('Shape and colors of the storefront buttons.', 'restropress'),
+						'type' => 'header',
+					),
 					'button_style' => array(
 						'id' => 'button_style',
-						'name' => esc_html__('Default Button Style', 'restropress'),
-						'desc' => esc_html__('Choose the style you want to use for the buttons.', 'restropress'),
+						'name' => esc_html__('Button Shape', 'restropress'),
+						'desc' => esc_html__('Shape of the general storefront buttons (Checkout, Update Cart, and similar).', 'restropress'),
 						'type' => 'select',
 						'options' => rpress_get_button_styles(),
-					),
-					'add_button_style' => array(
-						'id' => 'add_button_style',
-						'name' => esc_html__('Add Button Style', 'restropress'),
-						'desc' => esc_html__('Choose the style you want to use for the Add Buttons.', 'restropress'),
-						'type' => 'select',
-						'options' => rpress_get_add_button_styles(),
 					),
 					'add_button_visibility' => array(
 						'id' => 'add_button_visibility',
 						'name' => esc_html__('Add Button', 'restropress'),
-						'desc' => esc_html__('Choose whether to show or hide the add button on frontend menu items.', 'restropress'),
+						'desc' => esc_html__('Show or hide the Add button on menu items. The style and color options below only apply while it is shown.', 'restropress'),
 						'type' => 'select',
 						'options' => array(
 							'show' => esc_html__('Show', 'restropress'),
@@ -1034,31 +1237,51 @@ function rpress_get_registered_settings()
 						),
 						'std' => 'show',
 					),
+					'add_button_style' => array(
+						'id' => 'add_button_style',
+						'name' => esc_html__('Add Button Style', 'restropress'),
+						'desc' => esc_html__('Shape of the Add button shown on each food item in the menu.', 'restropress'),
+						'type' => 'select',
+						'options' => rpress_get_add_button_styles(),
+					),
 					'add_button_background_color' => array(
 						'id' => 'add_button_background_color',
 						'name' => esc_html__('Add Button Background Color', 'restropress'),
-						'desc' => esc_html__('Choose the color you want to use for the add button.', 'restropress'),
+						'desc' => esc_html__('Fill color of the Add button on each food item.', 'restropress'),
 						'type' => 'color',
 						'std' => '#FEE2E8',
 					),
 					'add_button_text_color' => array(
 						'id' => 'add_button_text_color',
 						'name' => esc_html__('Add Button Text Color', 'restropress'),
-						'desc' => esc_html__('Choose the color you want to use for the add button.', 'restropress'),
+						'desc' => esc_html__('Label (text and icon) color of the Add button on each food item.', 'restropress'),
 						'type' => 'color',
 						'std' => '#000000',
 					),
-					'primary_color' => array(
-						'id' => 'primary_color',
-						'name' => esc_html__('Theme Color', 'restropress'),
-						'desc' => esc_html__('Choose the color you want to use for the buttons and links.', 'restropress'),
-						'type' => 'color',
-						'std' => '#ED5575',
+					'advanced_header' => array(
+						'id' => 'advanced_header',
+						'name' => '<strong>' . esc_html__('Advanced', 'restropress') . '</strong>',
+						'desc' => esc_html__('For custom-built themes and older setups. Most stores should leave these off.', 'restropress'),
+						'type' => 'header',
+					),
+					'disable_styles' => array(
+						'id' => 'disable_styles',
+						'name' => esc_html__('Disable RestroPress Styles', 'restropress'),
+						'desc' => esc_html__('Remove all RestroPress styling so your theme\'s CSS takes over. Template packs stop applying.', 'restropress'),
+						'type' => 'checkbox',
+						'tooltip_title' => esc_html__('Disabling Styles', 'restropress'),
+						'tooltip_desc' => esc_html__("If your theme has a complete custom CSS file for RestroPress, you may wish to disable our default styles. This is not recommended unless you're sure your theme has a complete custom CSS.", 'restropress'),
+					),
+					'old_ui_ux' => array(
+						'id' => 'old_ui_ux',
+						'name' => esc_html__('Legacy Ordering Flow', 'restropress'),
+						'desc' => esc_html__('Use the older flow: customers pick delivery/pickup and a time in a popup before adding items to the cart. Leave off for the current inline flow.', 'restropress'),
+						'type' => 'checkbox',
 					),
 					'template' => array(
 						'id' => 'template',
-						'name' => __('Menu Item Template', 'restropress'),
-						'desc' => __('Choose a layout template for the menu item.', 'restropress'),
+						'name' => __('Menu Layout', 'restropress'),
+						'desc' => __('List or grid layout for the food menu. Works with any template pack.', 'restropress'),
 						'type' => 'radio_image',
 						'options' => array(
 							'list' => array(
@@ -1402,6 +1625,50 @@ function rpress_get_registered_settings()
 		$rpress_settings['misc']['button_text']['buy_now_text']['tooltip_title'] = esc_html__('Buy Now Disabled', 'restropress');
 		$rpress_settings['misc']['button_text']['buy_now_text']['tooltip_desc'] = esc_html__('Buy Now buttons are only available for stores that have a single supported gateway active and that do not use taxes.', 'restropress');
 	}
+	// Free-tier basics (3.4). Each block registers only while the related
+	// paid extension is inactive; the extension owns the area when active.
+	if (function_exists('rpress_basic_store_hours_active') && rpress_basic_store_hours_active()) {
+		// The weekly grid replaces the single global open/close pair in the UI;
+		// the legacy pair stays stored as the fallback for unconfigured days.
+		unset($rpress_settings['general']['service_options']['open_time']);
+		unset($rpress_settings['general']['service_options']['close_time']);
+		$rpress_settings['general']['service_options']['store_hours'] = array(
+			'id'   => 'store_hours',
+			'name' => esc_html__('Weekly store hours', 'restropress'),
+			'desc' => esc_html__('Set open and close times per day, or mark a day closed. Ordering outside these hours is blocked.', 'restropress'),
+			'type' => 'store_hours',
+		);
+		$rpress_settings['general']['service_options']['basic_holidays'] = array(
+			'id'   => 'basic_holidays',
+			'name' => esc_html__('Holidays', 'restropress'),
+			'desc' => esc_html__('Up to 5 dates when the store is closed all day.', 'restropress'),
+			'type' => 'holiday_dates',
+		);
+		$rpress_settings['general']['service_options']['store_hours_upsell'] = array(
+			'id'   => 'store_hours_upsell',
+			'name' => '',
+			'desc' => rpress_settings_upsell_nudge(__('Need separate delivery and pickup schedules, order cutoffs, break times, pre-orders, or unlimited holidays? The Store Timing & Delivery Cutoff extension adds all of that.', 'restropress'), 'https://www.restropress.com/downloads/store-timings-delivery-cutoff/'),
+			'type' => 'descriptive_text',
+		);
+	}
+	if (!class_exists('RP_Order_Time_intervals_Limit_Functions')) {
+		$rpress_settings['general']['service_options']['order_slot_interval'] = array(
+			'id'   => 'order_slot_interval',
+			'name' => esc_html__('Order time slot interval (minutes)', 'restropress'),
+			'desc' => esc_html__('Customers pick an order time from slots this many minutes apart.', 'restropress'),
+			'type' => 'number',
+			'size' => 'small',
+			'min'  => 5,
+			'step' => 5,
+			'std'  => '30',
+		);
+		$rpress_settings['general']['service_options']['order_slot_interval_upsell'] = array(
+			'id'   => 'order_slot_interval_upsell',
+			'name' => '',
+			'desc' => rpress_settings_upsell_nudge(__('Need different intervals for delivery and pickup, a cap on orders per slot, or item limits per order? The Order Time, Intervals & Limits extension adds all of that.', 'restropress')),
+			'type' => 'descriptive_text',
+		);
+	}
 	$rpress_settings['general'] = rpress_reorganize_general_settings($rpress_settings['general']);
 	return apply_filters('rpress_registered_settings', $rpress_settings);
 }
@@ -1468,8 +1735,12 @@ function rpress_reorganize_general_settings($settings)
 			'enable_always_open',
 			'open_time',
 			'close_time',
+			'store_hours',
+			'basic_holidays',
+			'store_hours_upsell',
+			'order_slot_interval',
+			'order_slot_interval_upsell',
 			'prep_time',
-			'expire_service_cookie',
 			'store_closed_msg',
 		)),
 		'live_orders' => $move($settings, array(
@@ -1544,6 +1815,37 @@ function rpress_reorganize_general_settings($settings)
 	return !empty(array_filter($reorganized)) ? $reorganized : $original;
 }
 /**
+ * Map old settings section slugs to the reorganized General sections.
+ *
+ * Used both when rendering the settings page and when sanitizing a save,
+ * so a form posted from a legacy URL still resolves to the section its
+ * fields are registered under.
+ *
+ * @since 3.3
+ *
+ * @param string $tab     Active settings tab.
+ * @param string $section Requested settings section.
+ * @return string
+ */
+function rpress_map_legacy_settings_section( $tab, $section ) {
+	if ( 'general' !== $tab || empty( $section ) ) {
+		return $section;
+	}
+
+	$legacy_sections = array(
+		'main'               => 'store_setup',
+		'api'                => 'developer_api',
+		'currency'           => 'money_order_numbers',
+		'accounting'         => 'money_order_numbers',
+		'order_notification' => 'live_orders',
+		'service_options'    => 'service_hours',
+		'checkout_options'   => 'checkout',
+		'print_receipts'     => 'printing',
+	);
+
+	return isset( $legacy_sections[ $section ] ) ? $legacy_sections[ $section ] : $section;
+}
+/**
  * Settings Sanitization
  *
  * Adds a settings error (for the updated message)
@@ -1573,7 +1875,15 @@ function rpress_settings_sanitize($input = array())
 		if (!empty($_POST['rpress_section_override'])) {
 			$section = sanitize_text_field(wp_unslash($_POST['rpress_section_override']));
 		}
+		$section = rpress_map_legacy_settings_section($tab, $section);
 		$setting_types = rpress_get_registered_settings_types($tab, $section);
+		if (empty($setting_types)) {
+			// The referrer named a section that is not registered (stale link or
+			// missing query args). Type-aware cleanup must still run for the posted
+			// keys, but only for them - a tab-wide whitelist would drop settings
+			// from sections that were not part of this form.
+			$setting_types = array_intersect_key(rpress_get_registered_settings_types($tab), $input);
+		}
 		// Run a general sanitization for the tab for special fields (like taxes)
 		$input = apply_filters('rpress_settings_' . $tab . '_sanitize', $input);
 		// Run a general sanitization for the section so custom tabs with sub-sections can save special data
@@ -1604,7 +1914,10 @@ function rpress_settings_sanitize($input = array())
 				case 'gateways':
 				case 'multicheck':
 				case 'payment_icons':
-					if (array_key_exists($key, $input) && $output[$key] === '-1') {
+					// '-1' is the unchecked marker from the hidden input, never a real
+					// value - also scrub stale '-1's saved before section mapping existed,
+					// since they read as truthy.
+					if (isset($output[$key]) && $output[$key] === '-1') {
 						unset($output[$key]);
 					}
 					break;
@@ -1947,16 +2260,17 @@ function rpress_get_registered_settings_sections()
 		return $sections;
 	}
 	$sections = array(
-		'general' => apply_filters('rpress_settings_sections_general', array(
+		'general' => apply_filters('rpress_settings_sections_general', array_filter(array(
 			'store_setup' => esc_html__('Store Setup', 'restropress'),
 			'ordering_rules' => esc_html__('Ordering Rules', 'restropress'),
 			'service_hours' => esc_html__('Service & Hours', 'restropress'),
+			'delivery_fee' => rpress_flat_delivery_fee_active() ? esc_html__('Delivery Fee', 'restropress') : null,
 			'live_orders' => esc_html__('Live Orders', 'restropress'),
 			'checkout' => esc_html__('Checkout', 'restropress'),
 			'money_order_numbers' => esc_html__('Money & Order Numbers', 'restropress'),
 			'printing' => esc_html__('Printing', 'restropress'),
 			'developer_api' => esc_html__('Developer API', 'restropress'),
-		)),
+		))),
 		'gateways' => apply_filters('rpress_settings_sections_gateways', array(
 			'main' => esc_html__('General', 'restropress'),
 			'paypal' => esc_html__('PayPal Standard', 'restropress'),
@@ -2744,9 +3058,15 @@ function rpress_rich_editor_callback($args)
 	$class = rpress_sanitize_html_class($args['field_class']);
 	ob_start();
 	wp_editor(stripslashes($value), 'rpress_settings_' . esc_attr($args['id']), array('textarea_name' => 'rpress_settings[' . esc_attr($args['id']) . ']', 'textarea_rows' => absint($rows), 'editor_class' => $class));
-	$html = ob_get_clean();
+	// wp_editor() emits the scripts/attributes TinyMCE needs, which the wp_kses()
+	// pass below would strip (leaving a broken, editor-less box). Keep it out of
+	// that pass: mark its place with a token, sanitise the rest, then splice the
+	// trusted WP-core-generated editor markup back in.
+	$editor_html  = ob_get_clean();
+	$editor_token = '{{RPRESS_RICH_EDITOR}}';
+	$html  = $editor_token;
 	$html .= '<br/><label for="rpress_settings[' . rpress_sanitize_key($args['id']) . ']"> ' . wp_kses_post($args['desc']) . '</label>';
-	echo wp_kses(
+	$sanitized = wp_kses(
 		apply_filters('rpress_after_setting_output', $html, $args),
 		array(
 			'div' => array(
@@ -2771,6 +3091,7 @@ function rpress_rich_editor_callback($args)
 			),
 		)
 	);
+	echo str_replace($editor_token, $editor_html, $sanitized); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- markup already sanitised; editor markup is WP-core-generated.
 }
 /**
  * Upload Callback
@@ -2905,6 +3226,10 @@ function rpress_shop_states_callback($args)
 }
 function rpress_order_notification_settings_callback($args)
 {
+	// wp_editor() output (below) is captured here and re-injected AFTER the
+	// section is run through wp_kses(), which would otherwise strip the editor's
+	// <script> init + rich markup and break TinyMCE. Placeholder -> raw editor.
+	$rpress_email_editors = array();
 	ob_start(); ?>
 	<p class="order_notification_desc"><?php echo wp_kses_post($args['desc']); ?></p>
 	<table class="rpress_emails widefat" cellspacing="0">
@@ -3138,7 +3463,14 @@ function rpress_order_notification_settings_callback($args)
 					</td>
 					<td class="email_message_contents">
 						<?php
-						wp_editor(stripslashes($email_content), 'rpress_settings_' . esc_attr($order_status), array('textarea_name' => 'rpress_settings[' . $order_status . '][content]', 'textarea_rows' => absint(20), 'editor_class' => 'rpress'));
+						// Capture the editor so it bypasses the wp_kses() pass below
+						// (which strips its scripts/markup and breaks TinyMCE); a
+						// placeholder marks where to splice the raw editor back in.
+						$rpress_editor_id = 'rpress_settings_' . esc_attr($order_status);
+						ob_start();
+						wp_editor(stripslashes($email_content), $rpress_editor_id, array('textarea_name' => 'rpress_settings[' . $order_status . '][content]', 'textarea_rows' => absint(20), 'editor_class' => 'rpress'));
+						$rpress_email_editors[$rpress_editor_id] = ob_get_clean();
+						echo '{{RPRESS_EMAIL_EDITOR:' . $rpress_editor_id . '}}';
 						?>
 						<label for="email_content">
 							<?php esc_html_e('Enter the text that is sent as order notification email. HTML is accepted. Available template tags:', 'restropress'); ?>
@@ -3150,7 +3482,7 @@ function rpress_order_notification_settings_callback($args)
 		</div>
 		<?php
 	}
-	echo wp_kses(
+	$rpress_notification_html = wp_kses(
 		ob_get_clean(),
 		array(
 			'div' => array('class' => array(), 'id' => array()),
@@ -3179,6 +3511,12 @@ function rpress_order_notification_settings_callback($args)
 			'h3' => array(),
 		)
 	);
+	// Splice the captured (trusted, WP-core-generated) editor markup back in
+	// where its placeholder sits, so TinyMCE gets an intact container.
+	foreach ($rpress_email_editors as $rpress_editor_id => $rpress_editor_html) {
+		$rpress_notification_html = str_replace('{{RPRESS_EMAIL_EDITOR:' . $rpress_editor_id . '}}', $rpress_editor_html, $rpress_notification_html);
+	}
+	echo $rpress_notification_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- markup already sanitised above; editor markup is WP-core-generated.
 }
 /**
  * Descriptive text callback.

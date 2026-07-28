@@ -1226,8 +1226,8 @@ function rpress_check_minimum_order_amount() {
 	if( $enable_minimum_order ) :
 		$minimum_order_price_delivery = rpress_get_option('minimum_order_price');
 		$minimum_order_price_pickup = rpress_get_option('minimum_order_price_pickup');
-		$minimum_price_error_delivery = rpress_get_option('minimum_order_error') !== '' ? rpress_get_option('minimum_order_error') : 'Please add more items';
-		$minimum_price_error_pickup = rpress_get_option('minimum_order_error_pickup') !== '' ? rpress_get_option('minimum_order_error_pickup') : 'Please add more items';
+		$minimum_price_error_delivery = rpress_get_option('minimum_order_error') !== '' ? rpress_get_option('minimum_order_error') : __( 'Please add more items', 'restropress' );
+		$minimum_price_error_pickup = rpress_get_option('minimum_order_error_pickup') !== '' ? rpress_get_option('minimum_order_error_pickup') : __( 'Please add more items', 'restropress' );
 		$minimum_order_delivery_formatted = rpress_currency_filter( rpress_format_amount( $minimum_order_price_delivery ) );
 		$minimum_order_pickup_formatted = rpress_currency_filter( rpress_format_amount( $minimum_order_price_pickup) );
 		$minimum_price_error_delivery = str_replace('{min_order_price}', $minimum_order_delivery_formatted, $minimum_price_error_delivery);

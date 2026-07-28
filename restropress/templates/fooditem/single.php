@@ -27,7 +27,10 @@ else {
 }
 ?>
 <div <?php echo esc_html( $schema ); ?>class="<?php echo esc_attr( apply_filters( 'rpress_fooditem_class', 'rpress_fooditem', get_the_ID(), $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i ) ); ?> <?php echo esc_attr( $food_item_class ); ?>" data-term-id="<?php echo esc_attr( $term_id ); ?>" id="rpress_fooditem_<?php the_ID(); ?>">
-<?php $img_wrp = ( ! has_post_thumbnail( get_the_ID() ) ) ? 'rp-no-img' : ''; ?>
+<?php
+// With the image placeholder enabled the thumbnail holder shows the placeholder
+// graphic, so don't mark the card image-less (which would hide the holder).
+$img_wrp = ( ! has_post_thumbnail( get_the_ID() ) && ! rpress_get_option( 'enable_image_placeholder', false ) ) ? 'rp-no-img' : ''; ?>
 	<div class="row <?php echo esc_attr( $img_wrp ) . ' ' . esc_attr( apply_filters( 'rpress_fooditem_inner_class', 'rpress_fooditem_inner', get_the_ID(), $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i ) ); ?>">
 		<?php do_action( 'rpress_fooditem_before' ); ?>
 		<div class="rp-col-md-9 rp-grid-view-wrap">

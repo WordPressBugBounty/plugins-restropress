@@ -158,6 +158,11 @@ class RP_Frontend_Scripts
         'deps' => array('jquery'),
         'version' => RP_VERSION,
       ),
+      'rp-checkout-ui' => array(
+        'src' => self::get_asset_url('assets/js/frontend/rp-checkout-ui.js'),
+        'deps' => array('jquery', 'rp-checkout'),
+        'version' => file_exists(RP_PLUGIN_DIR . 'assets/js/frontend/rp-checkout-ui.js') ? RP_VERSION . '.' . filemtime(RP_PLUGIN_DIR . 'assets/js/frontend/rp-checkout-ui.js') : RP_VERSION,
+      ),
       'jquery-payment' => array(
         'src' => self::get_asset_url('assets/js/jquery.payment' . $suffix . '.js'),
         'deps' => array('jquery'),
@@ -260,6 +265,53 @@ class RP_Frontend_Scripts
     self::enqueue_script('rp-frontend');
     if (rpress_is_checkout()) {
       self::enqueue_script('rp-checkout');
+      self::enqueue_script('rp-checkout-ui');
+
+      // Each service chip advertises the fee that applies to it. The currently
+      // selected service has its fees on the cart, so this reflects whatever
+      // fee extension is active (delivery zones, pickup/extra fees, …).
+      $fee_sub = function ($service) {
+        $amount = function_exists('rpress_get_checkout_service_fee_display')
+          ? (float) rpress_get_checkout_service_fee_display($service)
+          : 0;
+        return $amount > 0
+          ? sprintf(__('%s fee', 'restropress'), rpress_currency_filter(rpress_format_amount($amount)))
+          : __('Free', 'restropress');
+      };
+      $delivery_sub = $fee_sub('delivery');
+      $pickup_sub   = $fee_sub('pickup');
+      $support_email = sanitize_email((string) get_option('admin_email'));
+      $support_url = !empty($support_email) ? 'mailto:' . antispambot($support_email) : home_url('/');
+
+      wp_localize_script('rp-checkout-ui', 'rpress_checkout_ui', apply_filters('rpress_checkout_ui_vars', array(
+        'place_order' => __('Place order', 'restropress'),
+        /* translators: %s: discount amount */
+        'coupon_applied' => __('applied · %s off', 'restropress'),
+        'coupon_remove' => __('Remove', 'restropress'),
+        'encrypted_note' => __('Payments are encrypted', 'restropress'),
+        'need_help' => __('Need help?', 'restropress'),
+        'contact_support' => __('Contact support', 'restropress'),
+        'support_url' => $support_url,
+        'total_label' => __('Total', 'restropress'),
+        'continue_guest' => __('Continue as guest', 'restropress'),
+        'view_order' => __('view order details', 'restropress'),
+        'err_email' => __('Please enter a valid email address', 'restropress'),
+        'err_email_format' => __('That email doesn\'t look right, check for typos', 'restropress'),
+        'err_phone' => __('Please enter a valid phone number', 'restropress'),
+        'err_first' => __('Please enter your first name', 'restropress'),
+        'err_required' => __('This field is required.', 'restropress'),
+        /* translators: %d: number of fields with errors */
+        'err_banner' => __('Please fix the %d highlighted field(s) below to place your order.', 'restropress'),
+        'item_singular' => __('1 item', 'restropress'),
+        'items_plural' => __('items', 'restropress'),
+        'delivery_sub' => $delivery_sub,
+        'pickup_sub' => $pickup_sub,
+        'gateways' => array(
+          'cash_on_delivery' => array('sub' => __('Pay the driver on delivery', 'restropress'), 'icon' => 'cash'),
+          'cod' => array('sub' => __('Pay the driver on delivery', 'restropress'), 'icon' => 'cash'),
+          'stripe' => array('sub' => __('Pay securely online now', 'restropress'), 'icon' => 'card', 'icons' => function_exists('rpress_get_accepted_card_icon_urls') ? rpress_get_accepted_card_icon_urls() : array()),
+        ),
+      )));
       if (rpress_is_cc_verify_enabled()) {
         self::enqueue_script('jquery-creditcard-validator');
         self::enqueue_script('jquery-payment');
@@ -356,7 +408,7 @@ class RP_Frontend_Scripts
     if (isset($post->ID))
       $position = rpress_get_item_position_in_cart($post->ID);
     $has_purchase_links = false;
-    if ((!empty($post->post_content) && (has_shortcode($post->post_content, 'purchase_link') || has_shortcode($post->post_content, 'fooditems'))) || is_post_type_archive('fooditem'))
+    if ((!empty($post->post_content) && (has_shortcode($post->post_content, 'purchase_link') || has_shortcode($post->post_content, 'fooditems') || has_block('rpress/food-menu', $post))) || is_post_type_archive('fooditem'))
       $has_purchase_links = true;
     $pickup_time_enabled = rpress_is_service_enabled('pickup');
     $delivery_time_enabled = rpress_is_service_enabled('delivery');
@@ -465,6 +517,333 @@ class RP_Frontend_Scripts
     }
     wp_register_style('rpress-styles', $url, array(), RP_VERSION, 'all');
     wp_enqueue_style('rpress-styles');
+    if (function_exists('rpress_is_checkout') && rpress_is_checkout()) {
+      self::enqueue_checkout_styles();
+    }
+
+    $success_page_id = absint(rpress_get_option('success_page', 0));
+    if ($success_page_id && is_page($success_page_id)) {
+      self::enqueue_tracking_styles();
+    }
+
+    // Ordering / menu page: the redesigned storefront menu styles.
+    $post = get_post();
+    if (
+      $post instanceof WP_Post
+      && ( has_shortcode((string) $post->post_content, 'fooditems')
+        || ( function_exists('has_block') && has_block('rpress/food-menu', $post) ) )
+    ) {
+      self::enqueue_menu_styles();
+    }
+  }
+
+  /**
+   * The brand primary the storefront tokens should use.
+   *
+   * Merchant's primary_color wins when they changed it from the shipped
+   * default; otherwise the active template pack's own primary applies, so a
+   * pack can ship a full palette while one settings knob still rebrands
+   * every pack (07-Template-Pack-Engineering-Plan.md, decision #3).
+   *
+   * @since 3.4
+   * @return string Hex color.
+   */
+  private static function get_effective_primary()
+  {
+    $default = '#ED5575';
+    $saved   = sanitize_hex_color(rpress_get_option('primary_color', $default));
+    if ($saved && strtoupper($saved) !== $default) {
+      return $saved;
+    }
+    $pack = function_exists('rpress_get_active_template_pack') ? rpress_get_active_template_pack() : array();
+    if (!empty($pack['tokens']['primary'])) {
+      $pack_primary = sanitize_hex_color($pack['tokens']['primary']);
+      if ($pack_primary) {
+        return $pack_primary;
+      }
+    }
+    return $saved ? $saved : $default;
+  }
+
+  /**
+   * Active pack skin: fonts, skin stylesheet (loads after the core handle so
+   * it wins the cascade without !important), and the pack's token overrides
+   * scoped to the page wrapper. No-op for Classic.
+   *
+   * @since 3.4
+   * @param string $core_handle Core stylesheet handle for this page.
+   * @param string $scope       CSS scope selector for the token block.
+   * @return void
+   */
+  private static function enqueue_pack_assets($core_handle, $scope)
+  {
+    if (!function_exists('rpress_get_active_template_pack')) {
+      return $core_handle;
+    }
+    $pack = rpress_get_active_template_pack();
+    if (empty($pack['id']) || 'classic' === $pack['id']) {
+      return $core_handle;
+    }
+
+    if (!empty($pack['fonts'])) {
+      wp_enqueue_style('rpress-pack-fonts', esc_url($pack['fonts']), array(), null);
+    }
+
+    $pack_handle = $core_handle;
+    if (!empty($pack['stylesheet'])) {
+      $pack_handle = 'rpress-pack-' . $pack['id'];
+      if (!wp_style_is($pack_handle, 'registered')) {
+        if (wp_style_is($pack['stylesheet'], 'registered')) {
+          // Pack supplied an already-registered handle.
+          $pack_handle = $pack['stylesheet'];
+        } elseif (!empty($pack['url']) && file_exists($pack['stylesheet'])) {
+          wp_register_style(
+            $pack_handle,
+            trailingslashit($pack['url']) . basename($pack['stylesheet']),
+            array($core_handle),
+            (isset($pack['version']) ? $pack['version'] : RP_VERSION) . '.' . filemtime($pack['stylesheet']),
+            'all'
+          );
+        }
+      }
+      if (wp_style_is($pack_handle, 'registered')) {
+        wp_enqueue_style($pack_handle);
+      } else {
+        $pack_handle = $core_handle;
+      }
+    }
+
+    // Token overrides. The primary family is excluded here: it flows through
+    // get_effective_primary() so the merchant's primary_color keeps working
+    // under every pack.
+    if (!empty($pack['tokens']) && is_array($pack['tokens'])) {
+      $vars = '';
+      foreach ($pack['tokens'] as $token => $value) {
+        // The whole primary colour family (primary + its derived shades:
+        // -hover, -press, -tint, -tint-border, …) must follow the merchant's
+        // primary_color via get_effective_primary(), which enqueue_menu_styles()
+        // derives and injects. Never let a pack hardcode them, or its mockup
+        // shade (e.g. an orange tint/hover) overrides the merchant's colour.
+        if ('primary' === $token || 0 === strpos($token, 'primary-')) {
+          continue;
+        }
+        $token = sanitize_key(str_replace('--rpc-', '', $token));
+        $value = trim(wp_strip_all_tags((string) $value));
+        if ('' === $token || '' === $value || false !== strpos($value, ';')) {
+          continue;
+        }
+        $vars .= '--rpc-' . $token . ':' . $value . ';';
+      }
+      if ($vars) {
+        wp_add_inline_style($pack_handle, $scope . '{' . $vars . '}');
+      }
+    }
+
+    return $pack_handle;
+  }
+
+  /**
+   * Storefront menu redesign stylesheet, fonts and settings-driven color tokens.
+   * Mirrors enqueue_checkout_styles(): scoped to .rpress-menu-v2.
+   *
+   * @since 3.4
+   * @return void
+   */
+  private static function enqueue_menu_styles()
+  {
+    $menu_css_path = trailingslashit(RP_PLUGIN_DIR) . 'assets/css/rpress-menu.css';
+    if (!file_exists($menu_css_path)) {
+      return;
+    }
+
+    $fonts_url = apply_filters('rpress_checkout_fonts_url', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+    if ($fonts_url) {
+      wp_enqueue_style('rpress-checkout-fonts', esc_url($fonts_url), array(), null);
+    }
+
+    wp_register_style(
+      'rpress-menu',
+      plugin_dir_url(RP_PLUGIN_FILE) . 'assets/css/rpress-menu.css',
+      array('rpress-styles'),
+      RP_VERSION . '.' . filemtime($menu_css_path),
+      'all'
+    );
+    wp_enqueue_style('rpress-menu');
+
+    $primary = self::get_effective_primary();
+    $rgb = sscanf($primary, '#%02x%02x%02x');
+    $rgba = (is_array($rgb) && 3 === count($rgb)) ? absint($rgb[0]) . ',' . absint($rgb[1]) . ',' . absint($rgb[2]) : '237,85,117';
+
+    $vars = sprintf(
+      // The item and schedule modals render outside the menu wrapper, so the
+      // tokens must reach them too for pack skins.
+      '.rpress-menu-v2,#rpressModal,#rpressDateTime{--rpc-primary:%1$s;--rpc-primary-hover:%2$s;--rpc-primary-press:%3$s;--rpc-primary-tint:%4$s;--rpc-primary-tint-border:%5$s;--rpc-primary-shadow:rgba(%6$s,0.24);--rpc-primary-rgb:%6$s;}',
+      $primary,
+      self::mix_hex_color($primary, '#000000', 12),
+      self::mix_hex_color($primary, '#000000', 28),
+      self::mix_hex_color($primary, '#ffffff', 92),
+      self::mix_hex_color($primary, '#ffffff', 75),
+      $rgba
+    );
+    wp_add_inline_style('rpress-menu', $vars);
+    // The settings-driven add-button CSS must print AFTER the pack skin so
+    // merchant choices (shape, colors) beat the pack's defaults.
+    $final_handle = self::enqueue_pack_assets('rpress-menu', '.rpress-menu-v2,#rpressModal,#rpressDateTime');
+    wp_add_inline_style($final_handle ? $final_handle : 'rpress-menu', self::menu_add_button_styles());
+  }
+
+  /**
+   * Add-button CSS driven by the Styles settings (color pickers + the
+   * circle | rounded | rectangle shape picker), so those settings keep
+   * working under the redesigned menu. Circle is icon-only; rounded and
+   * rectangle show the label as a pill / soft rectangle.
+   *
+   * @since 3.4
+   * @return string
+   */
+  private static function menu_add_button_styles()
+  {
+    $bg = sanitize_hex_color(rpress_get_option('add_button_background_color', '#FEE2E8'));
+    if (!$bg) {
+      $bg = '#FEE2E8';
+    }
+    $color = sanitize_hex_color(rpress_get_option('add_button_text_color', '#000000'));
+    if (!$color) {
+      $color = '#000000';
+    }
+    $style = sanitize_key((string) rpress_get_option('add_button_style', 'circle'));
+
+    // Same contract as get_effective_primary(): under a non-Classic pack the
+    // shipped defaults defer to the pack's own button look, while values the
+    // merchant actually changed always win.
+    $pack            = function_exists('rpress_get_active_template_pack') ? rpress_get_active_template_pack() : array('id' => 'classic');
+    $defaults_active = strtoupper($bg) === '#FEE2E8' && strtoupper($color) === '#000000';
+    $skip_colors     = ('classic' !== $pack['id']) && $defaults_active;
+
+    $css = '';
+    if (!$skip_colors) {
+      $css = sprintf(
+        '.rpress-menu-v2{--rpc-addbtn-bg:%1$s;--rpc-addbtn-border:%1$s;--rpc-addbtn-color:%2$s;--rpc-addbtn-bg-hover:%3$s;}',
+        $bg,
+        $color,
+        self::mix_hex_color($bg, '#000000', 10)
+      );
+    }
+
+    // The add-button SHAPE (circle/rounded/rectangle) follows the merchant's
+    // setting under every pack, so a store's chosen button style applies to the
+    // designed packs too (circle is the base look each pack ships, so only the
+    // rounded/rectangle overrides need emitting).
+    if ( 'rounded' === $style || 'rectangle' === $style ) {
+      // The `.rpress-add-to-cart` class is doubled so this rule (5 classes)
+      // out-specifies a pack's fixed-circle dimension rule (4 classes +
+      // body); otherwise the width:36px there pins this pill to a square and
+      // clips the label.
+      $css .= sprintf(
+        '.rpress-menu-v2.rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-add-to-cart{width:auto !important;min-width:0 !important;height:36px !important;padding:0 16px !important;gap:6px;border-radius:%s !important;font-size:13px !important;line-height:1 !important;font-weight:700;}'
+        . '.rpress-menu-v2.rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-add-to-cart .rpress-add-to-cart-label{display:inline !important;font:700 13px var(--rpc-font-body) !important;color:inherit !important;text-transform:uppercase;letter-spacing:.02em;}'
+        . '.rpress-menu-v2.rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-add-to-cart::before{width:11px !important;height:11px !important;}'
+        // In list view, straddle the labelled pill over the photo's bottom
+        // edge (about half on the image, half below), matching the circle
+        // variant. A slightly larger thumbnail gives the wider pill the room
+        // it needs to sit on the photo instead of overlapping it awkwardly.
+        . '.rpress-menu-v2.rpress-menu-v2 .rpress_fooditem_inner .rpress-thumbnail-holder,'
+        . '.rpress-menu-v2.rpress-menu-v2 .rpress_fooditem_inner .rpress-thumbnail-holder img{width:128px !important;height:128px !important;}'
+        . '.rpress-menu-v2 .rpress_fooditem_inner:not(.rp-no-img) .rpress-list-view-image-wrapper .rpress_fooditem_buy_button{position:absolute !important;top:auto !important;bottom:-18px !important;left:50%% !important;transform:translateX(-50%%) !important;max-width:calc(100%% + 8px) !important;margin:0 !important;}'
+        . '.rpress-menu-v2 .rpress_fooditem_inner:not(.rp-no-img) .rpress-list-view-image-wrapper{margin-bottom:18px !important;}',
+        'rounded' === $style ? '999px' : '10px'
+      );
+    }
+    return $css;
+  }
+
+  /**
+   * Order tracking / confirmation stylesheet, fonts and settings-driven colors.
+   *
+   * @since 3.4
+   * @return void
+   */
+  private static function enqueue_tracking_styles()
+  {
+    $tracking_css_path = trailingslashit(RP_PLUGIN_DIR) . 'assets/css/rpress-tracking.css';
+    if (!file_exists($tracking_css_path)) {
+      return;
+    }
+
+    $fonts_url = apply_filters('rpress_checkout_fonts_url', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+    if ($fonts_url) {
+      wp_enqueue_style('rpress-checkout-fonts', esc_url($fonts_url), array(), null);
+    }
+
+    wp_register_style(
+      'rpress-tracking',
+      plugin_dir_url(RP_PLUGIN_FILE) . 'assets/css/rpress-tracking.css',
+      array('rpress-styles'),
+      RP_VERSION . '.' . filemtime($tracking_css_path),
+      'all'
+    );
+    wp_enqueue_style('rpress-tracking');
+
+    $primary = self::get_effective_primary();
+    $rgb  = sscanf($primary, '#%02x%02x%02x');
+    $rgba = (is_array($rgb) && 3 === count($rgb)) ? absint($rgb[0]) . ',' . absint($rgb[1]) . ',' . absint($rgb[2]) : '239,100,61';
+
+    $vars = sprintf(
+      '.rp-track-v1{--rp-track-primary:%1$s;--rp-track-primary-tint:%2$s;--rp-track-primary-tint-border:%3$s;--rp-track-primary-rgb:%4$s;}',
+      $primary,
+      self::mix_hex_color($primary, '#ffffff', 92),
+      self::mix_hex_color($primary, '#ffffff', 75),
+      $rgba
+    );
+    wp_add_inline_style('rpress-tracking', $vars);
+    self::enqueue_pack_assets('rpress-tracking', '.rp-track-v1');
+  }
+
+  /**
+   * Checkout redesign stylesheet, fonts and settings-driven color tokens.
+   *
+   * @since 3.4
+   * @return void
+   */
+  private static function enqueue_checkout_styles()
+  {
+    $checkout_css_path = trailingslashit(RP_PLUGIN_DIR) . 'assets/css/rpress-checkout.css';
+    if (!file_exists($checkout_css_path)) {
+      return;
+    }
+
+    $fonts_url = apply_filters('rpress_checkout_fonts_url', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+    if ($fonts_url) {
+      wp_enqueue_style('rpress-checkout-fonts', esc_url($fonts_url), array(), null);
+    }
+
+    wp_register_style(
+      'rpress-checkout',
+      plugin_dir_url(RP_PLUGIN_FILE) . 'assets/css/rpress-checkout.css',
+      array('rpress-styles'),
+      RP_VERSION . '.' . filemtime($checkout_css_path),
+      'all'
+    );
+    wp_enqueue_style('rpress-checkout');
+
+    $primary = self::get_effective_primary();
+    $rgb = sscanf($primary, '#%02x%02x%02x');
+    $rgba = (is_array($rgb) && 3 === count($rgb)) ? absint($rgb[0]) . ',' . absint($rgb[1]) . ',' . absint($rgb[2]) : '237,85,117';
+
+    $vars = sprintf(
+      '#rpress_checkout_wrap.rpress-checkout-v2{--rpc-primary:%1$s;--rpc-primary-hover:%2$s;--rpc-primary-press:%3$s;--rpc-primary-tint:%4$s;--rpc-primary-tint-border:%5$s;--rpc-primary-shadow:rgba(%6$s,0.24);}',
+      $primary,
+      self::mix_hex_color($primary, '#000000', 12),
+      self::mix_hex_color($primary, '#000000', 28),
+      self::mix_hex_color($primary, '#ffffff', 92),
+      self::mix_hex_color($primary, '#ffffff', 75),
+      $rgba
+    );
+    wp_add_inline_style('rpress-checkout', $vars);
+    // Pack token scope matches the double-id selector rpress-checkout.css uses
+    // for its own token defaults; anything weaker loses the specificity war and
+    // no pack can retheme checkout.
+    self::enqueue_pack_assets('rpress-checkout', 'body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2');
   }
   /**
    * Load head styles
@@ -490,7 +869,7 @@ class RP_Frontend_Scripts
     $parent_theme_style_sheet = trailingslashit(get_template_directory()) . $templates_dir . $file;
     $parent_theme_style_sheet_2 = trailingslashit(get_template_directory()) . $templates_dir . 'rpress.css';
     $has_css_template = false;
-    if (has_shortcode($post->post_content, 'fooditems') && file_exists($child_theme_style_sheet) || file_exists($child_theme_style_sheet_2) || file_exists($parent_theme_style_sheet) || file_exists($parent_theme_style_sheet_2)) {
+    if ((has_shortcode($post->post_content, 'fooditems') || has_block('rpress/food-menu', $post)) && file_exists($child_theme_style_sheet) || file_exists($child_theme_style_sheet_2) || file_exists($parent_theme_style_sheet) || file_exists($parent_theme_style_sheet_2)) {
       $has_css_template = apply_filters('rpress_load_head_styles', true);
     }
     if (!$has_css_template) {
@@ -641,7 +1020,6 @@ class RP_Frontend_Scripts
       .cart_item.rpress_checkout,
       body.rpress-checkout #rpress_checkout_wrap,
       body.rpress-checkout #rpress_purchase_form,
-      .rp-thankyou-page,
       #rpress_user_history.rpress-order-history,
       .user-dashboard-wrapper,
       form.rpress_form,
@@ -694,7 +1072,6 @@ class RP_Frontend_Scripts
       .rpress-wrap,
       .rpress-section,
       body.rpress-checkout #rpress_checkout_wrap,
-      .rp-thankyou-page,
       #rpress_user_history.rpress-order-history,
       .user-dashboard-wrapper,
       form.rpress_form,
@@ -707,10 +1084,6 @@ class RP_Frontend_Scripts
         --rp-checkout-brand-rgb: var(--rpress-theme-primary-rgb);
         --rp-checkout-card-soft: var(--rpress-theme-section-bg-soft);
         --rp-checkout-border: var(--rpress-theme-border-soft);
-        --rp-thankyou-accent: var(--rpress-theme-primary);
-        --rp-thankyou-accent-ink: var(--rpress-theme-primary-dark);
-        --rp-thankyou-surface: var(--rpress-theme-section-bg);
-        --rp-thankyou-border: var(--rpress-theme-border-soft);
       }
 
       .rpress-wrap a:not(.button):not(.btn):not(.rpress-submit):not(.rpress-add-to-cart),
@@ -718,17 +1091,12 @@ class RP_Frontend_Scripts
       form.rpress_form a,
       .custom-reset-password a,
       .user-dashboard-wrapper a,
-      #rpress_user_history.rpress-order-history a:not(.rpress-view-order-btn):not(.rpress-reorder-btn),
-      .rp-thankyou-page a {
+      #rpress_user_history.rpress-order-history a:not(.rpress-view-order-btn):not(.rpress-reorder-btn) {
         color: var(--rpress-theme-link) !important;
       }
 
       .rpress-wrap label,
       .rpress-wrap .rpress-label,
-      .rpress-checkout #rpress_checkout_wrap label,
-      .rpress-checkout #rpress_checkout_wrap .rpress-label,
-      .rpress-checkout #rpress_checkout_wrap .delivery-time-text,
-      .rpress-checkout #rpress_checkout_wrap .pickup-time-text,
       form.rpress_form p label,
       .custom-reset-password form label,
       .user-dashboard-wrapper .form-label,
@@ -738,29 +1106,14 @@ class RP_Frontend_Scripts
       #rpress_user_history.rpress-order-history .rpress-history-meta-item span,
       #rpress_user_history.rpress-order-history .rpress-history-items span,
       #rpress_user_history.rpress-order-history .rpress-history-total span,
-      .rp-thankyou-meta-item span,
-      .rp-thankyou-list span,
       #rpressModal.show-order-details.rpress-order-details-context .rp-detils-content-view .rp-detail-label {
         color: var(--rpress-theme-label) !important;
       }
 
-      body.rpress-checkout #rpress_checkout_wrap,
       .user-dashboard-wrapper {
         background: linear-gradient(180deg, var(--rpress-theme-section-bg-soft) 0%, #ffffff 100%) !important;
       }
 
-      body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_discount_code,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_rewards,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_login_register,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_user_info,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_order_details,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_payment_mode_select_wrap,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_payment_icons,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_cc_fields,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_cc_address,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap table,
       #rpress_user_history.rpress-order-history .rpress-history-card,
       .user-dashboard-wrapper .box-bg,
       .user-dashboard-wrapper .light-gray-bg,
@@ -773,32 +1126,6 @@ class RP_Frontend_Scripts
         background: linear-gradient(180deg, #ffffff 0%, var(--rpress-theme-section-bg-soft) 100%) !important;
         border-color: var(--rpress-theme-border-soft) !important;
       }
-
-      .rp-thankyou-hero {
-        background: linear-gradient(140deg, #ffffff 0%, var(--rpress-theme-section-bg) 48%, #ffffff 100%) !important;
-        border-color: var(--rpress-theme-border-soft) !important;
-      }
-
-      .rp-thankyou-hero::before {
-        background: radial-gradient(circle at center, rgba(<?php echo esc_attr($rgba); ?>, 0.2), rgba(<?php echo esc_attr($rgba); ?>, 0)) !important;
-      }
-
-      .rp-thankyou-check {
-        background: linear-gradient(135deg, var(--rpress-theme-primary), var(--rpress-theme-primary-light)) !important;
-        box-shadow: 0 10px 20px rgba(<?php echo esc_attr($rgba); ?>, 0.28) !important;
-      }
-
-      .rp-thankyou-live-status,
-      .rp-thankyou-meta-item,
-      .rp-thankyou-card,
-      .rp-thankyou-next-item,
-      .rp-thankyou-table-wrap {
-        background: rgba(255, 255, 255, 0.92) !important;
-        border-color: var(--rpress-theme-border-soft) !important;
-      }
-
-      .rp-thankyou-page table#rp-order-summary thead th,
-      .rp-thankyou-page table#rp-order-summary tfoot td,
       #rpress_user_history.rpress-order-history .rpress-order-history-count,
       #rpress_user_history.rpress-order-history .rpress-history-meta-item,
       .user-dashboard-wrapper table#user-orders thead th,
@@ -812,9 +1139,6 @@ class RP_Frontend_Scripts
 
       .user-dashboard-wrapper ul.sidebar-menu li.active,
       .user-dashboard-wrapper ul.sidebar-menu li:hover,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_payment_mode_select .rpress-gateway-option-selected,
-      body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option #rpressdeliveryTab .single-service-selected.active,
-      body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option #rpressdeliveryTab .single-service-selected[aria-selected="true"],
       .rpress-section ul.rpress-category-lists .rpress-category-item.current,
       .rpress-section ul.rpress-category-lists .rpress-category-item:hover,
       .rpress-section .cd-dropdown-content li a.mnuactive {
@@ -853,12 +1177,7 @@ class RP_Frontend_Scripts
       .user-dashboard-wrapper input.search__input:focus,
       .user-dashboard-wrapper div#user-orders_filter input[type="search"]:focus,
       form.rpress_form p input:focus,
-      .custom-reset-password form input:focus,
-      body.rpress-checkout #rpress_checkout_wrap .rpress-input:focus,
-      body.rpress-checkout #rpress_checkout_wrap select.rpress-select:focus,
-      body.rpress-checkout #rpress_checkout_wrap select.rp-form-control:focus,
-      body.rpress-checkout #rpress_checkout_wrap select.rpress-hrs:focus,
-      body.rpress-checkout #rpress_checkout_wrap textarea.rpress-input:focus {
+      .custom-reset-password form input:focus {
         border-color: var(--rpress-theme-primary) !important;
         box-shadow: 0 0 0 3px var(--rpress-theme-focus) !important;
       }
@@ -874,63 +1193,17 @@ class RP_Frontend_Scripts
       .user-dashboard-wrapper .address-wrap button.btn.btn-primary:hover,
       form.rpress_form p input[type="submit"],
       .custom-reset-password form input[type="submit"],
-      body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit #rpress-purchase-button,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit input[type="submit"],
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_rewards .rpress-apply-discount.rpress-submit,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_rewards .rpress-apply-redemp.rpress-submit,
-      body.rpress-checkout #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
-      #rpress_user_history.rpress-order-history .rpress-history-actions a,
-      .rp-live-status-toast {
+      #rpress_user_history.rpress-order-history .rpress-history-actions a {
         background: var(--rpress-theme-primary) !important;
         border-color: var(--rpress-theme-primary) !important;
         color: var(--rpress-theme-primary-contrast) !important;
       }
 
       .user-dashboard-wrapper .address-wrap button.btn.btn-primary,
-      .user-dashboard-wrapper button.btn.btn-primary.add-new-address-btn,
-      .rp-thankyou-notify-btn,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit {
+      .user-dashboard-wrapper button.btn.btn-primary.add-new-address-btn {
         background: transparent !important;
         border-color: var(--rpress-theme-primary) !important;
         color: var(--rpress-theme-primary) !important;
-      }
-
-      .rp-thankyou-notify-btn:hover,
-      .rp-thankyou-notify-btn:focus,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:hover {
-        background: var(--rpress-theme-primary) !important;
-        color: var(--rpress-theme-primary-contrast) !important;
-      }
-
-      #rpress_checkout_wrap #rpress_discount_code_wrap .rpress-discount-code-field-wrap {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        width: 100% !important;
-        max-width: 100% !important;
-      }
-
-      #rpress_checkout_wrap #rpress_discount_code_wrap input#rpress-discount {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        width: 100% !important;
-        margin: 0 !important;
-      }
-
-      #rpress_checkout_wrap #rpress_discount_code_wrap .rpress-apply-discount.rpress-submit {
-        flex: 0 0 auto !important;
-        margin-left: 0 !important;
-      }
-
-      @media only screen and (max-width: 480px) {
-        #rpress_checkout_wrap #rpress_discount_code_wrap .rpress-discount-code-field-wrap {
-          align-items: stretch !important;
-          flex-direction: column !important;
-        }
-
-        #rpress_checkout_wrap #rpress_discount_code_wrap .rpress-apply-discount.rpress-submit:not(.th-plain) {
-          width: 100% !important;
-        }
       }
 
       .user-dashboard-wrapper .radio-custom:checked + .radio-custom-label,
@@ -950,24 +1223,11 @@ class RP_Frontend_Scripts
       }
 
       /* Sync frontend button/select shapes with "Default Button Style". */
-      body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available),
-      body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available),
-      body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available),
-      body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available),
       .rpress-section .rpress-tabs-wrapper.rpress-delivery-options,
       .rpress-section .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs,
       .rpress-section .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item,
       .rpress-section .rpress-delivery-options ul#rpressdeliveryTab.order-online-servicetabs > li.nav-item > a.nav-link,
       .rpress-section .rpress_checkout a,
-      body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit,
-      #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit,
-      #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button,
-      #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit,
-      #rpress_checkout_wrap .rpress-delivery-options ul#rpressdeliveryTab.nav,
-      #rpress_checkout_wrap .rpress-delivery-options ul#rpressdeliveryTab.nav>li,
-      #rpress_checkout_wrap .rpress-delivery-options ul#rpressdeliveryTab.nav>li.nav-item,
-      #rpress_checkout_wrap .rpress-delivery-options ul#rpressdeliveryTab.nav>li>a,
-      #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
       #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn,
       #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn,
       #rpressDateTime.rpress-edit-address-popup .rpress-delivery-options ul#rpressdeliveryTab,
@@ -978,20 +1238,15 @@ class RP_Frontend_Scripts
       #rpressModal.show-service-options .rpress-delivery-options ul#rpressdeliveryTab>li.nav-item>a.nav-link,
       #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
       #rpressModal .rpress-popup-actions .submit-fooditem-button,
-      #rpress_purchase_form #rpress-purchase-button,
-      #rpress_purchase_form #rpress-user-login-submit input,
       #rpress_login_submit,
       #rpress_register_form input[type="submit"].rpress-submit,
       #rpress_profile_editor_submit,
       .rpress-order-history a.rpress-view-order-btn,
-      .rpress-order-history a.rpress-reorder-btn,
-      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
-      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
+      .rpress-order-history a.rpress-reorder-btn {
         border-radius: var(--rpress-default-control-radius) !important;
       }
 
       .rpress-section .rpress-delivery-options select,
-      #rpress_checkout_wrap select,
       #rpressDateTime.rpress-edit-address-popup select,
       #rpressModal.show-service-options select {
         border-radius: var(--rpress-default-control-radius) !important;
@@ -1011,17 +1266,21 @@ class RP_Frontend_Scripts
         display: block;
         width: 20px;
         height: 20px;
-        line-height: 20px;
-        margin: 2px auto;
         border-radius: 50%;
         border: 3px solid #fff;
         border-color: #fff transparent #fff transparent;
         animation: lds-dual-ring 1.2s linear infinite;
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 4px;
-        bottom: 0;
+        /* Center the spinner on the button both horizontally and vertically,
+           whatever the button's size. Uses a margin offset (half the 20px box)
+           rather than transform, because the spin animation drives `transform`.
+           !important so it wins over the per-button top/margin offsets that
+           used to pin the spinner off-center on taller buttons. */
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        margin: -10px 0 0 -10px !important;
       }
 
       .rpress-add-to-cart.rp-loading:after {
@@ -1046,6 +1305,21 @@ class RP_Frontend_Scripts
         right: 0;
         top: 4px;
         bottom: 0;
+      }
+
+      /* While a button is loading, hide its own label + plus icon so only the
+         centered spinner shows — otherwise the "+ ADD" label and the masked
+         "+" icon (drawn by the button's ::before) sit under the spinner. Tied
+         to .rp-loading itself (the state that draws the spinner) so the two can
+         never appear at once. The spinner is ::after, so hiding ::before is
+         safe. */
+      .rp-loading .rp-ajax-toggle-text,
+      .rpress-add-to-cart.rp-loading .rpress-add-to-cart-label,
+      .rpress-add-to-cart.rp-loading .add-icon {
+        opacity: 0 !important;
+      }
+      .rpress-add-to-cart.rp-loading::before {
+        opacity: 0 !important;
       }
 
       .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit {
@@ -1126,9 +1400,7 @@ class RP_Frontend_Scripts
       #rpress_register_form input[type="submit"].rpress-submit,
       #rpress_profile_editor_submit,
       .rpress-order-history a.rpress-view-order-btn,
-      .rpress-order-history a.rpress-reorder-btn,
-      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
-      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
+      .rpress-order-history a.rpress-reorder-btn {
         background:
           <?php echo sanitize_hex_color($primary_color); ?>
         ;
@@ -1175,9 +1447,7 @@ class RP_Frontend_Scripts
       #rpress_register_form input[type="submit"].rpress-submit:hover,
       #rpress_profile_editor_submit:hover,
       .rpress-order-history a.rpress-view-order-btn:hover,
-      .rpress-order-history a.rpress-reorder-btn:hover,
-      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:hover,
-      #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:hover
+      .rpress-order-history a.rpress-reorder-btn:hover
       {
       border: 1px solid
         <?php echo sanitize_hex_color($primary_color); ?>
@@ -1232,9 +1502,6 @@ class RP_Frontend_Scripts
       .nav#rpressdeliveryTab>li.active>a:focus,
       .rpress-sidebar-cart-wrap .close-cart-ic,
       .rpress-mobile-cart-icons .close-cart-ic,
-      #rpress_checkout_wrap .nav#rpressdeliveryTab>li.active>a,
-      #rpress_checkout_wrap .nav#rpressdeliveryTab>li.active>a:hover,
-      #rpress_checkout_wrap .nav#rpressdeliveryTab>li.active>a:focus,
       [type=submit].rpress-submit {
         background-color:
           <?php echo sanitize_hex_color($primary_color); ?>
@@ -1300,9 +1567,7 @@ class RP_Frontend_Scripts
       }
 
       .rpress-order-history a.rpress-view-order-btn,
-      .rpress-order-history a.rpress-reorder-btn,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
-      body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
+      .rpress-order-history a.rpress-reorder-btn {
         background:
           <?php echo sanitize_hex_color($primary_color); ?>
           !important;
@@ -1324,6 +1589,20 @@ class RP_Frontend_Scripts
         border: 1px solid
           <?php echo sanitize_hex_color($primary_color) ?>
         ;
+      }
+
+      /* Cancel button: a light pill with readable dark-grey text. A broader
+         button rule was painting the label white on the near-white fill, so
+         "Cancel" was invisible. This inline block loads last and wins. */
+      #rpressDateTime.rpress-edit-address-popup .modal-footer button.rpress-editaddress-cancel-btn,
+      #rpressDateTime.rpress-edit-address-popup button.rpress-editaddress-cancel-btn {
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border: 1px solid #e2e8f0 !important;
+      }
+      #rpressDateTime.rpress-edit-address-popup button.rpress-editaddress-cancel-btn:hover {
+        background: #e2e8f0 !important;
+        color: #334155 !important;
       }
 
       .rpress-section .cd-dropdown-wrapper .cd-dropdown-content li a.mnuactive {
@@ -1376,6 +1655,15 @@ class RP_Frontend_Scripts
        .rpress-section .container-actionmenu #actionburger {
         background-color:
           <?php echo sanitize_hex_color($primary_color) ?>
+        ;
+        /* Base CSS leaves the label black; on a dark theme colour that made it
+           invisible on the tinted button. Follow the theme's contrast colour so
+           the "Menu" text stays readable whatever colour is chosen. */
+        color: var(--rpress-theme-primary-contrast, #fff) !important;
+       }
+       .rpress-section .container-actionmenu #actionburger svg,
+       .rpress-section .container-actionmenu #actionburger path {
+        fill: var(--rpress-theme-primary-contrast, #fff) !important;
        }
 
       <?php if ('th-plain' === $button_style) : ?>
@@ -1384,38 +1672,21 @@ class RP_Frontend_Scripts
         button.rpress-submit:not(.rpress-not-available),
         input[type="submit"].rpress-submit:not(.rpress-not-available),
         input[type="button"].rpress-submit:not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available),
         .button.rpress-submit:not(.rpress-not-available),
         [type=submit].rpress-submit:not(.rpress-not-available),
         #rpressModal.show-service-options .btn.btn-block.btn-primary,
         #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary,
         .rpress-section .rpress_checkout a,
         .rpress-section .cart-action-wrap a,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit,
-        body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit #rpress-purchase-button,
-        body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit input[type="submit"].rpress-submit,
-        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit,
-        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button,
-        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit,
-        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn,
         #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
         #rpressModal .rpress-popup-actions .submit-fooditem-button,
-        #rpress_purchase_form #rpress-purchase-button,
-        #rpress_purchase_form #rpress-user-login-submit input,
         #rpress_login_submit,
         #rpress_register_form input[type="submit"].rpress-submit,
         #rpress_profile_editor_submit,
         .rpress-order-history a.rpress-view-order-btn,
-        .rpress-order-history a.rpress-reorder-btn,
-        body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
-        body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
+        .rpress-order-history a.rpress-reorder-btn {
           background: transparent !important;
           background-color: transparent !important;
           border: 0 !important;
@@ -1488,14 +1759,6 @@ class RP_Frontend_Scripts
         input[type="submit"].rpress-submit:not(.rpress-not-available):focus,
         input[type="button"].rpress-submit:not(.rpress-not-available):hover,
         input[type="button"].rpress-submit:not(.rpress-not-available):focus,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available):hover,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available):focus,
-        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available):hover,
-        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available):focus,
-        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available):hover,
-        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available):focus,
-        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available):hover,
-        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available):focus,
         .button.rpress-submit:not(.rpress-not-available):hover,
         .button.rpress-submit:not(.rpress-not-available):focus,
         [type=submit].rpress-submit:not(.rpress-not-available):hover,
@@ -1506,16 +1769,6 @@ class RP_Frontend_Scripts
         #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary:focus,
         .rpress-section .rpress_checkout a:hover,
         .rpress-section .rpress_checkout a:focus,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit:hover,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit:focus,
-        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit:hover,
-        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit:focus,
-        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button:hover,
-        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button:focus,
-        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:hover,
-        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:focus,
-        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update:hover,
-        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update:focus,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn:hover,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn:focus,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn:hover,
@@ -1524,10 +1777,6 @@ class RP_Frontend_Scripts
         #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update:focus,
         #rpressModal .rpress-popup-actions .submit-fooditem-button:hover,
         #rpressModal .rpress-popup-actions .submit-fooditem-button:focus,
-        #rpress_purchase_form #rpress-purchase-button:hover,
-        #rpress_purchase_form #rpress-purchase-button:focus,
-        #rpress_purchase_form #rpress-user-login-submit input:hover,
-        #rpress_purchase_form #rpress-user-login-submit input:focus,
         #rpress_login_submit:hover,
         #rpress_login_submit:focus,
         #rpress_register_form input[type="submit"].rpress-submit:hover,
@@ -1537,11 +1786,7 @@ class RP_Frontend_Scripts
         .rpress-order-history a.rpress-view-order-btn:hover,
         .rpress-order-history a.rpress-view-order-btn:focus,
         .rpress-order-history a.rpress-reorder-btn:hover,
-        .rpress-order-history a.rpress-reorder-btn:focus,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:hover,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:focus,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:hover,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:focus {
+        .rpress-order-history a.rpress-reorder-btn:focus {
           background: transparent !important;
           background-color: transparent !important;
           border-color: transparent !important;
@@ -1581,33 +1826,20 @@ class RP_Frontend_Scripts
         button.rpress-submit:not(.rpress-not-available),
         input[type="submit"].rpress-submit:not(.rpress-not-available),
         input[type="button"].rpress-submit:not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available),
-        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available),
         .button.rpress-submit:not(.rpress-not-available),
         [type=submit].rpress-submit:not(.rpress-not-available),
         #rpressModal.show-service-options .btn.btn-block.btn-primary,
         #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary,
         .rpress-section .rpress_checkout a,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit,
-        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit,
-        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button,
-        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit,
-        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn,
         #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update,
         #rpressModal .rpress-popup-actions .submit-fooditem-button,
-        #rpress_purchase_form #rpress-purchase-button,
-        #rpress_purchase_form #rpress-user-login-submit input,
         #rpress_login_submit,
         #rpress_register_form input[type="submit"].rpress-submit,
         #rpress_profile_editor_submit,
         .rpress-order-history a.rpress-view-order-btn,
-        .rpress-order-history a.rpress-reorder-btn,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart {
+        .rpress-order-history a.rpress-reorder-btn {
           color: #fff !important;
           text-decoration: none !important;
         }
@@ -1622,14 +1854,6 @@ class RP_Frontend_Scripts
         input[type="submit"].rpress-submit:not(.rpress-not-available):focus,
         input[type="button"].rpress-submit:not(.rpress-not-available):hover,
         input[type="button"].rpress-submit:not(.rpress-not-available):focus,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available):hover,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-submit:not(.rpress-not-available):focus,
-        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available):hover,
-        body.rpress-checkout #rpress_checkout_wrap button.rpress-submit:not(.rpress-not-available):focus,
-        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available):hover,
-        body.rpress-checkout #rpress_checkout_wrap input[type="submit"].rpress-submit:not(.rpress-not-available):focus,
-        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available):hover,
-        body.rpress-checkout #rpress_checkout_wrap input[type="button"].rpress-submit:not(.rpress-not-available):focus,
         .button.rpress-submit:not(.rpress-not-available):hover,
         .button.rpress-submit:not(.rpress-not-available):focus,
         [type=submit].rpress-submit:not(.rpress-not-available):hover,
@@ -1640,16 +1864,6 @@ class RP_Frontend_Scripts
         #rpressDateTime.rpress-edit-address-popup .btn.btn-block.btn-primary:focus,
         .rpress-section .rpress_checkout a:hover,
         .rpress-section .rpress_checkout a:focus,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit:hover,
-        body.rpress-checkout #rpress_checkout_wrap a.rpress-checkout-cart.rpress-submit:focus,
-        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit:hover,
-        #rpress_checkout_wrap #rpress_purchase_submit .rpress-submit:focus,
-        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button:hover,
-        #rpress_checkout_wrap .rpress-checkout-button-actions a.rpress-submit.button:focus,
-        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:hover,
-        #rpress_checkout_form_wrap .rpress-cart-adjustment .rpress-apply-discount.rpress-submit:focus,
-        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update:hover,
-        #rpress_checkout_wrap a.btn.btn-primary.btn-block.rpress-delivery-opt-update:focus,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn:hover,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-cancel-btn:focus,
         #rpressDateTime.rpress-edit-address-popup .rpress-editaddress-submit-btn:hover,
@@ -1658,10 +1872,6 @@ class RP_Frontend_Scripts
         #rpressModal.show-service-options a.btn.btn-primary.btn-block.rpress-delivery-opt-update:focus,
         #rpressModal .rpress-popup-actions .submit-fooditem-button:hover,
         #rpressModal .rpress-popup-actions .submit-fooditem-button:focus,
-        #rpress_purchase_form #rpress-purchase-button:hover,
-        #rpress_purchase_form #rpress-purchase-button:focus,
-        #rpress_purchase_form #rpress-user-login-submit input:hover,
-        #rpress_purchase_form #rpress-user-login-submit input:focus,
         #rpress_login_submit:hover,
         #rpress_login_submit:focus,
         #rpress_register_form input[type="submit"].rpress-submit:hover,
@@ -1671,11 +1881,7 @@ class RP_Frontend_Scripts
         .rpress-order-history a.rpress-view-order-btn:hover,
         .rpress-order-history a.rpress-view-order-btn:focus,
         .rpress-order-history a.rpress-reorder-btn:hover,
-        .rpress-order-history a.rpress-reorder-btn:focus,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:hover,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress_cart_remove_item_btn:focus,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:hover,
-        #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-actions .rpress-remove-from-cart:focus {
+        .rpress-order-history a.rpress-reorder-btn:focus {
           background:
             <?php echo sanitize_hex_color($theme_dark); ?>
             !important;
@@ -1710,8 +1916,6 @@ class RP_Frontend_Scripts
       <?php endif; ?>
 
       @media only screen and (max-width: 768px) {
-        #rpress_checkout_wrap #rpress_purchase_submit #rpress-purchase-button:not(.th-plain),
-        #rpress_checkout_wrap #rpress_checkout_form_wrap .rpress-checkout-button-actions a.rpress-submit.button:not(.th-plain) {
           padding: 12px 16px;
         }
       }

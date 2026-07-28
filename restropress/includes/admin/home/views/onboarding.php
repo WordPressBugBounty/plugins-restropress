@@ -41,6 +41,13 @@ $asap_on      = (string) rpress_get_option( 'enable_asap_option', '1' );
 $notify_on    = rpress_get_option( 'enable_order_notification', '1' );
 $min_delivery = rpress_get_option( 'minimum_order_price', '' );
 $min_pickup   = rpress_get_option( 'minimum_order_price_pickup', '' );
+// Appearance step (Styles settings surfaced during onboarding).
+$cur_pack     = rpress_get_option( 'template_pack', 'classic' );
+$cur_pack     = in_array( $cur_pack, array( 'classic', 'modern' ), true ) ? $cur_pack : 'classic';
+$theme_color  = rpress_get_option( 'primary_color', '#ED5575' );
+$theme_color  = sanitize_hex_color( $theme_color ) ? $theme_color : '#ED5575';
+$menu_layout  = rpress_get_option( 'template', 'list' );
+$menu_layout  = in_array( $menu_layout, array( 'list', 'grid' ), true ) ? $menu_layout : 'list';
 $service_labels = array(
 	'delivery_and_pickup' => __( 'Pickup & delivery', 'restropress' ),
 	'pickup'              => __( 'Pickup only', 'restropress' ),
@@ -89,7 +96,8 @@ $stripe_settings_url = admin_url( 'admin.php?page=rpress-settings&tab=gateways&s
 
 // Steps for the rail.
 $steps = array(
-	'profile'  => array( 'label' => __( 'Restaurant profile', 'restropress' ), 'sub' => __( 'Name, location & basics', 'restropress' ) ),
+	'profile'    => array( 'label' => __( 'Restaurant profile', 'restropress' ), 'sub' => __( 'Name, location & basics', 'restropress' ) ),
+	'appearance' => array( 'label' => __( 'Storefront look', 'restropress' ),     'sub' => __( 'Template & brand colour', 'restropress' ) ),
 	'menu'     => array( 'label' => __( 'Your menu', 'restropress' ),          'sub' => __( 'Import or build', 'restropress' ) ),
 	'config'   => array( 'label' => __( 'How you sell', 'restropress' ),       'sub' => __( 'Service, hours, labels', 'restropress' ) ),
 	'payments' => array( 'label' => __( 'Payments', 'restropress' ),           'sub' => __( 'Cash + online options', 'restropress' ) ),
@@ -178,6 +186,46 @@ $steps = array(
 					</div>
 				</div>
 				<p class="rp-ob-hint rp-help-text"><?php esc_html_e( 'Saves to your WordPress timezone & time format - applies across your whole site.', 'restropress' ); ?></p>
+			</section>
+
+			<!-- APPEARANCE -->
+			<section class="rp-ob-pane" data-pane="appearance" hidden>
+				<h2 class="rp-ob-title"><?php esc_html_e( 'Choose your storefront look', 'restropress' ); ?></h2>
+				<p class="rp-ob-sub"><?php esc_html_e( 'Pick a design and your brand colour. You can change these any time under Settings → Styles.', 'restropress' ); ?></p>
+
+				<div class="rp-ob-group"><?php esc_html_e( 'Template', 'restropress' ); ?></div>
+				<div class="rp-ob-packs">
+					<label class="rp-ob-pack">
+						<input type="radio" name="template_pack" value="classic" <?php checked( $cur_pack, 'classic' ); ?>>
+						<span class="rp-ob-pack-in">
+							<span class="rp-ob-pack-thumb"><svg viewBox="0 0 76 66" xmlns="http://www.w3.org/2000/svg"><rect width="76" height="66" fill="#f1f1f2"/><rect x="14" y="18" width="30" height="7" rx="3.5" fill="#e0521f"/><rect x="14" y="32" width="48" height="5" rx="2.5" fill="#d5d7da"/><rect x="14" y="43" width="48" height="5" rx="2.5" fill="#d5d7da"/></svg></span>
+							<span class="rp-ob-pack-body"><b><?php esc_html_e( 'Classic', 'restropress' ); ?></b><small><?php esc_html_e( 'The original RestroPress look: clean and neutral, inherits your theme.', 'restropress' ); ?></small></span>
+						</span>
+					</label>
+					<label class="rp-ob-pack">
+						<input type="radio" name="template_pack" value="modern" <?php checked( $cur_pack, 'modern' ); ?>>
+						<span class="rp-ob-pack-in">
+							<span class="rp-ob-pack-thumb"><svg viewBox="0 0 76 66" xmlns="http://www.w3.org/2000/svg"><rect width="76" height="66" fill="#1b1b1f"/><rect x="16" y="14" width="17" height="17" rx="4" fill="#e0521f"/><rect x="43" y="14" width="17" height="17" rx="4" fill="#6c5ce7"/><rect x="16" y="36" width="17" height="17" rx="4" fill="#2e9e4f"/><rect x="43" y="36" width="17" height="17" rx="4" fill="#f0c040"/></svg></span>
+							<span class="rp-ob-pack-body"><b><?php esc_html_e( 'Modern', 'restropress' ); ?></b><small><?php esc_html_e( 'Image-forward, food-delivery-app style: big photos, rounded cards.', 'restropress' ); ?></small></span>
+						</span>
+					</label>
+				</div>
+
+				<div class="rp-ob-two">
+					<div class="rp-ob-field">
+						<div class="rp-ob-group" style="margin-top:4px"><?php esc_html_e( 'Brand colour', 'restropress' ); ?></div>
+						<label><?php esc_html_e( 'Theme colour', 'restropress' ); ?></label>
+						<span class="rp-ob-colorwrap"><input type="color" name="primary_color" id="rp-ob-theme-color" value="<?php echo esc_attr( $theme_color ); ?>"><code id="rp-ob-theme-hex"><?php echo esc_html( strtoupper( $theme_color ) ); ?></code></span>
+						<p class="rp-ob-hint rp-help-text"><?php esc_html_e( 'Used for buttons, links and highlights across your storefront.', 'restropress' ); ?></p>
+					</div>
+					<div class="rp-ob-field">
+						<div class="rp-ob-group" style="margin-top:4px"><?php esc_html_e( 'Menu layout', 'restropress' ); ?></div>
+						<label><?php esc_html_e( 'How items are arranged', 'restropress' ); ?></label>
+						<div class="rp-ob-seg" id="rp-ob-layout"><button type="button" data-layout="list" class="<?php echo 'list' === $menu_layout ? 'on' : ''; ?>"><?php esc_html_e( 'List', 'restropress' ); ?></button><button type="button" data-layout="grid" class="<?php echo 'grid' === $menu_layout ? 'on' : ''; ?>"><?php esc_html_e( 'Grid', 'restropress' ); ?></button></div>
+						<input type="hidden" name="template" id="rp-ob-layout-val" value="<?php echo esc_attr( $menu_layout ); ?>">
+						<p class="rp-ob-hint rp-help-text"><?php esc_html_e( 'Works with either template.', 'restropress' ); ?></p>
+					</div>
+				</div>
 			</section>
 
 			<!-- MENU -->

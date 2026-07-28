@@ -82,7 +82,7 @@ class RP_REST_Posts_Controller extends WP_REST_Posts_Controller
 	private function check_application_password_auth(WP_REST_Request $request)
 	{
 		// Check if user is already authenticated (e.g., via cookies for web users)
-		if (is_user_logged_in() && current_user_can('manage_options')) {
+		if (is_user_logged_in() && current_user_can( 'manage_shop_settings' )) {
 			return parent::get_items_permissions_check($request);
 		}
 		return new WP_Error(

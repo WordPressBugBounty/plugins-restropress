@@ -301,7 +301,7 @@ class RP_REST_Cart_V1_Controller extends WP_REST_Controller {
 				'discount'     => rpress_get_cart_discounted_amount(), // Discounted amount
 				'tax'          => rpress_get_cart_tax(),               // Taxed amount
 				'price'        => rpress_get_cart_total(),    // Amount after taxes
-				'cart_details' => $data,
+				'cart_details' => $posts,
 			);
 			$response = rest_ensure_response( $cart_data );
 			return $response;
@@ -368,7 +368,7 @@ class RP_REST_Cart_V1_Controller extends WP_REST_Controller {
 	 */
 	private function check_application_password_auth(WP_REST_Request $request) {
 		// Check if user is already authenticated (e.g., via cookies for web users)
-		if (is_user_logged_in() && current_user_can('manage_options')) {
+		if (is_user_logged_in() && current_user_can( 'manage_shop_settings' )) {
 			return true;
 		}
 		return new WP_Error(

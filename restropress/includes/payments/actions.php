@@ -226,6 +226,36 @@ function rpress_clear_user_history_cache( $payment_id, $new_status, $old_status 
 	}
 }
 add_action( 'rpress_update_payment_status', 'rpress_clear_user_history_cache', 10, 3 );
+
+/**
+ * Keep the order fulfilment status in sync with terminal payment states.
+ *
+ * When a payment is refunded, cancelled or revoked the order is no longer being
+ * fulfilled, so reflect that in _order_status. Otherwise the customer tracker
+ * (and admin badge) keep showing a stale fulfilment step for a dead order.
+ *
+ * @since 3.4
+ * @param int    $payment_id The payment ID.
+ * @param string $new_status New payment status.
+ * @param string $old_status Previous payment status.
+ * @return void
+ */
+function rpress_sync_order_status_on_payment_change( $payment_id, $new_status, $old_status ) {
+	if ( $new_status === $old_status ) {
+		return;
+	}
+	if ( ! in_array( $new_status, array( 'refunded', 'cancelled', 'revoked' ), true ) ) {
+		return;
+	}
+	if ( ! function_exists( 'rpress_get_order_status' ) || ! function_exists( 'rpress_update_order_status' ) ) {
+		return;
+	}
+	if ( 'cancelled' === rpress_get_order_status( $payment_id ) ) {
+		return;
+	}
+	rpress_update_order_status( $payment_id, 'cancelled' );
+}
+add_action( 'rpress_update_payment_status', 'rpress_sync_order_status_on_payment_change', 20, 3 );
 /**
  * Updates all old payments, prior to 1.2, with new
  * meta for the total purchase amount
@@ -481,7 +511,7 @@ function rpress_recovery_force_login_fields() {
 			<div class="rpress-alert rpress-alert-info">
 				<p><?php esc_html_e( 'To complete this payment, please login to your account.', 'restropress' ); ?></p>
 				<p>
-					<a href="<?php echo esc_url( wp_lostpassword_url() ); ?>" title="<?php echo esc_attr__( 'Lost Password', 'restropress' ); ?>">
+					<a href="<?php echo esc_url( rpress_get_lostpassword_url() ); ?>" title="<?php echo esc_attr__( 'Lost Password', 'restropress' ); ?>">
 						<?php esc_html_e( 'Lost Password?', 'restropress' ); ?>
 					</a>
 				</p>

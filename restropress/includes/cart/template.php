@@ -65,6 +65,34 @@ function rpress_get_cart_sidebar_summary_html() {
 
 	return (string) apply_filters( 'rpress_cart_sidebar_summary_html', $html );
 }
+
+/**
+ * A delivery fee makes no sense on a pickup order, but the active Delivery Fee
+ * extension can still register a zero-amount `delivery_fee`, which surfaced as
+ * a stray "Delivery Fee ₹0.00" row in the sidebar. Hide any delivery-labelled
+ * fee while the selected service is pickup.
+ *
+ * @since 3.4
+ * @param bool   $render Whether to render this fee row.
+ * @param string $fee_id Fee id.
+ * @param array  $fee    Fee data.
+ * @return bool
+ */
+function rpress_cart_sidebar_hide_delivery_fee_on_pickup( $render, $fee_id, $fee ) {
+	if ( ! $render ) {
+		return $render;
+	}
+	$service = isset( $_COOKIE['service_type'] ) ? sanitize_key( wp_unslash( $_COOKIE['service_type'] ) ) : '';
+	if ( 'pickup' !== $service ) {
+		return $render;
+	}
+	$label = isset( $fee['label'] ) ? strtolower( (string) $fee['label'] ) : '';
+	if ( 'delivery_fee' === $fee_id || false !== strpos( $label, 'delivery' ) ) {
+		return false;
+	}
+	return $render;
+}
+add_filter( 'rpress_cart_sidebar_render_fee', 'rpress_cart_sidebar_hide_delivery_fee_on_pickup', 10, 3 );
 /**
  * Get Cart Item Template
  *

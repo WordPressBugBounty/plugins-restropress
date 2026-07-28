@@ -31,6 +31,7 @@ $button_style = sanitize_html_class( rpress_get_option( 'button_style', 'button'
 			</span>
 		</div>
 	</div>
+	<div class="rpress-cart-addons">{addon_items}</div>
 	<span class="rpress-special-instruction">{special_instruction}</span>
 	<div>
 		<span class="cart-action-wrap">
@@ -51,5 +52,4 @@ $button_style = sanitize_html_class( rpress_get_option( 'button_style', 'button'
 				<?php echo esc_html(apply_filters('rpress_cart_remove', __('Remove', 'restropress'))); ?></a>
 		</span>
 	</div>
-	<div>{addon_items}</div>
 </li>

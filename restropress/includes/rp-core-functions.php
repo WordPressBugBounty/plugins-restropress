@@ -210,19 +210,19 @@ function myplugin_custom_forgot_password_form()
   if (!is_user_logged_in()) {
     ?>
     <div class="custom-reset-password">
-      <h2>Forgot your password?</h2>
-      <p>A code will be sent to your email to help reset password</p>
+      <h2><?php esc_html_e( 'Forgot your password?', 'restropress' ); ?></h2>
+      <p><?php esc_html_e( 'A code will be sent to your email to help reset password', 'restropress' ); ?></p>
 
       <form method="post">
-        <label for="user_login">Username or Email Address</label>
-        <input type="text" name="user_login" id="user_login" required placeholder="Enter your email address" />
+        <label for="user_login"><?php esc_html_e( 'Username or Email Address', 'restropress' ); ?></label>
+        <input type="text" name="user_login" id="user_login" required placeholder="<?php esc_attr_e( 'Enter your email address', 'restropress' ); ?>" />
 
         <?php wp_nonce_field('custom_forgot_password_action', 'custom_forgot_password_nonce'); ?>
 
-        <input type="submit" name="custom_forgot_password_submit" class="reset-button" value="Get New Password" />
+        <input type="submit" name="custom_forgot_password_submit" class="reset-button" value="<?php esc_attr_e( 'Get New Password', 'restropress' ); ?>" />
 
         <div class="login-link">
-          <a href="<?php echo esc_url(site_url('/login')); ?>">â† Back to Login</a>
+          <a href="<?php echo esc_url(site_url('/login')); ?>">&larr; <?php esc_html_e( 'Back to Login', 'restropress' ); ?></a>
         </div>
       </form>
 
@@ -238,12 +238,12 @@ function myplugin_custom_forgot_password_form()
           if ($user) {
             $reset = retrieve_password($user->user_login);
             if ($reset) {
-              echo '<p class="success">Check your email for the confirmation link.</p>';
+              echo '<p class="success">' . esc_html__( 'Check your email for the confirmation link.', 'restropress' ) . '</p>';
             } else {
-              echo '<p class="error">Could not reset password. Try again later.</p>';
+              echo '<p class="error">' . esc_html__( 'Could not reset password. Try again later.', 'restropress' ) . '</p>';
             }
           } else {
-            echo '<p class="error">No user found with that email or username.</p>';
+            echo '<p class="error">' . esc_html__( 'No user found with that email or username.', 'restropress' ) . '</p>';
           }
         }
       }
@@ -251,7 +251,7 @@ function myplugin_custom_forgot_password_form()
     </div>
     <?php
   } else {
-    echo '<p>You are already logged in.</p>';
+    echo '<p>' . esc_html__( 'You are already logged in.', 'restropress' ) . '</p>';
   }
 
   return ob_get_clean();
@@ -528,19 +528,27 @@ function rpress_remove_food_cat_view_link($actions, $taxonomy)
  * @since       1.0.0
  * @return      array | store timings
  */
-function rp_get_store_timings($hide_past_time = true, $service_type = null)
+function rp_get_store_timings($hide_past_time = true, $service_type = null, $service_date = '')
 {
   $now = rpress_get_wp_now();
   $current_time = $now->getTimestamp();
   $current_date = $now->format('Y-m-d');
+  $slot_date = !empty($service_date) ? $service_date : $current_date;
   $prep_time = !empty(rpress_get_option('prep_time')) ? rpress_get_option('prep_time') : 30;
-  $open_time = !empty(rpress_get_option('open_time')) ? rpress_get_option('open_time') : '9:00am';
-  $close_time = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
-  $time_interval = apply_filters('rp_store_time_interval', '30', $service_type);
+  // Per-day basic hours (falls back to the legacy open_time/close_time pair).
+  $day_hours = rpress_get_store_hours_for_date($slot_date);
+  if (!empty($day_hours['closed'])) {
+    return array();
+  }
+  $open_time = $day_hours['open'];
+  $close_time = $day_hours['close'];
+  $default_interval = rpress_get_option('order_slot_interval', '30');
+  $default_interval = is_numeric($default_interval) && (int) $default_interval > 0 ? (string) (int) $default_interval : '30';
+  $time_interval = apply_filters('rp_store_time_interval', $default_interval, $service_type);
   $time_interval = $time_interval * 60;
   $prep_time = $prep_time * 60;
-  $open_time = rpress_get_wp_timestamp($current_date . ' ' . $open_time);
-  $close_time = rpress_get_wp_timestamp($current_date . ' ' . $close_time);
+  $open_time = rpress_get_wp_timestamp($slot_date . ' ' . $open_time);
+  $close_time = rpress_get_wp_timestamp($slot_date . ' ' . $close_time);
   if (empty($open_time) || empty($close_time)) {
     return array();
   }
@@ -822,6 +830,28 @@ function rpress_get_categories($params = array())
     $params['orderby'] = 'include';
   }
   unset($params['ids']);
+  // Resolve excluded_category (comma list of term ids or slugs) into real
+  // term ids so get_terms() actually excludes them (3.4). Previously the key
+  // was passed through unrecognized and exclusion never reached the query.
+  if (!empty($params['excluded_category'])) {
+    $exclude_ids = array();
+    foreach (explode(',', (string) $params['excluded_category']) as $token) {
+      $token = trim($token);
+      if ('' === $token) {
+        continue;
+      }
+      $term = is_numeric($token)
+        ? get_term_by('id', (int) $token, 'food-category')
+        : get_term_by('slug', $token, 'food-category');
+      if ($term && !is_wp_error($term)) {
+        $exclude_ids[] = (int) $term->term_id;
+      }
+    }
+    if ($exclude_ids) {
+      $params['exclude'] = $exclude_ids;
+    }
+  }
+  unset($params['excluded_category'], $params['category_menu']);
   $defaults = array(
     'taxonomy' => 'food-category',
     'hide_empty' => true,
@@ -956,7 +986,7 @@ function rp_get_store_service_hours(
   // -----------------------------
   // Get Store Timings
   // -----------------------------
-  $store_times = rp_get_store_timings(false, $service_type);
+  $store_times = rp_get_store_timings(false, $service_type, $service_date);
 
   $store_timings = apply_filters(
     'rpress_store_timings',
@@ -1185,7 +1215,7 @@ function rpress_get_available_service_slots( $service_type, $service_date = '', 
     return array();
   }
   $hide_past_time = $hide_past_time && ( $service_date === $today );
-  $store_times  = rp_get_store_timings( $hide_past_time, $service_type );
+  $store_times  = rp_get_store_timings( $hide_past_time, $service_type, $service_date );
   $store_times  = apply_filters( 'rpress_store_timings', $store_times, $service_type, $service_date );
 
   if ( empty( $store_times ) || ! is_array( $store_times ) ) {
@@ -1671,6 +1701,16 @@ function is_restropress_page()
           break;
         }
       }
+      // RestroPress blocks (3.4) count the same as their shortcodes.
+      if ( ! $rp_page && function_exists( 'has_block' ) ) {
+        $rpress_blocks = array( 'rpress/food-menu', 'rpress/checkout', 'rpress/order-history', 'rpress/receipt', 'rpress/food-search' );
+        foreach ( $rpress_blocks as $block_name ) {
+          if ( has_block( $block_name, $post ) ) {
+            $rp_page = true;
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -1742,13 +1782,13 @@ function rpress_string_is_image_url($str)
 {
   $ext = rpress_get_file_extension($str);
   switch (strtolower($ext)) {
-    case 'jpg';
+    case 'jpg':
       $return = true;
       break;
-    case 'png';
+    case 'png':
       $return = true;
       break;
-    case 'gif';
+    case 'gif':
       $return = true;
       break;
     default:
@@ -2746,29 +2786,29 @@ function rp_get_checkout_fields()
   $checkout_fields = array(
     'rpress_street_address' => array(
       'id' => 'rpress-street-address',
-      'title' => __('Street Address', 'restropress'),
+      'title' => __('Street address', 'restropress'),
       'is_required' => true,
       'is_hidden' => false,
       'name' => 'rpress_street_address',
-      'placeholder' => __('Street Address', 'restropress'),
+      'placeholder' => __('House number and street', 'restropress'),
       'value' => $customer['delivery_address']['address'],
     ),
     'rpress_apt_suite' => array(
       'id' => 'rpress-apt-suite',
-      'title' => __('Apartment, suite, unit etc. (optional)', 'restropress'),
+      'title' => __('Apt / suite (optional)', 'restropress'),
       'is_required' => false,
       'is_hidden' => false,
       'name' => 'rpress_apt_suite',
-      'placeholder' => __('Apartment, suite, unit etc. (optional)', 'restropress'),
+      'placeholder' => __('Apt, suite, unit', 'restropress'),
       'value' => $customer['delivery_address']['flat'],
     ),
     'rpress_city' => array(
       'id' => 'rpress_city',
-      'title' => __('Town / City', 'restropress'),
+      'title' => __('Town / city', 'restropress'),
       'is_required' => true,
       'is_hidden' => false,
       'name' => 'rpress_city',
-      'placeholder' => __('Town / City', 'restropress'),
+      'placeholder' => __('City', 'restropress'),
       'value' => $customer['delivery_address']['city'],
     ),
     'rpress_postcode' => array(
@@ -2777,7 +2817,7 @@ function rp_get_checkout_fields()
       'is_required' => true,
       'is_hidden' => false,
       'name' => 'rpress_postcode',
-      'placeholder' => __('Postcode / ZIP', 'restropress'),
+      'placeholder' => __('Postcode', 'restropress'),
       'value' => $customer['delivery_address']['postcode'],
     ),
   );
@@ -2830,16 +2870,23 @@ function rpress_is_store_open($service_type, $selected_date = '')
   $selected_date = !empty($selected_date) ? rp_row_date($selected_date, $service_type) : $current_day;
   $has_service_hours = true;
 
+  // Resolve the open/close window for the date being asked about (per-day
+  // basic hours + holidays when configured, legacy global pair otherwise).
+  $day_hours = rpress_get_store_hours_for_date($selected_date);
+
   if (!empty(rpress_get_option('enable_always_open'))) {
     $open_time = rpress_get_wp_timestamp($current_day . ' 00:00');
     $close_time = rpress_get_wp_timestamp($current_day . ' 23:59');
     $is_open = true;
+  } elseif (!empty($day_hours['closed'])) {
+    // Closed all day: a holiday or a day marked closed in the weekly hours.
+    $open_time = false;
+    $close_time = false;
+    $is_open = false;
+    $has_service_hours = false;
   } else {
-    $open_time_raw = !empty(rpress_get_option('open_time')) ? rpress_get_option('open_time') : '9:00am';
-    $close_time_raw = !empty(rpress_get_option('close_time')) ? rpress_get_option('close_time') : '11:30pm';
-
-    $open_time = rpress_get_wp_timestamp($current_day . ' ' . $open_time_raw);
-    $close_time = rpress_get_wp_timestamp($current_day . ' ' . $close_time_raw);
+    $open_time = rpress_get_wp_timestamp($selected_date . ' ' . $day_hours['open']);
+    $close_time = rpress_get_wp_timestamp($selected_date . ' ' . $day_hours['close']);
 
     if ($open_time === false || $close_time === false) {
       $is_open = false;
@@ -2961,6 +3008,21 @@ function rpress_get_service_context( $service_type_override = '' ): array
     $context['service_date'] = rpress_format_service_date( $raw );
   } else {
     $context['service_date'] = rpress_format_service_date( rpress_get_wp_now()->format( 'Y-m-d' ) );
+  }
+
+  // When the customer has not pinned a date, advance to the first date that
+  // actually has open slots. Without this an open store (in particular one set
+  // to always open) reads as "closed" late at night once today's slots are
+  // exhausted, even though tomorrow is wide open. rpress_get_first_available_
+  // service_date() returns the seed date unchanged when it already has slots,
+  // so daytime and genuinely-closed cases are untouched.
+  if ( ! $manual_service_date ) {
+    $first_available = rpress_get_first_available_service_date( $context['service_type'], $raw );
+    if ( ! empty( $first_available ) && $first_available !== $raw ) {
+      $raw = $first_available;
+      $context['service_date_raw'] = $first_available;
+      $context['service_date']     = rpress_format_service_date( $first_available );
+    }
   }
 
   if ( ! $manual_service_date && ! empty( $raw ) ) {

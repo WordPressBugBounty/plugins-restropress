@@ -1,0 +1,37 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/checkout",
+	"title": "Cart & Checkout",
+	"category": "restropress",
+	"description": "The RestroPress checkout flow, or a standalone cart, on any page.",
+	"keywords": [
+		"checkout",
+		"cart",
+		"order",
+		"food",
+		"restaurant"
+	],
+	"textdomain": "restropress",
+	"attributes": {
+		"mode": {
+			"type": "string",
+			"default": "checkout"
+		}
+	},
+	"supports": {
+		"align": [
+			"wide",
+			"full"
+		],
+		"html": false,
+		"multiple": false
+	},
+	"editorScript": "rpress-blocks-editor",
+	"style": "rpress-blocks",
+	"example": {
+		"attributes": {
+			"mode": "checkout"
+		}
+	}
+}

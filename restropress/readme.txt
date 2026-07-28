@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.0
-Stable tag: 3.3.1
+Stable tag: 3.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -154,6 +154,51 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
+
+= Version 3.4 (2026-07-28) =
+
+RestroPress 3.4 is the "open the door" release: a refreshed storefront you can restyle in one click, a free plan that can genuinely run a restaurant, RestroPress's first Gutenberg blocks, and a round of fixes for headless integrations, multisite, and staff accounts.
+
+* **A refreshed storefront with switchable template packs**
+    * New "Template" section under Settings, Styles: choose a template pack for your customer-facing pages. Classic keeps the original RestroPress look; Modern is a polished, image-forward storefront styled like a food-delivery app.
+    * Menu layout (list or grid) is now its own control that works with any pack, so you can pair either look with either layout.
+    * The Modern pack adds large food photos, rounded cards, sticky pill category tabs, a store header with your open status and prep time, and a redesigned sidebar cart with quantity steppers and tap-to-edit items.
+    * Redesigned checkout with cleaner contact, service, payment, and order summary cards, clearer typography, and tidier states for delivery, pickup, guest, and logged-in customers.
+    * New order confirmation and live tracking page that updates the order status in real time as the kitchen works through it.
+    * Redesigned toast notifications for add-to-cart, errors, and warnings, plus a more consistent delivery and pickup schedule popup (matching dropdowns and inputs).
+    * Everything here is styling only: your products, prices, menu items, and orders are untouched, and you can switch packs or revert at any time.
+* **A free plan that can actually go live**
+    * Flat delivery fee, weekly store hours (set per day, or mark a day closed), up to 5 holiday dates, and an order time slot interval are all free now. Basic receipt printing was already free.
+    * If you install the Delivery Fee, Store Timing & Delivery Cutoff, or Order Time, Intervals & Limits extension, it takes over automatically. Nothing is charged twice and no setting is duplicated.
+    * A short note now points you to the matching extension wherever a free setting has a more advanced paid option (delivery zones, per-service schedules, slot caps), so you always know what more is available without anything being blocked.
+* **RestroPress's first Gutenberg blocks**
+    * Six new blocks: Menu, Cart & Checkout, Order History, Order Receipt, Food Search, and Opening Hours, all listed under their own RestroPress category in the block inserter.
+    * The Menu block supports category filters, layout, sort order, and direct styling (colors, typography, spacing, borders) from the block sidebar, with a live preview as you edit.
+    * The Order Receipt block lets you choose exactly what shows on your confirmation page: items, prices, discounts, date, notes, payment method, and order number.
+    * Existing shortcodes keep working exactly as before. Blocks are an additional way to build pages, not a replacement.
+* **Fixes and improvements**
+    * Fixed: Weglot translation URL prefixes (e.g., `/en/`) are now properly preserved during checkout, order success, and failure redirects.
+    * Improved: Wrapped hardcoded strings on the login form template (`templates/shortcode-login.php`) in WordPress translation functions.
+    * Improved: Localized all user-facing strings in the forgot password custom shortcode form (`myplugin_custom_forgot_password_form` in `rp-core-functions.php`) and resolved broken arrow character encoding (`â† ` to `&larr;`).
+    * Improved: Localized fallback default error messages for minimum order amount validation.
+    * Fixed: Avoid appending list items (`li.cart_item.empty`) directly to the checkout table layout, which caused invalid HTML markup on the checkout page.
+    * Improved: Replaced the checkout page content with a clean loading spinner instantly when the last item is removed from the cart, preventing flashes of broken/inconsistent cart states during the page reload.
+    * Fixed: the REST API cart endpoint returned only the last item in the cart instead of all of them, breaking headless and mobile app integrations.
+    * Fixed: REST API access required full administrator permissions, blocking shop managers and staff from using the API at all.
+    * Fixed: reordering a past order could fail with a PHP notice when the order had no special instructions or no add-ons.
+    * Fixed: installing RestroPress on a multisite network with more than 100 sites silently skipped every site after the 100th.
+    * Fixed: the Orders menu badge count could disagree with the Orders list; it now always shows the same all-time pending count as the list's "All" filter.
+    * Removed the "Service Cookies Expire Time" setting. It controlled how long a customer's delivery/pickup choice was remembered, and almost no one needs to change it. The same 90-minute default keeps working; there is just no longer a confusing setting for it.
+* **PHP 8.x compatibility**
+    * Fixed several deprecation warnings that showed up under PHP 8.1 and newer, including in the REST API and the bundled JWT library.
+    * RestroPress now declares `Requires PHP: 7.4` and runs cleanly through PHP 8.5.
+* **For developers**
+    * New filters `rpress_flat_delivery_fee_active` and `rpress_basic_store_hours_active` let an extension announce that it is taking over a free-tier feature.
+    * New `rpress_get_store_hours_for_date()` helper resolves the open/close window and holiday status for any date.
+    * New `rpress_service_type_switched` action fires when a customer changes delivery/pickup on the storefront.
+    * All six blocks are registered as standard `block.json` blocks with server side rendering, so they can be filtered, extended, or restyled like any other WordPress block.
+* Fixed: Checkout page cart removal breaks when removing the last item due to concurrent AJAX calls creating an infinite loop.
+* Fixed: Checkout page table row was not removed when deleting items from the cart due to an underscore vs hyphen class selector mismatch (`.rpress-cart-item` vs `.rpress_cart_item`).
 
 = Version 3.3.1 (2026-07-03) =
 * Fixed: Live orders sound overlay cannot be closed/dismissed on live sites where autoplay is blocked by browser policies.
@@ -466,7 +511,7 @@ RestroPress 3.3 is a major update: a guided setup wizard with AI menu import, a 
 
 == Upgrade Notice ==
 
-= 3.3.1 =
+= 3.4 =
 A major update: a guided setup wizard with AI menu import, a real time Live Orders board, a redesigned Dashboard and Orders screen, a built-in Sold Out toggle, dietary labels on your menu, and faster Reports. "Food Items" is now labelled "Menu Items" throughout the admin (your links, shortcodes, and data keep working). Please back up your site before upgrading.
 
 = 3.2.8.8.6 =

@@ -69,7 +69,11 @@ $has_tags = ( $tags && ! is_wp_error( $tags ) ) ? 'has-tags' : '';
     ?>" 
     data-term-id="<?php echo esc_attr( $term_id ); ?>" 
     id="rpress_fooditem_<?php the_ID(); ?>">
-<?php $img_wrp = ( ! $has_thumbnail ) ? 'rp-no-img' : ''; ?>
+<?php
+// Keep the thumbnail holder visible when the image placeholder is enabled (the
+// holder renders the placeholder graphic); only flag rp-no-img when there is
+// truly nothing to display.
+$img_wrp = ( ! $has_thumbnail && $image_placeholder == 0 ) ? 'rp-no-img' : ''; ?>
 	<div class="<?php echo  esc_attr( $image_placeholder_cls ) . ' ' . esc_attr( $img_wrp ) . ' ' . esc_attr( $no_img_no_desc_cls ) . ' ' . esc_attr( apply_filters( 'rpress_fooditem_inner_class', 'rpress_fooditem_inner', get_the_ID(), $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i ) ); ?>">
 		<?php do_action( 'rpress_fooditem_before' ); ?>
 		<div class="rp-col-md-4 rp-col-xs-4 rp-col-sm-3 rp-grid-view-wrap">

@@ -29,11 +29,23 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 function rpress_install( $network_wide = false ) {
 	global $wpdb;
 	if ( is_multisite() && $network_wide ) {
-		foreach ( $wpdb->get_col( "SELECT blog_id FROM $wpdb->blogs LIMIT 100" ) as $blog_id ) {
-			switch_to_blog( $blog_id );
-			rpress_run_install();
-			restore_current_blog();
-		}
+		$batch_size = 100;
+		$offset     = 0;
+		do {
+			$site_ids = get_sites(
+				array(
+					'fields' => 'ids',
+					'number' => $batch_size,
+					'offset' => $offset,
+				)
+			);
+			foreach ( $site_ids as $blog_id ) {
+				switch_to_blog( $blog_id );
+				rpress_run_install();
+				restore_current_blog();
+			}
+			$offset += $batch_size;
+		} while ( count( $site_ids ) === $batch_size );
 	} else {
 		rpress_run_install();
 	}

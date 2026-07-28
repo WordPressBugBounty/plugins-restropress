@@ -50,18 +50,19 @@ window.RPRESS_Checkout = (function ($) {
 				.parent()
 				.addClass('rpress-gateway-option-selected');
 		});
-		// Validate and apply a discount
-		$checkout_form_wrap.on('click', '.rpress-apply-discount', apply_discount);
-		// Prevent the checkout form from submitting when hitting Enter in the discount field
-		$checkout_form_wrap.on('keypress', '#rpress-discount', function (event) {
+		// Validate and apply a discount. Bound on body: since 3.4 the coupon
+		// field lives in the order summary form, outside #rpress_checkout_form_wrap.
+		$body.on('click', '.rpress-apply-discount', apply_discount);
+		// Prevent the enclosing form from submitting when hitting Enter in the discount field
+		$body.on('keypress', '#rpress-discount', function (event) {
 			if (event.keyCode == '13') {
 				return false;
 			}
 		});
 		// Apply the discount when hitting Enter in the discount field instead
-		$checkout_form_wrap.on('keyup', '#rpress-discount', function (event) {
+		$body.on('keyup', '#rpress-discount', function (event) {
 			if (event.keyCode == '13') {
-				$checkout_form_wrap.find('.rpress-apply-discount')
+				$body.find('.rpress-apply-discount')
 					.trigger('click');
 			}
 		});

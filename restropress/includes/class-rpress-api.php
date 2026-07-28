@@ -1208,7 +1208,7 @@ class RPRESS_API {
 				delete_transient( 'rpress-total-api-keys' );
 				wp_safe_redirect( add_query_arg( 'rpress-message', 'api-key-revoked', 'admin.php?page=rpress-tools&tab=api_keys' ) ); exit();
 				break;
-			default;
+			default:
 				break;
 		}
 	}

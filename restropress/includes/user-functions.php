@@ -971,8 +971,11 @@ if ( ! function_exists( 'restropress_update_user_api_key' ) ) {
 	function restropress_update_user_api_key( int $user_ID ) {
 
 		rp_generate_api_keys( $user_ID );
-		$data = filter_input( INPUT_POST, 'rp-api-revoke-keys', FILTER_SANITIZE_STRING ) ?? filter_input( INPUT_POST, 'rp-api-refresh-keys', FILTER_SANITIZE_STRING );
-		if ( ! is_null( $data ) ) {
+		// FILTER_SANITIZE_STRING is deprecated since PHP 8.1; sanitize explicitly
+		// and only dispatch to the two callables that actually exist.
+		$data = isset( $_POST['rp-api-revoke-keys'] ) ? sanitize_key( wp_unslash( $_POST['rp-api-revoke-keys'] ) )
+			: ( isset( $_POST['rp-api-refresh-keys'] ) ? sanitize_key( wp_unslash( $_POST['rp-api-refresh-keys'] ) ) : null );
+		if ( in_array( $data, array( 'revoke', 'refresh' ), true ) ) {
 			call_user_func( "rp_user_api_{$data}", $user_ID );
 		}
 	}
@@ -1120,3 +1123,46 @@ if ( ! function_exists( 'rp_user_api_refresh' ) ) {
 		rp_user_api_get_token( $private_key, $public_key, $user_ID );
 	}
 }
+
+if ( ! function_exists( 'rpress_get_lostpassword_url' ) ) {
+	/**
+	 * Get Lost Password Page URL.
+	 *
+	 * Returns the URL of the RestroPress forgot-password page if it exists,
+	 * or falls back to site_url('/forgot-password').
+	 *
+	 * @since 3.4.2
+	 * @param string $redirect Optional. URL to redirect to after password reset.
+	 * @return string Lost password URL.
+	 */
+	function rpress_get_lostpassword_url( $redirect = '' ) {
+		$forgot_page = get_page_by_path( 'forgot-password' );
+		if ( $forgot_page ) {
+			$url = get_permalink( $forgot_page->ID );
+		} else {
+			$url = site_url( '/forgot-password' );
+		}
+
+		if ( ! empty( $redirect ) ) {
+			$url = add_query_arg( 'redirect_to', urlencode( $redirect ), $url );
+		}
+
+		return apply_filters( 'rpress_get_lostpassword_url', $url, $redirect );
+	}
+}
+
+if ( ! function_exists( 'rpress_filter_lostpassword_url' ) ) {
+	/**
+	 * Filter WordPress lostpassword_url to redirect to RestroPress forgot-password page.
+	 *
+	 * @since 3.4.2
+	 * @param string $lostpassword_url Default WordPress lostpassword URL.
+	 * @param string $redirect Redirect URL.
+	 * @return string RestroPress lostpassword URL.
+	 */
+	function rpress_filter_lostpassword_url( $lostpassword_url, $redirect = '' ) {
+		return rpress_get_lostpassword_url( $redirect );
+	}
+	add_filter( 'lostpassword_url', 'rpress_filter_lostpassword_url', 10, 2 );
+}
+

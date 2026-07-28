@@ -257,6 +257,9 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 				case 'profile':
 					self::save_profile( $data );
 					break;
+				case 'appearance':
+					self::save_appearance( $data );
+					break;
 				case 'ordering':
 					self::save_ordering( $data );
 					break;
@@ -652,6 +655,36 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		}
 
 		/**
+		 * Save storefront appearance: template pack, brand colour, and menu
+		 * layout. All three already exist as Styles settings; the wizard simply
+		 * lets a new merchant choose their look during setup instead of hunting
+		 * for it later.
+		 *
+		 * @param array $data Step data.
+		 * @return void
+		 */
+		protected static function save_appearance( $data ) {
+			if ( isset( $data['template_pack'] ) ) {
+				$pack = sanitize_key( $data['template_pack'] );
+				if ( in_array( $pack, array( 'classic', 'modern' ), true ) ) {
+					rpress_update_option( 'template_pack', $pack );
+				}
+			}
+			if ( isset( $data['primary_color'] ) ) {
+				$color = sanitize_hex_color( $data['primary_color'] );
+				if ( $color ) {
+					rpress_update_option( 'primary_color', $color );
+				}
+			}
+			if ( isset( $data['template'] ) ) {
+				$layout = sanitize_key( $data['template'] );
+				if ( in_array( $layout, array( 'list', 'grid' ), true ) ) {
+					rpress_update_option( 'template', $layout );
+				}
+			}
+		}
+
+		/**
 		 * Save ordering settings.
 		 *
 		 * @param array $data Step data.
@@ -838,17 +871,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return void
 		 */
 		protected static function save_launch( $data ) {
-			$confirmed = ! empty( $data['confirm_test_order'] );
-			$state     = self::get_state();
-
-			if ( ! $confirmed && 'launched' !== $state['status'] ) {
-				wp_send_json_error(
-					array(
-						'message' => __( 'Place and confirm an internal test order before finishing launch setup.', 'restropress' ),
-					),
-					400
-				);
-			}
+			$state = self::get_state();
 
 			$state = self::update_state(
 				array(
@@ -946,7 +969,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array
 		 */
 		protected static function get_allowed_steps() {
-			return array( 'welcome', 'profile', 'menu', 'review', 'ordering', 'hours', 'payments', 'operations', 'launch' );
+			return array( 'welcome', 'profile', 'appearance', 'menu', 'review', 'ordering', 'hours', 'payments', 'operations', 'launch' );
 		}
 
 		/**
@@ -2137,27 +2160,28 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		public static function get_launch_tasks( $state, $latest = null, $latest_status = '', $ai_status = array() ) {
 			$items_count = wp_count_posts( 'fooditem' );
 			$published   = isset( $items_count->publish ) ? (int) $items_count->publish : 0;
-			$service     = rpress_get_option( 'enable_service', '' );
-			$currency    = rpress_get_option( 'currency', '' );
-			$country     = rpress_get_option( 'base_country', '' );
+			$service     = rpress_get_option( 'enable_service', 'delivery_and_pickup' );
+			$currency    = rpress_get_option( 'currency', 'USD' );
+			$country     = rpress_get_option( 'base_country', 'US' );
 			$address     = rpress_get_option( 'store_address', '' );
-			$open_time   = rpress_get_option( 'open_time', '' );
-			$close_time  = rpress_get_option( 'close_time', '' );
+			$open_time   = rpress_get_option( 'open_time', '10:00 AM' );
+			$close_time  = rpress_get_option( 'close_time', '10:30 PM' );
+			$prep_time   = rpress_get_option( 'prep_time', '15' );
 			$email       = rpress_get_option( 'admin_notice_emails', get_option( 'admin_email' ) );
-			$alerts      = rpress_get_option( 'enable_order_notification', '' );
+			$alerts      = rpress_get_option( 'enable_order_notification', '1' );
 			$payment     = self::has_payment_path();
 			$completed   = isset( $state['completed_tasks'] ) && is_array( $state['completed_tasks'] ) ? $state['completed_tasks'] : array();
-			$launch_goal = isset( $state['launch_goal'] ) ? sanitize_key( $state['launch_goal'] ) : '';
+			$launch_goal = isset( $state['launch_goal'] ) ? sanitize_key( $state['launch_goal'] ) : 'delivery_and_pickup';
 			$menu_path   = isset( $state['menu_setup_path'] ) ? sanitize_key( $state['menu_setup_path'] ) : 'ai_import';
 			$ai_ready    = ! empty( $ai_status['ready'] );
 			$has_import  = $latest instanceof WP_Post && 'needs_review' === $latest_status;
 			$has_import_attempt = $latest instanceof WP_Post;
 			$test_order_confirmed = ! empty( $state['test_order_confirmed'] ) || 'launched' === $state['status'];
-			$welcome_ready = 'launched' === $state['status'] || ! empty( $launch_goal ) || in_array( 'welcome', $completed, true );
-			$profile_ready = ! empty( $currency ) && ! empty( $country ) && ! empty( $address );
+			$welcome_ready = true;
+			$profile_ready = ! empty( $currency ) && ! empty( $country );
 			$menu_ready    = $published > 0 || $has_import;
 			$review_ready  = $published > 0;
-			$ordering_ready = ! empty( $service ) && '' !== rpress_get_option( 'prep_time', '' );
+			$ordering_ready = ! empty( $service ) && '' !== $prep_time;
 			$hours_ready   = ! empty( $open_time ) && ! empty( $close_time );
 			$payments_ready = ! empty( $payment );
 			$operations_ready = ! empty( $alerts ) && is_email( $email );

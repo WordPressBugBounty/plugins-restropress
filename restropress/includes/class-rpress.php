@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.3.1';
+	public $version = '3.4';
 	/**
 	 * The single instance of the class.
 	 *
@@ -224,6 +224,7 @@ final class RestroPress
 			require_once $realtime_file;
 		}
 		require_once RP_PLUGIN_DIR . 'includes/template-functions.php';
+		require_once RP_PLUGIN_DIR . 'includes/class-rpress-template-packs.php';
 		require_once RP_PLUGIN_DIR . 'includes/template-actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/checkout/template.php';
 		require_once RP_PLUGIN_DIR . 'includes/checkout/functions.php';
@@ -251,6 +252,9 @@ final class RestroPress
 		require_once RP_PLUGIN_DIR . 'includes/country-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/formatting.php';
 		require_once RP_PLUGIN_DIR . 'includes/rp-core-functions.php';
+		require_once RP_PLUGIN_DIR . 'includes/rp-delivery-fee-basic.php';
+		require_once RP_PLUGIN_DIR . 'includes/rp-store-hours-basic.php';
+		require_once RP_PLUGIN_DIR . 'includes/blocks/class-rpress-blocks.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/paypal-standard.php';

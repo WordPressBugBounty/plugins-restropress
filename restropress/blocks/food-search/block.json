@@ -1,0 +1,23 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/food-search",
+	"title": "Food Search",
+	"category": "restropress",
+	"description": "A search bar for your food menu.",
+	"keywords": [
+		"search",
+		"food",
+		"menu",
+		"find",
+		"restaurant"
+	],
+	"textdomain": "restropress",
+	"supports": {
+		"html": false
+	},
+	"editorScript": "rpress-blocks-editor",
+	"style": "rpress-blocks",
+	"editorStyle": "rpress-storefront-editor",
+	"example": {}
+}

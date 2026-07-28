@@ -88,6 +88,7 @@ class RP_AJAX {
       'check_service_slot',
       'edit_cart_fooditem',
       'update_cart_items',
+      'cart_item_quantity',
       'remove_from_cart',
       'clear_cart',
       'proceed_checkout',
@@ -100,6 +101,7 @@ class RP_AJAX {
       'get_states',
       'fooditem_search',
       'checkout_update_service_option',
+      'checkout_service_fees',
       'remove_fees_after_empty_cart',
       'reorder',
       "update_modal_on_service_switch",
@@ -259,12 +261,12 @@ class RP_AJAX {
     $cart = rpress_get_payment_meta_cart_details( $payment->ID, true );
     if ( $cart ) {
         foreach( $cart as $key=>$fooditem ) {
-            $instructions   = isset( $item['instruction'] ) ? $item['instruction'] : '';
+            $instructions   = isset( $fooditem['instruction'] ) ? $fooditem['instruction'] : '';
             $fooditem_id    = $fooditem['id'];
             $quantity       = $fooditem['quantity'];
             $items          = '';
             $options        = array();
-            $addon_items    = $fooditem['addon_items'];
+            $addon_items    = isset( $fooditem['addon_items'] ) && is_array( $fooditem['addon_items'] ) ? $fooditem['addon_items'] : array();
             
             foreach( $addon_items as $key => $value ) {
                 if ( is_array( $value ) && ! empty( $value ) ) {
@@ -276,7 +278,7 @@ class RP_AJAX {
             }
             //Check whether the fooditem has variable pricing
             if ( rpress_has_variable_prices( $fooditem_id ) ) {
-                $price_id       = $fooditem['item_number']['options']['price_id'];
+                $price_id       = isset( $fooditem['item_number']['options']['price_id'] ) ? $fooditem['item_number']['options']['price_id'] : 0;
                 $options['price_id'] = $price_id;
                 $options['price']    = rpress_get_price_option_amount( $fooditem_id, $price_id );
             } else {
@@ -1046,6 +1048,68 @@ class RP_AJAX {
     );
     $return = apply_filters( 'rpress_cart_data', $return );
     $return = self::ensure_cart_response_payload( $return );
+    echo wp_json_encode( $return );
+    rpress_die();
+  }
+  /**
+   * Change a single cart line's quantity from the sidebar stepper.
+   *
+   * Keyed by cart_key (the exact line) and preserves that line's existing
+   * add-ons / price id / instruction, so a +/- never drops modifiers. A
+   * quantity below 1 removes the line (the trash affordance at qty 1).
+   *
+   * @since 3.4
+   */
+  public static function cart_item_quantity() {
+    check_ajax_referer( 'update-cart-item', 'security' );
+
+    $cart_key = isset( $_POST['cart_key'] ) ? absint( wp_unslash( $_POST['cart_key'] ) ) : -1;
+    $quantity = isset( $_POST['quantity'] ) ? intval( wp_unslash( $_POST['quantity'] ) ) : 1;
+
+    $contents = rpress_get_cart_contents();
+    if ( ! is_array( $contents ) || ! isset( $contents[ $cart_key ] ) ) {
+      wp_send_json_error( array( 'message' => 'invalid_cart_key' ) );
+    }
+
+    $line        = $contents[ $cart_key ];
+    $fooditem_id = isset( $line['id'] ) ? absint( $line['id'] ) : 0;
+    if ( ! $fooditem_id ) {
+      wp_send_json_error( array( 'message' => 'invalid_item' ) );
+    }
+
+    // Quantity below 1 removes the line (trash icon at qty 1).
+    if ( $quantity < 1 ) {
+      rpress_remove_from_cart( $cart_key );
+      $return = self::ensure_cart_response_payload( array(
+        'removed'   => 1,
+        'cart_key'  => $cart_key,
+        'cart_item' => '',
+      ) );
+      echo wp_json_encode( $return );
+      rpress_die();
+    }
+
+    // Carry over the line's existing options so set_item_quantity() (which
+    // overwrites addon_items/instruction/price_id from what we pass) preserves
+    // the modifiers instead of wiping them.
+    $options = array(
+      'id'          => $fooditem_id,
+      'quantity'    => $quantity,
+      'instruction' => isset( $line['instruction'] ) ? $line['instruction'] : ( isset( $line['options']['instruction'] ) ? $line['options']['instruction'] : '' ),
+      'addon_items' => isset( $line['addon_items'] ) ? $line['addon_items'] : ( isset( $line['options']['addon_items'] ) ? $line['options']['addon_items'] : array() ),
+      'price_id'    => isset( $line['price_id'] ) ? $line['price_id'] : ( isset( $line['options']['price_id'] ) ? $line['options']['price_id'] : '' ),
+    );
+
+    RPRESS()->cart->set_item_quantity( $fooditem_id, $quantity, $options );
+
+    $item  = apply_filters( 'rpress_ajax_pre_cart_item_template', array( 'id' => $fooditem_id, 'options' => $options ) );
+    $items = rpress_get_cart_item_template( $cart_key, $item, true, '' );
+
+    $return = self::ensure_cart_response_payload( array(
+      'cart_item' => $items,
+      'cart_key'  => $cart_key,
+    ) );
+
     echo wp_json_encode( $return );
     rpress_die();
   }
@@ -2028,6 +2092,11 @@ class RP_AJAX {
    * @author Magnigeeks
    * @return json
    */
+  /**
+   * Update a cart line's quantity from the checkout summary stepper (3.4).
+   * Looks the item up by cart key so its options/addons are preserved, then
+   * returns the re-rendered summary and fresh totals.
+   */
   public static function checkout_update_service_option() {
     check_ajax_referer( 'update-service', 'security' );
     do_action( 'rpress_checkout_service_option_updated' );
@@ -2045,6 +2114,29 @@ class RP_AJAX {
     $response = apply_filters( 'rpress_checkout_update_service_option_response', $data );
     wp_send_json_success( $response );
     rpress_die();
+  }
+  /**
+   * Return the current per-service fee sublabels for the checkout service
+   * chips. Called by the checkout UI after any fee-changing AJAX (delivery
+   * zone/zip change, service switch, cart change) so the chips stay accurate.
+   *
+   * @since 3.4
+   */
+  public static function checkout_service_fees() {
+    $out = array();
+    foreach ( array( 'delivery', 'pickup' ) as $service ) {
+      $amount = function_exists( 'rpress_get_checkout_service_fee_display' )
+        ? (float) rpress_get_checkout_service_fee_display( $service )
+        : 0;
+      $out[ $service ] = $amount > 0
+        ? sprintf(
+            /* translators: %s: formatted fee amount */
+            __( '%s fee', 'restropress' ),
+            html_entity_decode( rpress_currency_filter( rpress_format_amount( $amount ) ), ENT_COMPAT, 'UTF-8' )
+          )
+        : __( 'Free', 'restropress' );
+    }
+    wp_send_json_success( $out );
   }
   public static function remove_fees_after_empty_cart() {
     check_ajax_referer( 'clear-cart', 'security' );
@@ -2067,7 +2159,16 @@ class RP_AJAX {
     check_ajax_referer( 'service-type', 'security' );
 
     $service_type = isset( $_GET['service_type'] ) ? sanitize_text_field( wp_unslash( $_GET['service_type'] ) ) : '';
-   
+
+    /**
+     * Fires when the storefront service toggle switches type, before the
+     * date/time popup re-renders. Lets fee logic react to the new type.
+     *
+     * @since 3.4
+     * @param string $service_type The newly selected service type.
+     */
+    do_action( 'rpress_service_type_switched', $service_type );
+
     ob_start();
     rpress_get_template_part('rpress','datetime-popup');
     $modal_html = ob_get_clean();

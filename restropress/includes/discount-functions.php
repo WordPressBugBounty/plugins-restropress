@@ -809,10 +809,13 @@ function rpress_get_cart_discounts_html( $discounts = false ) {
 			),
 			rpress_get_checkout_uri()
 		);
-		$coupon_text = esc_html( 'Coupon', 'restropress' );
+		/* The applied-coupon pill above the totals already names the code and
+		   carries the Remove action, so the totals line is just the accounting
+		   entry — label it generically to avoid showing the coupon twice. */
+		$coupon_text = esc_html__( 'Discount', 'restropress' );
         $discount_html = '';
         $discount_html .= "<span class=\"rpress_discount\">";
-        $discount_html .= "<span class=\"rpress_discount_label\">$coupon_text:&nbsp;$discount</span>";
+        $discount_html .= "<span class=\"rpress_discount_label\">$coupon_text</span>";
         $discount_html .= "<span class=\"rpress_discount_rate_wrap\">";
         $discount_html .= "<span class=\"rpress_discount_rate\">$discount_value</span>\n";
         $discount_html .= "<a href=\"$remove_url\" data-code=\"$discount\" class=\"rpress_discount_remove\"></a>\n";
@@ -822,6 +825,39 @@ function rpress_get_cart_discounts_html( $discounts = false ) {
 		
 	}
 	return apply_filters( 'rpress_get_cart_discounts_html', $html, $discounts, $rate, $remove_url );
+}
+
+/**
+ * Renders the applied-coupon "success" pill for the redesigned checkout
+ * summary — a check icon, "CODE applied · <amount> off", and a Remove link
+ * (reusing the .rpress_discount_remove wiring). Used on page load; the JS
+ * builds the same pill after an AJAX apply.
+ *
+ * @since 3.4
+ * @return string
+ */
+function rpress_coupon_applied_html() {
+	$discounts = rpress_get_cart_discounts();
+	if ( empty( $discounts ) ) {
+		return '';
+	}
+	$code        = is_array( $discounts ) ? (string) reset( $discounts ) : (string) $discounts;
+	$discount_id = rpress_get_discount_id_by_code( $code );
+	$amount      = rpress_currency_filter( rpress_format_amount( RPRESS()->cart->get_discounted_amount() ) );
+	$remove_url  = add_query_arg(
+		array(
+			'rpress_action' => 'remove_cart_discount',
+			'discount_id'   => $discount_id,
+			'discount_code' => $code,
+		),
+		rpress_get_checkout_uri()
+	);
+
+	$html  = '<span class="rpress-coupon-applied-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>';
+	$html .= '<span class="rpress-coupon-applied-text"><strong>' . esc_html( $code ) . '</strong> ' . sprintf( /* translators: %s: discount amount */ esc_html__( 'applied · %s off', 'restropress' ), esc_html( $amount ) ) . '</span>';
+	$html .= '<a href="' . esc_url( $remove_url ) . '" data-code="' . esc_attr( $code ) . '" class="rpress-coupon-remove rpress_discount_remove">' . esc_html__( 'Remove', 'restropress' ) . '</a>';
+
+	return apply_filters( 'rpress_coupon_applied_html', $html, $code, $amount );
 }
 /**
  * Show the fully formatted cart discount

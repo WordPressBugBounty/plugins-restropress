@@ -31,7 +31,7 @@ function rpress_print_errors() {
 			echo '<div class="' . esc_attr( implode( ' ', $classes ) ) . '">';
 				// Loop error codes and display errors
 				foreach ( $errors as $error_id => $error ) {
-					echo '<p class="rpress_error" id="rpress_error_' . esc_attr( $error_id ) . '"><strong>' . esc_html__( 'Error', 'restropress' ) . '</strong>: ' . esc_html( $error ) . '</p>';
+					echo '<p class="rpress_error" id="rpress_error_' . esc_attr( $error_id ) . '"><strong>' . esc_html__( 'Error', 'restropress' ) . ':</strong> ' . esc_html( $error ) . '</p>';
 				}
 			echo '</div>';
 		}

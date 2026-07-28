@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/order-history",
+	"title": "Order History",
+	"category": "restropress",
+	"description": "Show logged-in customers their past orders with one-click reorder.",
+	"keywords": [
+		"orders",
+		"history",
+		"reorder",
+		"food",
+		"account"
+	],
+	"textdomain": "restropress",
+	"attributes": {
+		"historyType": {
+			"type": "string",
+			"default": "orders"
+		}
+	},
+	"supports": {
+		"align": [
+			"wide",
+			"full"
+		],
+		"html": false,
+		"multiple": false
+	},
+	"editorScript": "rpress-blocks-editor",
+	"style": "rpress-blocks",
+	"example": {}
+}

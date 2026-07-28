@@ -29,7 +29,7 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 				</div>
 				<div class='rpress-cart-total-item-list'>
 					<span class="rp-mb-quantity"><?php echo esc_html(rpress_get_cart_quantity()); ?></span>
-					<span><?php esc_html_e('items added to cart', 'restropress'); ?></span>
+					<span><?php echo esc_html( _n( 'item added to cart', 'items added to cart', rpress_get_cart_quantity(), 'restropress' ) ); ?></span>
 				</div>
 			</div>
 			<!-- <span class="rp-separation">&nbsp;|&nbsp;</span> -->
@@ -54,7 +54,7 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 				<div class="rpress-cart-head-right">
 					<span class="rpress-cart-head-count" <?php echo wp_kses_post($display); ?>>
 						<span class="rpress-cart-quantity"><?php echo esc_html(rpress_get_cart_quantity()); ?></span>
-						<?php esc_html_e('items', 'restropress'); ?>
+						<?php echo esc_html( _n( 'item', 'items', rpress_get_cart_quantity(), 'restropress' ) ); ?>
 					</span>
 					<i class="fa fa-times close-cart-ic" aria-hidden="true"></i>
 				</div>

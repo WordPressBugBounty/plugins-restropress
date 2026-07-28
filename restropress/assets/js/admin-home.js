@@ -3,7 +3,7 @@
   'use strict';
 
   var cfg = window.rpressOnboarding || {};
-  var STEPS = ['profile', 'menu', 'config', 'payments', 'golive'];
+  var STEPS = ['profile', 'appearance', 'menu', 'config', 'payments', 'golive'];
   var DIET = ['Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 'Nut-free', 'Halal', 'Kosher', 'Spicy'];
 
   var $root = $('.rp-onboard');
@@ -33,6 +33,14 @@
   function esc(s){ return $('<div>').text(s == null ? '' : s).html(); }
   function ajax(action, data){
     return $.post(cfg.ajaxUrl, $.extend({ action: action, nonce: cfg.nonce }, data));
+  }
+  function getErrMsg(xhr){
+    if (xhr && xhr.responseJSON) {
+      if (xhr.responseJSON.data && xhr.responseJSON.data.message) { return xhr.responseJSON.data.message; }
+      if (xhr.responseJSON.message) { return xhr.responseJSON.message; }
+    }
+    if (typeof xhr === 'string' && xhr) { return xhr; }
+    return cfg.errorText || 'Something went wrong. Please try again.';
   }
   // type: success | error | warn | info - the toast colour must match the
   // message type (errors were showing green before).
@@ -165,8 +173,18 @@
     var $n = $('#rp-ob-next'); $n.prop('disabled', true);
 
     if (key === 'profile') {
-      saveStep('profile', collect('profile'), 'menu').done(function () { state.completed.profile = true; advance(); })
-        .fail(function () { $n.prop('disabled', false); notice(cfg.errorText, 'error'); });
+      saveStep('profile', collect('profile'), 'appearance').done(function () { state.completed.profile = true; advance(); })
+        .fail(function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); });
+      return;
+    }
+    if (key === 'appearance') {
+      var pack = $('.rp-ob-pane[data-pane="appearance"] input[name="template_pack"]:checked').val() || 'classic';
+      saveStep('appearance', {
+        template_pack: pack,
+        primary_color: $('#rp-ob-theme-color').val() || '',
+        template: $('#rp-ob-layout-val').val() || 'list'
+      }, 'menu').done(function () { state.completed.appearance = true; advance(); })
+        .fail(function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); });
       return;
     }
     if (key === 'menu') {
@@ -199,7 +217,7 @@
     }
     if (key === 'golive') {
       saveStep('launch', { confirm_test_order: 1 }).done(function () { state.completed.golive = true; state.done = true; render(); })
-        .fail(function () { $n.prop('disabled', false); notice(cfg.errorText, 'error'); });
+        .fail(function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); });
       return;
     }
   }
@@ -236,6 +254,13 @@
     $('#rp-ob-tf button').removeClass('on'); $(this).addClass('on');
     $('#rp-ob-tf-val').val($(this).data('tf')); tick(); updatePvHours();
   });
+
+  // Appearance step: menu-layout segmented toggle + live theme-colour hex.
+  $('#rp-ob-layout').on('click', 'button', function () {
+    $('#rp-ob-layout button').removeClass('on'); $(this).addClass('on');
+    $('#rp-ob-layout-val').val($(this).data('layout'));
+  });
+  $('#rp-ob-theme-color').on('input', function () { $('#rp-ob-theme-hex').text(($(this).val() || '').toUpperCase()); });
   // Format an "HH:MM" input value per the 12h/24h choice from the profile step.
   function fmtTime(v){
     if (!v) { return ''; }
@@ -731,7 +756,7 @@
       }
       state.completed.menu = true; $('#rp-ob-vmenu').text(n + ' items live on the ordering page'); refreshPreview(); advance();
     };
-    var fail = function () { $n.prop('disabled', false); notice(cfg.errorText, 'error'); };
+    var fail = function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); };
     var payload = JSON.stringify({ categories: regroup() });
     if (state.jobId) {
       ajax('rpress_onboarding_publish_menu', { job_id: state.jobId, mode: 'publish', payload: payload }).done(finish).fail(fail);

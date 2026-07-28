@@ -143,31 +143,3 @@ function rpress_options_page() {
 	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output buffer contains escaped settings page markup.
 	echo ob_get_clean();
 }
-
-/**
- * Map old settings section slugs to the reorganized General sections.
- *
- * @since 3.3
- *
- * @param string $tab     Active settings tab.
- * @param string $section Requested settings section.
- * @return string
- */
-function rpress_map_legacy_settings_section( $tab, $section ) {
-	if ( 'general' !== $tab || empty( $section ) ) {
-		return $section;
-	}
-
-	$legacy_sections = array(
-		'main'               => 'store_setup',
-		'api'                => 'developer_api',
-		'currency'           => 'money_order_numbers',
-		'accounting'         => 'money_order_numbers',
-		'order_notification' => 'live_orders',
-		'service_options'    => 'service_hours',
-		'checkout_options'   => 'checkout',
-		'print_receipts'     => 'printing',
-	);
-
-	return isset( $legacy_sections[ $section ] ) ? $legacy_sections[ $section ] : $section;
-}

@@ -2592,3 +2592,67 @@ jQuery(document).ready(function($) {
       showStep(currentStep - 1);
   });
 });
+
+/* Weekly store hours grid + holiday chips (3.4 free tier settings). */
+jQuery(function ($) {
+  var $grid = $('.rpress-store-hours-grid');
+  if ($grid.length) {
+    // Copy the first day's times and closed state to every other day.
+    $grid.on('click', '.rpress-hours-copy-all', function () {
+      var $rows = $grid.find('.rpress-hours-row');
+      var $src = $rows.first();
+      var open = $src.find('input[name$="[open]"]').val();
+      var close = $src.find('input[name$="[close]"]').val();
+      var closed = $src.find('.rpress-hours-closed').prop('checked');
+      $rows.slice(1).each(function () {
+        $(this).find('input[name$="[open]"]').val(open);
+        $(this).find('input[name$="[close]"]').val(close);
+        $(this).find('.rpress-hours-closed').prop('checked', closed).trigger('change');
+      });
+    });
+    // Dim a row while it is marked closed.
+    $grid.on('change', '.rpress-hours-closed', function () {
+      $(this).closest('.rpress-hours-row').toggleClass('is-closed', this.checked);
+    });
+  }
+
+  var $holidays = $('.rpress-holidays');
+  if ($holidays.length) {
+    var max = parseInt($holidays.data('max'), 10) || 5;
+    var refresh = function () {
+      var used = $holidays.find('.rpress-holiday-chip').length;
+      $holidays.find('.rpress-holiday-count').text(used + ' / ' + max);
+      var full = used >= max;
+      $holidays.find('.rpress-holiday-add').prop('disabled', full);
+      $holidays.find('.rpress-holiday-new').prop('disabled', full);
+    };
+    $holidays.on('click', '.rpress-holiday-add', function () {
+      var $input = $holidays.find('.rpress-holiday-new');
+      var date = $input.val();
+      if (!date) {
+        return;
+      }
+      var exists = $holidays.find('.rpress-holiday-chip input[type="hidden"]').filter(function () {
+        return this.value === date;
+      }).length > 0;
+      if (exists || $holidays.find('.rpress-holiday-chip').length >= max) {
+        $input.val('');
+        return;
+      }
+      var label = new Date(date + 'T00:00:00').toLocaleDateString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric'
+      });
+      var $chip = $('<span class="rpress-holiday-chip"/>').text(label);
+      $('<button type="button" class="rpress-holiday-remove" aria-label="Remove holiday">&times;</button>').appendTo($chip);
+      $('<input type="hidden" name="rpress_settings[basic_holidays][]"/>').val(date).appendTo($chip);
+      $holidays.find('.rpress-holiday-chips').append($chip);
+      $input.val('');
+      refresh();
+    });
+    $holidays.on('click', '.rpress-holiday-remove', function () {
+      $(this).closest('.rpress-holiday-chip').remove();
+      refresh();
+    });
+    refresh();
+  }
+});

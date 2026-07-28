@@ -202,6 +202,7 @@ function rpress_setup_fooditem_taxonomies() {
     'labels'            => $food_category_label,
     'show_ui'           => true,
     'query_var'         => true,
+    'show_in_rest'      => true, // Needed for the Food Menu block's category picker.
     'rewrite'           => array( 'slug' => 'food-category' ),
   );
   register_taxonomy( 'food-category', array( 'fooditem' ), $food_item_args );

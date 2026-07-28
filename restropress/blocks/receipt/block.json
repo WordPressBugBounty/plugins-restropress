@@ -1,0 +1,57 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/receipt",
+	"title": "Order Receipt",
+	"category": "restropress",
+	"description": "The order confirmation receipt. Place on your order confirmation page and choose exactly what it shows.",
+	"keywords": [
+		"receipt",
+		"confirmation",
+		"order",
+		"thank you",
+		"food"
+	],
+	"textdomain": "restropress",
+	"attributes": {
+		"showPrice": {
+			"type": "boolean",
+			"default": true
+		},
+		"showDiscount": {
+			"type": "boolean",
+			"default": true
+		},
+		"showProducts": {
+			"type": "boolean",
+			"default": true
+		},
+		"showDate": {
+			"type": "boolean",
+			"default": true
+		},
+		"showNotes": {
+			"type": "boolean",
+			"default": true
+		},
+		"showPaymentMethod": {
+			"type": "boolean",
+			"default": true
+		},
+		"showPaymentId": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"supports": {
+		"align": [
+			"wide",
+			"full"
+		],
+		"html": false,
+		"multiple": false
+	},
+	"editorScript": "rpress-blocks-editor",
+	"style": "rpress-blocks",
+	"example": {}
+}

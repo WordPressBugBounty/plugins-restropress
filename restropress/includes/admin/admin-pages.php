@@ -106,9 +106,6 @@ class RP_Admin_Menus
 			unset($submenu['restropress'][0]);
 			// Add count if user has access.
 			if (apply_filters('rpress_include_pending_order_count_in_menu', true) && current_user_can('edit_shop_payments')) {
-				// Count pending orders for the date range currently in effect on the
-				// Orders screen (defaults to Today, follows whatever filter the user
-				// last applied there). See get_menu_pending_count().
 				$pending_count = $this->get_menu_pending_count();
 				$order_count = apply_filters('rpress_menu_order_count', $pending_count);
 				if ($order_count) {
@@ -124,152 +121,43 @@ class RP_Admin_Menus
 	}
 
 	/**
-	 * Pending-order count for the Orders menu badge.
+	 * All-time pending-order count for the Orders menu badge.
 	 *
-	 * The count tracks the Orders screen's date filter: when the user is on the
-	 * Orders list it reads the live filter from the request and remembers it, so
-	 * the badge on every other admin page mirrors that same window. With no
-	 * filter chosen it defaults to Today (the Orders screen default view).
-	 *
-	 * Cached briefly and per date-range; the cache key carries a version that is
-	 * bumped whenever an order is created or changes status.
+	 * Cached briefly; the cache key carries a version that is bumped whenever
+	 * an order is created or changes status.
 	 *
 	 * @since 3.3
 	 * @return int
 	 */
 	public function get_menu_pending_count()
 	{
-		$range   = $this->resolve_orders_badge_range();
-		$version = (int) get_option('rpress_menu_pending_version', 1);
-		$cache_key = 'rpress_menu_pending_' . $version . '_' . md5(wp_json_encode($range));
+		$version   = (int) get_option('rpress_menu_pending_version', 1);
+		$cache_key = 'rpress_menu_pending_' . $version;
 
 		$cached = get_transient($cache_key);
 		if (false !== $cached) {
 			return (int) $cached;
 		}
 
-		$args = array(
-			'post_type'              => 'rpress_payment',
-			'post_status'            => array('pending'),
-			'posts_per_page'         => -1,
-			'fields'                 => 'ids',
-			'no_found_rows'          => true,
-			'update_post_term_cache' => false,
-			'update_post_meta_cache' => false,
-		);
-
-		// Empty range = all-time (the Orders screen "All" chip). Otherwise scope
-		// to post_date, mirroring the Orders list date filter.
-		if (!$range['all'] && ($range['start'] || $range['end'])) {
-			$args['date_query'] = array(
-				array(
-					'after'     => $range['start'] ? $range['start'] . ' 00:00:00' : '',
-					'before'    => $range['end'] ? $range['end'] . ' 23:59:59' : '',
-					'inclusive' => true,
-				),
-			);
-		}
-
-		$query = new WP_Query($args);
-		$count = (int) $query->post_count;
+		// Count by the fulfilment status (_order_status meta), matching the
+		// Orders list's Pending filter, not the payment post_status.
+		global $wpdb;
+		$count = (int) $wpdb->get_var($wpdb->prepare(
+			"SELECT COUNT(DISTINCT pm.post_id)
+			FROM {$wpdb->postmeta} pm
+			INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			WHERE pm.meta_key = %s
+			  AND pm.meta_value = %s
+			  AND p.post_type = %s
+			  AND p.post_status <> %s",
+			'_order_status',
+			'pending',
+			'rpress_payment',
+			'trash'
+		));
 
 		set_transient($cache_key, $count, 2 * MINUTE_IN_SECONDS);
 		return $count;
-	}
-
-	/**
-	 * Resolve the date window the badge should count within.
-	 *
-	 * On the Orders list screen, read the live filter and persist it to user
-	 * meta. Elsewhere, reuse the last persisted filter, defaulting to Today.
-	 *
-	 * @since 3.3
-	 * @return array{all:bool,start:string,end:string}
-	 */
-	protected function resolve_orders_badge_range()
-	{
-		$page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
-		$view = isset($_GET['view']) ? sanitize_key(wp_unslash($_GET['view'])) : '';
-		$on_orders_list = ('rpress-payment-history' === $page) && ('' === $view || 'list' === $view);
-
-		if ($on_orders_list) {
-			$range = $this->read_badge_range_from_request();
-			if (is_user_logged_in()) {
-				update_user_meta(get_current_user_id(), 'rpress_orders_badge_range', $range);
-			}
-			return $range;
-		}
-
-		$saved = is_user_logged_in() ? get_user_meta(get_current_user_id(), 'rpress_orders_badge_range', true) : '';
-		if (is_array($saved) && isset($saved['all'], $saved['start'], $saved['end'])) {
-			return $saved;
-		}
-		return $this->default_today_badge_range();
-	}
-
-	/**
-	 * Read the Orders list date filter out of the current request.
-	 *
-	 * @since 3.3
-	 * @return array{all:bool,start:string,end:string}
-	 */
-	protected function read_badge_range_from_request()
-	{
-		$date_range = isset($_GET['date-range']) ? sanitize_key(wp_unslash($_GET['date-range'])) : '';
-		if ('all' === $date_range) {
-			return array('all' => true, 'start' => '', 'end' => '');
-		}
-
-		$start = isset($_GET['start-date']) ? sanitize_text_field(wp_unslash($_GET['start-date'])) : '';
-		$end   = isset($_GET['end-date'])   ? sanitize_text_field(wp_unslash($_GET['end-date']))   : '';
-
-		// No explicit dates means the Orders screen is showing Today.
-		if ('' === $start && '' === $end) {
-			return $this->default_today_badge_range();
-		}
-		if ('' === $end) {
-			$end = $start;
-		}
-		if ('' === $start) {
-			$start = $end;
-		}
-
-		return array(
-			'all'   => false,
-			'start' => $this->normalize_badge_date($start),
-			'end'   => $this->normalize_badge_date($end),
-		);
-	}
-
-	/**
-	 * Today's range in the site timezone.
-	 *
-	 * @since 3.3
-	 * @return array{all:bool,start:string,end:string}
-	 */
-	protected function default_today_badge_range()
-	{
-		$today = date_i18n('Y-m-d');
-		return array('all' => false, 'start' => $today, 'end' => $today);
-	}
-
-	/**
-	 * Normalize a request date (in the site's display format) to Y-m-d.
-	 *
-	 * @since 3.3
-	 * @param string $date Raw date from the request.
-	 * @return string Y-m-d, or '' when unparseable.
-	 */
-	protected function normalize_badge_date($date)
-	{
-		if (function_exists('rpress_parse_payment_filter_date')) {
-			$parsed = rpress_parse_payment_filter_date($date);
-			if ($parsed) {
-				return $parsed;
-			}
-		}
-		$timestamp = strtotime($date);
-		return $timestamp ? gmdate('Y-m-d', $timestamp) : '';
 	}
 
 	/**

@@ -77,17 +77,9 @@ main .singular-content-wrap{
 img[src=""] {
 	display: none;
 }
-.tata{
-	z-index: 9999999999999 !important;
-	background: #fff !important;
-	color: #000000 !important;
-}
-@media screen and (max-width: 480px) {
-	.tata{
-		width: 100% !important;
-		left: 0 !important;
-	}
-}
+/* Toast (Tata) notifications are styled inside rp-tata.js — the design is
+   appended to the stylesheet Tata injects at runtime, so it wins by order
+   without needing !important overrides here. */
 li.cart_item.rpress_checkout .rp-loading:after {
 	top: 10px;
 }
@@ -387,15 +379,6 @@ html body .rpress-errors-wrap {
     border-radius: 50%;
 }
 /*----food_grid-view---*/
-/* .desktop-scroll-menu,
-.make-me-sticky,
-.scrollable-div-wrapper-main
-{
-	border:1px solid #000;
-} */
-/* .rpress_fooditems_grid .rpress-grid-main-wrap .description-tag-wrap{
-	min-height: 28px;
-} */
 .make-me-sticky{
     position: -webkit-sticky;
     position: sticky;
@@ -418,561 +401,6 @@ div.rpress_fooditems_grid .rpress_fooditem.rpress-list .rpress_fooditem_inner {
 	display: none;
 }
 
-/*--------------------------------------
-  Modern Order Confirmation (Receipt)
----------------------------------------*/
-.rp-thankyou-page {
-	--rp-thankyou-accent: var(--rpress-theme-primary, #ed5575);
-	--rp-thankyou-accent-ink: var(--rpress-theme-primary-dark, #c83258);
-	--rp-thankyou-bg: #ffffff;
-	--rp-thankyou-surface: var(--rpress-theme-section-bg, #fff7fa);
-	--rp-thankyou-border: var(--rpress-theme-border-soft, #f0dfe6);
-	--rp-thankyou-text: #1f2b46;
-	--rp-thankyou-subtext: #5c6884;
-	max-width: 1180px;
-	margin: 24px auto 48px;
-	padding: 0 16px;
-	font-family: "Poppins", "Nunito Sans", "Helvetica Neue", sans-serif;
-	color: var(--rp-thankyou-text);
-}
-
-.rp-thankyou-hero {
-	position: relative;
-	overflow: hidden;
-	border-radius: 22px;
-	border: 1px solid var(--rp-thankyou-border);
-	background: linear-gradient(140deg, #ffffff 0%, var(--rp-thankyou-surface) 48%, #ffffff 100%);
-	padding: 30px;
-	display: grid;
-	gap: 24px;
-	box-shadow: 0 20px 45px rgba(31, 43, 70, 0.08);
-}
-
-.rp-thankyou-hero::before {
-	content: "";
-	position: absolute;
-	width: 300px;
-	height: 300px;
-	border-radius: 50%;
-	right: -120px;
-	top: -140px;
-	background: radial-gradient(circle at center, rgba(var(--rpress-theme-primary-rgb, 237, 85, 117), 0.18), rgba(var(--rpress-theme-primary-rgb, 237, 85, 117), 0));
-}
-
-.rp-thankyou-hero-main {
-	position: relative;
-	z-index: 1;
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 16px;
-	align-items: start;
-}
-
-.rp-thankyou-check {
-	width: 56px;
-	height: 56px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 16px;
-	background: linear-gradient(135deg, var(--rp-thankyou-accent), var(--rpress-theme-primary-light, #ff7c98));
-	box-shadow: 0 10px 20px rgba(var(--rpress-theme-primary-rgb, 237, 85, 117), 0.3);
-}
-
-.rp-thankyou-check svg {
-	width: 28px;
-	height: 28px;
-	fill: #ffffff;
-}
-
-.rp-thankyou-kicker {
-	margin: 2px 0 8px;
-	font-size: 12px;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	font-weight: 700;
-	color: var(--rp-thankyou-accent-ink);
-}
-
-.rp-thankyou-hero h2 {
-	margin: 0;
-	font-size: 36px;
-	line-height: 1.15;
-	font-weight: 700;
-}
-
-.rp-thankyou-message {
-	margin: 12px 0 0;
-	font-size: 16px;
-	color: var(--rp-thankyou-subtext);
-	line-height: 1.6;
-}
-
-.rp-thankyou-message strong {
-	color: var(--rp-thankyou-text);
-	font-weight: 600;
-	word-break: break-word;
-}
-
-.rp-thankyou-live-status {
-	position: relative;
-	z-index: 1;
-	display: grid;
-	grid-template-columns: auto 1fr auto;
-	gap: 14px;
-	align-items: center;
-	padding: 14px;
-	border-radius: 16px;
-	border: 1px solid var(--rp-thankyou-border);
-	background: rgba(255, 255, 255, 0.88);
-}
-
-.rp-thankyou-live-status-media {
-	width: 72px;
-	height: 72px;
-	flex-shrink: 0;
-	background: #ffffff;
-	border-radius: 14px;
-	border: 1px solid var(--rp-thankyou-border);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.rp-thankyou-live-status-media img {
-	max-width: 56px;
-	max-height: 56px;
-	width: auto;
-	height: auto;
-}
-
-.rp-thankyou-live-status-content h4 {
-	margin: 0;
-	font-size: 24px;
-	line-height: 1.15;
-	font-weight: 700;
-	color: var(--rp-thankyou-text);
-}
-
-.rp-thankyou-live-status-content p {
-	margin: 0;
-}
-
-.rp-live-status-kicker {
-	margin: 0 0 4px;
-	font-size: 11px;
-	letter-spacing: 0.09em;
-	text-transform: uppercase;
-	font-weight: 700;
-	color: var(--rp-thankyou-accent-ink);
-}
-
-#rp-live-order-status-desc {
-	margin-top: 6px;
-	color: var(--rp-thankyou-subtext);
-	font-size: 14px;
-	line-height: 1.5;
-}
-
-#rp-live-status-updated {
-	margin-top: 6px;
-	font-size: 12px;
-	color: #707b93;
-}
-
-.rp-thankyou-live-status-actions {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-}
-
-.rp-thankyou-notify-btn {
-	border: 1px solid var(--rp-thankyou-accent);
-	background: #ffffff;
-	color: var(--rp-thankyou-accent-ink);
-	border-radius: 999px;
-	font-size: 13px;
-	line-height: 1;
-	font-weight: 600;
-	padding: 10px 14px;
-	cursor: pointer;
-	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-
-.rp-thankyou-notify-btn:hover,
-.rp-thankyou-notify-btn:focus {
-	background: var(--rp-thankyou-accent);
-	color: #ffffff;
-	border-color: var(--rp-thankyou-accent);
-}
-
-.rp-thankyou-notify-btn[disabled] {
-	cursor: not-allowed;
-	opacity: 0.74;
-}
-
-.rp-thankyou-meta {
-	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
-	gap: 12px;
-	position: relative;
-	z-index: 1;
-}
-
-.rp-thankyou-meta-item {
-	background: rgba(255, 255, 255, 0.88);
-	backdrop-filter: blur(2px);
-	border: 1px solid var(--rp-thankyou-border);
-	border-radius: 14px;
-	padding: 12px 14px;
-}
-
-.rp-thankyou-meta-item span {
-	display: block;
-	font-size: 12px;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-	color: var(--rp-thankyou-subtext);
-	font-weight: 600;
-	margin-bottom: 4px;
-}
-
-.rp-thankyou-meta-item strong {
-	font-size: 18px;
-	line-height: 1.2;
-	font-weight: 700;
-	color: var(--rp-thankyou-text);
-}
-
-.rp-thankyou-details-grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 16px;
-	margin-top: 18px;
-}
-
-.rp-thankyou-card {
-	background: var(--rp-thankyou-bg);
-	border: 1px solid #eaedf4;
-	border-radius: 18px;
-	padding: 22px 22px 20px;
-	box-shadow: 0 8px 22px rgba(22, 34, 60, 0.05);
-}
-
-.rp-thankyou-card h3 {
-	margin: 0;
-	font-size: 28px;
-	line-height: 1.2;
-	font-weight: 600;
-}
-
-.rp-thankyou-subhead {
-	margin-top: 20px !important;
-}
-
-.rp-thankyou-list {
-	margin: 16px 0 0;
-	padding: 0;
-	list-style: none;
-}
-
-.rp-thankyou-list li {
-	margin: 0;
-	padding: 11px 0;
-	border-bottom: 1px solid #f0f3f8;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
-}
-
-.rp-thankyou-list li:last-child {
-	border-bottom: 0;
-	padding-bottom: 0;
-}
-
-.rp-thankyou-list span {
-	font-size: 14px;
-	color: var(--rp-thankyou-subtext);
-}
-
-.rp-thankyou-list strong {
-	font-size: 15px;
-	font-weight: 600;
-	color: var(--rp-thankyou-text);
-	text-align: right;
-}
-
-.rp-thankyou-card-wide {
-	grid-column: 1 / -1;
-}
-
-.rp-thankyou-address {
-	margin: 12px 0 0;
-	font-size: 15px;
-	color: var(--rp-thankyou-subtext);
-	line-height: 1.6;
-}
-
-.rp-thankyou-summary {
-	margin-top: 18px;
-}
-
-.rp-thankyou-summary-header {
-	display: flex;
-	align-items: flex-end;
-	justify-content: space-between;
-	gap: 12px;
-	margin-bottom: 16px;
-}
-
-.rp-thankyou-summary-header p {
-	margin: 0;
-	font-size: 15px;
-	font-weight: 600;
-	color: var(--rp-thankyou-accent-ink);
-}
-
-.rp-thankyou-table-wrap {
-	overflow-x: auto;
-	border: 1px solid #edf0f5;
-	border-radius: 14px;
-}
-
-.rp-thankyou-page table#rp-order-summary {
-	margin: 0;
-	border: 0;
-	min-width: 620px;
-	background: #ffffff;
-}
-
-.rp-thankyou-page table#rp-order-summary th,
-.rp-thankyou-page table#rp-order-summary td {
-	padding: 14px 16px;
-	border-color: #eef1f5;
-	font-size: 15px;
-	vertical-align: top;
-}
-
-.rp-thankyou-page table#rp-order-summary thead th {
-	background: #f7f9fc;
-	font-size: 13px;
-	font-weight: 700;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-	color: #5f6a84;
-}
-
-.rp-thankyou-page table#rp-order-summary tfoot td {
-	font-weight: 600;
-	background: #fcfdff;
-}
-
-.rp-thankyou-page table#rp-order-summary .rp-bold {
-	color: #0f1a36;
-}
-
-.rp-thankyou-page .rpress_purchase_receipt_product_name span.rpress-main-item-name {
-	font-weight: 600;
-	display: inline-block;
-	margin-bottom: 2px;
-}
-
-.rp-thankyou-page .rpress_purchase_receipt_product_name .rpress-receipt-addon-item {
-	color: #647089;
-	font-size: 13px;
-}
-
-.rp-thankyou-page .rpress_purchase_receipt_product_name span:not(.rpress-main-item-name) {
-	display: block;
-	margin-top: 6px;
-	font-size: 12px;
-	font-weight: 600;
-	color: #5a647d;
-	text-transform: uppercase;
-	letter-spacing: 0.03em;
-}
-
-.rp-thankyou-page .rpress_purchase_receipt_product_name small {
-	display: block;
-	font-size: 13px;
-	color: #404c66;
-}
-
-.rp-thankyou-next {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 12px;
-	margin-top: 18px;
-}
-
-.rp-thankyou-next-item {
-	border-radius: 14px;
-	background: var(--rp-thankyou-surface);
-	border: 1px solid var(--rp-thankyou-border);
-	padding: 14px 16px;
-}
-
-.rp-thankyou-next-item h4 {
-	margin: 0;
-	font-size: 15px;
-	font-weight: 700;
-}
-
-.rp-thankyou-next-item p {
-	margin: 6px 0 0;
-	font-size: 13px;
-	color: var(--rp-thankyou-subtext);
-	line-height: 1.5;
-}
-
-.rp-live-status-toast {
-	position: fixed;
-	right: 18px;
-	bottom: 18px;
-	z-index: 9999;
-	max-width: min(92vw, 360px);
-	padding: 10px 14px;
-	border-radius: 12px;
-	background: #1f2b46;
-	color: #ffffff;
-	font-size: 14px;
-	line-height: 1.4;
-	box-shadow: 0 14px 28px rgba(18, 31, 60, 0.25);
-	opacity: 0;
-	transform: translateY(8px);
-	pointer-events: none;
-	transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.rp-live-status-toast.is-visible {
-	opacity: 1;
-	transform: translateY(0);
-}
-
-.rp-reveal {
-	opacity: 0;
-	transform: translateY(10px);
-	animation: rp-thankyou-fade 0.45s ease-out forwards;
-}
-
-.rp-reveal-2 {
-	animation-delay: 0.08s;
-}
-
-.rp-reveal-3 {
-	animation-delay: 0.16s;
-}
-
-.rp-reveal-4 {
-	animation-delay: 0.24s;
-}
-
-@keyframes rp-thankyou-fade {
-	from {
-		opacity: 0;
-		transform: translateY(10px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.rp-reveal {
-		animation: none;
-		opacity: 1;
-		transform: none;
-	}
-}
-
-@media only screen and (max-width: 1024px) {
-	.rp-thankyou-hero h2 {
-		font-size: 30px;
-	}
-
-	.rp-thankyou-live-status {
-		grid-template-columns: auto 1fr;
-	}
-
-	.rp-thankyou-live-status-actions {
-		grid-column: 1 / -1;
-		justify-content: flex-start;
-	}
-
-	.rp-thankyou-meta {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-}
-
-@media only screen and (max-width: 767px) {
-	.rp-thankyou-page {
-		margin-top: 14px;
-		padding: 0 12px;
-	}
-
-	.rp-thankyou-hero {
-		padding: 22px 18px;
-		border-radius: 18px;
-	}
-
-	.rp-thankyou-hero-main {
-		grid-template-columns: 1fr;
-	}
-
-	.rp-thankyou-check {
-		width: 50px;
-		height: 50px;
-	}
-
-	.rp-thankyou-hero h2 {
-		font-size: 26px;
-	}
-
-	.rp-thankyou-live-status {
-		grid-template-columns: 1fr;
-	}
-
-	.rp-thankyou-live-status-media {
-		width: 64px;
-		height: 64px;
-	}
-
-	.rp-thankyou-live-status-content h4 {
-		font-size: 21px;
-	}
-
-	.rp-thankyou-notify-btn {
-		width: 100%;
-	}
-
-	.rp-live-status-toast {
-		left: 12px;
-		right: 12px;
-		bottom: 12px;
-		max-width: none;
-	}
-
-	.rp-thankyou-meta {
-		grid-template-columns: 1fr;
-	}
-
-	.rp-thankyou-details-grid,
-	.rp-thankyou-next {
-		grid-template-columns: 1fr;
-	}
-
-	.rp-thankyou-card {
-		border-radius: 14px;
-		padding: 18px 16px;
-	}
-
-	.rp-thankyou-summary-header {
-		flex-direction: column;
-		align-items: flex-start;
-	}
-}
 .image-placeholder-disabled .rp-col-md-8{
 	width: 100%;
 }
@@ -1433,9 +861,6 @@ div.rpress-element-title.matched {
 	width: 100%;
 	height: 100%;
 }
-/* .rpress-grid-main-wrap .rpress-thumbnail-holder img {
-	height:auto;
-} */
 .rpress-thumbnail-holder+.rpress-title-holder {
 	padding-left: 10px;
 	width: -webkit-calc(100% - 120px);
@@ -1477,10 +902,6 @@ form#fooditem-details {
 .addon-popup-wrap .food-item-list label{
 	gap: 6px;
 }
-/* .addon-popup-wrap .food-item-list label>span{
-	font-size: 14px;
-	text-transform: capitalize;
-} */
 .addon-popup-wrap .rpress-addon-category span.rp-min-addon,
 .addon-popup-wrap .rpress-addon-category span.rp-max-addon{
     display: block;
@@ -1492,15 +913,6 @@ form#fooditem-details {
 .food-item-list.active .radio-container input:checked~.control__indicator:after {
 	display: block;
 }
-/* .food-item-list.active .radio-container .control__indicator:after {
-	left: 3px;
-	top: 3px;
-	height: 10px;
-	width: 10px;
-	border-radius: 100px;
-	background: #000;
-	border: none;
-} */
 .rp-addon-required{
 	background-color: #D9D9D9;
     padding: 0px 12px;
@@ -1518,6 +930,57 @@ span.rp-addon-required.rp-addon-error {
 	background-position: 9px 47%;
 	background-size: 13px;
 	padding: 3px 12px 5px 26px;
+}
+/* A required addon group whose min/max rule is not satisfied on Add to Cart:
+   highlight the group header + its min/max message so the customer can see
+   what to fix (min-selection groups have no "Required" badge to flag). */
+.addon-popup-wrap .rpress-addon-category.rp-addon-error {
+	color: #DE1135 !important;
+	background: #FFE4E9 !important;
+	border: 1px solid #F5B5C0 !important;
+	border-radius: 8px !important;
+	padding: 8px 12px !important;
+}
+.addon-popup-wrap .rpress-addon-category.rp-addon-error .rp-min-addon,
+.addon-popup-wrap .rpress-addon-category.rp-addon-error .rp-max-addon,
+.addon-popup-wrap .rp-min-addon.rp-addon-error,
+.addon-popup-wrap .rp-max-addon.rp-addon-error {
+	color: #DE1135 !important;
+	font-weight: 600 !important;
+}
+/* Unified radio control for the item modal — one style everywhere. Price
+   options and addon groups both rendered native radios (checked = blue dot,
+   unchecked = squished grey circle), so they looked like two controls. Force
+   a single custom filled-dot radio driven by the settings primary color. */
+.addon-popup-wrap .radio-container input[type="radio"] {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 18px;
+	height: 18px;
+	min-width: 18px;
+	margin: 0 10px 0 0;
+	padding: 0;
+	border: 1.5px solid #C9CCD1;
+	border-radius: 50%;
+	background: #fff;
+	display: inline-block;
+	vertical-align: middle;
+	cursor: pointer;
+	box-shadow: none;
+	transition: border-color .15s ease;
+}
+.addon-popup-wrap .radio-container input[type="radio"]:checked {
+	border-color: var(--rp-checkout-accent, #1e73be);
+	background: radial-gradient(circle at center, var(--rp-checkout-accent, #1e73be) 0 4.5px, #fff 5.5px);
+}
+.addon-popup-wrap .radio-container input[type="radio"]:focus-visible {
+	outline: 2px solid var(--rp-checkout-accent, #1e73be);
+	outline-offset: 2px;
+}
+/* The price-options group also ships a legacy .control__indicator circle; hide
+   it so only the unified input control shows (no double radio). */
+.addon-popup-wrap .radio-container input[type="radio"] ~ .control__indicator {
+	display: none !important;
 }
 div#rpressModal {
 	z-index: 999999;
@@ -1844,7 +1307,8 @@ div.rpress-popup-actions .btn-count .qtyminus-wrap{
 	width: 18px;
 	background: #ffffff;
 	margin: 0 !important;
-	border: 2px solid #000000;
+	/* Match the radio's kit: grey when unchecked, settings-accent when checked. */
+	border: 2px solid #C9CCD1;
 	border-radius: 3px;
 	transition: all 0.2s ease-in-out 0s
 }
@@ -1854,7 +1318,8 @@ div.rpress-popup-actions .btn-count .qtyminus-wrap{
 	opacity: 0;
 }
 .addon-popup-wrap .checkbox-container input:checked~.control__indicator {
-	background: #000000
+	background: var(--rp-checkout-accent, #1e73be);
+	border-color: var(--rp-checkout-accent, #1e73be);
 }
 .addon-popup-wrap .checkbox-container input:checked~.control__indicator:after {
 	display: block
@@ -1871,33 +1336,6 @@ div.rpress-popup-actions .btn-count .qtyminus-wrap{
 	transform: rotate(45deg);
 	display: none;
 }
-/* .addon-popup-wrap .radio-container input:checked~.control__indicator {
-	background: #ffffff
-}
-.addon-popup-wrap .food-item-list.active .radio-container input:checked~.control__indicator:after {
-	display: block
-} */
-/* .addon-popup-wrap .food-item-list.active .radio-container .control__indicator:after {
-	  left: 3px;
-    top: 3.3px;
-    height: 10px;
-    width: 10px;
-	border-radius: 100px;
-	background: #000;
-	border: none
-}
-.addon-popup-wrap .radio-container .control__indicator {
-	position: absolute;
-	top: 3px;
-	left: 1px;
-	height: 20px;
-	width: 20px;
-	background: #ffffff;
-	margin: 0 !important;
-	border-radius: 50%;
-	border: 2px solid #000000;
-	transition: all 0.2s ease-in-out 0s
-} */
 .bg-gray{
     background-color: #F7F7F7;
     padding:10px 30px;
@@ -1956,6 +1394,11 @@ div.rpress-popup-actions .btn-count .qtyminus-wrap{
 .rpress-edit-address-popup .rpress-time-preference-wrap .rpress-service-hours-row,
 .rpress-edit-address-popup .rpress-time-preference-wrap .rpress-delivery-zone-wrapper {
 	width: 100%;
+}
+/* Breathing room above the time row so its label doesn't touch the date
+   select above it. */
+#rpressDateTime.rpress-edit-address-popup .rpress-time-preference-wrap .rpress-service-hours-row {
+	margin-top: 14px;
 }
 #rpress_checkout_wrap .rp-checkout-service-option .delivery-time-wrapper,
 #rpress_checkout_wrap .rp-checkout-service-option .pickup-time-wraper,
@@ -2029,7 +1472,14 @@ select#rpress-delivery-hours{
 }
 div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates,
 .delivery-time-wrapper select#rpress_get_delivery_dates,
-.rp-checkout-service-option select#rpress_get_pickup_dates
+.rp-checkout-service-option select#rpress_get_pickup_dates,
+/* Redesigned schedule modal wraps the date select in .rpress-service-date-row
+   (not .delivery-time-wrapper), so the rules above never matched it and it fell
+   back to the native browser arrow — inconsistent with the custom chevron on the
+   time select. Match the actual structure so both selects share one chevron. */
+#rpressDateTime .rpress-service-date-row select.rpress-service-date-select,
+#rpressDateTime .rpress-service-date-row select#rpress_get_pickup_dates,
+#rpressDateTime .rpress-service-date-row select#rpress_get_delivery_dates
 {
     background-image: url(../../assets/svg/date.svg), url("data:image/svg+xml,%3Csvg class='ast-arrow-svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='26px' height='16.043px' fill='%23334155' viewBox='57 35.171 26 16.043' enable-background='new 57 35.171 26 16.043' xml:space='preserve' %3E%3Cpath d='M57.5,38.193l12.5,12.5l12.5-12.5l-2.5-2.5l-10,10l-10-10L57.5,38.193z'%3E%3C/path%3E%3C/svg%3E");
     background-position: 12px 12px, 96% 50%;
@@ -2047,6 +1497,32 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates,
 	border: 1.2px solid #E3E3E3;
 	background-color: #fff;
 	box-shadow: none;
+}
+/* Storefront schedule modal (#rpressDateTime) doesn't carry the
+   .rpress-edit-address-popup class, so the pill rule above never reached its
+   zip input — it stayed a sharp 8px box, mismatched against the pill date/time
+   selects beside it. Give it the same pill + left icon + height so all three
+   controls read as one set. */
+#rpressDateTime .rpress-delivery-zone-wrapper input[type="text"],
+#rpressDateTime .rpress-delivery-zone-wrapper input.rpress-input {
+	height: 40px;
+	/* Follow the backend button-style radius like the date/time selects do,
+	   instead of a hardcoded pill, so all three controls match. */
+	border-radius: var(--rpress-default-control-radius, 8px);
+	border: 1.2px solid #E3E3E3;
+	background-color: #fff;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%231f2937' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: 12px 50%;
+	background-size: 16px;
+	padding: 0 20px 0 40px;
+	box-shadow: none;
+	font-size: 16px;
+}
+#rpressDateTime .rpress-delivery-zone-wrapper input[type="text"]:focus,
+#rpressDateTime .rpress-delivery-zone-wrapper input.rpress-input:focus {
+	outline: 0;
+	border-color: var(--rpress-theme-primary, #046bd2);
 }
 .delivery-time-wrapper select#rpress_get_delivery_dates{
 	padding:0 0 0 40px;
@@ -2153,6 +1629,9 @@ div#rpressDateTime .delivery-time-wrapper select#rpress_get_pickup_dates:focus,
 	max-width: 520px;
 	padding: 20px 0 0;
 	border-radius: 20px;
+	/* Clip children (notably the white footer) to the rounded corners so the
+	   bottom of the modal is rounded like the top, not squared off. */
+	overflow: hidden;
 	box-shadow: 0 18px 40px rgba(17, 24, 39, 0.20);
 }
 #rpressDateTime.rpress-edit-address-popup .modal__header {
@@ -2993,15 +2472,29 @@ ul.rpress-cart span.cart-total {
 .cart_item .rpress_checkout {
 	padding-left: 28%;
 }
+/* Modifier lines sit directly under their parent item (matching the checkout
+   summary): a muted, indented "+ Name … price" row, not an orphaned block
+   below the Edit/Remove actions. */
 .rpress-sidebar-cart ul.addon-item-wrap {
-	padding: 0;
+	padding: 0 0 0 10px;
+	margin: 4px 0 0;
+	list-style: none;
 }
-.rpress-sidebar-cart ul.addon-item-wrap, 
 .rpress-sidebar-cart ul.rpress-cart {
 	margin: 0px;
 }
 .rpress-sidebar-cart .addon-item-wrap li {
-	margin-top: 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 8px;
+	margin: 2px 0 0;
+}
+.rpress-sidebar-cart .addon-item-wrap li .rpress-cart-item-title::before {
+	content: "+ ";
+}
+.rpress-sidebar-cart span.addon-item-price {
+	float: none;
 }
 .rpress-cart-meta {
 	padding: 5px 0px;
@@ -3661,15 +3154,6 @@ div.rpress_fooditems_list.rp-col-md-5 {
 #rpress_user_history th {
 	background: #e4e4e4;
 }
-#rpress_checkout_cart_wrap table{
-	border: none !important;
-	background: #fff;
-	box-shadow: 1px 1px 10px #efefef;
-	padding: 15px;
-	border-radius: 4px;
-	width: 100%;
-	border-collapse: inherit;
-}
 /*---tab_menu---*/
 .pn-ProductNav_Wrapper {
 	position: relative;
@@ -3678,9 +3162,6 @@ div.rpress_fooditems_list.rp-col-md-5 {
 	background-color: #fff;
 	top:-32px;
 }
-/* body.logged-in .pn-ProductNav_Wrapper{
-	top:-20px;
-} */
 .pn-ProductNav {
 	margin:0 29px 0 15px;
 	overflow-x: auto;
@@ -6001,17 +5482,6 @@ width: 32px;
 	.pn-ProductNav_Link {
 		border-bottom: 0px solid #eee;
 	}
-	.ast-container, .ast-container-fluid {
-		padding-left:0px;
-		padding-right:0px;
-	}
-	.rpress-options-row,
-	.rpress_fooditems_list,
-	.rpress-grid-main-wrap
-	{
-		padding-left: 20px;
-		padding-right: 20px;
-	}
 	div.rpress_fooditems_grid .rpress_fooditem.rpress-list .rpress_fooditem_inner {
 		padding: 10px 10px 10px 10px;
 		height: auto;
@@ -6490,17 +5960,6 @@ width: 32px;
 	}
 	.pn-ProductNav_Link {
 		border-bottom: 0px solid #eee;
-	}
-	.ast-container, .ast-container-fluid {
-		padding-left:0px;
-		padding-right:0px;
-	}
-	.rpress-options-row,
-	.rpress_fooditems_list,
-	.rpress-grid-main-wrap
-	{
-		padding-left: 20px;
-		padding-right: 20px;
 	}
 	div.rpress_fooditems_grid .rpress_fooditem.rpress-list .rpress_fooditem_inner {
 		padding: 10px 10px 10px 10px;
@@ -7322,6 +6781,15 @@ width: 32px;
 		transition: left 0.35s ease;
 	}
 
+	/* While the mobile cart drawer is open it is a full-screen overlay, so it
+	   must sit above third-party fixed elements. Menu plugins (e.g. Responsive
+	   Menu) pin a floating hamburger at a very high z-index (999999) in the
+	   same top-right corner as the drawer's close button, hiding it so the
+	   shopper cannot dismiss the cart. Lift the open drawer above them. */
+	body.rp-mobile-cart-open .rpress-section .rpress-sidebar-main-wrap {
+		z-index: 2147483000;
+	}
+
 	.rpress-section .rpress-mobile-cart-icons {
 		display: flex !important;
 		align-items: center;
@@ -8084,11 +7552,6 @@ body.admin-bar .order-online .rpress-section .make-me-sticky .scrollable-div-wra
 	position: sticky;
 	top: 88px;
 }
-
-body.admin-bar #rpress_checkout_wrap #rpress_checkout_cart_form {
-	top: 120px;
-}
-
 @media screen and (max-width: 782px) {
 	body.admin-bar #rpress_checkout_wrap #rpress_checkout_cart_form {
 		top: 134px;
@@ -8101,7 +7564,6 @@ body.admin-bar #rpress_checkout_wrap #rpress_checkout_cart_form {
 #rpress_checkout_wrap #rpress_checkout_order_details,
 #rpress_checkout_wrap #rpress_cc_fields,
 #rpress_checkout_wrap #rpress_purchase_submit,
-#rpress_checkout_wrap #rpress_checkout_cart_wrap table,
 #rpress_checkout_wrap .rp-checkout-service-option {
 	background: #fff;
 	border: 1px solid #e4e9f2;
@@ -8114,15 +7576,6 @@ body.admin-bar #rpress_checkout_wrap #rpress_checkout_cart_form {
 #rpress_checkout_wrap #rpress_purchase_submit {
 	padding: 18px 24px;
 }
-
-#rpress_checkout_wrap #rpress_checkout_login_register,
-#rpress_checkout_wrap #rpress_checkout_user_info,
-#rpress_checkout_wrap #rpress_checkout_order_details,
-#rpress_checkout_wrap #rpress_cc_fields {
-	padding: 22px 24px 20px;
-	margin: 0 0 18px;
-}
-
 #rpress_checkout_wrap fieldset > legend {
 	font-size: clamp(24px, 2vw, 34px);
 	line-height: 1.05;
@@ -8158,13 +7611,6 @@ body.admin-bar #rpress_checkout_wrap #rpress_checkout_cart_form {
 	box-shadow: none;
 	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
-#rpress_checkout_wrap textarea.rpress-input {
-	min-height: 120px;
-	padding: 14px 16px;
-	resize: vertical;
-}
-
 #rpress_checkout_wrap .rpress-input:focus,
 #rpress_checkout_wrap select.rpress-select:focus,
 #rpress_checkout_wrap select.rp-form-control:focus,
@@ -8208,12 +7654,6 @@ body.admin-bar #rpress_checkout_wrap #rpress_checkout_cart_form {
 	background: #2d78bb;
 	border-color: #2d78bb;
 	color: #fff;
-}
-
-#rpress_checkout_wrap #rpress_checkout_cart_wrap table {
-	border-collapse: separate;
-	border-spacing: 0;
-	overflow: hidden;
 }
 
 #rpress_checkout_wrap #rpress_checkout_cart_wrap thead th {
@@ -8265,11 +7705,6 @@ body.admin-bar #rpress_checkout_wrap #rpress_checkout_cart_form {
 	text-decoration: none;
 	font-weight: 600;
 }
-
-#rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress_cart_remove_item_btn:hover {
-	color: #9a3412;
-}
-
 #rpress_checkout_wrap #rpress_checkout_cart_wrap th.rpress_get_subtotal,
 #rpress_checkout_wrap #rpress_checkout_cart_wrap th.rpress_cart_discount,
 #rpress_checkout_wrap #rpress_checkout_cart_wrap th.rpress_cart_tax,
@@ -8422,7 +7857,6 @@ body.admin-bar #rpress_checkout_wrap #rpress_checkout_cart_form {
 
 #rpress_checkout_wrap #rpress_discount_code_wrap,
 #rpress_checkout_wrap .rp-checkout-service-option,
-#rpress_checkout_wrap #rpress_checkout_cart_wrap table,
 #rpress_checkout_wrap #rpress_purchase_submit,
 #rpress_checkout_wrap #rpress_checkout_login_register,
 #rpress_checkout_wrap #rpress_checkout_user_info,
@@ -8608,12 +8042,6 @@ body.admin-bar #rpress_checkout_wrap #rpress_checkout_cart_form {
 	background: linear-gradient(135deg, rgba(var(--rp-checkout-brand-rgb), 1) 0%, rgba(var(--rp-checkout-brand-rgb), 0.82) 100%);
 	border-color: transparent;
 	box-shadow: 0 8px 18px rgba(var(--rp-checkout-brand-rgb), 0.28);
-}
-
-#rpress_checkout_wrap #rpress_checkout_cart_wrap table {
-	border-collapse: separate;
-	border-spacing: 0;
-	overflow: hidden;
 }
 
 #rpress_checkout_wrap #rpress_checkout_cart_wrap thead th {
@@ -9091,11 +8519,6 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .cart-item
 	line-height: 1.25 !important;
 	font-weight: 700 !important;
 }
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-cart-item-title {
-	max-width: 100% !important;
-}
-
 body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-row > a.rpress_cart_remove_item_btn,
 body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-addon-row > .cart-action-wrap {
 	grid-column: 2 / 4 !important;
@@ -9144,12 +8567,6 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress_ca
 		min-height: 56px !important;
 		font-size: 18px !important;
 	}
-
-	body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-row,
-	body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-addon-row {
-		grid-template-columns: auto minmax(0, 1fr) auto !important;
-	}
-
 	body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress_checkout_cart_item_qty,
 	body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-cart-item-title,
 	body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .cart-item-quantity-wrap {
@@ -9208,8 +8625,7 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_payment_mode_select_wrap,
 body.rpress-checkout #rpress_checkout_wrap #rpress_payment_icons,
 body.rpress-checkout #rpress_checkout_wrap #rpress_cc_fields,
 body.rpress-checkout #rpress_checkout_wrap #rpress_cc_address,
-body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit,
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap table {
+body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit{
 	background: #ffffff !important;
 	border: 1px solid #e5e8ef !important;
 	border-radius: 14px !important;
@@ -9228,10 +8644,6 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_cc_address,
 body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit {
 	padding: 18px !important;
 	margin: 0 0 16px !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap table {
-	overflow: hidden !important;
 }
 
 body.rpress-checkout #rpress_checkout_wrap fieldset > legend,
@@ -9384,25 +8796,11 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_payment_icons legend {
 	margin-bottom: 8px !important;
 	color: #6b7280 !important;
 }
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_payment_icons .rpress-payment-icons {
-	display: flex !important;
-	flex-wrap: wrap !important;
-	gap: 8px !important;
-}
-
 body.rpress-checkout #rpress_checkout_wrap #rpress_payment_icons img.payment-icon {
 	height: 22px !important;
 	width: auto !important;
 	filter: saturate(0.95);
 }
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap thead th {
-	padding: 18px 18px 8px !important;
-	background: #fff !important;
-	border: 0 !important;
-}
-
 body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .item-order h6 {
 	font-size: 18px !important;
 	line-height: 1.2 !important;
@@ -9410,11 +8808,6 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .item-orde
 	color: #111827 !important;
 	margin: 0 !important;
 }
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap td.rpress_cart_item_name {
-	padding: 0 18px !important;
-}
-
 body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-row,
 body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-addon-row {
 	display: grid !important;
@@ -9424,22 +8817,7 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-ch
 	row-gap: 5px !important;
 	padding: 12px 0 !important;
 	border-top: 1px solid #eef2f7 !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap tbody tr:first-child .rpress-checkout-item-row {
-	border-top: 0 !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress_checkout_cart_item_qty,
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-cart-item-title,
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .cart-item-quantity-wrap {
-	font-size: 16px !important;
-	line-height: 1.35 !important;
-	font-weight: 600 !important;
-	color: #111827 !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-cart-item-title {
+}body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-cart-item-title {
 	max-width: 100% !important;
 }
 
@@ -9604,7 +8982,6 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_cc_address > legend {
 }
 
 /* Checkout responsive hardening: keep layout safe on all screen sizes */
-body.rpress-checkout,
 body.rpress-checkout #rpress_checkout_wrap,
 body.rpress-checkout #rpress_checkout_wrap * {
 	box-sizing: border-box;
@@ -9788,21 +9165,13 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_payment_mode_select_wrap,
 body.rpress-checkout #rpress_checkout_wrap #rpress_payment_icons,
 body.rpress-checkout #rpress_checkout_wrap #rpress_cc_fields,
 body.rpress-checkout #rpress_checkout_wrap #rpress_cc_address,
-body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit,
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap table {
+body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit{
 	background: var(--rp-checkout-card) !important;
 	border: 1px solid var(--rp-checkout-border) !important;
 	border-radius: 14px !important;
 	box-shadow: 0 2px 14px rgba(15, 23, 42, 0.03) !important;
 	padding: 14px !important;
 	margin: 0 0 12px !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap table {
-	padding: 0 !important;
-	border-collapse: separate !important;
-	border-spacing: 0 !important;
-	overflow: hidden !important;
 }
 
 body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_user_info,
@@ -9935,13 +9304,6 @@ body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-d
 	padding: 0 !important;
 	margin: 0 0 10px !important;
 }
-
-body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li,
-body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li.nav-item {
-	margin: 0 !important;
-	width: 100% !important;
-}
-
 body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li > a {
 	min-height: 40px !important;
 	padding: 8px 10px !important;
@@ -10142,28 +9504,7 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-ch
 	align-items: flex-start !important;
 	padding: 12px 0 !important;
 	border-top: 1px solid #eef1f5 !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap tbody tr:first-child .rpress-checkout-item-row {
-	border-top: 0 !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-media {
-	width: 56px !important;
-	height: 56px !important;
-	border-radius: 8px !important;
-	overflow: hidden !important;
-	background: #f3f4f6 !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-media img {
-	width: 100% !important;
-	height: 100% !important;
-	object-fit: cover !important;
-	display: block !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-content {
+}body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-content {
 	min-width: 0 !important;
 }
 
@@ -10368,14 +9709,9 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_terms_agreement .rpress-show-
 	body.rpress-checkout #rpress_checkout_wrap #rpress_payment_icons,
 	body.rpress-checkout #rpress_checkout_wrap #rpress_cc_fields,
 	body.rpress-checkout #rpress_checkout_wrap #rpress_cc_address,
-	body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit,
-	body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap table {
+	body.rpress-checkout #rpress_checkout_wrap #rpress_purchase_submit{
 		padding: 12px !important;
 		border-radius: 12px !important;
-	}
-
-	body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap table {
-		padding: 0 !important;
 	}
 
 	body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap th.rpress_cart_total .rpress_cart_amount,
@@ -10396,13 +9732,7 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_terms_agreement .rpress-show-
 	body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-row {
 		grid-template-columns: 48px minmax(0, 1fr) auto !important;
 		gap: 10px !important;
-	}
-
-body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-checkout-item-media {
-		width: 48px !important;
-		height: 48px !important;
-	}
-}
+	}}
 
 /* ==========================================================================
    Checkout UI Corrections (May 2026)
@@ -10571,13 +9901,6 @@ body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-d
 	border-radius: 8px !important;
 	background: #fff !important;
 }
-
-body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li,
-body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li.nav-item {
-	margin: 0 !important;
-	width: 100% !important;
-}
-
 body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li > a {
 	min-height: 42px !important;
 	border: 1px solid transparent !important;
@@ -10756,19 +10079,7 @@ body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-c
 	width: 18px !important;
 	height: 18px !important;
 	color: #111827 !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-checkout-service-heading .service-icon-delivery,
-body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-checkout-service-heading .service-icon-pickup {
-	display: none !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-checkout-service-heading.is-service-delivery .service-icon-delivery,
-body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-checkout-service-heading.is-service-pickup .service-icon-pickup {
-	display: inline-flex !important;
-}
-
-body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav {
+}body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav {
 	display: grid !important;
 	grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 	gap: 8px !important;
@@ -10909,19 +10220,10 @@ body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .delivery
 }
 
 @media only screen and (max-width: 767px) {
-	body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-checkout-service-heading {
-		font-size: 26px !important;
-	}
-
 	body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .rpress-delivery-options ul#rpressdeliveryTab.nav > li > a {
 		min-height: 40px !important;
 		padding: 7px 10px !important;
-	}
-
-	body.rpress-checkout #rpress_checkout_wrap .rp-checkout-service-option .delivery-settings-wrapper.active.show .rpress-time-wrap {
-		grid-template-columns: 1fr !important;
-	}
-}
+	}}
 
 /* ==========================================================================
    Checkout Service Type UI Adjustments (May 2026 - Request)

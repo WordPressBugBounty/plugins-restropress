@@ -1,0 +1,743 @@
+/* ==========================================================================
+   RestroPress storefront menu / ordering page redesign (3.4)
+   Scoped to .rpress-menu-v2 so nothing leaks to or from the theme. Reuses the
+   checkout design system (Poppins/Inter, the --rpc-* tokens, settings-driven
+   --rpc-primary injected inline).
+
+   !important policy: this skin overrides the legacy rpress.css, which in places
+   uses very high-specificity selectors (e.g. div.rpress_fooditems_list
+   .rpress_fooditem.rpress-list .rpress_purchase_submit_wrapper a.rpress-add-to-cart
+   = 0,5,2). Where a legacy rule out-specifies our selector we MUST keep
+   !important; where our selector already wins on specificity we DON'T. Every
+   !important below was verified against a computed-style diff (strip all, reload,
+   compare) in both list and grid views — only the declarations a legacy rule
+   actually wins carry it. Please keep it that way: don't add !important by reflex.
+   ========================================================================== */
+
+/* Reserve the vertical scrollbar gutter from first paint. The menu grid is a
+   full-width flex row, so on classic-scrollbar platforms (Windows) the page
+   renders 15px wider for the split second before it grows tall enough to need
+   a scrollbar, then reflows narrower the moment the bar appears: the listing
+   visibly "resizes" on load. Reserving the gutter keeps the width constant. */
+html {
+	scrollbar-gutter: stable;
+}
+
+.rpress-menu-v2 {
+	/* Fixed neutrals + status tokens (match checkout). --rpc-primary* are
+	   injected inline from the Theme Color setting. */
+	--rpc-ink: #000F37;
+	--rpc-body: #575757;
+	--rpc-muted: #787A7C;
+	--rpc-border-subtle: #EAE8E7;
+	--rpc-border-strong: #D9D9D9;
+	--rpc-surface: #FAFAFA;
+	--rpc-page: #FAFAFA;
+	--rpc-gray-400: #BDBDBD;
+	--rpc-success: #3DAD58;
+	--rpc-success-bg: #E7F6EC;
+	--rpc-danger: #E5402B;
+	--rpc-danger-bg: #FFEDEA;
+	--rpc-veg: #3DAD58;
+	--rpc-nonveg: #E5402B;
+	--rpc-font-head: 'Poppins', system-ui, sans-serif;
+	--rpc-font-body: 'Inter', system-ui, sans-serif;
+	--rpc-card-shadow: 0 8px 24px rgba(0, 0, 0, .05);
+
+	font-family: var(--rpc-font-body);
+	color: var(--rpc-body);
+}
+.rpress-menu-v2 *,
+.rpress-menu-v2 *::before,
+.rpress-menu-v2 *::after { box-sizing: border-box; }
+
+/* ------------------------------------------------------------------ */
+/* Page layout: menu (fluid) + cart (fixed, sticky)                     */
+/* Replaces the legacy fixed-width floats (menu 780px + cart 390px)     */
+/* that dropped the cart below the menu whenever the viewport was       */
+/* narrower than their sum. Flex guarantees they always fit; the cart   */
+/* stacks below on mobile.                                              */
+/* ------------------------------------------------------------------ */
+.rpress-menu-v2.rpress-menu-v2 {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 24px;
+	width: 100%;
+	max-width: 100%;
+	float: none;
+	/* Reclaim the leftover bootstrap column gutter (0 15px) + top margin so the
+	   storefront uses the full content width instead of wasting side space. */
+	padding: 0;
+	margin-top: 0;
+}
+.rpress-menu-v2 > .rpress_fooditems_grid,
+.rpress-menu-v2 > .rp-col-lg-8 {
+	flex: 1 1 440px;
+	width: auto;
+	max-width: none;
+	min-width: 0;
+	float: none;
+	margin: 0;
+	padding: 0;
+}
+/* Doubled class: legacy rpress.css collapses .rpress-sidebar-cart.item-cart
+   to width/max-width 0 below 1025px (old floating-cart design) and would
+   out-specify a single class, leaving a 0-width flex item that still eats a
+   24px gap off the menu column. */
+.rpress-menu-v2.rpress-menu-v2 > .rpress-sidebar-cart {
+	flex: 0 1 360px;
+	width: 360px;
+	max-width: 100%;
+	min-width: 0;
+	float: none !important; /* legacy .rpress_fooditems_list float:right wins otherwise */
+	margin: 0;
+	/* Zero the leftover bootstrap column padding (the menu column's was already
+	   zeroed); otherwise the cart card is inset 15px, making the card→cart gap
+	   wider than the category→card gap. */
+	padding: 0 !important;
+}
+/* Through 1024px legacy rpress.css hides the sidebar-cart content (the mobile
+   bottom bar takes over), so let the empty flex item wrap to its own row
+   instead of squatting on the menu row and eating a 24px gap. */
+@media (max-width: 1024px) {
+	.rpress-menu-v2 > .rpress-sidebar-cart { flex-basis: 100% !important; width: 100% !important; max-width: 100% !important; }
+}
+/* Category rail sits ABOVE the menu grid + cart as a full-width band (the grid
+   template renders .desktop-scroll-menu as a direct child of the flex
+   container). It's display:contents, so the flex item is its .make-me-sticky
+   child — give that flex-basis:100% so it takes its own row. */
+.rpress-menu-v2 > .desktop-scroll-menu,
+.rpress-menu-v2 > .desktop-scroll-menu > .make-me-sticky {
+	flex: 0 0 100%;
+	width: 100%;
+	min-width: 0;
+	margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Category section headers                                             */
+/* ------------------------------------------------------------------ */
+.rpress-menu-v2 .rpress-element-title {
+	margin: 26px 0 14px;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+.rpress-menu-v2 .rpress-element-title .rpress-cat,
+.rpress-menu-v2 .rpress-element-title h5 {
+	margin: 0;
+	padding: 0;
+	font: 600 20px var(--rpc-font-head);
+	color: var(--rpc-ink);
+	text-transform: none;
+	letter-spacing: normal;
+}
+/* Category description under the heading. The legacy .rpress-element-title span
+   rule pulls it up with margin-top:-10px (it assumed the heading kept a 20px
+   bottom margin, which the rule above zeroes) — that overlapped the name. Reset
+   to a normal muted sub-line. Our selector (0,3,1) out-specifies the legacy one. */
+.rpress-menu-v2 .rpress-element-title .menu-category-wrap span {
+	display: block;
+	margin: 4px 0 0;
+	font: 400 13px var(--rpc-font-body);
+	line-height: 1.45;
+	color: var(--rpc-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Item cards                                                           */
+/* ------------------------------------------------------------------ */
+.rpress-menu-v2 .rpress_fooditems_list,
+.rpress-menu-v2 .rpress_fooditems_grid { background: none !important; }
+
+/* These wrappers are flex containers in v2, so the legacy clearfix
+   ::after (display:table) becomes a zero-width flex item and silently
+   consumes one column gap - 24px of dead space right of the cards. */
+.rpress-menu-v2 .rpress_fooditems_list::after,
+.rpress-menu-v2 .rpress_fooditems_grid::after { content: none; }
+
+/* Reclaim the leftover bootstrap gutter on the items wrapper so the cards
+   sit one clean flex gap from the category sidebar. */
+.rpress-menu-v2 .rpress_fooditems_list > .rp-col-lg-8.rp-col-md-12 { padding-left: 0; }
+
+.rpress-menu-v2 .rpress_fooditem {
+	/* Flex column so the inner card stretches to the grid cell height: in grid
+	   view every cell in a row is stretched to the tallest, and without this
+	   the shorter-content cards (e.g. no image) leave the white box short and
+	   the row looks ragged.
+	   display / margin / background / box-shadow keep !important: the legacy
+	   div.rpress_fooditems_list .rpress_fooditem rule (0,2,1) wins otherwise. */
+	display: flex !important;
+	flex-direction: column;
+	margin: 0 0 14px !important;
+	padding: 0;
+	border: 0;
+	background: none !important;
+	box-shadow: none !important;
+}
+.rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner {
+	display: flex;
+	flex: 1 1 auto; /* fill the card's stretched grid-cell height */
+	gap: 14px;
+	/* flex-start, not stretch: the card should hug its content instead of the
+	   image column dictating a tall empty band under short descriptions. */
+	align-items: flex-start;
+	margin: 0;
+	/* padding keeps !important: the legacy .rp-col rule zeroes it in grid.
+	   Extra top/bottom gives the card a bit more breathing room. */
+	padding: 18px 14px !important;
+	/* Cards need definition at rest or they merge into the page: a hairline
+	   border plus a whisper of shadow (the DoorDash treatment), lifting on
+	   hover. */
+	border: 1px solid var(--rpc-border-subtle);
+	border-radius: 14px;
+	background: #fff;
+	box-shadow: 0 1px 3px rgba(16, 24, 40, .05);
+	transition: box-shadow .15s ease, border-color .15s ease;
+}
+.rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner:hover {
+	border-color: var(--rpc-border-strong) !important;
+	box-shadow: 0 6px 18px rgba(16, 24, 40, .10) !important;
+}
+/* In grid, rows are spaced by the group's grid gap. The card's own
+   bottom margin would otherwise be pulled into the row track (grid sizes
+   auto rows to the item's margin box), inflating every cell ~14px above its
+   content, so the stretched inner box leaves that gap below the content.
+   Drop the margin for grid items; the list keeps it for row spacing. */
+.rpress-menu-v2 .food-group-wrap > .rpress_fooditem { margin-bottom: 0 !important; }
+
+/* Content column (title, price, excerpt, tags) */
+.rpress-menu-v2 .rpress_fooditem_inner > div { float: none; }
+.rpress-menu-v2 .rpress-title-holder { margin: 0; }
+.rpress-menu-v2 .rpress-title-holder h3,
+.rpress-menu-v2 .rpress_fooditem_title,
+.rpress-menu-v2 .food-title {
+	/* margin / font / line-height keep !important: the legacy
+	   .rpress_fooditems_list h3.rpress_fooditem_title rule (0,2,1) wins. */
+	margin: 0 0 4px !important;
+	font: 600 15px var(--rpc-font-body) !important;
+	color: var(--rpc-ink);
+	line-height: 1.3 !important;
+}
+.rpress-menu-v2 .rpress_fooditem_excerpt {
+	margin: 0 0 8px;
+	font: 400 13px var(--rpc-font-body);
+	color: var(--rpc-muted);
+	line-height: 1.45;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.rpress-menu-v2 .rpress-price-holder {
+	/* Flow layout (no absolute): price text on the left, + button on the right,
+	   on one row below the title/tags. position / margin keep !important: the
+	   legacy list rule positions this holder absolutely. */
+	position: static !important;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin: 10px 0 0 !important;
+}
+.rpress-menu-v2 .rpress_fooditem_buy_button,
+.rpress-menu-v2 .rpress_fooditem_purchase_form { flex: none; margin: 0; }
+.rpress-menu-v2 .rpress-price-holder,
+.rpress-menu-v2 .rpress-price-holder * {
+	font: 600 14px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+}
+/* Beat the legacy theme-color price rule: prices read as information, not
+   as links, so they stay ink (the DoorDash/Uber convention). */
+.rpress-menu-v2.rpress-menu-v2 .rpress-price-holder span.rpress_price,
+.rpress-menu-v2.rpress-menu-v2 .rpress-price-holder .price,
+.rpress-menu-v2.rpress-menu-v2 .rpress-price-holder .price * {
+	color: var(--rpc-ink) !important;
+}
+
+/* Category section headers (same element the .rpress-element-title rule above
+   styles; kept plain so that rule's higher specificity wins, as it does in the
+   baseline). */
+.rpress-menu-v2 h5.rpress-cat {
+	margin: 26px 0 14px;
+	padding: 0;
+	font: 700 20px var(--rpc-font-display, var(--rpc-font-body));
+	color: var(--rpc-ink);
+	line-height: 1.3;
+	border: 0;
+	background: none;
+}
+
+/* Sold-out: quiet dark chip instead of grey-on-grey. No legacy rule targets
+   .rp-soldout-badge, so no !important needed. */
+.rpress-menu-v2 .rp-soldout-badge {
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: rgba(25, 25, 25, .78);
+	color: #fff;
+	font: 600 11px var(--rpc-font-body);
+	letter-spacing: .02em;
+	text-transform: uppercase;
+}
+
+/* Veg / non-veg indicator (square with inner dot). Legacy .rpress-section
+   .rpress_fooditems_list .vegbg (0,3,0) out-specifies our selector and
+   positions it absolutely, so these keep !important. */
+.rpress-menu-v2 .vegbg,
+.rpress-menu-v2 .non_vegbg {
+	/* Flow (float) instead of absolute — sits top-right, title wraps beside it. */
+	position: static !important;
+	float: right !important;
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	width: 16px !important;
+	height: 16px !important;
+	margin: 2px 0 6px 10px !important;
+	border-radius: 3px !important;
+	background: #fff !important;
+	vertical-align: middle;
+}
+.rpress-menu-v2 .vegbg { border: 1.5px solid var(--rpc-veg) !important; }
+.rpress-menu-v2 .non_vegbg { border: 1.5px solid var(--rpc-nonveg) !important; }
+.rpress-menu-v2 .veg_sub { width: 8px !important; height: 8px !important; border-radius: 50% !important; background: var(--rpc-veg) !important; }
+.rpress-menu-v2 .non_vegsub { width: 8px !important; height: 8px !important; border-radius: 50% !important; background: var(--rpc-nonveg) !important; }
+
+/* Tag badges (Popular, Bestseller, dietary, etc.). Legacy
+   .rpress_fooditem_tags span.fooditem_tag (0,2,1) ties our fallback selector,
+   so these keep !important to win on more than load order. */
+.rpress-menu-v2 .rpress_fooditem_tags { margin: 6px 0 0 !important; display: flex; flex-wrap: wrap; gap: 6px; }
+.rpress-menu-v2 .rpress_fooditem_tags .fooditem_tag,
+.rpress-menu-v2 span.fooditem_tag {
+	display: inline-flex !important;
+	align-items: center;
+	margin: 0 !important;
+	padding: 3px 9px !important;
+	border: 1px solid var(--rpc-primary-tint-border, var(--rpc-border-subtle)) !important;
+	border-radius: 999px !important;
+	background: var(--rpc-primary-tint, #fff) !important;
+	color: var(--rpc-primary, var(--rpc-body)) !important;
+	font: 600 11px var(--rpc-font-body) !important;
+	text-transform: none !important;
+	line-height: 1.4 !important;
+}
+
+/* Image column (scoped INSIDE the card so it can't hit the .rp-col-md-4 cart
+   wrapper, which shares the class). Legacy .rpress_fooditems_list
+   .rpress_fooditem_inner .rp-col-md-4 (0,3,0) ties, so keep !important. */
+.rpress-menu-v2 .rpress_fooditem_inner .rpress-list-view-image-wrapper,
+.rpress-menu-v2 .rpress_fooditem_inner .rp-col-md-4,
+.rpress-menu-v2 .rpress_fooditem_inner .rp-grid-view-wrap {
+	position: relative !important;
+	flex: 0 0 auto !important;
+	width: auto !important;
+	padding: 0 !important;
+}
+/* Content column is the card child that is NOT the image column. */
+.rpress-menu-v2 .rpress_fooditem_inner > .rp-col-md-8 {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	padding: 0 !important;
+}
+.rpress-menu-v2.rpress-menu-v2 .rpress-thumbnail-holder,
+.rpress-menu-v2.rpress-menu-v2 .rpress-thumbnail-holder img {
+	width: 104px;
+	height: 104px;
+	min-width: 0;
+	min-height: 0; /* rpress.css list view forces min-height:150px; the doubled wrapper class already out-specifies it */
+	border-radius: 12px;
+	overflow: hidden;
+	object-fit: cover;
+	display: block;
+	margin: 0;
+}
+.rpress-menu-v2 .rpress-thumbnail-holder {
+	border: 0;
+	background: var(--rpc-surface);
+}
+
+/* Items without an image: drop the empty grey placeholder box entirely and
+   let the + button sit alone, vertically centered. Text gets the full row.
+   The legacy list/thumbnail rules force display/min-height, so keep !important. */
+.rpress-menu-v2 .rp-no-img .rpress-thumbnail-holder { display: none !important; }
+.rpress-menu-v2 .rpress_fooditem_inner .rpress-list-view-image-wrapper {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	justify-content: flex-start !important;
+}
+.rpress-menu-v2 .rp-no-img .rpress-list-view-image-wrapper {
+	justify-content: center !important;
+	min-width: 40px;
+}
+/* With an image: rpress.css already makes the + button absolute, horizontally
+   centred (left:50% + translateX) and auto-width. We only nudge it to sit just
+   inside the photo's bottom edge (the default is a -16px hang) and cap its
+   width so a long label can't overflow the narrow photo. This selector is more
+   specific than the rpress.css rule, so it wins on the cascade — no !important. */
+.rpress-menu-v2 .rpress_fooditem_inner:not(.rp-no-img) .rpress-list-view-image-wrapper .rpress_fooditem_buy_button {
+	top: auto;                    /* neutralise the responsive top:55% */
+	bottom: -11px;                /* straddle the photo's bottom edge */
+	max-width: calc(100% - 12px);
+}
+/* The straddle hangs 11px below the photo; without this the hang eats the
+   card's bottom padding and the button ends ~2px from the card edge. */
+.rpress-menu-v2 .rpress_fooditem_inner:not(.rp-no-img) .rpress-list-view-image-wrapper {
+	margin-bottom: 11px;
+}
+/* No image: no photo to overlay, so let the + button flow in the centred
+   column instead of absolute-positioning against an empty box. */
+.rpress-menu-v2 .rp-no-img .rpress-list-view-image-wrapper .rpress_fooditem_buy_button {
+	position: static;
+}
+
+/* Add-to-cart button. The whole appearance block keeps !important: the legacy
+   div.rpress_fooditems_(list|grid) .rpress_fooditem.rpress-list
+   .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-submit rules are
+   0,5,2 and would otherwise win outright. This is also the fallback the Styles
+   settings override via injected tokens, so it must beat the legacy rules when
+   no token is set. */
+.rpress-menu-v2 .rpress_fooditem_buy_button,
+.rpress-menu-v2 .rpress_fooditem_purchase_form,
+.rpress-menu-v2 .rpress_purchase_submit_wrapper {
+	margin: 0 !important;
+	padding: 0 !important;
+	height: auto !important;
+	line-height: 0 !important;
+}
+/* The add button honours the Styles settings via tokens injected by
+   enqueue_menu_styles(): --rpc-addbtn-bg / -color / -border / -bg-hover from
+   the color pickers, and the shape variant (circle | rounded | rectangle)
+   emitted as extra rules from add_button_style. Fallbacks below only apply
+   if the tokens are missing. */
+.rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart {
+	position: static !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 6px;
+	width: 32px !important;
+	height: 32px !important;
+	min-width: 0 !important;
+	padding: 0 !important;
+	border-radius: 50% !important;
+	border: 1.5px solid var(--rpc-addbtn-border, var(--rpc-primary)) !important;
+	background: var(--rpc-addbtn-bg, #fff) !important;
+	color: var(--rpc-addbtn-color, var(--rpc-primary)) !important;
+	font-size: 0 !important;
+	line-height: 0 !important;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, .12) !important;
+	transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.rpress-menu-v2 .rpress-add-to-cart .add-icon,
+.rpress-menu-v2 .rpress-add-to-cart .rpress-add-to-cart-label { display: none !important; }
+/* Geometric plus icon via a mask, so it's perfectly centred and follows the
+   button colour (primary by default, white on hover) — a text "+" glyph sits
+   off-centre in most fonts. */
+.rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart::before {
+	content: "" !important;
+	display: block !important;
+	width: 14px !important;
+	height: 14px !important;
+	background-color: currentColor !important;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14M5 12h14' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14M5 12h14' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart:hover {
+	background: var(--rpc-addbtn-bg-hover, var(--rpc-primary)) !important;
+	border-color: var(--rpc-addbtn-bg-hover, var(--rpc-primary)) !important;
+}
+.rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-not-available {
+	/* legacy .rpress-not-available rules are 0,4,2 — keep !important */
+	font: 500 11px var(--rpc-font-body) !important;
+	color: var(--rpc-danger) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Top toolbar: service tabs + date/time + search                       */
+/* ------------------------------------------------------------------ */
+.rpress-menu-v2 .rpress-options-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin: 0 0 18px;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+.rpress-menu-v2 .rpress-options-row .rpress-option-col { margin: 0 !important; padding: 0 !important; border: 0 !important; float: none !important; width: auto !important; }
+.rpress-menu-v2 .rpress-options-row .left-brdr { display: none !important; }
+.rpress-menu-v2 .rpress-search-wrap { flex: 1 1 220px !important; }
+
+/* Service tabs = segmented toggle. display / background keep !important
+   (legacy .order-online-servicetabs rules win otherwise). */
+.rpress-menu-v2 ul.order-online-servicetabs {
+	display: inline-flex !important;
+	gap: 4px;
+	margin: 0;
+	padding: 4px;
+	border: 1px solid var(--rpc-border-subtle);
+	border-radius: 999px;
+	background: var(--rpc-surface) !important;
+	list-style: none;
+}
+.rpress-menu-v2 ul.order-online-servicetabs .nav-item { margin: 0 !important; }
+.rpress-menu-v2 ul.order-online-servicetabs .nav-link {
+	/* display / padding / font keep !important: legacy .nav-link rules win. */
+	display: inline-flex !important;
+	align-items: center;
+	margin: 0;
+	padding: 7px 18px !important;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--rpc-body);
+	font: 600 13px var(--rpc-font-body) !important;
+	cursor: pointer;
+	transition: background .15s ease, color .15s ease;
+}
+.rpress-menu-v2 ul.order-online-servicetabs .nav-link.active {
+	background: var(--rpc-primary) !important;
+	color: #fff !important;
+}
+
+/* Date / time pill. border-radius / background / color keep !important
+   (legacy .rpress_order-address-wrap rules win otherwise). */
+.rpress-menu-v2 .rpress-edit-address-wrap .rpress_order-address-wrap,
+.rpress-menu-v2 .rpress_order-address-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 9px 15px;
+	border: 1px solid var(--rpc-border-subtle);
+	border-radius: 999px !important;
+	background: #fff !important;
+	font: 500 13px var(--rpc-font-body);
+	color: var(--rpc-body) !important;
+}
+.rpress-menu-v2 .rpress_order-address-wrap a,
+.rpress-menu-v2 .rpress_order-address-wrap .rpress-edit-order-address { color: var(--rpc-primary) !important; font-weight: 600 !important; text-decoration: none !important; }
+
+/* Search. width keeps !important (legacy input width wins); the rest is clean. */
+.rpress-menu-v2 .rpress-search-wrap #rpress-food-search {
+	width: 100% !important;
+	margin: 0;
+	padding: 10px 14px 10px 40px;
+	border: 1px solid var(--rpc-border-subtle);
+	border-radius: 999px;
+	background: var(--rpc-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23787A7C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 14px center;
+	font: 400 13.5px var(--rpc-font-body);
+	color: var(--rpc-ink);
+	box-shadow: none;
+	height: auto;
+	min-height: 0;
+}
+.rpress-menu-v2 .rpress-search-wrap #rpress-food-search:focus { border-color: var(--rpc-primary) !important; outline: none !important; background-color: #fff !important; }
+
+/* ------------------------------------------------------------------ */
+/* Sticky category nav                                                  */
+/* ------------------------------------------------------------------ */
+.rpress-menu-v2 .rpress-mobile-menu-wrap { position: sticky; top: 0; z-index: 20; background: #fff; }
+/* When logged in, the fixed WP admin bar (32px, 46px on mobile) sits at the
+   top; offset the sticky category bar below it so it isn't tucked behind the
+   toolbar. Applies to both packs (base menu-v2 skin). */
+body.admin-bar .rpress-menu-v2 .make-me-sticky,
+body.admin-bar .rpress-menu-v2 .rpress-mobile-menu-wrap { top: 32px; }
+@media screen and (max-width: 782px) {
+	body.admin-bar .rpress-menu-v2 .make-me-sticky,
+	body.admin-bar .rpress-menu-v2 .rpress-mobile-menu-wrap { top: 46px; }
+}
+.rpress-menu-v2 .pn-ProductNav_Wrapper {
+	margin: 0 0 8px;
+	padding: 4px 0;
+	border-bottom: 1px solid var(--rpc-border-subtle);
+	background: #fff !important; /* legacy nav wrapper background wins otherwise */
+}
+.rpress-menu-v2 .pn-ProductNav_Link {
+	margin: 0;
+	padding: 10px 2px;
+	margin-right: 22px;
+	border: 0;
+	background: none;
+	font: 500 14px var(--rpc-font-body);
+	color: var(--rpc-muted) !important; /* legacy .pn-ProductNav_Link color wins otherwise */
+	text-transform: none;
+	white-space: nowrap;
+}
+.rpress-menu-v2 .pn-ProductNav_Link.mnuactive,
+.rpress-menu-v2 .pn-ProductNav_Link.active,
+.rpress-menu-v2 .pn-ProductNav_Link:hover { color: var(--rpc-ink) !important; }
+/* Clicking a category chip (or the nav JS focusing it to scroll it into view)
+   left the theme's default focus ring — a stray rounded outline around the chip.
+   Suppress it for mouse/programmatic focus; keyboard users still get the
+   :focus-visible ring defined per pack. */
+.rpress-menu-v2 .pn-ProductNav_Link:focus:not(:focus-visible) { outline: 0 !important; box-shadow: none !important; }
+.rpress-menu-v2 .pn-ProductNav_Indicator { background: var(--rpc-primary); height: 2.5px !important; }
+.rpress-menu-v2 .pn-Advancer { background: #fff !important; border: 0 !important; }
+.rpress-menu-v2 .pn-Advancer svg,
+.rpress-menu-v2 .pn-Advancer_Icon { fill: var(--rpc-muted) !important; }
+
+/* Category rail item counts: markup ships for packs (Modern shows them);
+   Classic keeps its label-only rail. */
+.rpress-menu-v2 .pn-ProductNav_Count { display: none; }
+
+/* Respect an inline display:none on summary rows: the storefront JS hides the
+   delivery-fee line on pickup orders, but a legacy rpress.css rule forces
+   display:flex !important and un-hides it. Let the hide win. */
+.rpress-menu-v2 .rpress-sidebar-cart-wrap .rpress-cart-summary-area .rpress-cart-summary-list li.rpress-cart-meta[style*="display:none"],
+.rpress-menu-v2 .rpress-sidebar-cart-wrap .rpress-cart-summary-area .rpress-cart-summary-list li.rpress-cart-meta[style*="display: none"] { display: none !important; }
+
+/* Adaptive sidebar-cart height: the legacy fixed max-height (628px) left a
+   short, always-scrolling item list on tall screens. On desktop, cap the
+   sticky cart to the viewport instead so the flex item list grows to use the
+   available height and only scrolls once it genuinely overflows. The wrap is
+   already a flex column with the list at flex:1, so no structural change. */
+@media (min-width: 881px) {
+	.rpress-menu-v2.rpress-menu-v2 .rpress-sidebar-cart-wrap {
+		max-height: calc(100vh - 40px) !important;
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* Classic pack refinements                                             */
+/* ------------------------------------------------------------------ */
+/* Scoped to body.rp-pack-classic so Modern (which styles these itself) is
+   untouched. Tighter food-card padding, a visible shadowless border on the
+   sidebar cart, and no underline under the category rail. */
+body.rp-pack-classic .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner {
+	padding: 12px !important;
+}
+body.rp-pack-classic .rpress-menu-v2 .rpress-sidebar-cart-wrap,
+body.rp-pack-classic .rpress-menu-v2 .rpress-sidebar-main-wrap {
+	border: 1px solid var(--rpc-border-strong);
+	border-radius: 16px;
+	box-shadow: none;
+}
+body.rp-pack-classic .rpress-menu-v2 .pn-ProductNav_Wrapper {
+	border-bottom: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sidebar cart line — MODERN PACK ONLY: clickable item body, price +      */
+/* stepper stacked right. Classic keeps its original Edit/Remove cart via   */
+/* templates/cart/item.php; the Modern layout ships as a pack template      */
+/* override (templates/packs/modern/cart/item.php), so these rules are      */
+/* scoped to body.rp-pack-modern where they touch shared classes.           */
+/* ------------------------------------------------------------------ */
+/* Row layout: [thumbnail + title — clickable] [price over stepper]. The right
+   column stacks the price with the stepper beneath it, reusing the height the
+   tall thumbnail + title already occupy so the line stays compact. */
+body.rp-pack-modern .rpress-menu-v2 .rpress-cart-item-list {
+	align-items: flex-start;
+	gap: 8px;
+}
+.rpress-menu-v2 .rpress-cart-item .rp-remove-hidden { display: none !important; }
+.rpress-menu-v2 .rpress-cart-item-aside {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 8px;
+	flex: 0 0 auto;
+}
+
+/* Item body is the edit trigger — the whole thumbnail + title area. Reset the
+   legacy grey `.rpress-edit-from-cart` background; give it a quiet hover so it
+   reads as pressable. */
+.rpress-menu-v2 .rpress-cart-item-main.rpress-edit-from-cart {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	padding: 4px 6px;
+	border-radius: 8px;
+	background: none !important;
+	cursor: pointer;
+	transition: background .15s ease;
+}
+.rpress-menu-v2 .rpress-cart-item-main.rpress-edit-from-cart:hover { background: var(--rpc-surface) !important; }
+.rpress-menu-v2 .rpress-cart-item-main.rpress-edit-from-cart:focus-visible {
+	outline: 2px solid var(--rpc-primary);
+	outline-offset: 1px;
+}
+.rpress-menu-v2 .rpress-cart-item-main.rp-loading { opacity: .55; pointer-events: none; }
+/* Price sits flush right, no leading edit control before it anymore. */
+body.rp-pack-modern .rpress-menu-v2 .rpress-cart-item-list .rpress-cart-item-price { padding: 0; }
+
+/* Stepper — rounded pill: −  value  + . Glyphs are drawn in CSS (mask) so the
+   cart HTML sanitizer can't strip an inline SVG's stroke (which left the
+   buttons blank until the first click). */
+.rpress-menu-v2 .rpress-qty-stepper {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid var(--rpc-border-strong);
+	border-radius: 999px;
+	background: #fff;
+	overflow: hidden;
+}
+.rpress-menu-v2 .rpress-qty-stepper .rp-qty-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 30px;
+	padding: 0;
+	margin: 0;
+	border: 0;
+	background: none;
+	color: var(--rpc-ink);
+	cursor: pointer;
+	transition: background .15s ease, color .15s ease;
+}
+.rpress-menu-v2 .rpress-qty-stepper .rp-qty-btn::before {
+	content: "";
+	width: 12px;
+	height: 12px;
+	background-color: currentColor;
+	-webkit-mask: var(--rp-ico) center / contain no-repeat;
+	        mask: var(--rp-ico) center / contain no-repeat;
+}
+.rpress-menu-v2 .rpress-qty-stepper .rp-qty-inc { --rp-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E"); }
+.rpress-menu-v2 .rpress-qty-stepper .rp-qty-dec { --rp-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E"); }
+/* At qty 1 the − becomes a trash (JS toggles .is-one) and turns red to signal it
+   removes the line. */
+.rpress-menu-v2 .rpress-qty-stepper.is-one .rp-qty-dec { --rp-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6'/%3E%3C/svg%3E"); color: var(--rpc-body); }
+.rpress-menu-v2 .rpress-qty-stepper.is-one .rp-qty-dec::before { width: 13px; height: 13px; }
+.rpress-menu-v2 .rpress-qty-stepper.is-one .rp-qty-dec:hover { color: var(--rpc-danger); background: var(--rpc-danger-bg); }
+.rpress-menu-v2 .rpress-qty-stepper .rp-qty-btn:hover { background: var(--rpc-surface); }
+.rpress-menu-v2 .rpress-qty-stepper .rp-qty-inc:hover { color: var(--rpc-primary, var(--rpc-ink)); }
+.rpress-menu-v2 .rpress-qty-stepper .rp-qty-val {
+	min-width: 26px;
+	padding: 0 2px;
+	text-align: center;
+	font: 600 13px var(--rpc-font-body);
+	color: var(--rpc-ink);
+}
+.rpress-menu-v2 .rpress-qty-stepper.rp-qty-busy { opacity: .55; pointer-events: none; }
+
+/* Add-ons: smaller and quieter than the main item so they don't compete with
+   the food item name / price. */
+.rpress-menu-v2.rpress-menu-v2 .rpress-cart-addons ul.addon-item-wrap .rpress-cart-item-title,
+.rpress-menu-v2.rpress-menu-v2 .rpress-cart-addons .addon-item-price,
+.rpress-menu-v2.rpress-menu-v2 .rpress-cart-addons .rpress-cart-item-price {
+	font-size: 11.5px;
+	font-weight: 500;
+	color: var(--rpc-muted);
+}
+
+/* Cart item list scrollbar: a thin translucent bar riding the edge instead of
+   the old fat grey one that ate ~15px of the cart width. WebKit/Blink gets the
+   6px custom bar (declaring scrollbar-width here would make Chrome ignore the
+   ::-webkit rules and fall back to its ~11px 'thin'); Firefox uses the standard
+   properties below. */
+.rpress-menu-v2 .rpress-cart::-webkit-scrollbar { width: 6px; }
+.rpress-menu-v2 .rpress-cart::-webkit-scrollbar-track { background: transparent; }
+.rpress-menu-v2 .rpress-cart::-webkit-scrollbar-thumb {
+	background: rgba(25, 25, 25, .18);
+	border-radius: 999px;
+}
+.rpress-menu-v2 .rpress-cart:hover::-webkit-scrollbar-thumb { background: rgba(25, 25, 25, .32); }
+@supports (-moz-appearance: none) {
+	.rpress-menu-v2 .rpress-cart { scrollbar-width: thin; scrollbar-color: rgba(25, 25, 25, .28) transparent; }
+}

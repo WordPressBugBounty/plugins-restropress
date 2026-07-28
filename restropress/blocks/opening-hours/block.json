@@ -1,0 +1,46 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/opening-hours",
+	"title": "Opening Hours",
+	"category": "restropress",
+	"description": "Your weekly store hours, straight from RestroPress settings. Great for footers and contact pages.",
+	"keywords": [
+		"hours",
+		"opening",
+		"schedule",
+		"open",
+		"restaurant",
+		"times"
+	],
+	"textdomain": "restropress",
+	"attributes": {
+		"highlightToday": {
+			"type": "boolean",
+			"default": true
+		},
+		"showClosedDays": {
+			"type": "boolean",
+			"default": true
+		},
+		"showHolidays": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"supports": {
+		"align": true,
+		"html": false,
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"editorScript": "rpress-blocks-editor",
+	"style": "rpress-blocks",
+	"example": {
+		"attributes": {
+			"highlightToday": true
+		}
+	}
+}

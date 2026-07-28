@@ -1,11 +1,19 @@
 <?php
+/**
+ * Order confirmation → live order tracking template ([rpress_receipt]).
+ *
+ * Rebuilt for the 3.4 tracking redesign: a live-status hero with a 5-step
+ * progress tracker, plus two consolidated cards (Your order + Delivery &
+ * payment). One order status drives the hero, tracker, ETA and payment badge.
+ * Live updates reuse the rpress_receipt_order_status AJAX endpoint.
+ *
+ * @package RPRESS
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * This template is used to display the purchase summary with [rpress_receipt]
- */
 global $rpress_receipt_args;
 $payment = get_post( $rpress_receipt_args['id'] );
 if ( empty( $payment ) ) : ?>
@@ -23,830 +31,502 @@ $cart           = rpress_get_payment_meta_cart_details( $payment->ID, true );
 $discount       = rpress_get_discount_price_by_payment_id( $payment->ID );
 $user           = rpress_get_payment_meta_user_info( $payment->ID );
 $email          = rpress_get_payment_user_email( $payment->ID );
-$payment_status = rpress_get_payment_status( $payment, true );
-$order_status   = rpress_get_order_status( $payment->ID );
-$order_note     = rpress_get_payment_meta( $payment->ID, '_rpress_order_note', true );
-$prefix         = rpress_get_option( 'sequential_prefix' );
-$postfix        = rpress_get_option( 'sequential_postfix' );
-$payment_id     = rpress_get_payment_number( $payment->ID );
-$service_type   = rpress_get_payment_meta( $payment->ID, '_rpress_delivery_type' );
-$service_label  = rpress_service_label( $service_type );
-$phone          = ! empty( $meta['phone'] ) ? $meta['phone'] : ( ! empty( $user['phone'] ) ? $user['phone'] : '' );
-$firstname      = isset( $user['first_name'] ) ? $user['first_name'] : '';
-$lastname       = isset( $user['last_name'] ) ? $user['last_name'] : '';
-$address_info   = get_post_meta( $payment->ID, '_rpress_delivery_address', true );
-$address        = !empty( $address_info['address'] ) ? $address_info['address'] . ', ' : '';
-$address       .= ! empty( $address_info['flat'] ) ? $address_info['flat'] . ', ' : '';
-$address       .= ! empty( $address_info['city'] ) ? $address_info['city'] . ', ' : '';
-$address       .= ! empty( $address_info['postcode'] ) ? $address_info['postcode'] : '';
+$order_status    = rpress_get_order_status( $payment->ID );
+$prefix          = rpress_get_option( 'sequential_prefix' );
+$postfix         = rpress_get_option( 'sequential_postfix' );
+$payment_id      = rpress_get_payment_number( $payment->ID );
+$service_type    = rpress_get_payment_meta( $payment->ID, '_rpress_delivery_type' );
+$is_delivery     = ( 'delivery' === $service_type );
+$phone           = ! empty( $meta['phone'] ) ? $meta['phone'] : ( ! empty( $user['phone'] ) ? $user['phone'] : '' );
+$firstname       = isset( $user['first_name'] ) ? $user['first_name'] : '';
+$lastname        = isset( $user['last_name'] ) ? $user['last_name'] : '';
+$address_info    = get_post_meta( $payment->ID, '_rpress_delivery_address', true );
+$address         = ! empty( $address_info['address'] ) ? $address_info['address'] . ', ' : '';
+$address        .= ! empty( $address_info['flat'] ) ? $address_info['flat'] . ', ' : '';
+$address        .= ! empty( $address_info['city'] ) ? $address_info['city'] . ', ' : '';
+$address        .= ! empty( $address_info['postcode'] ) ? $address_info['postcode'] : '';
+$address         = trim( $address, ', ' );
 
-$service_label_text = ucfirst( (string) $service_label );
-$payment_method     = rpress_get_gateway_checkout_label( rpress_get_payment_gateway( $payment->ID ) );
-$order_status_text  = rpress_get_order_status_label( $order_status );
-$order_date_value   = ! empty( $meta['date'] ) ? date_i18n( get_option( 'date_format' ), strtotime( $meta['date'] ) ) : '';
-$customer_name      = trim( $firstname . ' ' . $lastname );
-$order_number       = rpress_get_option( 'enable_sequential' ) ? $payment_id : $prefix . $payment_id . $postfix;
-$store_location     = rpress_get_option( 'store_address' );
-$payment_key        = rpress_get_payment_key( $payment->ID );
-$visible_items      = 0;
-$order_status_key   = sanitize_key( $order_status );
-$status_asset_base  = trailingslashit( RP_PLUGIN_URL ) . 'templates/images/status/';
-$status_media_map   = array(
-	'pending'    => array(
-		'src'         => $status_asset_base . 'pending.gif',
-		'description' => __( 'Your order is waiting for confirmation.', 'restropress' ),
-	),
-	'accepted'   => array(
-		'src'         => $status_asset_base . 'accepted.gif',
-		'description' => __( 'Your order has been accepted by the restaurant.', 'restropress' ),
-	),
-	'processing' => array(
-		'src'         => $status_asset_base . 'prepare-food.gif',
-		'description' => __( 'Your order is being prepared in the kitchen.', 'restropress' ),
-	),
-	'ready'      => array(
-		'src'         => $status_asset_base . 'ready.gif',
-		'description' => __( 'Your order is ready for pickup or handoff.', 'restropress' ),
-	),
-	'transit'    => array(
-		'src'         => $status_asset_base . 'delivery-boy.gif',
-		'description' => __( 'Your order is on the way.', 'restropress' ),
-	),
-	'completed'  => array(
-		'src'         => $status_asset_base . 'delivered.gif',
-		'description' => __( 'Your order is completed. Enjoy your meal!', 'restropress' ),
-	),
-	'cancelled'  => array(
-		'src'         => $status_asset_base . 'cancelled.gif',
-		'description' => __( 'This order has been cancelled.', 'restropress' ),
-	),
-	'failed'     => array(
-		'src'         => $status_asset_base . 'cancelled.gif',
-		'description' => __( 'There was an issue with this order.', 'restropress' ),
-	),
-);
-$default_status_media = array(
-	'src'         => $status_asset_base . 'pending.gif',
-	'description' => __( 'Your order status is being updated.', 'restropress' ),
-);
-$current_status_media = isset( $status_media_map[ $order_status_key ] ) ? $status_media_map[ $order_status_key ] : $default_status_media;
-$current_status_src   = apply_filters(
-	'rpress_receipt_status_media_src',
-	$current_status_media['src'],
-	$order_status_key,
-	$payment->ID
-);
-$current_status_desc  = isset( $current_status_media['description'] ) ? $current_status_media['description'] : $default_status_media['description'];
-$status_poll_nonce    = wp_create_nonce( 'rpress-receipt-status-' . $payment->ID );
-$realtime_client      = class_exists( 'RPRESS_Realtime' ) ? RPRESS_Realtime::get_client_config_for_payment( $payment->ID ) : array( 'enabled' => false );
+$payment_method  = rpress_get_gateway_checkout_label( rpress_get_payment_gateway( $payment->ID ) );
+$gateway         = rpress_get_payment_gateway( $payment->ID );
+$customer_name   = trim( $firstname . ' ' . $lastname );
+$order_number    = rpress_get_option( 'enable_sequential' ) ? $payment_id : $prefix . $payment_id . $postfix;
+$store_name      = get_bloginfo( 'name' );
+$store_location  = rpress_get_option( 'store_address' );
+$store_phone     = rpress_get_option( 'store_phone' );
+$payment_key     = rpress_get_payment_key( $payment->ID );
+$order_status_key = sanitize_key( $order_status );
+$status_poll_nonce = wp_create_nonce( 'rpress-receipt-status-' . $payment->ID );
 
-foreach ( $status_media_map as $status_key => $status_media ) {
-	$status_media_map[ $status_key ]['src'] = apply_filters(
-		'rpress_receipt_status_media_src',
-		$status_media['src'],
-		$status_key,
-		$payment->ID
-	);
+$order_total     = rpress_payment_amount( $payment->ID );
+$order_subtotal  = rpress_payment_subtotal( $payment->ID );
+$support_email   = sanitize_email( (string) get_option( 'admin_email' ) );
+
+// Requested time label ("Today · DD/MM/YYYY · HH:MM").
+$service_date_label = ! empty( $service_date ) ? rpress_local_date( $service_date ) : '';
+$requested_time     = trim( $service_date_label . ( ! empty( $service_time ) ? ' · ' . $service_time : '' ), ' ·' );
+
+// --- Status model ------------------------------------------------------------
+// All sequencing/phase/step logic comes from the canonical model in
+// includes/payments/functions.php so admin + tracker never drift apart.
+$service_type_key = $is_delivery ? 'delivery' : 'pickup';
+
+// Terminal-bad payment states override the fulfilment status for display: a
+// refunded/failed order shows "cancelled" instead of a stale happy tracker.
+if ( in_array( $payment->post_status, array( 'refunded', 'cancelled', 'failed', 'abandoned', 'revoked' ), true ) ) {
+	$order_status_key = 'cancelled';
 }
 
+$status_model  = function_exists( 'rpress_order_status_model' ) ? rpress_order_status_model() : array();
+$tracker_steps = function_exists( 'rpress_order_tracker_steps' ) ? rpress_order_tracker_steps( $service_type_key ) : array();
+$step_names    = wp_list_pluck( $tracker_steps, 'label' );
+
+$phase_map = array();
+$step_map  = array();
+foreach ( $status_model as $skey => $sinfo ) {
+	$phase_map[ $skey ] = $sinfo['phase'];
+	$step_map[ $skey ]  = rpress_order_status_step_index( $skey, $service_type_key );
+}
+
+$phase        = isset( $phase_map[ $order_status_key ] ) ? $phase_map[ $order_status_key ] : 'pending';
+$current_step = isset( $step_map[ $order_status_key ] ) ? $step_map[ $order_status_key ] : 0;
+
+// Headline + message per phase (service-aware wording).
+$phase_copy   = array(
+	'pending'   => array( __( 'Waiting for confirmation', 'restropress' ), sprintf( /* translators: %s store name */ __( "We've sent your order to %s — it usually takes a minute or two to confirm.", 'restropress' ), $store_name ) ),
+	'accepted'  => array( __( 'Order confirmed', 'restropress' ), sprintf( /* translators: %s store name */ __( '%s has accepted your order and will start preparing it shortly.', 'restropress' ), $store_name ) ),
+	'preparing' => array( __( 'In the kitchen', 'restropress' ), __( 'Your food is being prepared right now.', 'restropress' ) ),
+	'ready'     => $is_delivery
+		? array( __( 'Ready to go', 'restropress' ), __( 'Your order is packed and waiting for a rider to pick it up.', 'restropress' ) )
+		: array( __( 'Ready for pickup', 'restropress' ), __( 'Your order is ready — come collect it when you can.', 'restropress' ) ),
+	'transit'   => array( __( 'Out for delivery', 'restropress' ), __( 'Your rider has picked up the order and is on the way.', 'restropress' ) ),
+	'delivered' => array( $is_delivery ? __( 'Delivered', 'restropress' ) : __( 'Picked up', 'restropress' ), $is_delivery ? __( 'Your order has arrived. Enjoy your meal!', 'restropress' ) : __( 'Order collected. Enjoy your meal!', 'restropress' ) ),
+	'cancelled' => array( __( 'Order cancelled', 'restropress' ), __( 'This order was cancelled.', 'restropress' ) ),
+);
+$headline = $phase_copy[ $phase ][0];
+$message  = $phase_copy[ $phase ][1];
+
+// ETA: show the requested service time until the order is delivered/cancelled.
+$eta_hidden = in_array( $phase, array( 'delivered', 'cancelled' ), true ) || empty( $service_time );
+$eta_value  = 'transit' === $phase ? __( 'Any minute now', 'restropress' ) : $service_time;
+
+// Payment badge/note. Trim a leading "Pay by/via/with" from the gateway label
+// so notes read "paid by cash" rather than "paid by Pay by cash".
+$method_noun = trim( preg_replace( '/^pay\s+(by|via|with|using)\s+/i', '', (string) $payment_method ) );
+if ( '' === $method_noun ) {
+	$method_noun = $payment_method;
+}
+$is_paid   = in_array( $payment->post_status, array( 'publish', 'complete' ), true ) || 'delivered' === $phase;
+$pay_label = $is_paid ? __( 'Paid', 'restropress' ) : __( 'Pay on delivery', 'restropress' );
+$pay_note  = $is_paid
+	? sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun )
+	: sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when your order arrives', 'restropress' ), $order_total, $method_noun );
+
+// Inline status icons (Lucide-style). Shared between PHP render and JS updates.
+$phase_icons = array(
+	'pending'   => '<circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path>',
+	'accepted'  => '<path d="M20 6 9 17l-5-5"></path>',
+	'preparing' => '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>',
+	'ready'     => '<path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path>',
+	'transit'   => '<path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"></path><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"></path><circle cx="7" cy="18" r="2"></circle><circle cx="17" cy="18" r="2"></circle>',
+	'delivered' => '<path d="M20 6 9 17l-5-5"></path>',
+	'cancelled' => '<path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>',
+);
+$hero_icon_svg = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $phase_icons[ $phase ] . '</svg>';
+
+// Visible item count.
+$visible_items = 0;
 if ( ! empty( $cart ) ) {
-	foreach ( $cart as $cart_item_for_count ) {
-		if ( apply_filters( 'rpress_user_can_view_receipt_item', true, $cart_item_for_count ) ) {
+	foreach ( $cart as $ci ) {
+		if ( apply_filters( 'rpress_user_can_view_receipt_item', true, $ci ) && empty( $ci['in_bundle'] ) ) {
 			$visible_items++;
 		}
 	}
 }
 
+// Small SVG helper for the delivery/payment icon rows.
+$svg_pin   = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>';
+$svg_clock = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>';
+$svg_card  = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle><path d="M6 12h.01M18 12h.01"></path></svg>';
+$svg_store = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>';
+
 do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 ?>
-<div class="rp-thankyou-page">
-	<div class="rp-thankyou-hero rp-reveal rp-reveal-1">
-		<div class="rp-thankyou-hero-main">
-			<span class="rp-thankyou-check" aria-hidden="true">
-				<svg viewBox="0 0 24 24" role="img" focusable="false" aria-hidden="true">
-					<path d="M9.55 17.62 4.7 12.77l1.41-1.42 3.44 3.44 8.35-8.35 1.41 1.42z"></path>
-				</svg>
-			</span>
-			<div>
-				<p class="rp-thankyou-kicker"><?php esc_html_e( 'Order Confirmation', 'restropress' ); ?></p>
-				<h2><?php esc_html_e( "We've received your order", 'restropress' ); ?></h2>
-				<p class="rp-thankyou-message">
-					<?php esc_html_e( 'A copy of your receipt has been sent to', 'restropress' ); ?>
-					<strong><?php echo esc_html( $email ); ?></strong>
-				</p>
+<div class="rp-track rp-track-v1<?php echo ( 'cancelled' === $phase ) ? ' is-cancelled' : ''; ?>" data-phase="<?php echo esc_attr( $phase ); ?>">
+	<div class="rp-track-inner">
+
+		<!-- Header -->
+		<div class="rp-track-topbar">
+			<div class="rp-track-brand">
+				<span class="rp-track-order"><?php /* translators: %s order number */ echo esc_html( sprintf( __( 'Order #%s', 'restropress' ), $order_number ) ); ?></span>
+			</div>
+			<a href="#" class="rp-track-print" onclick="window.print();return false;">
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+				<?php esc_html_e( 'Print receipt', 'restropress' ); ?>
+			</a>
+		</div>
+
+		<!-- Live status hero -->
+		<div class="rp-track-hero" data-phase="<?php echo esc_attr( $phase ); ?>">
+			<div class="rp-track-hero-top">
+				<span class="rp-track-hero-icon" id="rp-track-icon"><?php echo $hero_icon_svg; // phpcs:ignore ?></span>
+				<div class="rp-track-hero-body">
+					<div class="rp-track-eyebrow"><?php esc_html_e( 'Live order status', 'restropress' ); ?></div>
+					<div class="rp-track-headline" id="rp-track-headline"><?php echo esc_html( $headline ); ?></div>
+					<div class="rp-track-msg"><span id="rp-track-msg"><?php echo esc_html( $message ); ?></span> <span class="rp-track-updated" id="rp-track-updated">· <?php esc_html_e( 'Updated just now', 'restropress' ); ?></span></div>
+				</div>
+				<div class="rp-track-hero-side">
+					<div class="rp-track-eta" id="rp-track-eta"<?php echo $eta_hidden ? ' hidden' : ''; ?>>
+						<div class="rp-track-eta-label"><?php echo esc_html( $is_delivery ? __( 'Estimated delivery', 'restropress' ) : __( 'Ready by', 'restropress' ) ); ?></div>
+						<div class="rp-track-eta-time" id="rp-track-eta-time"><?php echo esc_html( $eta_value ); ?></div>
+					</div>
+					<button type="button" class="rp-track-alerts is-on" id="rp-track-alerts" aria-pressed="true">
+						<span class="rp-track-alerts-dot"></span>
+						<span class="rp-track-alerts-label"><?php esc_html_e( 'Live updates on', 'restropress' ); ?></span>
+					</button>
+				</div>
+			</div>
+
+			<!-- Progress tracker -->
+			<div class="rp-track-steps" id="rp-track-steps"<?php echo ( 'cancelled' === $phase ) ? ' hidden' : ''; ?>>
+				<?php
+				$last_index = count( $step_names ) - 1;
+				foreach ( $step_names as $i => $name ) :
+					$done     = ( $current_step > $i ) || ( 'delivered' === $phase );
+					$active   = ( $current_step === $i ) && ( 'delivered' !== $phase );
+					$state    = $done ? 'is-done' : ( $active ? 'is-active' : 'is-upcoming' );
+					$mark     = $done ? '&#10003;' : ( $i + 1 );
+					$l_fill   = ( 0 !== $i ) && ( $done || $active );
+					$r_fill   = ( $last_index !== $i ) && $done;
+					$classes  = 'rp-track-step ' . $state;
+					$classes .= ( 0 === $i ) ? ' rp-track-first' : '';
+					$classes .= ( $last_index === $i ) ? ' rp-track-last' : '';
+					$classes .= $l_fill ? ' rp-lfill' : '';
+					$classes .= $r_fill ? ' rp-rfill' : '';
+					?>
+					<div class="<?php echo esc_attr( $classes ); ?>">
+						<span class="rp-track-bar rp-track-bar-left"></span>
+						<span class="rp-track-bar rp-track-bar-right"></span>
+						<span class="rp-track-dot"><?php echo wp_kses_post( $done ? $mark : ( $active ? ( $i + 1 ) : ( $i + 1 ) ) ); ?></span>
+						<span class="rp-track-step-label"><?php echo esc_html( $name ); ?></span>
+					</div>
+				<?php endforeach; ?>
+			</div>
+
+			<!-- Cancelled banner -->
+			<div class="rp-track-cancel" id="rp-track-cancel"<?php echo ( 'cancelled' === $phase ) ? '' : ' hidden'; ?>>
+				<span><?php esc_html_e( 'This order was cancelled. Any online payment will be refunded to your original payment method.', 'restropress' ); ?></span>
+				<a class="rp-track-btn" href="<?php echo esc_url( home_url( '/order-online' ) ); ?>"><?php esc_html_e( 'Order again', 'restropress' ); ?></a>
 			</div>
 		</div>
-		<div class="rp-thankyou-live-status">
-			<div class="rp-thankyou-live-status-media">
-				<img
-					id="rp-live-status-gif"
-					src="<?php echo esc_url( $current_status_src ); ?>"
-					alt="<?php echo esc_attr( sprintf( __( 'Order status animation: %s', 'restropress' ), $order_status_text ) ); ?>"
-				/>
-			</div>
-			<div class="rp-thankyou-live-status-content">
-				<p class="rp-live-status-kicker"><?php esc_html_e( 'Live Order Status', 'restropress' ); ?></p>
-				<h4 id="rp-live-order-status-panel"><?php echo esc_html( $order_status_text ); ?></h4>
-				<p id="rp-live-order-status-desc"><?php echo esc_html( $current_status_desc ); ?></p>
-				<p id="rp-live-status-updated"><?php esc_html_e( 'Updated just now', 'restropress' ); ?></p>
-			</div>
-			<div class="rp-thankyou-live-status-actions">
-				<button type="button" class="rp-thankyou-notify-btn" id="rp-enable-order-alerts">
-					<?php esc_html_e( 'Enable Browser Alerts', 'restropress' ); ?>
+
+		<!-- Two cards -->
+		<div class="rp-track-grid">
+
+			<!-- Your order -->
+			<div class="rp-track-card rp-track-order">
+				<button type="button" class="rp-track-order-head" id="rp-track-receipt-toggle" aria-expanded="true">
+					<span class="rp-track-card-title"><?php esc_html_e( 'Your order', 'restropress' ); ?> <span class="rp-track-muted">· <?php echo esc_html( sprintf( _n( '%d item', '%d items', $visible_items, 'restropress' ), $visible_items ) ); ?></span></span>
+					<span class="rp-track-receipt-to rp-track-receipt-to--head"><?php echo esc_html( sprintf( /* translators: %s email */ __( 'Receipt sent to %s', 'restropress' ), $email ) ); ?></span>
+					<span class="rp-track-order-total"><?php echo esc_html( $order_total ); ?></span>
+					<svg class="rp-track-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
 				</button>
-			</div>
-		</div>
-		<div class="rp-thankyou-meta">
-			<div class="rp-thankyou-meta-item">
-				<span><?php esc_html_e( 'Order', 'restropress' ); ?></span>
-				<strong>#<?php echo esc_html( $order_number ); ?></strong>
-			</div>
-			<div class="rp-thankyou-meta-item">
-				<span><?php esc_html_e( 'Total', 'restropress' ); ?></span>
-				<strong><?php echo esc_html( rpress_payment_amount( $payment->ID ) ); ?></strong>
-			</div>
-			<div class="rp-thankyou-meta-item">
-				<span><?php esc_html_e( 'Status', 'restropress' ); ?></span>
-				<strong id="rp-live-order-status"><?php echo esc_html( $order_status_text ); ?></strong>
-			</div>
-			<div class="rp-thankyou-meta-item">
-				<span><?php esc_html_e( 'Items', 'restropress' ); ?></span>
-				<strong><?php echo esc_html( (string) $visible_items ); ?></strong>
-			</div>
-		</div>
-	</div>
-	<div id="rp-order-details" class="rp-thankyou-details-grid rp-reveal rp-reveal-2">
-		<div class="rp-thankyou-card rp-thankyou-details-card">
-			<h3>
-				<?php
-				/* translators: %s: Service type name */
-				echo esc_html( sprintf( __( '%s details', 'restropress' ), $service_label_text ) );
-				?>
-			</h3>
-			<ul class="rp-thankyou-list">
-				<li>
-					<span><?php esc_html_e( 'Name', 'restropress' ); ?></span>
-					<strong><?php echo esc_html( $customer_name ); ?></strong>
-				</li>
-				<li>
-					<span><?php esc_html_e( 'Phone Number', 'restropress' ); ?></span>
-					<strong><?php echo esc_html( $phone ); ?></strong>
-				</li>
-				<li>
-					<span>
+				<div class="rp-track-order-body">
+					<div class="rp-track-items">
 						<?php
-						/* translators: %s: Service type name */
-						echo esc_html( sprintf( __( '%s Date', 'restropress' ), $service_label_text ) );
-						?>
-					</span>
-					<strong><?php echo esc_html( rpress_local_date( $service_date ) ); ?></strong>
-				</li>
-				<?php if ( ! empty( $service_time ) ) : ?>
-					<li>
-						<span>
-							<?php
-							/* translators: %s: Service type name */
-							echo esc_html( sprintf( __( '%s Time', 'restropress' ), $service_label_text ) );
-							?>
-						</span>
-						<strong><?php echo esc_html( $service_time ); ?></strong>
-					</li>
-				<?php endif; ?>
-			</ul>
-		</div>
-
-		<div class="rp-thankyou-card rp-thankyou-details-card">
-			<?php if ( filter_var( $rpress_receipt_args['date'], FILTER_VALIDATE_BOOLEAN ) ) : ?>
-				<h3><?php esc_html_e( 'Order details', 'restropress' ); ?></h3>
-				<ul class="rp-thankyou-list">
-					<li>
-						<span><?php esc_html_e( 'Order Status', 'restropress' ); ?></span>
-						<strong id="rp-live-order-status-details"><?php echo esc_html( $order_status_text ); ?></strong>
-					</li>
-					<li>
-						<span><?php esc_html_e( 'Order Date', 'restropress' ); ?></span>
-						<strong><?php echo esc_html( $order_date_value ); ?></strong>
-					</li>
-				</ul>
-			<?php endif; ?>
-
-			<h3 class="rp-thankyou-subhead"><?php esc_html_e( 'Payment Details', 'restropress' ); ?></h3>
-			<ul class="rp-thankyou-list">
-				<li>
-					<span><?php esc_html_e( 'Payment Method', 'restropress' ); ?></span>
-					<strong><?php echo esc_html( $payment_method ); ?></strong>
-				</li>
-				<li>
-					<span><?php esc_html_e( 'Payment Status', 'restropress' ); ?></span>
-					<strong><?php echo esc_html( $payment_status ); ?></strong>
-				</li>
-			</ul>
-		</div>
-
-		<?php if ( 'delivery' === $service_type ) : ?>
-			<div class="rp-thankyou-card rp-thankyou-card-wide">
-				<h3><?php esc_html_e( 'Delivery Address', 'restropress' ); ?></h3>
-				<p class="rp-thankyou-address">
-					<?php echo esc_html( apply_filters( 'rpress_receipt_delivery_address', $address, $address_info ) ); ?>
-				</p>
-			</div>
-		<?php endif; ?>
-
-		<?php if ( ! empty( $store_location ) ) : ?>
-			<div class="rp-thankyou-card rp-thankyou-card-wide">
-				<h3><?php esc_html_e( 'Store Address', 'restropress' ); ?></h3>
-				<p class="rp-thankyou-address"><?php echo esc_html( $store_location ); ?></p>
-			</div>
-		<?php endif; ?>
-	</div>
-
-	<?php do_action( 'rpress_after_order_details', $payment, $rpress_receipt_args ); ?>
-
-	<div class="rp-thankyou-card rp-thankyou-summary rp-reveal rp-reveal-3">
-		<div class="rp-thankyou-summary-header">
-			<h3><?php esc_html_e( 'Order summary', 'restropress' ); ?></h3>
-			<p>
-				<?php
-				printf(
-					/* translators: %s: Order total amount */
-					esc_html__( 'Grand total: %s', 'restropress' ),
-					esc_html( rpress_payment_amount( $payment->ID ) )
-				);
-				?>
-			</p>
-		</div>
-		<div class="rp-thankyou-table-wrap">
-			<table id="rp-order-summary" class="rp-thankyou-table" width="100%">
-				<thead>
-					<tr>
-						<th class="rp-tb-left"><?php esc_html_e( 'Item', 'restropress' ); ?></th>
-						<th class="rp-center"><?php esc_html_e( 'Quantity', 'restropress' ); ?></th>
-						<th class="rp-tb-right"><?php esc_html_e( 'Amount', 'restropress' ); ?></th>
-					</tr>
-				</thead>
-				<tbody>
-				<?php
-				if ( $cart ) :
-					foreach ( $cart as $item ) :
-						if ( ! apply_filters( 'rpress_user_can_view_receipt_item', true, $item ) ) :
-							continue;
-						endif;
-
-						if ( ! empty( $item['in_bundle'] ) ) :
-							continue;
-						endif;
-
-						$special_instruction = isset( $item['instruction'] ) ? $item['instruction'] : '';
-						$item_options        = array();
-
-						if ( isset( $item['item_number']['options'] ) && is_array( $item['item_number']['options'] ) ) {
-							$item_options = $item['item_number']['options'];
-						}
-						?>
-						<tr>
-							<td>
-								<div class="rpress_purchase_receipt_product_name">
-									<span class="rpress-main-item-name"><?php echo wp_kses_post( rpress_get_cart_item_name( $item ) ); ?></span>
-									<?php
-									foreach ( $item_options as $option ) {
-										if ( empty( $option['quantity'] ) ) {
-											continue;
-										}
-
-										$addon_id = ! empty( $option['addon_id'] ) ? $option['addon_id'] : '';
-										if ( empty( $addon_id ) ) {
-											continue;
-										}
-
-										if ( ! empty( $option['addon_item_name'] ) ) {
-											echo '<br><small class="rpress-receipt-addon-item">' . wp_kses_post( $option['addon_item_name'] ) . '</small>';
-										}
+						if ( $cart ) :
+							foreach ( $cart as $item ) :
+								if ( ! apply_filters( 'rpress_user_can_view_receipt_item', true, $item ) || ! empty( $item['in_bundle'] ) ) {
+									continue;
+								}
+								$item_options = ( isset( $item['item_number']['options'] ) && is_array( $item['item_number']['options'] ) ) ? $item['item_number']['options'] : array();
+								$mods         = array();
+								foreach ( $item_options as $option ) {
+									if ( ! empty( $option['quantity'] ) && ! empty( $option['addon_id'] ) && ! empty( $option['addon_item_name'] ) ) {
+										$mods[] = $option['addon_item_name'];
 									}
-									?>
-									<?php if ( ! empty( $special_instruction ) ) : ?>
-										<span><?php esc_html_e( 'Special Instructions', 'restropress' ); ?>:</span>
-										<small><?php echo esc_html( $special_instruction ); ?></small>
+								}
+								$instruction = ! empty( $item['instruction'] ) ? $item['instruction'] : '';
+								?>
+								<div class="rp-track-item">
+									<div class="rp-track-item-line">
+										<span><?php echo wp_kses_post( rpress_get_cart_item_name( $item ) ); ?> <span class="rp-track-muted">&times; <?php echo esc_html( $item['quantity'] ); ?></span></span>
+										<span><?php echo esc_html( rpress_currency_filter( rpress_format_amount( $item['item_price'] ) ) ); ?></span>
+									</div>
+									<?php if ( ! empty( $mods ) ) : ?>
+										<div class="rp-track-item-mods"><?php echo esc_html( implode( ' · ', $mods ) ); ?></div>
+									<?php endif; ?>
+									<?php if ( ! empty( $instruction ) ) : ?>
+										<div class="rp-track-item-note">&ldquo;<?php echo esc_html( $instruction ); ?>&rdquo;</div>
 									<?php endif; ?>
 								</div>
-							</td>
-							<td class="rp-center">
-								<?php echo wp_kses_post( $item['quantity'] ); ?><br>
-								<?php
-								foreach ( $item_options as $option ) {
-									if ( empty( $option['quantity'] ) ) {
-										continue;
-									}
+							<?php endforeach; ?>
+						<?php endif; ?>
+					</div>
 
-									$addon_id = ! empty( $option['addon_id'] ) ? $option['addon_id'] : '';
-									if ( empty( $addon_id ) ) {
-										continue;
-									}
-
-									$addon_item_quantity = isset( $option['quantity'] ) ? $option['quantity'] : 0;
-									echo '<small>' . esc_html( $addon_item_quantity ) . '</small><br>';
-								}
-
-								do_action( 'rpress_payment_receipt_table', $payment, $item );
+					<div class="rp-track-totals">
+						<div class="rp-track-total-row"><span><?php esc_html_e( 'Subtotal', 'restropress' ); ?></span><span><?php echo esc_html( $order_subtotal ); ?></span></div>
+						<?php
+						$fees = rpress_get_payment_fees( $payment->ID, 'fee' );
+						if ( $fees ) :
+							foreach ( $fees as $fee ) :
 								?>
-							</td>
-							<td class="rp-tb-right">
-								<?php
-								echo esc_html( rpress_currency_filter( rpress_format_amount( $item['item_price'] ) ) ) . '<br>';
-								foreach ( $item_options as $option ) {
-									if ( empty( $option['quantity'] ) ) {
-										continue;
-									}
+								<div class="rp-track-total-row"><span><?php echo esc_html( $fee['label'] ); ?></span><span><?php echo esc_html( rpress_currency_filter( rpress_format_amount( $fee['amount'] ) ) ); ?></span></div>
+							<?php endforeach; ?>
+						<?php endif; ?>
+						<?php if ( filter_var( $rpress_receipt_args['discount'], FILTER_VALIDATE_BOOLEAN ) && isset( $user['discount'] ) && 'none' !== $user['discount'] ) : ?>
+							<div class="rp-track-total-row"><span><?php esc_html_e( 'Coupon', 'restropress' ); ?></span><span><?php echo wp_kses_post( $discount ); ?></span></div>
+						<?php endif; ?>
+						<?php if ( rpress_use_taxes() ) : ?>
+							<div class="rp-track-total-row"><span><?php echo esc_html( rpress_get_tax_name() ); ?></span><span><?php echo esc_html( rpress_payment_tax( $payment->ID ) ); ?></span></div>
+						<?php endif; ?>
+						<div class="rp-track-grand">
+							<span><?php esc_html_e( 'Total', 'restropress' ); ?></span>
+							<span class="rp-track-grand-amount"><?php echo esc_html( $order_total ); ?></span>
+						</div>
+					</div>
+					<div class="rp-track-receipt-to rp-track-receipt-to--foot"><?php echo esc_html( sprintf( /* translators: %s email */ __( 'Receipt sent to %s', 'restropress' ), $email ) ); ?></div>
+				</div>
+			</div>
 
-									$addon_id = ! empty( $option['addon_id'] ) ? $option['addon_id'] : '';
-									if ( empty( $addon_id ) ) {
-										continue;
-									}
+			<!-- Delivery & payment -->
+			<div class="rp-track-card rp-track-dp">
+				<div class="rp-track-card-title rp-track-dp-title"><?php echo esc_html( ( $is_delivery ? __( 'Delivery', 'restropress' ) : __( 'Pickup', 'restropress' ) ) . ' ' . __( '& payment', 'restropress' ) ); ?></div>
 
-									$cart_instance     = new RPRESS_Cart();
-									$addon_item_price  = isset( $option['price'] ) ? $option['price'] : 0;
-									$addon_price_value = $cart_instance->get_addon_price( $addon_id, $item, $addon_item_price );
-									echo esc_html( rpress_currency_filter( rpress_format_amount( $addon_price_value ) ) ) . '<br>';
-								}
-								?>
-							</td>
-						</tr>
-					<?php endforeach; ?>
+				<?php if ( $is_delivery && ! empty( $address ) ) : ?>
+					<div class="rp-track-dp-row">
+						<span class="rp-track-dp-icon"><?php echo $svg_pin; // phpcs:ignore ?></span>
+						<div class="rp-track-dp-text">
+							<div class="rp-track-dp-label"><?php esc_html_e( 'Delivering to', 'restropress' ); ?></div>
+							<div class="rp-track-dp-detail"><?php echo esc_html( trim( $customer_name . ( $phone ? ' · ' . $phone : '' ) ) ); ?><br><?php echo esc_html( $address ); ?></div>
+						</div>
+					</div>
+				<?php else : ?>
+					<div class="rp-track-dp-row">
+						<span class="rp-track-dp-icon"><?php echo $svg_pin; // phpcs:ignore ?></span>
+						<div class="rp-track-dp-text">
+							<div class="rp-track-dp-label"><?php esc_html_e( 'Pickup by', 'restropress' ); ?></div>
+							<div class="rp-track-dp-detail"><?php echo esc_html( trim( $customer_name . ( $phone ? ' · ' . $phone : '' ) ) ); ?></div>
+						</div>
+					</div>
 				<?php endif; ?>
-				</tbody>
-				<tfoot>
-					<tr class="rpress_cart_footer_row rpress_cart_subtotal_row">
-						<td colspan="2" class="rp-tb-right"><?php esc_html_e( 'Subtotal', 'restropress' ); ?>:</td>
-						<td class="rp-tb-right rp-amount-right"><?php echo esc_html( rpress_payment_subtotal( $payment->ID ) ); ?></td>
-					</tr>
 
-					<?php
-					$fees = rpress_get_payment_fees( $payment->ID, 'fee' );
-					if ( $fees ) :
-						foreach ( $fees as $fee ) :
-							?>
-							<tr class="rpress_cart_footer_row rpress_cart_delivery_row">
-								<td colspan="2" class="rp-tb-right"><?php echo esc_html( $fee['label'] ); ?>:</td>
-								<td class="rp-tb-right rp-amount-right"><?php echo esc_html( rpress_currency_filter( rpress_format_amount( $fee['amount'] ) ) ); ?></td>
-							</tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
+				<?php if ( ! empty( $requested_time ) ) : ?>
+					<div class="rp-track-dp-row">
+						<span class="rp-track-dp-icon"><?php echo $svg_clock; // phpcs:ignore ?></span>
+						<div class="rp-track-dp-text">
+							<div class="rp-track-dp-label"><?php esc_html_e( 'Requested time', 'restropress' ); ?></div>
+							<div class="rp-track-dp-detail"><?php echo esc_html( $requested_time ); ?></div>
+						</div>
+					</div>
+				<?php endif; ?>
 
-					<?php if ( filter_var( $rpress_receipt_args['discount'], FILTER_VALIDATE_BOOLEAN ) && isset( $user['discount'] ) && 'none' !== $user['discount'] ) : ?>
-						<tr class="rpress_cart_footer_row rpress_cart_discount_row">
-							<td colspan="2" class="rp-tb-right"><?php esc_html_e( 'Coupon', 'restropress' ); ?>:</td>
-							<td class="rp-tb-right rp-amount-right"><?php echo wp_kses_post( $discount ); ?></td>
-						</tr>
-					<?php endif; ?>
+				<div class="rp-track-dp-row">
+					<span class="rp-track-dp-icon"><?php echo $svg_card; // phpcs:ignore ?></span>
+					<div class="rp-track-dp-text">
+						<div class="rp-track-dp-payhead">
+							<span class="rp-track-dp-label"><?php esc_html_e( 'Payment', 'restropress' ); ?></span>
+							<span class="rp-track-pay-badge<?php echo $is_paid ? ' is-paid' : ''; ?>" id="rp-track-pay-badge"><?php echo esc_html( $pay_label ); ?></span>
+						</div>
+						<div class="rp-track-dp-detail" id="rp-track-pay-note"><?php echo esc_html( $pay_note ); ?></div>
+					</div>
+				</div>
 
-					<?php if ( rpress_use_taxes() ) : ?>
-						<tr class="rpress_cart_footer_row kk rpress_cart_tax_row">
-							<td colspan="2" class="rp-tb-right"><?php echo esc_html( rpress_get_tax_name() ); ?>:</td>
-							<td class="rp-tb-right rp-amount-right"><?php echo esc_html( rpress_payment_tax( $payment->ID ) ); ?></td>
-						</tr>
-						<?php do_action( 'rpress_payment_receipt_after_tax_table', $payment, $rpress_receipt_args ); ?>
-					<?php endif; ?>
-
-					<?php if ( filter_var( $rpress_receipt_args['price'], FILTER_VALIDATE_BOOLEAN ) ) : ?>
-						<tr class="rpress_cart_footer_row rpress_cart_total_row">
-							<td colspan="2" class="rp-tb-right rp-bold"><?php esc_html_e( 'Total', 'restropress' ); ?>:</td>
-							<td class="rp-tb-right rp-amount-right rp-bold"><?php echo esc_html( rpress_payment_amount( $payment->ID ) ); ?></td>
-						</tr>
-					<?php endif; ?>
-				</tfoot>
-			</table>
+				<?php if ( ! empty( $store_name ) || ! empty( $store_location ) ) : ?>
+					<div class="rp-track-dp-row rp-track-dp-store">
+						<span class="rp-track-dp-icon rp-track-dp-icon-neutral"><?php echo $svg_store; // phpcs:ignore ?></span>
+						<div class="rp-track-dp-text">
+							<div class="rp-track-dp-label"><?php echo esc_html( $store_name ); ?></div>
+							<?php if ( ! empty( $store_location ) ) : ?>
+								<div class="rp-track-dp-detail"><?php echo esc_html( $store_location ); ?></div>
+							<?php endif; ?>
+							<div class="rp-track-dp-links">
+								<?php if ( ! empty( $store_phone ) ) : ?>
+									<a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $store_phone ) ); ?>"><?php esc_html_e( 'Call store', 'restropress' ); ?></a>
+								<?php endif; ?>
+								<?php if ( ! empty( $support_email ) ) : ?>
+									<a href="mailto:<?php echo esc_attr( antispambot( $support_email ) ); ?>?subject=<?php echo rawurlencode( sprintf( __( 'Help with order #%s', 'restropress' ), $order_number ) ); ?>"><?php esc_html_e( 'Get help with this order', 'restropress' ); ?></a>
+								<?php endif; ?>
+							</div>
+						</div>
+					</div>
+				<?php endif; ?>
+			</div>
 		</div>
-		<?php do_action( 'rpress_payment_receipt_after_table', $payment, $rpress_receipt_args ); ?>
+
+		<?php do_action( 'rpress_after_payment_receipt', $payment, $rpress_receipt_args ); ?>
 	</div>
-
-	<div class="rp-thankyou-next rp-reveal rp-reveal-4">
-		<div class="rp-thankyou-next-item">
-			<h4><?php esc_html_e( 'Order Received', 'restropress' ); ?></h4>
-			<p><?php esc_html_e( 'Your order has been captured successfully.', 'restropress' ); ?></p>
-		</div>
-		<div class="rp-thankyou-next-item">
-			<h4><?php esc_html_e( 'Kitchen Preparation', 'restropress' ); ?></h4>
-			<p><?php esc_html_e( 'We are preparing your items and updating status in real-time.', 'restropress' ); ?></p>
-		</div>
-		<div class="rp-thankyou-next-item">
-			<h4><?php esc_html_e( 'Ready for Service', 'restropress' ); ?></h4>
-			<p><?php esc_html_e( 'You will receive updates once your order is ready.', 'restropress' ); ?></p>
-		</div>
-	</div>
-	<div class="rp-live-status-toast" id="rp-live-status-toast" aria-live="polite"></div>
 </div>
-<?php if ( ! empty( $realtime_client['enabled'] ) && ! empty( $realtime_client['script_url'] ) ) : ?>
-<script src="<?php echo esc_url( $realtime_client['script_url'] ); ?>"></script>
-<?php endif; ?>
 <script>
-	(function () {
-		var receiptConfig = {
-			ajaxUrl: <?php echo wp_json_encode( rpress_get_ajax_url() ); ?>,
-			paymentId: <?php echo (int) $payment->ID; ?>,
-			paymentKey: <?php echo wp_json_encode( $payment_key ); ?>,
-			security: <?php echo wp_json_encode( $status_poll_nonce ); ?>,
-			currentStatus: <?php echo wp_json_encode( $order_status_key ); ?>,
-			currentStatusLabel: <?php echo wp_json_encode( wp_strip_all_tags( (string) $order_status_text ) ); ?>,
-			orderNumber: <?php echo wp_json_encode( (string) $order_number ); ?>,
-			pollInterval: 10000,
-			trackerStorageKey: 'rpress_live_order_tracker_v1',
-			trackerTtlMs: 21600000,
-			statusMediaMap: <?php echo wp_json_encode( $status_media_map ); ?>,
-			realtime: <?php echo wp_json_encode( $realtime_client ); ?>,
-			strings: {
-				updatedJustNow: <?php echo wp_json_encode( __( 'Updated just now', 'restropress' ) ); ?>,
-				updatedAt: <?php echo wp_json_encode( __( 'Updated at', 'restropress' ) ); ?>,
-				alertsEnabled: <?php echo wp_json_encode( __( 'Alerts Enabled', 'restropress' ) ); ?>,
-				alertButton: <?php echo wp_json_encode( __( 'Enable Browser Alerts', 'restropress' ) ); ?>,
-				alertDenied: <?php echo wp_json_encode( __( 'Browser alerts blocked for this site.', 'restropress' ) ); ?>,
-				alertUnsupported: <?php echo wp_json_encode( __( 'Browser alerts are not supported.', 'restropress' ) ); ?>,
-				realtimeConnected: <?php echo wp_json_encode( __( 'Live status connected.', 'restropress' ) ); ?>,
-				realtimeConnecting: <?php echo wp_json_encode( __( 'Connecting to live status updates...', 'restropress' ) ); ?>,
-				realtimeUnavailable: <?php echo wp_json_encode( __( 'Live updates are unavailable, showing latest status.', 'restropress' ) ); ?>,
-				alertsEnabledForOrder: <?php echo wp_json_encode( __( 'Browser alerts enabled for Order', 'restropress' ) ); ?>,
-				statusAnimationPrefix: <?php echo wp_json_encode( __( 'Order status animation', 'restropress' ) ); ?>,
-				orderPrefix: <?php echo wp_json_encode( __( 'Order', 'restropress' ) ); ?>,
-				isNow: <?php echo wp_json_encode( __( 'is now', 'restropress' ) ); ?>,
-				notificationTitlePrefix: <?php echo wp_json_encode( __( 'Order update', 'restropress' ) ); ?>,
-				notificationBodyPrefix: <?php echo wp_json_encode( __( 'Status', 'restropress' ) ); ?>
-			}
-		};
-
-		var statusPrimary = document.getElementById('rp-live-order-status');
-		var statusDetails = document.getElementById('rp-live-order-status-details');
-		var statusPanel = document.getElementById('rp-live-order-status-panel');
-		var statusDescription = document.getElementById('rp-live-order-status-desc');
-		var statusUpdated = document.getElementById('rp-live-status-updated');
-		var statusGif = document.getElementById('rp-live-status-gif');
-		var toast = document.getElementById('rp-live-status-toast');
-		var notifyButton = document.getElementById('rp-enable-order-alerts');
-
-		if (!statusPrimary || !statusPanel) {
-			return;
+(function () {
+	var CFG = {
+		ajaxUrl: <?php echo wp_json_encode( rpress_get_ajax_url() ); ?>,
+		paymentId: <?php echo (int) $payment->ID; ?>,
+		paymentKey: <?php echo wp_json_encode( $payment_key ); ?>,
+		security: <?php echo wp_json_encode( $status_poll_nonce ); ?>,
+		status: <?php echo wp_json_encode( $order_status_key ); ?>,
+		isDelivery: <?php echo $is_delivery ? 'true' : 'false'; ?>,
+		orderNumber: <?php echo wp_json_encode( (string) $order_number ); ?>,
+		pollInterval: 8000,
+		icons: <?php echo wp_json_encode( $phase_icons ); ?>,
+		phaseMap: <?php echo wp_json_encode( $phase_map ); ?>,
+		stepMap: <?php echo wp_json_encode( $step_map ); ?>,
+		stepNames: <?php echo wp_json_encode( array_values( $step_names ) ); ?>,
+		copy: <?php echo wp_json_encode( $phase_copy ); ?>,
+		terminal: { completed: 1, cancelled: 1, failed: 1, refunded: 1 },
+		i18n: {
+			updated: <?php echo wp_json_encode( __( 'Updated', 'restropress' ) ); ?>,
+			justNow: <?php echo wp_json_encode( __( 'just now', 'restropress' ) ); ?>,
+			liveOn: <?php echo wp_json_encode( __( 'Live updates on', 'restropress' ) ); ?>,
+			liveOff: <?php echo wp_json_encode( __( 'Enable live updates', 'restropress' ) ); ?>,
+			anyMinute: <?php echo wp_json_encode( __( 'Any minute now', 'restropress' ) ); ?>,
+			paid: <?php echo wp_json_encode( __( 'Paid', 'restropress' ) ); ?>,
+			paidNote: <?php echo wp_json_encode( sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun ) ); ?>
 		}
+	};
 
-		var currentStatus = receiptConfig.currentStatus || '';
-		var statusMediaMap = receiptConfig.statusMediaMap || {};
-		var realtimeConfig = receiptConfig.realtime || {};
-		var TERMINAL_STATUSES = {
-			completed: true,
-			cancelled: true,
-			failed: true
-		};
-		var pusherClient = null;
-		var pollTimer = null;
-		var pollRequestInFlight = false;
+	var root = document.querySelector('.rp-track-v1');
+	if (!root) { return; }
 
-		function getStatusMedia(statusKey) {
-			if (statusMediaMap && statusMediaMap[statusKey]) {
-				return statusMediaMap[statusKey];
-			}
+	var hero = root.querySelector('.rp-track-hero');
+	var elIcon = document.getElementById('rp-track-icon');
+	var elHeadline = document.getElementById('rp-track-headline');
+	var elMsg = document.getElementById('rp-track-msg');
+	var elUpdated = document.getElementById('rp-track-updated');
+	var elSteps = document.getElementById('rp-track-steps');
+	var elCancel = document.getElementById('rp-track-cancel');
+	var elEta = document.getElementById('rp-track-eta');
+	var elEtaTime = document.getElementById('rp-track-eta-time');
+	var elPayBadge = document.getElementById('rp-track-pay-badge');
+	var elPayNote = document.getElementById('rp-track-pay-note');
+	var alertsBtn = document.getElementById('rp-track-alerts');
 
-			return {
-				src: '',
-				description: ''
-			};
+	var current = CFG.status;
+	var alertsOn = true;
+	var pollTimer = null;
+	var inFlight = false;
+
+	function timeNow() {
+		try { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+		catch (e) { return CFG.i18n.justNow; }
+	}
+
+	function iconSvg(phase) {
+		return '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (CFG.icons[phase] || CFG.icons.pending) + '</svg>';
+	}
+
+	function renderSteps(phase, step) {
+		if (!elSteps) { return; }
+		var names = CFG.stepNames, last = names.length - 1, html = '';
+		for (var i = 0; i < names.length; i++) {
+			var done = (step > i) || (phase === 'delivered');
+			var active = (step === i) && (phase !== 'delivered');
+			var state = done ? 'is-done' : (active ? 'is-active' : 'is-upcoming');
+			var cls = 'rp-track-step ' + state + (i === 0 ? ' rp-track-first' : '') + (i === last ? ' rp-track-last' : '');
+			cls += (i !== 0 && (done || active)) ? ' rp-lfill' : '';
+			cls += (i !== last && done) ? ' rp-rfill' : '';
+			var mark = done ? '✓' : (i + 1);
+			html += '<div class="' + cls + '"><span class="rp-track-bar rp-track-bar-left"></span><span class="rp-track-bar rp-track-bar-right"></span><span class="rp-track-dot">' + mark + '</span><span class="rp-track-step-label">' + names[i] + '</span></div>';
 		}
+		elSteps.innerHTML = html;
+	}
 
-		function formatUpdatedText(unixTime) {
-			if (!unixTime || isNaN(unixTime)) {
-				return receiptConfig.strings.updatedJustNow;
-			}
+	function render(statusKey, label, updatedText) {
+		var phase = CFG.phaseMap[statusKey] || 'pending';
+		var step = (statusKey in CFG.stepMap) ? CFG.stepMap[statusKey] : 0;
+		var copy = CFG.copy[phase] || CFG.copy.pending;
 
-			var d = new Date(unixTime * 1000);
-			return receiptConfig.strings.updatedAt + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-		}
+		root.setAttribute('data-phase', phase);
+		hero.setAttribute('data-phase', phase);
+		root.classList.toggle('is-cancelled', phase === 'cancelled');
 
-		function setStatusText(statusLabel, statusKey, updatedAtUnix, statusColor) {
-			var media = getStatusMedia(statusKey);
+		if (elIcon) { elIcon.innerHTML = iconSvg(phase); }
+		if (elHeadline) { elHeadline.textContent = copy[0]; }
+		if (elMsg) { elMsg.textContent = copy[1]; }
+		if (elUpdated) { elUpdated.textContent = '· ' + CFG.i18n.updated + ' ' + (updatedText || timeNow()); }
 
-			statusPrimary.textContent = statusLabel;
-			statusPanel.textContent = statusLabel;
-			if (statusDetails) {
-				statusDetails.textContent = statusLabel;
-			}
-
-			[statusPrimary, statusDetails, statusPanel].forEach(function (el) {
-				if (!el) {
-					return;
-				}
-
-				if (statusColor) {
-					el.style.color = statusColor;
-				} else {
-					el.style.removeProperty('color');
-				}
-			});
-
-			if (statusDescription) {
-				statusDescription.textContent = media.description || '';
-			}
-
-			if (statusUpdated) {
-				statusUpdated.textContent = formatUpdatedText(updatedAtUnix);
-			}
-
-			if (statusGif && media.src) {
-				statusGif.src = media.src;
-				statusGif.alt = receiptConfig.strings.statusAnimationPrefix + ': ' + statusLabel;
-			}
-		}
-
-		function showToast(message) {
-			if (!toast || !message) {
-				return;
-			}
-
-			toast.textContent = message;
-			toast.classList.add('is-visible');
-			window.setTimeout(function () {
-				toast.classList.remove('is-visible');
-			}, 3500);
-		}
-
-		function maybeSendBrowserNotification(orderNumber, statusLabel) {
-			if (!('Notification' in window)) {
-				return;
-			}
-
-			if (Notification.permission !== 'granted') {
-				return;
-			}
-
-			var title = receiptConfig.strings.notificationTitlePrefix + ' #' + orderNumber;
-			var body = receiptConfig.strings.notificationBodyPrefix + ': ' + statusLabel;
-
-			if ('serviceWorker' in navigator) {
-				navigator.serviceWorker.getRegistration().then(function (registration) {
-					if (registration && typeof registration.showNotification === 'function') {
-						registration.showNotification(title, {
-							body: body,
-							tag: 'rpress-order-' + orderNumber
-						});
-						return;
-					}
-
-					try {
-						new Notification(title, { body: body });
-					} catch (e) {
-						// Ignore browser-level notification errors.
-					}
-				}).catch(function () {
-					try {
-						new Notification(title, { body: body });
-					} catch (e) {
-						// Ignore browser-level notification errors.
-					}
-				});
-				return;
-			}
-
-			try {
-				new Notification(title, { body: body });
-			} catch (e) {
-				// Ignore browser-level notification errors.
-			}
-		}
-
-		function saveOrderTracker(statusKey, statusLabel, updatedAtUnix) {
-			if (!window.localStorage || !receiptConfig.paymentId || !receiptConfig.paymentKey) {
-				return;
-			}
-
-			var tracker = {
-				payment_id: receiptConfig.paymentId,
-				payment_key: receiptConfig.paymentKey,
-				security: receiptConfig.security,
-				order_number: receiptConfig.orderNumber,
-				status: statusKey || '',
-				status_label: statusLabel || '',
-				updated_at_unix: updatedAtUnix || 0,
-				realtime: realtimeConfig || {},
-				expires_at: Date.now() + receiptConfig.trackerTtlMs
-			};
-
-			try {
-				window.localStorage.setItem(receiptConfig.trackerStorageKey, JSON.stringify(tracker));
-			} catch (e) {
-				// Ignore storage failures.
-			}
-		}
-
-		function clearOrderTracker() {
-			if (!window.localStorage) {
-				return;
-			}
-
-			try {
-				window.localStorage.removeItem(receiptConfig.trackerStorageKey);
-			} catch (e) {
-				// Ignore storage failures.
-			}
-		}
-
-		function stopLiveWatchers() {
-			if (pusherClient && typeof pusherClient.disconnect === 'function') {
-				pusherClient.disconnect();
-				pusherClient = null;
-			}
-
-			if (pollTimer) {
-				window.clearInterval(pollTimer);
-				pollTimer = null;
-			}
-		}
-
-		function handleIncomingStatus(statusPayload) {
-			if (!statusPayload) {
-				return;
-			}
-
-			var incomingStatus = statusPayload.status || '';
-			var incomingLabel = statusPayload.status_label || incomingStatus;
-			var incomingOrderNumber = statusPayload.order_number || receiptConfig.orderNumber;
-
-			if (!incomingStatus) {
-				return;
-			}
-
-			setStatusText(
-				incomingLabel,
-				incomingStatus,
-				statusPayload.updated_at_unix || 0,
-				statusPayload.status_color || ''
-			);
-
-			if (incomingStatus !== currentStatus) {
-				currentStatus = incomingStatus;
-				showToast(
-					receiptConfig.strings.orderPrefix + ' #' + incomingOrderNumber + ' ' +
-					receiptConfig.strings.isNow + ' ' + incomingLabel + '.'
-				);
-				maybeSendBrowserNotification(incomingOrderNumber, incomingLabel);
-			}
-
-			if (TERMINAL_STATUSES[incomingStatus]) {
-				clearOrderTracker();
-				stopLiveWatchers();
-				return;
-			}
-
-			saveOrderTracker(incomingStatus, incomingLabel, statusPayload.updated_at_unix || 0);
-		}
-
-		function fetchOrderStatusOnce() {
-			if (pollRequestInFlight) {
-				return;
-			}
-
-			var body = new URLSearchParams();
-			body.set('action', 'rpress_receipt_order_status');
-			body.set('payment_id', String(receiptConfig.paymentId));
-			body.set('payment_key', receiptConfig.paymentKey);
-			body.set('security', receiptConfig.security);
-
-			pollRequestInFlight = true;
-			fetch(receiptConfig.ajaxUrl, {
-				method: 'POST',
-				credentials: 'same-origin',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				},
-				body: body.toString()
-			})
-				.then(function (response) {
-					return response.json();
-				})
-				.then(function (result) {
-					if (!result || !result.success || !result.data) {
-						return;
-					}
-
-					handleIncomingStatus(result.data);
-				})
-				.catch(function () {
-					// Skip transient sync failures.
-				})
-				.then(function () {
-					pollRequestInFlight = false;
-				});
-		}
-
-		function startFallbackPolling() {
-			if (pollTimer) {
-				return;
-			}
-
-			fetchOrderStatusOnce();
-			pollTimer = window.setInterval(fetchOrderStatusOnce, receiptConfig.pollInterval);
-		}
-
-		function connectRealtimeUpdates() {
-			if (!realtimeConfig || !realtimeConfig.enabled) {
-				return false;
-			}
-
-			if (typeof window.Pusher === 'undefined' || !realtimeConfig.key || !realtimeConfig.channel || !realtimeConfig.event) {
-				showToast(receiptConfig.strings.realtimeUnavailable);
-				return false;
-			}
-
-			var pusherOptions = {
-				forceTLS: !!realtimeConfig.forceTLS
-			};
-
-			if (realtimeConfig.cluster) {
-				pusherOptions.cluster = realtimeConfig.cluster;
-			}
-
-			if (realtimeConfig.wsHost) {
-				pusherOptions.wsHost = realtimeConfig.wsHost;
-			}
-
-			if (realtimeConfig.wsPort) {
-				pusherOptions.wsPort = parseInt(realtimeConfig.wsPort, 10);
-			}
-
-			if (realtimeConfig.wssPort) {
-				pusherOptions.wssPort = parseInt(realtimeConfig.wssPort, 10);
-			}
-
-			showToast(receiptConfig.strings.realtimeConnecting);
-
-			try {
-				pusherClient = new window.Pusher(realtimeConfig.key, pusherOptions);
-			} catch (e) {
-				showToast(receiptConfig.strings.realtimeUnavailable);
-				return false;
-			}
-
-			var channel = pusherClient.subscribe(realtimeConfig.channel);
-
-			channel.bind(realtimeConfig.event, function (payload) {
-				handleIncomingStatus(payload || {});
-			});
-
-			channel.bind('pusher:subscription_succeeded', function () {
-				showToast(receiptConfig.strings.realtimeConnected);
-			});
-
-			channel.bind('pusher:subscription_error', function () {
-				showToast(receiptConfig.strings.realtimeUnavailable);
-				startFallbackPolling();
-			});
-
-			if (pusherClient.connection && typeof pusherClient.connection.bind === 'function') {
-				pusherClient.connection.bind('error', function () {
-					startFallbackPolling();
-				});
-			}
-
-			return true;
-		}
-
-		if (notifyButton) {
-			if (!('Notification' in window)) {
-				notifyButton.textContent = receiptConfig.strings.alertUnsupported;
-				notifyButton.disabled = true;
-			} else if (Notification.permission === 'granted') {
-				notifyButton.textContent = receiptConfig.strings.alertsEnabled;
-				notifyButton.disabled = true;
-			} else if (Notification.permission === 'denied') {
-				notifyButton.textContent = receiptConfig.strings.alertDenied;
-				notifyButton.disabled = true;
-			} else {
-				notifyButton.addEventListener('click', function () {
-					Notification.requestPermission().then(function (permission) {
-						if (permission === 'granted') {
-							notifyButton.textContent = receiptConfig.strings.alertsEnabled;
-							notifyButton.disabled = true;
-							showToast(receiptConfig.strings.alertsEnabledForOrder + ' #' + receiptConfig.orderNumber + '.');
-							maybeSendBrowserNotification(receiptConfig.orderNumber, receiptConfig.currentStatusLabel);
-						} else if (permission === 'denied') {
-							notifyButton.textContent = receiptConfig.strings.alertDenied;
-							notifyButton.disabled = true;
-						}
-					});
-				});
-			}
-		}
-
-		setStatusText(receiptConfig.currentStatusLabel, receiptConfig.currentStatus, 0, '');
-		if (TERMINAL_STATUSES[receiptConfig.currentStatus]) {
-			clearOrderTracker();
-			return;
-		}
-
-		saveOrderTracker(receiptConfig.currentStatus, receiptConfig.currentStatusLabel, 0);
-		var realtimeConnected = connectRealtimeUpdates();
-		if (realtimeConnected) {
-			window.setTimeout(fetchOrderStatusOnce, 1200);
+		if (phase === 'cancelled') {
+			if (elSteps) { elSteps.hidden = true; }
+			if (elCancel) { elCancel.hidden = false; }
 		} else {
-			startFallbackPolling();
+			if (elCancel) { elCancel.hidden = true; }
+			if (elSteps) { elSteps.hidden = false; renderSteps(phase, step); }
 		}
 
-		window.addEventListener('beforeunload', function () {
-			stopLiveWatchers();
+		// ETA
+		var etaHide = (phase === 'delivered' || phase === 'cancelled');
+		if (elEta) {
+			if (etaHide) { elEta.hidden = true; }
+			else if (elEtaTime && elEtaTime.textContent.trim()) {
+				elEta.hidden = false;
+				if (phase === 'transit') { elEtaTime.textContent = CFG.i18n.anyMinute; }
+			}
+		}
+
+		// Payment badge + note → Paid (green) when delivered
+		if (phase === 'delivered' && elPayBadge && !elPayBadge.classList.contains('is-paid')) {
+			elPayBadge.classList.add('is-paid');
+			elPayBadge.textContent = CFG.i18n.paid;
+			if (elPayNote && CFG.i18n.paidNote) { elPayNote.textContent = CFG.i18n.paidNote; }
+		}
+	}
+
+	function formatUpdated(unix) {
+		if (!unix) { return timeNow(); }
+		try { return new Date(unix * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+		catch (e) { return timeNow(); }
+	}
+
+	function poll() {
+		if (inFlight || !alertsOn) { return; }
+		inFlight = true;
+		var body = new URLSearchParams();
+		body.set('action', 'rpress_receipt_order_status');
+		body.set('payment_id', String(CFG.paymentId));
+		body.set('payment_key', CFG.paymentKey);
+		body.set('security', CFG.security);
+		fetch(CFG.ajaxUrl, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: body.toString() })
+			.then(function (r) { return r.json(); })
+			.then(function (res) {
+				if (!res || !res.success || !res.data || !res.data.status) { return; }
+				var s = res.data.status;
+				if (s !== current) {
+					current = s;
+					render(s, res.data.status_label || '', formatUpdated(res.data.updated_at_unix));
+				}
+				if (CFG.terminal[s]) { stop(); }
+			})
+			.catch(function () {})
+			.then(function () { inFlight = false; });
+	}
+
+	function start() {
+		if (pollTimer || CFG.terminal[current]) { return; }
+		poll(); // check straight away so a status that advanced around page load is caught fast
+		pollTimer = setInterval(poll, CFG.pollInterval);
+	}
+	function stop() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+	if (alertsBtn) {
+		alertsBtn.addEventListener('click', function () {
+			alertsOn = !alertsOn;
+			alertsBtn.classList.toggle('is-on', alertsOn);
+			alertsBtn.setAttribute('aria-pressed', alertsOn ? 'true' : 'false');
+			alertsBtn.querySelector('.rp-track-alerts-label').textContent = alertsOn ? CFG.i18n.liveOn : CFG.i18n.liveOff;
+			if (alertsOn) { start(); } else { stop(); }
 		});
-	})();
+	}
+
+	// Mobile collapsible receipt.
+	var toggle = document.getElementById('rp-track-receipt-toggle');
+	var orderCard = root.querySelector('.rp-track-order');
+	if (toggle && orderCard) {
+		toggle.addEventListener('click', function () {
+			var open = orderCard.classList.toggle('is-open');
+			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		});
+	}
+
+	if (!CFG.terminal[current]) { start(); }
+})();
 </script>
-<?php do_action( 'rpress_after_payment_receipt', $payment, $rpress_receipt_args ); ?>

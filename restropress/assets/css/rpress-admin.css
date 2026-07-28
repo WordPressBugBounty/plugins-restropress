@@ -4103,3 +4103,116 @@ div#rpress-purchased-items .rpress-purchased-items-header.row.header ul.rpress-p
 #rpress-purchased-items .rpress-purchased-items-list-wrapper .price {
 	top: 0px;
 }
+
+/* Upgrade nudge under free-tier settings (3.4) */
+.rpress-upsell-nudge {
+	display: block;
+	max-width: 620px;
+	margin-top: 4px;
+	padding: 10px 14px;
+	background: #fff8f5;
+	border-left: 3px solid #ff4f18;
+	border-radius: 2px;
+	color: #50575e;
+	line-height: 1.5;
+}
+.rpress-upsell-nudge a {
+	text-decoration: none;
+	font-weight: 600;
+}
+
+/* Weekly store hours grid (3.4) */
+.rpress-store-hours-grid {
+	display: inline-block;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	overflow: hidden;
+	margin-top: 2px;
+}
+.rpress-hours-head,
+.rpress-hours-row {
+	display: grid;
+	grid-template-columns: 110px 128px 128px 64px 130px;
+	align-items: center;
+}
+.rpress-hours-head {
+	background: #f6f7f7;
+	border-bottom: 1px solid #dcdcde;
+	font-weight: 600;
+}
+.rpress-hours-head span,
+.rpress-hours-row > span {
+	padding: 8px 10px;
+	text-align: center;
+}
+.rpress-hours-head span:first-child,
+.rpress-hours-row .rpress-hours-day {
+	text-align: left;
+	padding-left: 14px;
+	font-weight: 600;
+}
+.rpress-hours-row {
+	border-bottom: 1px solid #f0f0f1;
+}
+.rpress-hours-row:last-child {
+	border-bottom: 0;
+}
+.rpress-hours-row input.rpress-hours-time {
+	width: 104px;
+	text-align: center;
+	margin: 0;
+}
+.rpress-hours-row input[type="checkbox"] {
+	margin: 0;
+}
+.rpress-hours-copy-all {
+	color: #ff4f18;
+	cursor: pointer;
+	background: none;
+	border: 0;
+	padding: 0;
+	font-size: 12px;
+	white-space: nowrap;
+}
+.rpress-hours-copy-all:hover {
+	text-decoration: underline;
+}
+.rpress-hours-row.is-closed input.rpress-hours-time {
+	opacity: 0.4;
+}
+
+/* Holiday chips (3.4) */
+.rpress-holiday-chips {
+	margin-bottom: 8px;
+}
+.rpress-holiday-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: #f0f0f1;
+	border: 1px solid #dcdcde;
+	border-radius: 14px;
+	padding: 3px 8px 3px 12px;
+	margin: 0 6px 6px 0;
+	font-size: 13px;
+}
+.rpress-holiday-remove {
+	background: none;
+	border: 0;
+	color: #787c82;
+	cursor: pointer;
+	font-size: 16px;
+	line-height: 1;
+	padding: 0 2px;
+}
+.rpress-holiday-remove:hover {
+	color: #d63638;
+}
+.rpress-holiday-adder {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.rpress-holiday-adder input[type="date"] {
+	margin: 0;
+}

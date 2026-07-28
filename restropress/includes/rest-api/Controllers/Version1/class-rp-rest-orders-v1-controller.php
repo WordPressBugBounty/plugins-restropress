@@ -544,7 +544,7 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			$response->set_data( array( 'message' => __( 'Cart is empty please add some item than you can place an order.', 'restropress' ) ) );
 			return $response;
 		}
-		if ( current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'manage_shop_settings' ) ) {
 			// if user is admin ...
 			if ( ! empty( $customer ) && is_array( $customer ) ) {
 					$user_info = array(
@@ -792,7 +792,7 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			);
 			$payment->update_meta( '_rpress_delivery_address', $delivery_adrress );
 		}
-		if ( current_user_can( 'manage_options' ) && ! empty( $customer ) && is_array( $customer ) ) {
+		if ( current_user_can( 'manage_shop_settings' ) && ! empty( $customer ) && is_array( $customer ) ) {
 				$user_info                 = array(
 					'id'         => isset( $customer['id'] ) ? absint( $customer['id'] ) : 0,
 					'email'      => isset( $customer['email'] ) ? sanitize_email( $customer['email'] ) : '',

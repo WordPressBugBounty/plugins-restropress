@@ -825,10 +825,125 @@ function rpress_get_order_status_label( $status = '' ) {
 	if ( ! is_array( $statuses ) || empty( $statuses ) ) {
 		return false;
 	}
+	// Legacy alias: the orphaned out_for_delivery collapses onto transit.
+	if ( 'out_for_delivery' === $status ) {
+		$status = 'transit';
+	}
 	if ( array_key_exists( $status, $statuses ) ) {
 		return $statuses[ $status ];
 	}
 	return false;
+}
+
+/**
+ * Canonical order-status model — the single source of truth for status
+ * sequencing, the customer-facing phase and which service types use a status.
+ *
+ * Every consumer (admin dropdown, flow buttons, the customer tracker) derives
+ * from this so the maps stop drifting apart. Phases feed the tracking page;
+ * `services` scopes the admin dropdown; `order` is the canonical sequence.
+ *
+ * @since 3.4
+ * @return array status_key => array( phase, services, order )
+ */
+function rpress_order_status_model() {
+	$model = array(
+		'pending'    => array( 'phase' => 'pending',   'services' => array( 'delivery', 'pickup' ), 'order' => 0 ),
+		'accepted'   => array( 'phase' => 'accepted',  'services' => array( 'delivery', 'pickup' ), 'order' => 1 ),
+		'processing' => array( 'phase' => 'preparing', 'services' => array( 'delivery', 'pickup' ), 'order' => 2 ),
+		'ready'      => array( 'phase' => 'ready',      'services' => array( 'delivery', 'pickup' ), 'order' => 3 ),
+		'transit'    => array( 'phase' => 'transit',   'services' => array( 'delivery' ),            'order' => 4 ),
+		'completed'  => array( 'phase' => 'delivered', 'services' => array( 'delivery', 'pickup' ), 'order' => 5 ),
+		'cancelled'  => array( 'phase' => 'cancelled', 'services' => array( 'delivery', 'pickup' ), 'order' => 99 ),
+	);
+	// Back-compat: the orphaned out_for_delivery and dead payment states fold in.
+	$model['out_for_delivery'] = $model['transit'];
+	$model['failed']           = $model['cancelled'];
+	$model['refunded']         = $model['cancelled'];
+
+	return apply_filters( 'rpress_order_status_model', $model );
+}
+
+/**
+ * The customer-facing tracker steps for a service type (ordered).
+ *
+ * Delivery gets a distinct "Ready" step so "Mark ready" moves the customer's
+ * tracker; pickup ends at "Picked up".
+ *
+ * @since 3.4
+ * @param string $service_type 'delivery' | 'pickup'.
+ * @return array List of array( status, label ).
+ */
+function rpress_order_tracker_steps( $service_type = 'delivery' ) {
+	if ( 'pickup' === $service_type ) {
+		$steps = array(
+			array( 'status' => 'pending',    'label' => __( 'Placed', 'restropress' ) ),
+			array( 'status' => 'accepted',   'label' => __( 'Confirmed', 'restropress' ) ),
+			array( 'status' => 'processing', 'label' => __( 'Preparing', 'restropress' ) ),
+			array( 'status' => 'ready',      'label' => __( 'Ready', 'restropress' ) ),
+			array( 'status' => 'completed',  'label' => __( 'Picked up', 'restropress' ) ),
+		);
+	} else {
+		$steps = array(
+			array( 'status' => 'pending',    'label' => __( 'Placed', 'restropress' ) ),
+			array( 'status' => 'accepted',   'label' => __( 'Confirmed', 'restropress' ) ),
+			array( 'status' => 'processing', 'label' => __( 'Preparing', 'restropress' ) ),
+			array( 'status' => 'ready',      'label' => __( 'Ready', 'restropress' ) ),
+			array( 'status' => 'transit',    'label' => __( 'Out for delivery', 'restropress' ) ),
+			array( 'status' => 'completed',  'label' => __( 'Delivered', 'restropress' ) ),
+		);
+	}
+
+	return apply_filters( 'rpress_order_tracker_steps', $steps, $service_type );
+}
+
+/**
+ * The tracker step index a status maps to for a given service type.
+ *
+ * Statuses that aren't themselves a step (a delivery-only status on a pickup
+ * order, or the out_for_delivery alias) resolve to the furthest step whose
+ * canonical order does not exceed the status's order.
+ *
+ * @since 3.4
+ * @return int
+ */
+function rpress_order_status_step_index( $status, $service_type = 'delivery' ) {
+	$steps  = rpress_order_tracker_steps( $service_type );
+	$model  = rpress_order_status_model();
+	$target = isset( $model[ $status ]['order'] ) ? $model[ $status ]['order'] : 0;
+	$idx    = 0;
+	foreach ( $steps as $i => $step ) {
+		$s_order = isset( $model[ $step['status'] ]['order'] ) ? $model[ $step['status'] ]['order'] : $i;
+		if ( $s_order <= $target ) {
+			$idx = $i;
+		}
+	}
+	return $idx;
+}
+
+/**
+ * The order statuses valid to set for a given service type — used to scope the
+ * admin status dropdown so delivery-only statuses aren't offered on pickup
+ * orders (and vice-versa).
+ *
+ * @since 3.4
+ * @param string $service_type 'delivery' | 'pickup' | '' (all).
+ * @return array status_key => label
+ */
+function rpress_get_order_statuses_for_service( $service_type = '' ) {
+	$all = rpress_get_order_statuses();
+	if ( empty( $service_type ) ) {
+		return $all;
+	}
+	$model = rpress_order_status_model();
+	$out   = array();
+	foreach ( $all as $key => $label ) {
+		$services = isset( $model[ $key ]['services'] ) ? $model[ $key ]['services'] : array( 'delivery', 'pickup' );
+		if ( in_array( $service_type, $services, true ) ) {
+			$out[ $key ] = $label;
+		}
+	}
+	return $out;
 }
 /**
   * Retrieves all available statuses for Orders.
@@ -842,8 +957,7 @@ function rpress_get_order_status_label( $status = '' ) {
       'accepted'    => __( 'Accepted', 'restropress' ),
       'processing'  => __( 'Processing', 'restropress' ),
       'ready' 		=> __( 'Ready', 'restropress' ),
-      'transit' 	=> __( 'Picked Up', 'restropress' ),
-      'out_for_delivery' => __( 'Out for Delivery', 'restropress' ),
+      'transit' 	=> __( 'Out for delivery', 'restropress' ),
       'cancelled'   => __( 'Cancelled', 'restropress' ),
       'completed'   => __( 'Completed', 'restropress' ),
     );
@@ -867,7 +981,7 @@ function rpress_get_order_status_label( $status = '' ) {
       'ready_text' 		=> '#ffffff',
       'transit' 		=> '#f5a623',
       'transit_text' 	=> '#ffffff',
-      'out_for_delivery' => '#4a90e2',
+      'out_for_delivery' => '#f5a623',
       'out_for_delivery_text' => '#ffffff',
       'cancelled'   	=> '#eba3a3',
       'cancelled_text' 	=> '#761919',

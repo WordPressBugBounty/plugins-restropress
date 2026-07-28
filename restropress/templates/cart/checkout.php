@@ -59,7 +59,7 @@ $old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
 	<?php endif; ?>
 	<?php do_action( 'rpress_cart_line_item' ); ?>
 	<li class="cart_item rpress-cart-meta rpress_total">
-		<span class="rpress-total-label"><?php esc_html_e( 'Total (', 'restropress' ); ?><span class="rpress-cart-quantity" <?php echo wp_kses_post( $display ); ?> ><?php echo esc_html( $cart_quantity ); ?></span><?php esc_html_e( ' Items)', 'restropress' ); ?></span>
+		<span class="rpress-total-label"><?php esc_html_e( 'Total (', 'restropress' ); ?><span class="rpress-cart-quantity" <?php echo wp_kses_post( $display ); ?> ><?php echo esc_html( $cart_quantity ); ?></span>&nbsp;<?php echo esc_html( _n( 'item)', 'items)', (int) $cart_quantity, 'restropress' ) ); ?></span>
 		<span class="cart-total"><?php echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ) ); ?></span>
 	</li>
 	</ul>

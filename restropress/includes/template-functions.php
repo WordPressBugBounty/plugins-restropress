@@ -499,10 +499,10 @@ function rpress_get_button_colors()
 function rpress_get_button_styles()
 {
 	$styles = array(
-		'th-rectangle' => __('Rectangle Button', 'restropress'),
-		'th-rounded' => __('Rounded button', 'restropress'),
-		'th-border-radius' => __('Border Radius', 'restropress'),
-		'th-plain' => __('Plain Text', 'restropress'),
+		'th-rectangle' => __('Square', 'restropress'),
+		'th-rounded' => __('Pill', 'restropress'),
+		'th-border-radius' => __('Rounded corners', 'restropress'),
+		'th-plain' => __('Text only', 'restropress'),
 	);
 	return apply_filters('rpress_button_styles', $styles);
 }

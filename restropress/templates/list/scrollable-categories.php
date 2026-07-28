@@ -60,7 +60,7 @@ if (!$disable_category && is_array($get_all_items) && !empty($get_all_items)) :
                     <a href="#menu-category-<?php echo esc_attr($cat->term_id); ?>"
                     class="pn-ProductNav_Link<?php echo $first ? ' mnuactive' : ''; ?>"
                     aria-selected="<?php echo $first ? 'true' : 'false'; ?>">
-                        <?php echo esc_html($cat->name); ?>
+                        <?php echo esc_html($cat->name); ?><span class="pn-ProductNav_Count">(<?php echo intval($cat->count); ?>)</span>
                     </a>
                 <?php $first = false; endforeach; ?>
                 <span id="pnIndicator" class="pn-ProductNav_Indicator"></span>

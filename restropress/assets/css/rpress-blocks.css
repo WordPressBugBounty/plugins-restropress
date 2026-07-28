@@ -1,0 +1,121 @@
+/* RestroPress blocks (3.4) */
+
+/* Editor placeholder for session-dependent blocks */
+.rpress-block-placeholder {
+	border: 1px dashed #c3c4c7;
+	border-radius: 4px;
+	padding: 28px 20px;
+	text-align: center;
+	background: #f6f7f7;
+	color: #50575e;
+}
+.rpress-block-placeholder .rpress-block-placeholder-icon {
+	display: block;
+	margin: 0 auto 6px;
+	font-size: 28px;
+	width: 28px;
+	height: 28px;
+	color: #ff4f18;
+}
+.rpress-block-placeholder p {
+	margin: 4px 0 0;
+	font-size: 13px;
+}
+
+/* Opening Hours block */
+.rpress-opening-hours {
+	max-width: 420px;
+}
+.rpress-opening-hours-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 6px 0;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.rpress-opening-hours-row:last-of-type {
+	border-bottom: 0;
+}
+.rpress-opening-hours-row.is-today {
+	font-weight: 700;
+}
+.rpress-opening-hours-row.is-today .rpress-opening-hours-day::after {
+	content: " \2022";
+	color: #ff4f18;
+}
+.rpress-hours-closed-label {
+	opacity: 0.65;
+}
+.rpress-opening-hours-holidays {
+	margin-top: 10px;
+	font-size: 0.9em;
+	opacity: 0.8;
+}
+
+/* Menu block: clean editor preview (ServerSideRender). Hide session widgets
+   (service toggle bar, cart sidebar), let the menu fill the width, and make
+   the preview inert. */
+.rpress-block-editor-preview .rpress-delivery-wrap,
+.rpress-block-editor-preview .rpress-sidebar-main-wrap,
+.rpress-block-editor-preview .rpress-sidebar-cart-wrap {
+	display: none !important;
+}
+.rpress-block-editor-preview .rp-col-lg-8,
+.rpress-block-editor-preview .rp-col-md-8 {
+	width: 100% !important;
+	max-width: 100% !important;
+	flex: 0 0 100% !important;
+}
+.rpress-block-editor-preview .rpress-options-row {
+	display: none !important;
+}
+
+/* SSR preview: transparent overlay so clicking the inert preview still
+   selects the block in the editor. */
+.rpress-ssr-preview {
+	position: relative;
+	display: flow-root; /* contain the storefront's floated columns so the
+	                       wrapper (and the selection overlay) has real height */
+}
+.rpress-block-editor-preview {
+	display: flow-root;
+}
+.rpress-ssr-overlay {
+	position: absolute;
+	inset: 0;
+}
+
+/* Menu block layout toggles (3.4): each class hides one storefront region. */
+.rpress-menu-hide-categories .rpress-mobile-menu-wrap,
+.rpress-menu-hide-categories .mobile-scroll-menu,
+.rpress-menu-hide-categories .desktop-scroll-menu,
+.rpress-menu-hide-categories .desktop-scroll-menu .make-me-sticky,
+.rpress-menu-hide-categories .rpress_fooditems_grid .make-me-sticky {
+	display: none !important;
+}
+/* The emptied cart column (browsers with :has support collapse it fully). */
+.rpress-menu-hide-cart .rpress-section > .rp-col-lg-4:has(.rpress-sidebar-main-wrap) {
+	display: none !important;
+}
+.rpress-menu-hide-servicebar .rpress-delivery-wrap,
+.rpress-menu-hide-servicebar .rpress-options-row .rpress-option-col:not(.rpress-search-wrap),
+.rpress-menu-hide-servicebar .rpress-options-row .rpress-edit-address-wrap {
+	display: none !important;
+}
+.rpress-menu-hide-search .rpress-options-row .rpress-search-wrap {
+	display: none !important;
+}
+.rpress-menu-hide-servicebar.rpress-menu-hide-search .rpress-options-row {
+	display: none !important;
+}
+.rpress-menu-hide-cart .rpress-sidebar-main-wrap,
+.rpress-menu-hide-cart .rpress-sidebar-cart-wrap {
+	display: none !important;
+}
+.rpress-menu-hide-cart .rpress-section > .rp-col-lg-8,
+.rpress-menu-hide-cart .rpress-section > .rp-col-md-8,
+.rpress-menu-hide-cart .rpress_fooditems_grid.rp-col-lg-8 {
+	width: 100% !important;
+	max-width: 100% !important;
+	flex: 0 0 100% !important;
+}

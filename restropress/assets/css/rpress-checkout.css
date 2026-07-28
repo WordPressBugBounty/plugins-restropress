@@ -1,0 +1,1458 @@
+/**
+ * RestroPress checkout redesign (3.4).
+ *
+ * Ports the "2a desktop / 2b mobile" checkout mockup to the live templates:
+ * a #FAFAFA panel holding a header row and a two-column grid — numbered cards
+ * (Contact, Delivery/Pickup details, Payment) then Place order on the left, a
+ * sticky itemized order summary on the right.
+ *
+ * Brand color comes from the RestroPress "Theme Color" setting: the
+ * --rpc-primary* custom properties are injected inline (see
+ * enqueue_checkout_styles) so this file only references variables. Every rule
+ * is scoped to body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 and loads after
+ * rpress.css, intentionally overriding its checkout styling.
+ *
+ * Fixed tokens mirror the RestroPress design system (_ds): ink #000F37,
+ * borders #EAE8E7 / #D9D9D9, page tint #FAFAFA, status colors, Poppins
+ * headings + Inter body. The orange-50/200 washes in the mockup are replaced
+ * by the settings-derived --rpc-primary-tint / --rpc-primary-tint-border.
+ */
+
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 {
+	/* Fixed neutrals + status tokens */
+	--rpc-ink: #000F37;
+	--rpc-body: #575757;
+	--rpc-muted: #787A7C;
+	--rpc-border-subtle: #EAE8E7;
+	--rpc-border-strong: #D9D9D9;
+	--rpc-surface: #FAFAFA;
+	--rpc-page: #FAFAFA;
+	--rpc-gray-400: #BDBDBD;
+	--rpc-success: #3DAD58;
+	--rpc-success-bg: #E7F6EC;
+	--rpc-danger: #E5402B;
+	--rpc-danger-bg: #FFEDEA;
+	--rpc-visa: #2D267B;
+	--rpc-upi: #202427;
+	--rpc-font-head: 'Poppins', system-ui, sans-serif;
+	--rpc-font-body: 'Inter', system-ui, sans-serif;
+	--rpc-card-shadow: 0 8px 24px rgba(0, 0, 0, .05);
+
+	box-sizing: border-box;
+	display: grid !important;
+	grid-template-columns: minmax(0, 1fr) clamp(304px, 33.4vw, 384px);
+	gap: clamp(22px, 2.4vw, 28px);
+	align-items: start;
+	/* Fill the theme's content container (it owns the site's max-width and
+	   outer gutters). No self-imposed cap — that only re-introduced side
+	   margins when the container was wider than us. */
+	width: 100% !important;
+	max-width: 100% !important;
+	margin: 0 !important;
+	/* !important beats legacy `#rpress_checkout_wrap{padding:...}` rules so the
+	   surface has no padding on any side (the page/theme owns outer spacing). */
+	padding: 0 !important;
+	/* !important beats a legacy `#rpress_checkout_wrap{background:#f7f7f8}` so
+	   the surface is transparent (cards sit on the page, no grey wash). */
+	background: transparent !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
+	font-family: var(--rpc-font-body);
+	color: var(--rpc-body);
+	counter-reset: rpc-step;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 *,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 *::before,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 *::after { box-sizing: border-box; }
+
+/* No rules may target theme markup (body, #content, .entry-*, .ast-*, header,
+   footer). Everything below is scoped to the plugin's own #rpress_checkout_wrap
+   so the checkout renders inside the theme's normal page container. */
+
+/* ------------------------------------------------------------------ */
+/* Header row                                                          */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-header {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: 0 0 -6px;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-header-title {
+	display: flex;
+	align-items: baseline;
+	gap: 14px;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-store-name {
+	font: 700 22px var(--rpc-font-head);
+	color: var(--rpc-ink);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-header-sub {
+	font: 500 13px var(--rpc-font-body);
+	color: var(--rpc-muted);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-header-secure {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font: 500 12.5px var(--rpc-font-body);
+	color: var(--rpc-muted);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-header-secure svg { stroke: var(--rpc-success); }
+
+/* ------------------------------------------------------------------ */
+/* Two columns: form left, summary right (override legacy floats)      */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_form_wrap,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart_form {
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0;
+	float: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_form_wrap { grid-column: 1; grid-row: 2; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart_form { grid-column: 2; grid-row: 2; position: sticky; top: 24px; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_purchase_form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cards: the three numbered fieldsets                                  */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_user_info,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_payment_mode_select_wrap {
+	background: #fff !important;
+	border: 1px solid var(--rpc-border-subtle) !important;
+	border-radius: 16px !important;
+	box-shadow: var(--rpc-card-shadow);
+	padding: 22px 24px !important;
+	margin: 0 !important;
+	min-width: 0;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 fieldset {
+	border: 0;
+	min-width: 0;
+	background: none;
+}
+/* Numbered legend headings */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_user_info > legend,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details > legend,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_payment_mode_select > legend {
+	display: flex !important;
+	align-items: center;
+	gap: 10px;
+	/* Float the legend so it flows inside the card padding instead of sitting
+	   in the fieldset's native top-border notch (which read as "outside" the
+	   box). width:100% makes it a full row so the fields clear below it.
+	   order:-1 keeps it first when the card is a grid (Delivery details),
+	   where float is ignored and it would otherwise fall to its DOM order. */
+	float: left !important;
+	clear: both !important;
+	order: -1 !important;
+	width: 100% !important;
+	max-width: none !important;
+	padding: 0 0 0 34px !important;
+	margin: 0 0 16px !important;
+	border: 0 !important;
+	position: relative !important;
+	font: 600 16px var(--rpc-font-head) !important;
+	color: var(--rpc-ink) !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+}
+/* Kill the legacy underline pseudo on these legends */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_user_info > legend::after,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details > legend::after,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_payment_mode_select > legend::after { content: none !important; display: none !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_user_info > legend::before,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details > legend::before,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_payment_mode_select > legend::before {
+	counter-increment: rpc-step;
+	content: counter(rpc-step);
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: var(--rpc-primary);
+	color: #fff;
+	font: 600 12px var(--rpc-font-head);
+}
+
+/* ------------------------------------------------------------------ */
+/* Shared field styling                                                 */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-label,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 label.rpress-label,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .delivery-time-text,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-fields > label {
+	display: block;
+	margin: 0 0 6px !important;
+	font: 600 12.5px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-required-indicator { color: var(--rpc-danger); margin-left: 2px; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-optional-indicator { color: var(--rpc-muted); font-weight: 400; margin-left: 4px; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-description { display: none !important; }
+
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input[type="text"].rpress-input,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input[type="email"].rpress-input,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input[type="tel"].rpress-input,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input[type="password"].rpress-input,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input[type="number"].rpress-input,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 textarea.rpress-input,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rpress-select,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rp-form-control,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rpress-hrs {
+	width: 100% !important;
+	max-width: 100% !important;
+	margin: 0 !important;
+	padding: 12px 14px !important;
+	border: 1.5px solid var(--rpc-border-strong) !important;
+	border-radius: 10px !important;
+	background: #fff !important;
+	box-shadow: none !important;
+	font: 400 14.5px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+	line-height: 1.3 !important;
+	height: auto !important;
+	outline: none;
+}
+/* Unify every text field and select — including the delivery date/time
+   selects, which legacy service-option rules restyle into a bluer, shorter,
+   8px-radius box that clashes with the address inputs. Force one field spec
+   (1.5px strong border, 10px radius, 52px, white) so all controls match. */
+/* Triple the wrap id: the legacy delivery-select rules reach 2 ids + 5
+   classes, so a third #rpress_checkout_wrap is needed to out-specify them
+   and keep these controls on the shared field spec. Border set as longhands
+   so nothing partially overrides (legacy sets width/color separately). */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input.rpress-input,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rpress-select,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rp-form-control,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rpress-hrs,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rpress-delivery,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rp-checkout-service-option select,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .delivery-settings-wrapper select,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-delivery-time-wrap select {
+	min-height: 52px !important;
+	height: auto !important;
+	padding: 11px 14px !important;
+	border-width: 1.5px !important;
+	border-style: solid !important;
+	border-color: var(--rpc-border-strong) !important;
+	border-radius: 10px !important;
+	background: #fff !important;
+	font: 400 14.5px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+	box-shadow: none !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 textarea.rpress-input { min-height: 92px; resize: vertical; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rpress-select,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rp-form-control,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.rpress-hrs { appearance: auto; -webkit-appearance: auto; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input.rpress-input:focus,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 textarea.rpress-input:focus,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select:focus {
+	border-color: var(--rpc-primary) !important;
+	box-shadow: 0 0 0 3px var(--rpc-primary-tint) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input.rpress-input::placeholder,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 textarea.rpress-input::placeholder { color: var(--rpc-gray-400); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 p { margin: 0; }
+
+/* ------------------------------------------------------------------ */
+/* Contact card                                                         */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_user_info { position: relative; }
+/* Inline "Have an account? Log in" — top-right of the card */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-account-inline {
+	position: absolute;
+	top: 22px;
+	right: 24px;
+	z-index: 2;
+	margin: 0;
+	width: auto;
+	display: flex;
+	justify-content: flex-end;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-account-inline.panel-open {
+	position: static;
+	margin: 12px 0 16px;
+	display: block;
+	width: 100%;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-login-link {
+	position: static;
+	font: 500 13px var(--rpc-font-body);
+	color: var(--rpc-primary);
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	text-decoration: none;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-login-link strong { font-weight: 600; text-decoration: underline; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-login-link:hover { color: var(--rpc-primary-hover); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-login-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	background: var(--rpc-primary-tint);
+	border: 1px solid var(--rpc-primary-tint-border);
+	border-radius: 12px;
+	padding: 16px;
+	margin: 0;
+	width: 100%;
+	box-sizing: border-box;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-login-panel legend { display: none; }
+/* Login form: two fields in a grid, then a footer row (Log in + Lost + guest) */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_login_fields {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: none !important;
+	min-width: 0;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-login-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-login-field { margin: 0 !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_login_fields .rpress-input {
+	padding: 11px 14px !important;
+	font: 400 14px var(--rpc-font-body) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-login-footer {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-login-submit {
+	flex: none;
+	width: auto !important;
+	min-height: 0 !important;
+	height: auto !important;
+	margin: 0 !important;
+	padding: 9px 20px !important;
+	border: 0 !important;
+	border-radius: 999px !important;
+	background: var(--rpc-primary) !important;
+	color: #fff !important;
+	font: 600 13px var(--rpc-font-body) !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+	box-shadow: none !important;
+	cursor: pointer;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-login-submit:hover { background: var(--rpc-primary-hover) !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-login-lost,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-continue-guest {
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: 0;
+	font: 500 12.5px var(--rpc-font-body);
+	color: var(--rpc-muted) !important;
+	text-decoration: underline;
+	cursor: pointer;
+	white-space: nowrap;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-continue-guest { margin-left: auto; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-login-panel #rpress-new-account-wrap { display: none !important; }
+
+/* Logged-in "Signed in as … / Log out" — Log out link style. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-contact-logout {
+	font: 500 12.5px var(--rpc-font-body);
+	color: var(--rpc-primary);
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	text-decoration: underline;
+	white-space: nowrap;
+}
+/* "Signed in as … / Log out" row — spans the full grid width above the fields
+   (the contact card shows fields directly for logged-in customers). */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-contact-editable-head {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	width: 100%;
+	margin: 0 0 4px;
+	padding: 0 0 14px;
+	border-bottom: 1px solid var(--rpc-border-subtle);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-contact-signed-in {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	min-width: 0;
+	font: 400 12.5px var(--rpc-font-body);
+	color: var(--rpc-muted);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-contact-signed-in svg { flex: none; color: var(--rpc-primary); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-contact-signed-in strong { font-weight: 600; color: var(--rpc-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Toggle helper — keeps grid/flex display intact (unlike jQuery .show/.hide,
+   which forces inline display:block). */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-hidden { display: none !important; }
+
+/* Editable fields grid (guest, or logged-in after Edit).
+   width:100% makes the track sizing definite — without it the grid shrinks
+   to the (legacy-widthed) half-column items. The child reset clears the
+   legacy .rp-col-md-6 float/width so each field fills its cell. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-contact-editable {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px;
+	width: 100%;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-contact-editable > p,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-create-account-fields > p {
+	width: auto !important;
+	max-width: none !important;
+	min-width: 0;
+	float: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-create-account-wrap,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-create-account-fields { grid-column: 1 / -1; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-create-account-label,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-create-account-label span,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-create-account-label em {
+	text-transform: none !important;
+	letter-spacing: normal !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-create-account-label {
+	display: flex !important;
+	align-items: center;
+	gap: 9px;
+	margin: 0 !important;
+	font: 500 13px var(--rpc-font-body) !important;
+	color: var(--rpc-body) !important;
+	cursor: pointer;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-create-account-label input[type="checkbox"] {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	accent-color: var(--rpc-primary);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-create-account-label em { color: var(--rpc-muted); font-style: normal; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-create-account-fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px;
+	background: var(--rpc-page);
+	border-radius: 12px;
+	padding: 14px;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-create-account-fields > p { margin: 0; }
+
+/* ------------------------------------------------------------------ */
+/* Fulfillment card                                                     */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr !important;
+	/* legacy sets `gap: 10px 0 !important` here, collapsing the column gap so
+	   the two address columns touch — force the real gap with !important. */
+	gap: 14px !important;
+	column-gap: 14px !important;
+	row-gap: 14px !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details > legend,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details .rp-checkout-service-option,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details #rpress-order-note-wrap,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details .rpress-tips { grid-column: 1 / -1; }
+/* the legend must come visually below the service selector is NOT wanted; keep source order */
+/* The legacy stylesheet pins this wrapper chain to ~50% width (it used to sit
+   beside the old order-details form); in the redesign it spans the card. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rp-checkout-service-option,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-delivery-wrap,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-row,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tabs-wrapper.rpress-delivery-options,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rp-checkout-service-option .tab-content,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rp-checkout-service-option .delivery-settings-wrapper,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rp-checkout-service-option .rpress-delivery-time-wrap {
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0;
+	margin: 0 !important;
+	padding: 0 !important;
+	background: none !important;
+	border: 0 !important;
+	box-shadow: none !important;
+	float: none !important;
+}
+/* Legacy renders this wrapper as a grid (heading + tabs); the heading is
+   hidden here, so block flow lets the tab list span the card. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tabs-wrapper.rpress-delivery-options { display: block !important; }
+/* Legacy inner service heading is redundant next to the numbered legend */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-service-head { display: none !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-errors-wrap.disabled { display: none !important; }
+
+/* Service tabs as radio-cards: icon left, label, radio dot right */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+	width: 100% !important;
+	max-width: 100% !important;
+	margin: 0 0 16px !important;
+	padding: 0 !important;
+	border: 0 !important;
+	list-style: none;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab > li,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab > li.nav-item {
+	margin: 0 !important;
+	padding: 0 !important;
+	width: auto !important;
+	list-style: none;
+	background: none !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .nav-link {
+	display: block !important;
+	margin: 0 !important;
+	padding: 13px 16px !important;
+	border: 1.5px solid var(--rpc-border-subtle) !important;
+	border-radius: 12px !important;
+	background: #fff !important;
+	box-shadow: none !important;
+	cursor: pointer;
+	text-align: left !important;
+	color: var(--rpc-ink) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .nav-link .rpress-service-tab-inner {
+	display: flex !important;
+	align-items: center;
+	gap: 10px;
+	justify-content: flex-start;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .rpress-service-tab-icon {
+	flex: none;
+	font-size: 19px;
+	line-height: 1;
+	color: var(--rpc-ink);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .rpress-service-tab-textwrap {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .rpress-service-tab-label {
+	font: 600 14px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .rpress-service-tab-sub {
+	font: 400 12px var(--rpc-font-body);
+	color: var(--rpc-muted);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .rpress-service-tab-dot {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: 1.5px solid var(--rpc-gray-400);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .rpress-service-tab-dot::after {
+	content: "";
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: transparent;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .nav-link.active {
+	border-color: var(--rpc-primary) !important;
+	background: var(--rpc-primary-tint) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .nav-link.active .rpress-service-tab-label,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .nav-link.active .rpress-service-tab-icon { color: var(--rpc-primary) !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .nav-link.active .rpress-service-tab-dot { border-color: var(--rpc-primary); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab .nav-link.active .rpress-service-tab-dot::after { background: var(--rpc-primary); }
+
+/* Date / time controls */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .tab-content,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .delivery-settings-wrapper { margin: 0 !important; padding: 0 !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-delivery-time-wrap {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px;
+	margin: 0 0 4px !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-service-date-row,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-service-hours-row,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-service-time-row {
+	display: flex !important;
+	flex-direction: column;
+	gap: 6px;
+	margin: 0 !important;
+	width: auto !important;
+}
+
+/* Address fields flow 2-up inside the grid */
+/* Address field <p>s carry legacy rp-col 50% widths; as grid cells they
+   must fill their track. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-fields,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details > p {
+	width: auto !important;
+	max-width: none !important;
+	min-width: 0;
+	float: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-order-note-wrap { margin: 4px 0 0 !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-order-note-wrap {
+	display: none !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-service-instruction-label {
+	display: inline-flex !important;
+	align-items: center;
+	gap: 7px;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-service-instruction-icon { color: var(--rpc-muted); }
+
+/* Tips as chips joined to the bottom of the fulfillment card (delivery only).
+   Kept a DOM sibling (survives the service-switch AJAX that replaces the
+   card); the negative top margin cancels the form's flex gap so the two
+   read as one card with an internal divider above the tip row. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-has-tips #rpress_checkout_order_details {
+	border-bottom-left-radius: 0 !important;
+	border-bottom-right-radius: 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips {
+	margin: -16px 0 0 !important;
+	padding: 16px 24px 20px !important;
+	background: #fff !important;
+	border: 1px solid var(--rpc-border-subtle) !important;
+	border-top: 1px solid var(--rpc-border-subtle) !important;
+	border-radius: 0 0 16px 16px !important;
+	box-shadow: var(--rpc-card-shadow);
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .section-label { margin: 0; padding: 0; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .section-label-a { text-decoration: none; cursor: default; display: block; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .tips-text { font: 600 12.5px var(--rpc-font-body); color: var(--rpc-ink); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .tips-subtext { font: 400 12.5px var(--rpc-font-body); color: var(--rpc-muted); margin-left: 4px; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .tip-wrapper {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .tip-wrapper li { margin: 0; padding: 0; list-style: none; background: none; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .tip-wrapper a {
+	display: inline-block;
+	margin: 0 !important;
+	padding: 7px 16px !important;
+	border: 1.5px solid var(--rpc-border-strong) !important;
+	border-radius: 999px !important;
+	background: #fff !important;
+	color: var(--rpc-ink) !important;
+	font: 600 12.5px var(--rpc-font-body) !important;
+	text-decoration: none !important;
+	cursor: pointer;
+	line-height: 1.2 !important;
+	box-shadow: none !important;
+	min-height: 0 !important;
+	min-width: 0 !important;
+	height: auto !important;
+	width: auto !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .tip-wrapper a.active,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .tip-wrapper a.tip-selected {
+	border-color: var(--rpc-primary) !important;
+	background: var(--rpc-primary-tint) !important;
+	color: var(--rpc-primary) !important;
+}
+/* "None" chip = the remove-tip control: highlighted while no tip is applied */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-tips .rpress-remove-tip.disable {
+	border-color: var(--rpc-primary) !important;
+	background: var(--rpc-primary-tint) !important;
+	color: var(--rpc-primary) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-custom-tip-wrapper { display: flex; gap: 8px; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-custom-tip-wrapper input[type="number"] {
+	width: 110px !important;
+	padding: 7px 12px !important;
+	border: 1.5px solid var(--rpc-border-strong) !important;
+	border-radius: 999px !important;
+	font: 400 12.5px var(--rpc-font-body) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-custom-tip-wrapper input[type="button"] {
+	padding: 7px 16px !important;
+	border: 1.5px solid var(--rpc-primary) !important;
+	border-radius: 999px !important;
+	background: transparent !important;
+	color: var(--rpc-primary) !important;
+	font: 600 12.5px var(--rpc-font-body) !important;
+	cursor: pointer;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-service-pickup .rpress-tips { display: none !important; }
+
+/* ------------------------------------------------------------------ */
+/* Payment card                                                         */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_payment_mode_select { margin: 0; padding: 0; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-payment-mode-wrap {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 10px;
+	overflow: visible !important;
+	/* the Payment legend floats (heading-inside-card fix); as a flex/BFC box
+	   this wrap would otherwise sit beside that full-width float and collapse
+	   to 0 width. Clear it so it drops below the heading at full width. */
+	clear: both !important;
+	width: 100% !important;
+	/* this div only groups the two gateway options; each option is its own
+	   box, so the wrapper itself must not draw a border/card (legacy does). */
+	border: 0 !important;
+	border-radius: 0 !important;
+	background: none !important;
+	padding: 0 !important;
+	box-shadow: none !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-payment-mode-wrap label.rpress-gateway-option {
+	display: flex !important;
+	align-items: center;
+	gap: 12px;
+	margin: 0 !important;
+	padding: 14px 16px !important;
+	border: 1.5px solid var(--rpc-border-subtle) !important;
+	border-radius: 12px !important;
+	background: #fff !important;
+	box-shadow: none !important;
+	cursor: pointer;
+	font: 600 14px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+	width: 100%;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-payment-mode-wrap input.rpress-gateway {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	margin: 0;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-payment-mode-wrap .control__indicator { display: none !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-radio {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: 1.5px solid var(--rpc-gray-400);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-radio::after {
+	content: "";
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: transparent;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-icon {
+	flex: none;
+	display: inline-flex;
+	color: var(--rpc-ink);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-body {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-title { font: 600 14px var(--rpc-font-body); color: var(--rpc-ink); text-transform: none !important; letter-spacing: normal !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-sub { font: 400 12.5px var(--rpc-font-body); color: var(--rpc-muted); text-transform: none !important; letter-spacing: normal !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-badges { display: flex; align-items: center; gap: 6px; flex: none; }
+/* Real card icons (Accepted Cards setting) on the gateway row */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-card {
+	height: 22px !important;
+	width: auto !important;
+	max-width: 44px;
+	flex: none !important;
+	display: block;
+	object-fit: contain;
+	border: 1px solid var(--rpc-border-subtle);
+	border-radius: 4px;
+	background: #fff;
+	padding: 1px 2px;
+	box-shadow: none !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-badge {
+	font: 700 10px var(--rpc-font-body);
+	color: #fff;
+	border-radius: 4px;
+	padding: 3px 6px;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-badge.is-visa { background: var(--rpc-visa); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-gw-badge.is-upi { background: var(--rpc-upi); }
+/* Selection tracks the actual :checked radio (not the stale server class,
+   which can linger on the previously-selected option). */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-payment-mode-wrap label:has(input.rpress-gateway:checked) {
+	border-color: var(--rpc-primary) !important;
+	background: var(--rpc-primary-tint) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-payment-mode-wrap label:has(input.rpress-gateway:checked) .rpress-gw-radio { border-color: var(--rpc-primary); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-payment-mode-wrap label:has(input.rpress-gateway:checked) .rpress-gw-radio::after { background: var(--rpc-primary); }
+
+/* Inline card fields (AJAX gateway form) as a tinted box */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_cc_fields,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_cc_address {
+	background: var(--rpc-page) !important;
+	border: 1.5px solid var(--rpc-border-subtle) !important;
+	border-radius: 12px !important;
+	box-shadow: none !important;
+	padding: 16px !important;
+	margin: 12px 0 0 !important;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	width: 100%;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_cc_fields > p,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_cc_address > p {
+	width: auto !important;
+	max-width: none !important;
+	min-width: 0;
+	float: none !important;
+	margin: 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_cc_fields legend,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_cc_address legend {
+	grid-column: 1 / -1;
+	width: auto;
+	padding: 0;
+	margin: 0;
+	border: 0;
+	float: none;
+	font: 600 13px var(--rpc-font-head);
+	color: var(--rpc-ink);
+	text-transform: none;
+	letter-spacing: normal;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_cc_fields legend::before,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_cc_address legend::before { content: none; counter-increment: none; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-card-number-wrap,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_secure_site_wrapper { grid-column: 1 / -1; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_secure_site_wrapper {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font: 400 12px var(--rpc-font-body);
+	color: var(--rpc-muted);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_secure_site_wrapper svg { fill: var(--rpc-success); }
+
+/* ------------------------------------------------------------------ */
+/* Place order                                                          */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_purchase_submit,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_purchase_form_wrap {
+	margin: 0 !important;
+	padding: 0 !important;
+	background: none !important;
+	border: 0 !important;
+	box-shadow: none !important;
+}
+/* Guest-first: stock hides the purchase wrap (Place order button + total +
+   trust line) for logged-out visitors via .rpress-logged-out. The redesign
+   lets guests check out and already force-shows the payment card the same
+   way, so keep this wrap visible too — otherwise guests have no submit. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_purchase_form_wrap,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_purchase_submit {
+	display: block !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_purchase_submit #rpress_final_total_wrap {
+	display: none !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-purchase-button,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_purchase_submit input[type="submit"] {
+	display: block;
+	width: 100% !important;
+	margin: 0 !important;
+	padding: 16px 24px !important;
+	border: 0 !important;
+	border-radius: 999px !important;
+	background: var(--rpc-primary) !important;
+	color: #fff !important;
+	font: 600 15.5px var(--rpc-font-body) !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+	cursor: pointer;
+	box-shadow: 0 10px 24px var(--rpc-primary-shadow);
+	transition: background .2s ease, box-shadow .2s ease;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-purchase-button:hover {
+	background: var(--rpc-primary-hover) !important;
+	box-shadow: 0 6px 18px var(--rpc-primary-shadow);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-purchase-button:active {
+	background: var(--rpc-primary-press) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-encrypted-note {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin: 12px 0 0;
+	font: 400 12px var(--rpc-font-body);
+	color: var(--rpc-muted);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-encrypted-note a { color: var(--rpc-primary); font-weight: 500; text-decoration: none; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_terms_agreement { margin: 14px 0 0; padding: 0; font: 400 13px var(--rpc-font-body); }
+
+/* ------------------------------------------------------------------ */
+/* Error banner                                                         */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_errors,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-alert-error {
+	background: var(--rpc-danger-bg) !important;
+	border: 1.5px solid var(--rpc-danger) !important;
+	border-radius: 12px !important;
+	padding: 12px 16px !important;
+	color: var(--rpc-danger) !important;
+	font: 500 13.5px var(--rpc-font-body) !important;
+	margin: 0 0 4px !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_errors p { color: var(--rpc-danger) !important; margin: 0; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_error { color: var(--rpc-danger); font: 500 12px var(--rpc-font-body); }
+
+/* Client-side validation (mockup): invalid inputs get a red border, an inline
+   message below, and a summary banner at the top of the form. The triple wrap
+   id + .error out-specifies the shared field spec that pins the border colour. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input.rpress-input.error,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 select.error,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 textarea.rpress-input.error {
+	border-color: var(--rpc-danger) !important;
+	background: var(--rpc-danger-bg) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-field-error {
+	display: block;
+	margin: 6px 0 0;
+	font: 500 12px var(--rpc-font-body);
+	color: var(--rpc-danger);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-error-banner {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 0 16px;
+	padding: 12px 16px;
+	background: var(--rpc-danger-bg);
+	border: 1.5px solid var(--rpc-danger);
+	border-radius: 12px;
+	font: 500 13.5px var(--rpc-font-body);
+	color: var(--rpc-danger);
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-error-banner svg { flex: none; }
+
+/* ------------------------------------------------------------------ */
+/* Order summary (right column)                                         */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart_wrap {
+	background: #fff;
+	border: 1px solid var(--rpc-border-subtle);
+	border-radius: 16px;
+	box-shadow: var(--rpc-card-shadow);
+	padding: 20px 22px;
+}
+/* The summary table must NOT be its own box — the card (#rpress_checkout_cart_wrap)
+   is the only box. Legacy rpress.css still gives the table a bordered/rounded
+   card (see cleanup below); force it flat here so there's a single box. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 table#rpress_checkout_cart {
+	display: block;
+	width: 100%;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	border-collapse: collapse;
+	background: none !important;
+	box-shadow: none !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart thead,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart tbody,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart tfoot { display: block; width: 100%; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart tr { display: block; width: 100%; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart th,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart td {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	text-align: left;
+	font-weight: 400;
+}
+/* Zero only the "Your order" heading cell. !important beats legacy rpress.css
+   `#rpress_checkout_cart_wrap thead th { padding: 22px 24px 12px }`. Scoped to
+   thead so it no longer clobbers the totals rows' own padding below. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart thead th { padding: 0 !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart thead .item-order h6 {
+	margin: 0 0 14px !important;
+	font: 600 16px var(--rpc-font-head) !important;
+	color: var(--rpc-ink) !important;
+}
+
+/* Item row */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_item td { padding: 14px 0 !important; border-bottom: 1px solid var(--rpc-border-subtle) !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 tbody tr.rpress_cart_item:first-child td { padding-top: 0 !important; }
+/* An earlier redesign pass left competing grid rules for these rows in the
+   legacy rpress.css (padding, margin-bottom and their own border-bottom).
+   Fully declare the box here so nothing leaks through — otherwise each row
+   renders a second, spaced border (the "boxy" look). */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-row {
+	display: flex !important;
+	align-items: flex-start;
+	gap: 12px !important;
+	width: 100% !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-media {
+	width: 52px !important;
+	height: 52px !important;
+	min-width: 52px;
+	flex: none;
+	border-radius: 10px !important;
+	overflow: hidden;
+	background: #fff !important;
+	border: 1px solid var(--rpc-border-subtle) !important;
+	padding: 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Photo-less items get the tinted square + bowl icon (the mockup look). Items
+   with a real photo keep a clean neutral frame so the peach doesn't ring the
+   photo. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-media-empty {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--rpc-primary-tint) !important;
+	border: 1px solid var(--rpc-primary-tint-border) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-icon { color: var(--rpc-primary); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-content { flex: 1; min-width: 0; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-mainline {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	font: 600 14px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+}
+/* the inner title span is 16px/500 gray by legacy — force the mockup 14/600 ink */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-mainline .rpress-cart-item-title,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-mainline .rpress_checkout_cart_item_title { font: 600 14px var(--rpc-font-body) !important; color: var(--rpc-ink) !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-mainline .rpress_checkout_cart_item_price { font: 600 14px var(--rpc-font-body) !important; color: var(--rpc-ink) !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-mainline .rpress_checkout_cart_item_qty { font: 400 14px var(--rpc-font-body) !important; color: var(--rpc-muted) !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-mainline .cart-item-quantity-wrap { flex: none; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-addon-row {
+	display: flex !important;
+	justify-content: space-between;
+	gap: 8px;
+	margin: 4px 0 0 !important;
+	padding: 0 0 0 10px !important;
+	border: 0 !important;
+	font: 400 12.5px var(--rpc-font-body) !important;
+	color: var(--rpc-muted) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-addon-row .rpress_checkout_cart_item_qty { font: 400 12.5px var(--rpc-font-body) !important; color: var(--rpc-muted) !important; }
+/* The inner title span inherits legacy 16px; force it below the 14px item name
+   so a modifier reads as a sub-line, not larger than the food it belongs to. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-addon-row .rpress-cart-item-title { font: 400 12.5px var(--rpc-font-body) !important; color: var(--rpc-muted) !important; }
+/* mockup staggers the modifier lines: first 4px above, subsequent 2px */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-addon-row + .rpress-checkout-addon-row { margin-top: 2px !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-addon-row .rpress-cart-item-title::before { content: "+ "; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .special-instruction-wrapper { margin: 4px 0 0; padding: 0 0 0 10px; font: 400 12px var(--rpc-font-body); color: var(--rpc-muted); font-style: italic; }
+
+/* Remove control: a subtle round × pinned to the top-right of the item row,
+   in its own column beside the item content (not dangling under it). */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-actions {
+	flex: none !important;
+	display: flex !important;
+	align-items: flex-start;
+	gap: 6px;
+	margin: 0 !important;
+	padding: 1px 0 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-actions .rpress_cart_remove_item_btn {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	width: 22px !important;
+	height: 22px !important;
+	min-width: 22px;
+	padding: 0 !important;
+	margin: 0 !important;
+	border: 0 !important;
+	border-radius: 999px !important;
+	background: none !important;
+	color: var(--rpc-muted) !important;
+	text-decoration: none !important;
+	text-transform: none !important;
+	min-height: 0 !important;
+	box-shadow: none !important;
+	transition: color .15s ease, background .15s ease;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-actions .rpress_cart_remove_item_btn:hover {
+	color: var(--rpc-danger) !important;
+	background: var(--rpc-danger-bg) !important;
+}
+/* Show a clear trash/delete icon instead of the faint × glyph. Drawn with a
+   CSS mask so it inherits the button's colour (grey, red on hover) and can't be
+   stripped by any HTML sanitiser. The &times; text stays as a fallback but is
+   hidden via font-size:0. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-actions .rpress-remove-icon {
+	display: block;
+	width: 17px;
+	height: 17px;
+	font-size: 0 !important;
+	line-height: 0;
+	background-color: currentColor;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6'/%3E%3C/svg%3E") center / contain no-repeat;
+	        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-item-actions .rpress-remove-text.screen-reader-text {
+	position: absolute !important;
+	width: 1px; height: 1px;
+	padding: 0; margin: -1px;
+	overflow: hidden; clip: rect(0, 0, 0, 0);
+	white-space: nowrap; border: 0;
+}
+
+/* Subtotal row inside tbody */
+/* Subtotal starts the single "totals" block: one border-top above it, then
+   the fee/tip rows flow directly below (no divider), then the Total border. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_get_subtotal {
+	display: flex !important;
+	justify-content: space-between;
+	margin: 16px 0 0 !important;
+	/* Symmetric 9px so the gap from the border to Subtotal matches the gap
+	   down to the fee/discount rows (each of those adds 9px below). */
+	padding: 9px 0 !important;
+	border-top: 1px solid var(--rpc-border-subtle) !important;
+	font: 400 13.5px var(--rpc-font-body) !important;
+	color: var(--rpc-body) !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-cart-row-label { font: inherit; color: inherit; text-transform: none !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_get_subtotal .rpress_cart_subtotal_amount { float: none !important; font: 400 13.5px var(--rpc-font-body) !important; color: var(--rpc-body) !important; }
+
+/* Coupon row (moved between item and totals) */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-cell { padding: 14px 0 0 !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-coupon { margin: 0; }
+/* Applied-coupon success pill (mockup): green box with check + code + Remove. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-applied {
+	display: none;
+	align-items: center;
+	gap: 8px;
+	background: var(--rpc-success-bg);
+	border: 1px solid var(--rpc-success);
+	border-radius: 10px;
+	padding: 9px 13px;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-coupon.is-applied .rpress-coupon-applied { display: flex; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-coupon.is-applied .rpress-coupon-toggle,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-coupon.is-applied .rpress-coupon-body { display: none !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-applied-icon { display: inline-flex; align-items: center; color: var(--rpc-success); flex: none; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-applied-text { flex: 1; min-width: 0; font: 400 13px var(--rpc-font-body); color: var(--rpc-ink); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-applied-text strong { font-weight: 600; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-remove {
+	/* The Remove link also carries .rpress_discount_remove, which legacy
+	   rpress.min.css renders as a fixed 10px xit.gif icon — that squeezed the
+	   word "Remove" into a vertical stack. Undo the icon sizing. */
+	flex: none !important;
+	width: auto !important;
+	height: auto !important;
+	background: none !important;
+	position: static !important;
+	white-space: nowrap;
+	font: 500 12px var(--rpc-font-body) !important;
+	color: var(--rpc-muted) !important;
+	text-decoration: underline; cursor: pointer; border: 0; padding: 0;
+}
+/* Totals coupon line: clean flex row, hide the ⊗ (the pill owns removal),
+   green, with a minus so it reads as a reduction. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_discount .rpress_discount {
+	display: flex !important; width: 100%; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_discount .rpress_discount_label,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_discount .rpress_discount_rate_wrap { white-space: nowrap; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_discount .rpress_discount_remove { display: none !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_discount .rpress_discount_rate::before { content: "\2212"; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-remove:hover { color: var(--rpc-ink) !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font: 500 13px var(--rpc-font-body);
+	color: var(--rpc-primary);
+	text-decoration: none;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-body { margin: 10px 0 0; }
+/* Strip the legacy fieldset chrome (border/tint/padding) so it's just a clean
+   input + Apply row, not a box-inside-a-box. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-body #rpress_discount_code {
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: none !important;
+	min-width: 0 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-body #rpress-discount-code-wrap { display: block !important; margin: 0; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-body #rpress_show_discount,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-body #rpress-discount-code-wrap .rpress-label,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-coupon-body #rpress-discount-code-wrap .rpress-description { display: none !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-discount-code-field-wrap { display: flex !important; gap: 8px; align-items: center; }
+/* The coupon input is a compact field (mockup: 10px 13px padding → ~40px), NOT
+   one of the tall 52px form fields. The shared field spec above uses a tripled
+   #rpress_checkout_wrap, so match that ID count (+ input#id) to out-specify it. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 input#rpress-discount {
+	flex: 1;
+	min-width: 0;
+	/* Mockup values: 10px 13px padding, 1.5px border-strong, 10px radius. */
+	padding: 10px 13px !important;
+	min-height: 0 !important;
+	height: auto !important;
+	line-height: 1.35 !important;
+	border: 1.5px solid var(--rpc-border-strong) !important;
+	border-radius: 10px !important;
+	font: 400 13.5px var(--rpc-font-body) !important;
+	color: var(--rpc-ink) !important;
+	background: #fff !important;
+	transition: border-color .15s ease;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-discount::placeholder { color: var(--rpc-gray-400); }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-discount:focus { border-color: var(--rpc-primary) !important; outline: none; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-apply-discount.rpress-submit {
+	flex: none;
+	padding: 10px 18px !important;
+	border: 1.5px solid var(--rpc-primary) !important;
+	border-radius: 999px !important;
+	background: transparent !important;
+	color: var(--rpc-primary) !important;
+	font: 600 13px var(--rpc-font-body) !important;
+	cursor: pointer;
+	width: auto !important;
+	height: auto !important;
+	min-height: 0 !important;
+	box-shadow: none !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-apply-discount.rpress-submit:hover {
+	background: var(--rpc-primary) !important;
+	color: #fff !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-discount-error-wrap {
+	display: block;
+	margin: 8px 0 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: none !important;
+	font: 500 12px var(--rpc-font-body);
+	color: var(--rpc-danger) !important;
+}
+
+/* tfoot flows straight under the Subtotal row (which carries the block's
+   top border); no divider between Subtotal and the fee/tip rows. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart tfoot { margin: 0 !important; padding: 0 !important; border: 0 !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_footer_row { display: block; }
+/* Subtotal / fee / discount rows — but NOT the Total row (styled below).
+   :not(.rpress_cart_total) keeps this from beating the Total on specificity. */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_footer_row th:not(.rpress_cart_total),
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_fee th {
+	display: flex !important;
+	justify-content: space-between;
+	align-items: baseline;
+	padding: 0 0 9px !important;
+	font: 400 13.5px var(--rpc-font-body) !important;
+	color: var(--rpc-body) !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_footer_row th:not(.rpress_cart_total) .pull-right,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_fee th span,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_fee th span[style] { float: none !important; font: 400 13.5px var(--rpc-font-body) !important; color: var(--rpc-body) !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_discount { color: var(--rpc-success) !important; }
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_total {
+	display: flex !important;
+	justify-content: space-between;
+	align-items: baseline;
+	padding: 10px 0 0 !important;
+	border-top: 1px solid var(--rpc-border-subtle);
+	font: 600 15px var(--rpc-font-head) !important;
+	color: var(--rpc-ink) !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_cart_total .rpress_cart_amount {
+	float: none !important;
+	font: 700 24px var(--rpc-font-head) !important;
+	color: var(--rpc-ink) !important;
+}
+
+/* Order meta (secure / support) is relocated under Place order; hide here */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart_wrap .rpress-checkout-order-meta { display: none; }
+
+/* ------------------------------------------------------------------ */
+/* Mobile: collapsible summary + sticky bottom bar                      */
+/* ------------------------------------------------------------------ */
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-mobile-summary-toggle,
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-sticky-bar { display: none; }
+
+@media (min-width: 783px) and (max-width: 1024px) {
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 {
+		display: grid !important;
+		grid-template-columns: minmax(0, 1fr) clamp(304px, 33.4vw, 342px) !important;
+		gap: 23px !important;
+		width: calc(100vw - 62px) !important;
+		max-width: calc(100vw - 62px) !important;
+		padding: 28px 0 40px !important;
+		margin-left: auto !important;
+		margin-right: auto !important;
+	}
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_form_wrap {
+		grid-column: 1 !important;
+		grid-row: 2 !important;
+	}
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart_form {
+		grid-column: 2 !important;
+		grid-row: 2 !important;
+		position: sticky !important;
+		top: 24px;
+	}
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_user_info,
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details,
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_payment_mode_select_wrap,
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart_wrap {
+		width: 100% !important;
+	}
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-contact-editable,
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details,
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-delivery-time-wrap,
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab {
+		grid-template-columns: 1fr 1fr !important;
+	}
+}
+
+@media (max-width: 782px) {
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 {
+		grid-template-columns: 1fr;
+		width: 100% !important;
+		max-width: none !important;
+		padding: 16px 14px 20px;
+		border-radius: 0;
+		gap: 14px;
+	}
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-header { margin: 0; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_form_wrap { grid-column: 1; grid-row: 3; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart_form { grid-column: 1; grid-row: 2; position: static; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-contact-editable,
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_order_details,
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress-create-account-fields { grid-template-columns: 1fr; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpressdeliveryTab,
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-delivery-time-wrap { grid-template-columns: 1fr 1fr; }
+
+	/* Collapse the summary behind a toggle bar */
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-mobile-summary-toggle {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		width: 100%;
+		padding: 14px 16px;
+		border: 1px solid var(--rpc-primary-tint-border);
+		border-radius: 12px;
+		background: var(--rpc-primary-tint);
+		cursor: pointer;
+		font: 600 13.5px var(--rpc-font-body);
+		color: var(--rpc-ink);
+		text-align: left;
+	}
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-mobile-summary-toggle > span:first-child { flex: 1; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-msum-total { font: 700 15px var(--rpc-font-head); }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-msum-chevron { transition: transform .2s; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-msum-open .rpress-msum-chevron { transform: rotate(180deg); }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 #rpress_checkout_cart_form #rpress_checkout_cart_wrap { display: none; margin-top: 12px; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-msum-open #rpress_checkout_cart_form #rpress_checkout_cart_wrap { display: block; }
+
+	/* Sticky bottom bar with total + proxy Place order */
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-has-sticky-bar { padding-bottom: 96px; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-sticky-bar {
+		display: block;
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 40;
+		background: #fff;
+		border-top: 1px solid var(--rpc-border-subtle);
+		box-shadow: 0 -4px 16px rgba(0, 0, 0, .08);
+		padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+	}
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-sbar-row { display: flex; align-items: center; gap: 14px; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-sbar-total-label { font: 400 11px var(--rpc-font-body); color: var(--rpc-muted); }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-sbar-total { font: 700 18px var(--rpc-font-head); color: var(--rpc-ink); }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-sbar-button {
+		flex: 1;
+		padding: 14px 18px;
+		border: 0;
+		border-radius: 12px;
+		background: var(--rpc-primary);
+		color: #fff;
+		font: 600 15px var(--rpc-font-body);
+		cursor: pointer;
+	}
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-sbar-note {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		margin: 8px 0 0;
+		font: 400 11px var(--rpc-font-body);
+		color: var(--rpc-muted);
+	}
+	/* Hide the in-flow submit; the sticky bar proxies it */
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-has-sticky-bar #rpress_purchase_submit { position: absolute; left: -9999px; }
+}

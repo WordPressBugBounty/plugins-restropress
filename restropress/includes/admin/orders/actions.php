@@ -42,8 +42,35 @@ function rpress_get_order_status( $payment_id ) {
     return;
   }
   $order_status = !empty( get_post_meta( $payment_id, '_order_status', true ) ) ? get_post_meta( $payment_id, '_order_status', true ) : 'pending';
+  // The out_for_delivery status was retired in 3.4 (folded into transit).
+  // Normalize any legacy value here so every consumer sees one status.
+  if ( 'out_for_delivery' === $order_status ) {
+    $order_status = 'transit';
+  }
   return apply_filters( 'rp_get_order_status', $order_status );
 }
+
+/**
+ * One-time data migration: fold the retired out_for_delivery order status into
+ * transit so stored order data matches the 3.4 status model (the runtime alias
+ * in rpress_get_order_status() handles display; this makes the DB truthful).
+ *
+ * @since 3.4
+ * @return void
+ */
+function rpress_migrate_out_for_delivery_status() {
+  if ( get_option( 'rpress_ofd_status_migrated' ) ) {
+    return;
+  }
+  global $wpdb;
+  $wpdb->update(
+    $wpdb->postmeta,
+    array( 'meta_value' => 'transit' ),
+    array( 'meta_key' => '_order_status', 'meta_value' => 'out_for_delivery' )
+  );
+  update_option( 'rpress_ofd_status_migrated', 1 );
+}
+add_action( 'admin_init', 'rpress_migrate_out_for_delivery_status' );
 /**
  * Move an order to the trashed status
  *

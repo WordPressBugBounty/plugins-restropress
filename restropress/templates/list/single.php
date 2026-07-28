@@ -42,7 +42,13 @@ $has_tags = ( $tags && ! is_wp_error( $tags ) ) ? 'has-tags' : '';
          esc_attr($food_item_class);
 ?>"
 	data-term-id="<?php echo esc_attr($term_id); ?>" id="rpress_fooditem_<?php the_ID(); ?>">
-	<?php $img_wrp = (!has_post_thumbnail(get_the_ID())) ? 'rp-no-img' : ''; ?>
+	<?php
+	// Only treat the card as image-less (which the v2 skin uses to hide the
+	// thumbnail holder) when there's genuinely nothing to show. With the image
+	// placeholder enabled, the holder renders the placeholder graphic, so it
+	// must stay visible.
+	$img_wrp = ( ! has_post_thumbnail( get_the_ID() ) && ! rpress_get_option( 'enable_image_placeholder', false ) ) ? 'rp-no-img' : '';
+	?>
 	<div
 		class="<?php echo esc_attr($img_wrp) . ' ' . esc_attr(apply_filters('rpress_fooditem_inner_class', 'rpress_fooditem_inner', get_the_ID(), $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i)); ?>">
 		<?php do_action('rpress_fooditem_before'); ?>
