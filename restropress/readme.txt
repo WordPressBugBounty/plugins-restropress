@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.0
-Stable tag: 3.4
+Stable tag: 3.4.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -154,6 +154,12 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
+
+= Version 3.4.1 (2026-08-08) =
+* Fixed: Percentage discount float calculation precision error when using comma decimal separators, preventing loss of cents on totals.
+* Fixed: Terms of Agreement checkbox visibility and touch target on mobile checkout viewports.
+* Fixed: Food item card width uniformity and price range wrapping for variable price items in mobile grid view.
+* Fixed: Checkout error message overlapping by the mobile sticky bottom bar, adding smooth scroll positioning and elevated contrast styling.
 
 = Version 3.4 (2026-07-28) =
 
@@ -511,7 +517,7 @@ RestroPress 3.3 is a major update: a guided setup wizard with AI menu import, a 
 
 == Upgrade Notice ==
 
-= 3.4 =
+= 3.4.1 =
 A major update: a guided setup wizard with AI menu import, a real time Live Orders board, a redesigned Dashboard and Orders screen, a built-in Sold Out toggle, dietary labels on your menu, and faster Reports. "Food Items" is now labelled "Menu Items" throughout the admin (your links, shortcodes, and data keep working). Please back up your site before upgrading.
 
 = 3.2.8.8.6 =

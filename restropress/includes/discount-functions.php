@@ -1158,8 +1158,7 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
 					$item_cart_total_price = $cart_item_addon_price + $item_cart_price;
 					
 				if ( $discount_type == 'percent' ) {
-					
-					$discount_value +=  rpress_format_amount(( $discount_amount / 100 ) * $item_cart_total_price );
+					$discount_value += round( ( $discount_amount / 100 ) * $item_cart_total_price, rpress_currency_decimal_filter() );
 				} else {
 					$discount_value = $discount_amount;
 				}
@@ -1186,8 +1185,7 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
     				$item_cart_total_price = $cart_item_addon_price + $item_cart_price;
 					
     				if ( $discount_type == 'percent' ) {
-    					$discount_value += rpress_format_amount(( $discount_amount / 100 ) * $item_cart_total_price);
-						
+    					$discount_value += round( ( $discount_amount / 100 ) * $item_cart_total_price, rpress_currency_decimal_filter() );
 				    } else {
 				        $discount_value = $discount_value;
 				    }

@@ -1018,6 +1018,7 @@ function rpress_terms_agreement() {
 		ob_start();
 	?>
 		<fieldset id="rpress_terms_agreement">
+			<?php if ( ! empty( $agree_text ) ) : ?>
 			<div id="rpress_terms" class="rpress-terms" style="display:none;">
 				<?php
 					do_action( 'rpress_before_terms' );
@@ -1029,6 +1030,7 @@ function rpress_terms_agreement() {
 				<a href="#" class="rpress_terms_links"><?php esc_html_e( 'Show Terms', 'restropress' ); ?></a>
 				<a href="#" class="rpress_terms_links" style="display:none;"><?php esc_html_e( 'Hide Terms', 'restropress' ); ?></a>
 			</div>
+			<?php endif; ?>
 			<div class="rpress-terms-agreement">
 				<input name="rpress_agree_to_terms" class="required" type="checkbox" id="rpress_agree_to_terms" value="1"/>
 				<label for="rpress_agree_to_terms"><?php echo esc_html(stripslashes( $agree_label )); ?></label>
@@ -1037,15 +1039,17 @@ function rpress_terms_agreement() {
 <?php
 		$html_output = ob_get_clean();
 		$allowed_html = array(
-			'fieldset' => array( 'id' => true ),
+			'fieldset' => array( 'id' => true, 'class' => true, 'style' => true ),
 			'div'      => array( 'id' => true, 'class' => true, 'style' => true ),
-			'a'        => array( 'href' => true, 'class' => true, 'style' => true ),
-			'input'    => array( 'type' => true, 'name' => true, 'class' => true, 'id' => true, 'value' => true ),
-			'label'    => array( 'for' => true ),
-			'p'        => array(), // for wpautop
+			'a'        => array( 'href' => true, 'class' => true, 'style' => true, 'target' => true ),
+			'input'    => array( 'type' => true, 'name' => true, 'class' => true, 'id' => true, 'value' => true, 'checked' => true, 'required' => true ),
+			'label'    => array( 'for' => true, 'class' => true, 'style' => true ),
+			'span'     => array( 'class' => true, 'style' => true ),
+			'p'        => array( 'class' => true, 'style' => true ),
 			'br'       => array(),
 			'strong'   => array(),
 			'em'       => array(),
+			'i'        => array( 'class' => true ),
 		);
 		
 		echo wp_kses( apply_filters( 'rpress_checkout_terms_agreement_html', $html_output ), $allowed_html );
@@ -1075,8 +1079,8 @@ add_action( 'rpress_purchase_form_before_submit', 'rpress_checkout_final_total',
  */
 function rpress_checkout_submit() {
 ?>
+	<?php do_action( 'rpress_purchase_form_before_submit' ); ?>
 	<fieldset id="rpress_purchase_submit">
-		<?php do_action( 'rpress_purchase_form_before_submit' ); ?>
 		<?php rpress_checkout_hidden_fields(); ?>
 		<?php
 		$allowed_html = array(
@@ -1160,6 +1164,15 @@ function rpress_agree_to_terms_js() {
 				$(this).parent().prev('.rpress-terms').slideToggle();
 				$(this).parent().find('.rpress_terms_links').toggle();
 				return false;
+			});
+			$( document.body ).on('click', '.rpress-terms-agreement', function(e) {
+				if ( $(e.target).is('input[type="checkbox"]') || $(e.target).is('label') || $(e.target).is('a') ) {
+					return;
+				}
+				var $checkbox = $(this).find('input[type="checkbox"]#rpress_agree_to_terms');
+				if ( $checkbox.length ) {
+					$checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
+				}
 			});
 		});
 	</script>

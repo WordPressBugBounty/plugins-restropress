@@ -254,6 +254,11 @@ jQuery(document)
                 .prop('disabled', false);
               $(document.body)
                 .trigger('rpress_checkout_error', [data]);
+              var $errors = $('.rpress_errors:visible, .rpress-errors-wrap:visible, .rpress-alert-error:visible, .rpress-error:visible').first();
+              if ($errors.length) {
+                var targetTop = Math.max(0, $errors.offset().top - 120);
+                $('html, body').stop().animate({ scrollTop: targetTop }, 400);
+              }
             }
           });
       });

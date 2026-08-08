@@ -947,18 +947,47 @@ body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-
 /* ------------------------------------------------------------------ */
 /* Error banner                                                         */
 /* ------------------------------------------------------------------ */
-body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_errors,
-body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-alert-error {
-	background: var(--rpc-danger-bg) !important;
-	border: 1.5px solid var(--rpc-danger) !important;
-	border-radius: 12px !important;
-	padding: 12px 16px !important;
-	color: var(--rpc-danger) !important;
-	font: 500 13.5px var(--rpc-font-body) !important;
-	margin: 0 0 4px !important;
+.rpress_errors:empty,
+.rpress-errors-wrap:empty,
+.rpress-errors-wrap.disabled,
+.rpress-alert-error:empty,
+div.rpress_errors:empty,
+div.rpress-errors-wrap:empty {
+	display: none !important;
 }
-body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_errors p { color: var(--rpc-danger) !important; margin: 0; }
-body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_error { color: var(--rpc-danger); font: 500 12px var(--rpc-font-body); }
+
+.rpress_errors:not(:empty),
+.rpress-errors-wrap:not(:empty):not(.disabled),
+.rpress-alert-error:not(:empty),
+#rpress_checkout_errors:not(:empty),
+body.rpress-checkout #rpress_checkout_wrap .rpress_errors:not(:empty),
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_errors:not(:empty),
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-alert-error:not(:empty) {
+	background: #fef2f2 !important;
+	border: 1.5px solid #ef4444 !important;
+	border-radius: 12px !important;
+	padding: 14px 16px !important;
+	color: #991b1b !important;
+	font: 500 14px var(--rpc-font-body) !important;
+	margin: 16px 0 24px !important;
+	position: relative !important;
+	z-index: 50 !important;
+	display: block !important;
+	visibility: visible !important;
+	box-shadow: 0 4px 14px rgba(239, 68, 68, 0.12) !important;
+}
+.rpress_errors p,
+.rpress_errors li,
+.rpress_errors .rpress_error,
+body.rpress-checkout #rpress_checkout_wrap .rpress_errors p,
+body.rpress-checkout #rpress_checkout_wrap .rpress_errors li {
+	color: #991b1b !important;
+	margin: 4px 0 !important;
+	font-size: 14px !important;
+	font-weight: 500 !important;
+	line-height: 1.5 !important;
+}
+body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress_error { color: #991b1b !important; font: 500 13px var(--rpc-font-body); }
 
 /* Client-side validation (mockup): invalid inputs get a red border, an inline
    message below, and a summary banner at the top of the form. The triple wrap
@@ -1418,7 +1447,8 @@ body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-
 	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-msum-open #rpress_checkout_cart_form #rpress_checkout_cart_wrap { display: block; }
 
 	/* Sticky bottom bar with total + proxy Place order */
-	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-has-sticky-bar { padding-bottom: 96px; }
+	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-has-sticky-bar,
+	body.rpress-checkout #rpress_checkout_wrap.rpress-has-sticky-bar { padding-bottom: 160px !important; }
 	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2 .rpress-checkout-sticky-bar {
 		display: block;
 		position: fixed;
@@ -1455,4 +1485,82 @@ body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-
 	}
 	/* Hide the in-flow submit; the sticky bar proxies it */
 	body.rpress-checkout #rpress_checkout_wrap#rpress_checkout_wrap.rpress-checkout-v2.rpress-has-sticky-bar #rpress_purchase_submit { position: absolute; left: -9999px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Terms of Use Checkbox Mobile Touch & Accessibility Fix              */
+/* ------------------------------------------------------------------ */
+/* Terms of Agreement Section Visibility & Styling */
+#rpress_terms_agreement,
+body.rpress-checkout #rpress_checkout_wrap #rpress_terms_agreement,
+body.rpress-checkout #rpress_checkout_wrap.rpress-checkout-v2 #rpress_terms_agreement,
+body.rpress-checkout #rpress_checkout_wrap.rpress-has-sticky-bar #rpress_terms_agreement {
+	display: block !important;
+	visibility: visible !important;
+	position: relative !important;
+	left: auto !important;
+	right: auto !important;
+	top: auto !important;
+	bottom: auto !important;
+	opacity: 1 !important;
+	z-index: 10 !important;
+	margin: 16px 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: transparent !important;
+}
+
+#rpress_terms_agreement .rpress-terms-agreement {
+	display: flex !important;
+	align-items: center !important;
+	gap: 10px !important;
+	cursor: pointer !important;
+	padding: 8px 0 !important;
+	touch-action: manipulation !important;
+	position: relative !important;
+	z-index: 10 !important;
+}
+#rpress_terms_agreement .rpress-terms-agreement input[type="checkbox"]#rpress_agree_to_terms {
+	width: 20px !important;
+	height: 20px !important;
+	min-width: 20px !important;
+	min-height: 20px !important;
+	margin: 0 !important;
+	cursor: pointer !important;
+	flex-shrink: 0 !important;
+	pointer-events: auto !important;
+	position: relative !important;
+	z-index: 11 !important;
+	touch-action: manipulation !important;
+	accent-color: var(--rpc-primary, #ff6b1a);
+}
+#rpress_terms_agreement .rpress-terms-agreement label[for="rpress_agree_to_terms"] {
+	cursor: pointer !important;
+	user-select: none !important;
+	-webkit-user-select: none !important;
+	font-size: 14px !important;
+	line-height: 1.4 !important;
+	color: #374151 !important;
+	flex: 1 !important;
+	margin: 0 !important;
+	font-weight: 500 !important;
+	pointer-events: auto !important;
+	display: inline-block !important;
+	touch-action: manipulation !important;
+}
+
+@media only screen and (max-width: 782px) {
+	body.rpress-checkout #rpress_checkout_wrap #rpress_terms_agreement,
+	body.rpress-checkout #rpress_checkout_wrap.rpress-has-sticky-bar #rpress_terms_agreement,
+	#rpress_terms_agreement {
+		margin: 16px 0 24px !important;
+		padding: 12px 14px !important;
+		background: #f9fafb !important;
+		border: 1px solid #e5e7eb !important;
+		border-radius: 10px !important;
+		display: block !important;
+		visibility: visible !important;
+		position: relative !important;
+		z-index: 10 !important;
+	}
 }

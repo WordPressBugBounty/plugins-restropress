@@ -11127,3 +11127,207 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-ch
 		width: 100% !important;
 	}
 }
+
+/* Terms of Use Checkbox Mobile Touch & Accessibility Fix */
+#rpress_terms_agreement {
+	position: relative !important;
+	z-index: 10 !important;
+	margin-top: 14px !important;
+	margin-bottom: 16px !important;
+}
+#rpress_terms_agreement .rpress-terms-agreement {
+	display: flex !important;
+	align-items: center !important;
+	gap: 10px !important;
+	cursor: pointer !important;
+	padding: 6px 0 !important;
+	touch-action: manipulation !important;
+	position: relative !important;
+	z-index: 10 !important;
+}
+#rpress_terms_agreement .rpress-terms-agreement input[type="checkbox"]#rpress_agree_to_terms {
+	width: 20px !important;
+	height: 20px !important;
+	min-width: 20px !important;
+	min-height: 20px !important;
+	margin: 0 !important;
+	cursor: pointer !important;
+	flex-shrink: 0 !important;
+	pointer-events: auto !important;
+	position: relative !important;
+	z-index: 11 !important;
+	touch-action: manipulation !important;
+	accent-color: var(--rpress-theme-primary, #ff6b1a);
+}
+#rpress_terms_agreement .rpress-terms-agreement label[for="rpress_agree_to_terms"] {
+	cursor: pointer !important;
+	user-select: none !important;
+	-webkit-user-select: none !important;
+	font-size: 14px !important;
+	line-height: 1.4 !important;
+	color: #374151 !important;
+	flex: 1 !important;
+	margin: 0 !important;
+	font-weight: 500 !important;
+	pointer-events: auto !important;
+	display: inline-block !important;
+	touch-action: manipulation !important;
+}
+
+#rpress_terms_agreement,
+body.rpress-checkout #rpress_checkout_wrap #rpress_terms_agreement,
+body.rpress-checkout #rpress_checkout_wrap.rpress-checkout-v2 #rpress_terms_agreement,
+body.rpress-checkout #rpress_checkout_wrap.rpress-has-sticky-bar #rpress_terms_agreement {
+	display: block !important;
+	visibility: visible !important;
+	position: relative !important;
+	left: auto !important;
+	right: auto !important;
+	top: auto !important;
+	bottom: auto !important;
+	opacity: 1 !important;
+	z-index: 10 !important;
+	margin: 16px 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: transparent !important;
+}
+
+@media only screen and (max-width: 782px) {
+	body.rpress-checkout #rpress_checkout_wrap #rpress_terms_agreement,
+	body.rpress-checkout #rpress_checkout_wrap.rpress-has-sticky-bar #rpress_terms_agreement,
+	#rpress_terms_agreement {
+		margin: 16px 0 24px !important;
+		padding: 12px 14px !important;
+		background: #f9fafb !important;
+		border: 1px solid #e5e7eb !important;
+		border-radius: 10px !important;
+		display: block !important;
+		visibility: visible !important;
+		position: relative !important;
+		z-index: 10 !important;
+	}
+	body.rpress-checkout #rpress_checkout_wrap.rpress-has-sticky-bar {
+		padding-bottom: 160px !important;
+	}
+}
+
+/* Hide empty error containers */
+.rpress_errors:empty,
+.rpress-errors-wrap:empty,
+.rpress-errors-wrap.disabled,
+.rpress-alert-error:empty,
+div.rpress_errors:empty,
+div.rpress-errors-wrap:empty {
+	display: none !important;
+}
+
+/* Error banner styling for non-empty error messages */
+.rpress_errors:not(:empty),
+.rpress-errors-wrap:not(:empty):not(.disabled),
+.rpress-alert-error:not(:empty),
+#rpress_checkout_errors:not(:empty),
+body.rpress-checkout #rpress_checkout_wrap .rpress_errors:not(:empty) {
+	background: #fef2f2 !important;
+	border: 1.5px solid #ef4444 !important;
+	border-radius: 12px !important;
+	padding: 14px 16px !important;
+	color: #991b1b !important;
+	font: 500 14px var(--rpc-font-body, sans-serif) !important;
+	margin: 16px 0 24px !important;
+	position: relative !important;
+	z-index: 50 !important;
+	display: block !important;
+	visibility: visible !important;
+	box-shadow: 0 4px 14px rgba(239, 68, 68, 0.12) !important;
+}
+.rpress_errors p,
+.rpress_errors li,
+.rpress_errors .rpress_error,
+body.rpress-checkout #rpress_checkout_wrap .rpress_errors p,
+body.rpress-checkout #rpress_checkout_wrap .rpress_errors li {
+	color: #991b1b !important;
+	margin: 4px 0 !important;
+	font-size: 14px !important;
+	font-weight: 500 !important;
+	line-height: 1.5 !important;
+}
+
+/* Mobile Grid View Item Clickability Fix */
+.rpress_fooditems_grid .rpress_fooditem,
+.rpress-grid.rpress_fooditem {
+	cursor: pointer !important;
+	touch-action: manipulation !important;
+}
+.rpress_fooditems_grid .rpress_fooditem_inner,
+.rpress-grid.rpress_fooditem .rpress_fooditem_inner {
+	cursor: pointer !important;
+	touch-action: manipulation !important;
+	position: relative !important;
+	z-index: 1 !important;
+}
+.rpress_fooditems_grid .rpress-add-to-cart,
+.rpress-grid.rpress_fooditem .rpress-add-to-cart {
+	touch-action: manipulation !important;
+	position: relative !important;
+	z-index: 2 !important;
+}
+
+/* Fix Variable Item Card Width Expansion in Grid View on Mobile */
+.food-group-wrap {
+	grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+@media only screen and (max-width: 600px) {
+	.food-group-wrap,
+	.rpress_fooditems_grid .rpress-grid-main-wrap .food-group-wrap {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+@media only screen and (max-width: 420px) {
+	.food-group-wrap,
+	.rpress_fooditems_grid .rpress-grid-main-wrap .food-group-wrap {
+		grid-template-columns: minmax(0, 1fr) !important;
+	}
+}
+
+.food-group-wrap > .rpress_fooditem,
+.rpress_fooditems_grid .rpress_fooditem,
+.rpress-grid.rpress_fooditem {
+	min-width: 0 !important;
+	max-width: 100% !important;
+	width: 100% !important;
+	box-sizing: border-box !important;
+}
+
+.rpress_fooditems_grid .rpress_fooditem_inner,
+.rpress-grid.rpress_fooditem .rpress_fooditem_inner {
+	min-width: 0 !important;
+	max-width: 100% !important;
+	width: 100% !important;
+	box-sizing: border-box !important;
+	overflow: hidden !important;
+}
+
+.rpress_fooditems_grid .rpress-title-holder,
+.rpress_fooditems_grid .rpress-price-holder,
+.rpress-grid.rpress_fooditem .rpress-price-holder,
+.rpress-menu-v2 .rpress-price-holder {
+	min-width: 0 !important;
+	max-width: 100% !important;
+	flex-wrap: wrap !important;
+}
+
+.rpress_fooditems_grid .rpress-price-holder span.price,
+.rpress_fooditems_grid .rpress-price-holder .rpress_price,
+.rpress-grid.rpress_fooditem .rpress-price-holder span.price,
+.rpress_price_range_low,
+.rpress_price_range_high,
+.rpress_price_range_sep {
+	min-width: 0 !important;
+	max-width: 100% !important;
+	word-break: break-word !important;
+	overflow-wrap: break-word !important;
+	white-space: normal !important;
+}
