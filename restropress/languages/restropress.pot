@@ -2,8 +2,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: RestroPress\n"
-"POT-Creation-Date: 2026-08-08 15:30+0530\n"
-"PO-Revision-Date: 2026-08-08 15:30+0530\n"
+"POT-Creation-Date: 2026-08-13 19:58+0530\n"
+"PO-Revision-Date: 2026-08-13 19:57+0530\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -347,7 +347,7 @@ msgstr ""
 msgid "Dashboard"
 msgstr ""
 
-#: includes/admin/admin-pages.php:55 templates/rpress-user-dashboard.php:527
+#: includes/admin/admin-pages.php:55 templates/rpress-user-dashboard.php:432
 msgid "Home"
 msgstr ""
 
@@ -1155,7 +1155,7 @@ msgstr ""
 #: includes/admin/payments/class-payments-table.php:1596
 #: includes/admin/payments/view-order-details.php:1793
 #: includes/admin/settings/register-settings.php:1591
-#: includes/payments/functions.php:1695 templates/rpress-user-dashboard.php:417
+#: includes/payments/functions.php:1695 templates/rpress-user-dashboard.php:323
 msgid "Delete"
 msgstr ""
 
@@ -1441,7 +1441,6 @@ msgstr ""
 #: includes/admin/reporting/export/class-batch-export-payments.php:66
 #: includes/admin/tools.php:144 includes/admin/tools.php:1044
 #: includes/admin/tools.php:1298 includes/privacy-functions.php:664
-#: templates/rpress-user-dashboard.php:344
 msgid "Status"
 msgstr ""
 
@@ -1452,7 +1451,8 @@ msgstr ""
 #: includes/admin/payments/view-order-details.php:299
 #: includes/admin/payments/view-order-details.php:1195
 #: includes/class-rpress-frontend-scripts.php:295
-#: includes/emails/email-tags.php:380 templates/checkout_cart.php:198
+#: includes/emails/email-tags.php:380 templates/cart/cart.php:27
+#: templates/checkout_cart.php:198
 #: templates/receipt/print-receipt-content.php:108
 #: templates/rpress-show-order-details.php:243
 #: templates/shortcode-receipt.php:284
@@ -1479,7 +1479,6 @@ msgstr ""
 #: includes/admin/reporting/tabs/taxes.php:48
 #: includes/privacy-functions.php:794
 #: templates/rpress-show-order-details.php:129
-#: templates/rpress-user-dashboard.php:342
 msgid "Date"
 msgstr ""
 
@@ -1664,8 +1663,8 @@ msgstr ""
 #: includes/admin/customers/customers.php:598
 #: includes/admin/payments/class-payments-table.php:3028
 #: includes/admin/payments/view-order-details.php:838
-#: templates/rpress-user-dashboard.php:265
-#: templates/rpress-user-dashboard.php:514
+#: templates/rpress-user-dashboard.php:136
+#: templates/rpress-user-dashboard.php:419
 msgid "Phone"
 msgstr ""
 
@@ -1701,7 +1700,7 @@ msgstr ""
 #: includes/admin/reporting/tabs/sales.php:38
 #: includes/admin/reporting/tabs/sales.php:77
 #: includes/admin/reporting/tabs/taxes.php:51 includes/install.php:135
-#: includes/post-types.php:78 templates/rpress-user-dashboard.php:283
+#: includes/post-types.php:78 templates/rpress-user-dashboard.php:154
 msgid "Orders"
 msgstr ""
 
@@ -2326,7 +2325,6 @@ msgstr ""
 #: includes/admin/reporting/tabs/payments-recovery.php:77
 #: includes/admin/tools.php:146 includes/admin/tools.php:468
 #: includes/admin/tools.php:537 includes/user-functions.php:931
-#: templates/rpress-user-dashboard.php:350
 msgid "Action"
 msgstr ""
 
@@ -2366,7 +2364,7 @@ msgstr ""
 #: includes/admin/dashboard/views/command-center-panels.php:181
 #: includes/admin/payments/class-live-orders.php:44
 #: includes/admin/payments/views/html-live-orders.php:111
-#: includes/payments/functions.php:957 templates/rpress-user-dashboard.php:55
+#: includes/payments/functions.php:957 templates/rpress-user-dashboard.php:225
 msgid "Accepted"
 msgstr ""
 
@@ -2384,7 +2382,7 @@ msgstr ""
 #: includes/admin/payments/class-payments-table.php:1262
 #: includes/admin/payments/views/html-live-orders.php:113
 #: includes/payments/functions.php:883 includes/payments/functions.php:891
-#: includes/payments/functions.php:959 templates/rpress-user-dashboard.php:59
+#: includes/payments/functions.php:959 templates/rpress-user-dashboard.php:245
 msgid "Ready"
 msgstr ""
 
@@ -2399,7 +2397,7 @@ msgstr ""
 #: includes/admin/payments/class-payments-table.php:2960
 #: includes/admin/reporting/report-helpers.php:318
 #: includes/admin/reporting/tabs/orders-risk.php:38
-#: includes/payments/functions.php:962 templates/rpress-user-dashboard.php:54
+#: includes/payments/functions.php:962 templates/rpress-user-dashboard.php:220
 msgid "Completed"
 msgstr ""
 
@@ -2519,7 +2517,7 @@ msgstr ""
 
 #: includes/admin/dashboard/views/command-center-panels.php:300
 #: includes/admin/reporting/tabs/orders-risk.php:39
-#: includes/payments/functions.php:961 templates/rpress-user-dashboard.php:56
+#: includes/payments/functions.php:961 templates/rpress-user-dashboard.php:230
 msgid "Cancelled"
 msgstr ""
 
@@ -2796,7 +2794,7 @@ msgstr ""
 #: includes/admin/discounts/class-discount-codes-table.php:215
 #: includes/admin/payments/view-order-details.php:1178
 #: templates/cart/item.php:44 templates/grid/time-option.php:107
-#: templates/list/time-option.php:108 templates/rpress-user-dashboard.php:411
+#: templates/list/time-option.php:108 templates/rpress-user-dashboard.php:317
 msgid "Edit"
 msgstr ""
 
@@ -3075,7 +3073,6 @@ msgstr ""
 #: includes/rest-api/Controllers/Version1/class-rp-rest-foods-v1-controller.php:231
 #: includes/rp-core-functions.php:79 templates/email-foodlist.php:22
 #: templates/receipt/print-receipt-content.php:32
-#: templates/rpress-user-dashboard.php:343
 msgid "Price"
 msgstr ""
 
@@ -3228,7 +3225,7 @@ msgstr ""
 
 #: includes/admin/fooditems/views/html-fooditem-addon.php:122
 #: includes/class-rpress-ajax.php:550 includes/fooditem-functions.php:464
-#: templates/rpress-user-dashboard.php:407
+#: templates/rpress-user-dashboard.php:313
 msgid "Default"
 msgstr ""
 
@@ -3912,6 +3909,9 @@ msgstr ""
 #: includes/admin/home/class-rpress-onboarding.php:2214
 #: includes/admin/reporting/class-rpress-reports-intelligence.php:32
 #: includes/class-rpress-frontend-scripts.php:450
+#: templates/grid/scrollable-categories-mobile.php:34
+#: templates/grid/scrollable-categories.php:35
+#: templates/list/scrollable-categories.php:34
 #: templates/rpress-mobile-menu-category.php:32
 #: templates/rpress-mobile-menu-category.php:36
 #: templates/rpress-mobile-menu-category.php:40
@@ -5393,7 +5393,7 @@ msgstr ""
 
 #: includes/admin/payments/class-payments-table.php:2952
 #: includes/class-rpress-ajax.php:1722 includes/payments/functions.php:789
-#: includes/payments/functions.php:958 templates/rpress-user-dashboard.php:57
+#: includes/payments/functions.php:958 templates/rpress-user-dashboard.php:235
 msgid "Processing"
 msgstr ""
 
@@ -5472,6 +5472,9 @@ msgstr ""
 #: includes/admin/payments/class-payments-table.php:3079
 #: includes/admin/settings/register-settings.php:256
 #: includes/class-rpress-frontend-scripts.php:449
+#: templates/grid/scrollable-categories-mobile.php:35
+#: templates/grid/scrollable-categories.php:36
+#: templates/list/scrollable-categories.php:35
 #: templates/rpress-mobile-menu-category.php:33
 msgid "Close"
 msgstr ""
@@ -11021,7 +11024,7 @@ msgstr ""
 msgid "Log out"
 msgstr ""
 
-#: includes/checkout/template.php:310 templates/rpress-user-dashboard.php:259
+#: includes/checkout/template.php:310 templates/rpress-user-dashboard.php:130
 msgid "Email address"
 msgstr ""
 
@@ -11034,13 +11037,13 @@ msgid "Used for order updates"
 msgstr ""
 
 #: includes/checkout/template.php:324 includes/checkout/template.php:329
-#: templates/rpress-user-dashboard.php:245
+#: templates/rpress-user-dashboard.php:116
 msgid "First name"
 msgstr ""
 
 #: includes/checkout/template.php:333 includes/checkout/template.php:336
-#: templates/rpress-user-dashboard.php:251
-#: templates/rpress-user-dashboard.php:477
+#: templates/rpress-user-dashboard.php:122
+#: templates/rpress-user-dashboard.php:382
 msgid "Last name"
 msgstr ""
 
@@ -11162,7 +11165,7 @@ msgstr ""
 msgid "The state or province for your billing address."
 msgstr ""
 
-#: includes/checkout/template.php:686
+#: includes/checkout/template.php:686 templates/shortcode-register.php:57
 msgid "Already have an account?"
 msgstr ""
 
@@ -11239,27 +11242,27 @@ msgstr ""
 msgid "Agree to Terms?"
 msgstr ""
 
-#: includes/checkout/template.php:1029
+#: includes/checkout/template.php:1030
 msgid "Show Terms"
 msgstr ""
 
-#: includes/checkout/template.php:1030
+#: includes/checkout/template.php:1031
 msgid "Hide Terms"
 msgstr ""
 
-#: includes/checkout/template.php:1064
+#: includes/checkout/template.php:1068
 msgid "Order Total:"
 msgstr ""
 
-#: includes/checkout/template.php:1096
+#: includes/checkout/template.php:1100
 msgid "Go back"
 msgstr ""
 
-#: includes/checkout/template.php:1114
+#: includes/checkout/template.php:1118
 msgid "Next"
 msgstr ""
 
-#: includes/checkout/template.php:1142
+#: includes/checkout/template.php:1146
 msgid "Place Order"
 msgstr ""
 
@@ -11365,8 +11368,7 @@ msgid "Invalid order request."
 msgstr ""
 
 #: includes/class-rpress-ajax.php:1323 includes/process-purchase.php:66
-#: includes/process-purchase.php:278 templates/rpress-user-dashboard.php:617
-#: templates/rpress-user-dashboard.php:654
+#: includes/process-purchase.php:278
 msgid "Security check failed. Please refresh and try again."
 msgstr ""
 
@@ -11557,7 +11559,7 @@ msgid "Edit Delivery Address"
 msgstr ""
 
 #: includes/class-rpress-frontend-scripts.php:240
-#: templates/rpress-user-dashboard.php:462
+#: templates/rpress-user-dashboard.php:368
 msgid "Add Delivery Address"
 msgstr ""
 
@@ -12472,6 +12474,10 @@ msgstr ""
 msgid "Send Test Email"
 msgstr ""
 
+#: includes/emails/template.php:189
+msgid "Product Details"
+msgstr ""
+
 #: includes/emails/template.php:271
 msgid "Missing order key."
 msgstr ""
@@ -13111,7 +13117,7 @@ msgid "Payment recovery processed"
 msgstr ""
 
 #: includes/payments/functions.php:785 includes/payments/functions.php:956
-#: templates/rpress-user-dashboard.php:68
+#: templates/rpress-user-dashboard.php:250
 msgid "Pending"
 msgstr ""
 
@@ -13794,7 +13800,7 @@ msgstr ""
 msgid "Menu Item Name"
 msgstr ""
 
-#: includes/privacy-functions.php:731 templates/rpress-user-dashboard.php:341
+#: includes/privacy-functions.php:731
 msgid "Order ID"
 msgstr ""
 
@@ -15326,115 +15332,113 @@ msgstr ""
 msgid "Add Instructions..."
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:58
-msgid "In Transit"
-msgstr ""
-
-#: templates/rpress-user-dashboard.php:156
+#: templates/rpress-user-dashboard.php:27
 msgid "You are not logged in, please Log In"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:159
-msgid "Log In"
-msgstr ""
-
-#: templates/rpress-user-dashboard.php:179
+#: templates/rpress-user-dashboard.php:51
 msgid "Profile"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:185
+#: templates/rpress-user-dashboard.php:57
 msgid "My Orders"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:191
-#: templates/rpress-user-dashboard.php:378
+#: templates/rpress-user-dashboard.php:63
+#: templates/rpress-user-dashboard.php:284
 msgid "Saved Address"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:197
+#: templates/rpress-user-dashboard.php:69
 msgid "Logout"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:236
+#: templates/rpress-user-dashboard.php:108
 msgid "Personal Information"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:288
+#: templates/rpress-user-dashboard.php:159
 msgid "ORDER ID"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:289
+#: templates/rpress-user-dashboard.php:160
 msgid "DATE"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:290
+#: templates/rpress-user-dashboard.php:161
 msgid "PRICE"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:291
+#: templates/rpress-user-dashboard.php:162
 msgid "STATUS"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:292
+#: templates/rpress-user-dashboard.php:163
 msgid "ACTION"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:379
+#: templates/rpress-user-dashboard.php:240
+msgid "In Transit"
+msgstr ""
+
+#: templates/rpress-user-dashboard.php:285
 msgid ""
 "\n"
 "                            We will delivery your order here"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:431
+#: templates/rpress-user-dashboard.php:337
 msgid "DELIVER HERE"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:457
+#: templates/rpress-user-dashboard.php:348
+msgid "Address Not Found"
+msgstr ""
+
+#: templates/rpress-user-dashboard.php:350
+msgid ""
+"Please add your address information in your profile by clicking this button "
+"below."
+msgstr ""
+
+#: templates/rpress-user-dashboard.php:363
 msgid "Add New Address"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:471
+#: templates/rpress-user-dashboard.php:376
 msgid "Fast name"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:485
+#: templates/rpress-user-dashboard.php:390
 msgid "Town / City"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:491
+#: templates/rpress-user-dashboard.php:396
 msgid "Pincode"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:499
+#: templates/rpress-user-dashboard.php:404
 msgid "Street Address"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:505
+#: templates/rpress-user-dashboard.php:410
 msgid "Apartment, suite, unit etc. (optional)"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:519
+#: templates/rpress-user-dashboard.php:424
 msgid "Address Type"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:535
+#: templates/rpress-user-dashboard.php:440
 msgid "Office"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:544
+#: templates/rpress-user-dashboard.php:449
 msgid "Other"
 msgstr ""
 
-#: templates/rpress-user-dashboard.php:553
+#: templates/rpress-user-dashboard.php:458
 msgid "Make this my default address"
-msgstr ""
-
-#: templates/rpress-user-dashboard.php:608
-msgid "You must be logged in to update your profile."
-msgstr ""
-
-#: templates/rpress-user-dashboard.php:650
-msgid "You must be logged in to update your address."
 msgstr ""
 
 #: templates/shortcode-login.php:16
@@ -15449,11 +15453,11 @@ msgstr ""
 msgid "or Login with"
 msgstr ""
 
-#: templates/shortcode-login.php:49
+#: templates/shortcode-login.php:49 templates/shortcode-register.php:40
 msgid "E.g. johndoe@email.com"
 msgstr ""
 
-#: templates/shortcode-login.php:53
+#: templates/shortcode-login.php:53 templates/shortcode-register.php:44
 msgid "Enter your password"
 msgstr ""
 
@@ -15681,8 +15685,32 @@ msgstr ""
 msgid "Register New User"
 msgstr ""
 
+#: templates/shortcode-register.php:17
+msgid "Create an Account"
+msgstr ""
+
+#: templates/shortcode-register.php:18
+msgid "Welcome! Let’s set things up"
+msgstr ""
+
+#: templates/shortcode-register.php:29
+msgid "or Register with"
+msgstr ""
+
+#: templates/shortcode-register.php:36
+msgid "Enter your name"
+msgstr ""
+
 #: templates/shortcode-register.php:47
 msgid "Confirm Password"
+msgstr ""
+
+#: templates/shortcode-register.php:48
+msgid "Enter confirm password"
+msgstr ""
+
+#: templates/shortcode-register.php:57
+msgid "Sign In"
 msgstr ""
 
 #. Plugin URI of the plugin/theme

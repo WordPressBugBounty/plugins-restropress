@@ -2169,6 +2169,10 @@ class RP_AJAX {
      */
     do_action( 'rpress_service_type_switched', $service_type );
 
+    if ( function_exists( 'RPRESS' ) ) {
+      RPRESS()->load_textdomain();
+    }
+
     ob_start();
     rpress_get_template_part('rpress','datetime-popup');
     $modal_html = ob_get_clean();

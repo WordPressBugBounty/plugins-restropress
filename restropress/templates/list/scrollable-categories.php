@@ -31,8 +31,8 @@ if (!$disable_category && is_array($get_all_items) && !empty($get_all_items)) :
     <div class="cd-dropdown-wrapper">
         <a class="cd-dropdown-trigger" href="#0"></a>
         <nav class="cd-dropdown">
-            <h2>Menu</h2>
-            <a href="#0" class="cd-close">Close</a>
+            <h2><?php esc_html_e( 'Menu', 'restropress' ); ?></h2>
+            <a href="#0" class="cd-close"><?php esc_html_e( 'Close', 'restropress' ); ?></a>
             <ul class="cd-dropdown-content">
                 <?php foreach ($get_all_items as $cat) :
                     if (!empty($category_array) && in_array($cat->slug, $category_array)) continue;

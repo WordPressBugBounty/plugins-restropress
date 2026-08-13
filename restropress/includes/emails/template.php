@@ -186,7 +186,7 @@ function rpress_get_email_body_content( $payment_id = 0, $payment_data = array()
 
       <!-- Payment Summary -->
       <div style="background:#f9f9f9;padding:20px;font-size:14px;">
-        <h3 style="margin-top:0;">Product Details</h3>
+        <h3 style="margin-top:0;">' . esc_html__( 'Product Details', 'restropress' ) . '</h3>
         <div>{fooditem_list}</div>
       </div>
 

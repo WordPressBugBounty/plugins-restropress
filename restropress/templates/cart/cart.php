@@ -24,7 +24,7 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 			</span> -->
 			<div class='rpress-cart-badge'>
 				<div class="rpress-total-price-wrap">
-					<span>Total</span><span
+					<span><?php esc_html_e( 'Total', 'restropress' ); ?></span><span
 						class="rp-mb-price"><?php echo esc_html(rpress_currency_filter(rpress_format_amount(rpress_get_cart_total()))); ?></span>
 				</div>
 				<div class='rpress-cart-total-item-list'>

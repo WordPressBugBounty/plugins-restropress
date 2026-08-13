@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.4.1';
+	public $version = '3.4.2';
 	/**
 	 * The single instance of the class.
 	 *
@@ -402,12 +402,22 @@ final class RestroPress
 	 */
 	public function load_textdomain()
 	{
-		$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
-		$mofile = 'restropress-' . $locale . '.mo';
+		$site_locale = get_locale();
+		$user_locale = function_exists( 'determine_locale' ) ? determine_locale() : $site_locale;
 
-		// Preload the active locale to avoid just-in-time i18n notices before init.
-		load_textdomain( 'restropress', WP_LANG_DIR . '/plugins/' . $mofile );
-		load_textdomain( 'restropress', RP_PLUGIN_DIR . 'languages/' . $mofile );
+		// Load site locale first so storefront AJAX requests preserve translations
+		if ( ! empty( $site_locale ) ) {
+			$site_mofile = 'restropress-' . $site_locale . '.mo';
+			load_textdomain( 'restropress', WP_LANG_DIR . '/plugins/' . $site_mofile );
+			load_textdomain( 'restropress', RP_PLUGIN_DIR . 'languages/' . $site_mofile );
+		}
+
+		// Load user/determined locale if different
+		if ( ! empty( $user_locale ) && $user_locale !== $site_locale ) {
+			$user_mofile = 'restropress-' . $user_locale . '.mo';
+			load_textdomain( 'restropress', WP_LANG_DIR . '/plugins/' . $user_mofile );
+			load_textdomain( 'restropress', RP_PLUGIN_DIR . 'languages/' . $user_mofile );
+		}
 
 		load_plugin_textdomain( 'restropress', false, dirname( plugin_basename( RP_PLUGIN_FILE ) ) . '/languages/' );
 	}
