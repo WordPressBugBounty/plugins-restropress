@@ -105,6 +105,8 @@ function rpress_get_ajax_url()
     $ajax_url = admin_url('admin-ajax.php', $scheme);
     if (preg_match('/^https/', $current_url) && !preg_match('/^https/', $ajax_url)) {
         $ajax_url = preg_replace('/^http/', 'https', $ajax_url);
+    } elseif (preg_match('/^http:\/\//', $current_url) && preg_match('/^https:\/\//', $ajax_url)) {
+        $ajax_url = preg_replace('/^https:\/\//', 'http://', $ajax_url);
     }
     return apply_filters('rpress_ajax_url', $ajax_url);
 }

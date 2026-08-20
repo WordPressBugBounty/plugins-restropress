@@ -23,6 +23,7 @@
     parsed: false,
     items: [],            // current menu items for preview/review
     jobId: 0,
+    jobIds: [],
     testOk: false,
     completed: {},        // step -> true
     cur: $root.data('cur') || '$',
@@ -42,6 +43,43 @@
     if (typeof xhr === 'string' && xhr) { return xhr; }
     return cfg.errorText || 'Something went wrong. Please try again.';
   }
+  function errorData(value){
+    var xhr = value && typeof value === 'object' && ('status' in value || 'responseText' in value) ? value : null;
+    var structured = !xhr;
+    if (xhr && xhr.responseJSON) {
+      value = xhr.responseJSON.data || xhr.responseJSON;
+      structured = true;
+    } else if (xhr && xhr.responseText) {
+      try {
+        var parsed = JSON.parse(xhr.responseText);
+        value = parsed.data || parsed;
+        structured = true;
+      } catch (ignore) {
+        value = null;
+      }
+    }
+    if (typeof value === 'string') { return { message: value }; }
+    if (value && typeof value === 'object' && structured) { return value; }
+    if (xhr && xhr.status === 413) {
+      return { title: 'Menu file is too large for this server', message: 'The web server rejected the upload before RestroPress could read it.', steps: ['Upload a file up to 10 MB.', 'If the file is already smaller, ask the hosting provider to raise the request upload limit.'], error_code: 'upload_size' };
+    }
+    if (xhr && (xhr.status === 408 || xhr.status === 504)) {
+      return { title: 'The import request timed out', message: 'The server stopped waiting before the AI provider finished.', steps: ['Try a smaller file or fewer pages.', 'If it repeats, ask the hosting provider to increase the PHP and proxy timeouts.'], error_code: 'timeout', provider_error: true, status_message: 'AI import timed out.' };
+    }
+    if (xhr && xhr.status === 429) {
+      return { title: 'Too many requests', message: 'The site or AI provider is temporarily rate limiting imports.', steps: ['Wait one minute, test the connection, then try again.'], error_code: 'rate_limit', provider_error: true, status_message: 'AI provider usage limit reached.' };
+    }
+    if (xhr && (xhr.status === 401 || xhr.status === 403)) {
+      return { title: 'Your WordPress session cannot run this import', message: 'The request was rejected because the login session expired or this account lacks permission.', steps: ['Refresh the page and sign in again.', 'Ask an administrator for permission to edit menu items if it continues.'], error_code: 'permission' };
+    }
+    if (xhr && xhr.status >= 500) {
+      return { title: 'The server could not finish the import', message: 'RestroPress received an invalid response from the site or upstream AI service (HTTP ' + xhr.status + ').', steps: ['Try once more with a smaller file.', 'If it repeats, check the site PHP error log and hosting proxy log for this request.'], error_code: 'server', provider_error: true, status_message: 'The import server returned HTTP ' + xhr.status + '.' };
+    }
+    if (xhr && xhr.status === 0) {
+      return { title: 'The import request did not reach the server', message: 'The browser lost the connection or blocked the request.', steps: ['Check the internet connection and keep this page open.', 'Refresh the page, test the AI connection, and try again.'], error_code: 'network', provider_error: true, status_message: 'Could not reach the import server.' };
+    }
+    return { title: 'The server returned an unreadable response', message: 'RestroPress could not read the error returned by the server' + (xhr && xhr.status ? ' (HTTP ' + xhr.status + ')' : '') + '.', steps: ['Refresh the page and try again.', 'If it repeats, check the PHP error log or ask the hosting provider for the failed request details.'], error_code: 'unknown' };
+  }
   // type: success | error | warn | info - the toast colour must match the
   // message type (errors were showing green before).
   function notice(msg, type){
@@ -50,12 +88,31 @@
   }
   // Upload/parse problems also surface inline on the page (kit notice style),
   // so the user sees them even if the toast is missed.
-  function inlineError(msg){
+  function inlineError(error){
+    var data = errorData(error);
     var $sub = $('.rp-ob-pane[data-pane="menu"] [data-sub]:not([hidden])').first();
     if (!$sub.length) { return; }
     $sub.find('.rp-ob-inline-err').remove();
-    $('<div class="rp-notice rp-notice-error rp-ob-inline-err" role="alert"></div>').text(msg)
-      .prependTo($sub);
+    var $box = $('<div class="rp-notice rp-notice-error rp-ob-inline-err" role="alert" tabindex="-1"></div>');
+    $('<strong class="rp-ob-inline-err-title"></strong>').text(data.title || 'Could not import this menu').appendTo($box);
+    $('<p class="rp-ob-inline-err-message"></p>').text(data.message || cfg.errorText || 'Something went wrong. Please try again.').appendTo($box);
+    if (Array.isArray(data.steps) && data.steps.length) {
+      var $steps = $('<ol class="rp-ob-inline-err-steps"></ol>').appendTo($box);
+      data.steps.forEach(function (step) { if (step) { $('<li></li>').text(step).appendTo($steps); } });
+    }
+    if (data.action_url && /^https?:\/\//i.test(data.action_url)) {
+      var $actions = $('<div class="rp-ob-inline-err-actions"></div>').appendTo($box);
+      $('<a class="rp-btn rp-btn-secondary rp-ob-btn-sm" target="_blank" rel="noopener noreferrer"></a>')
+        .attr('href', data.action_url).text(data.action_label || 'Open provider settings').appendTo($actions);
+    }
+    if (data.technical && data.technical !== data.message) {
+      var $details = $('<details class="rp-ob-inline-err-details"><summary>Technical details</summary></details>').appendTo($box);
+      $('<div></div>').text(data.technical).appendTo($details);
+    }
+    $box.prependTo($sub).trigger('focus');
+    if (data.error_code === 'authentication') {
+      $('#rp-ob-ai-key').attr('aria-invalid', 'true').trigger('focus');
+    }
   }
   function clearInlineError(){ $('.rp-ob-inline-err').remove(); }
 
@@ -397,22 +454,40 @@
   function aiProviderData(){
     return { enabled: 'yes', provider: $('#rp-ob-ai-provider').val() || 'wordpress', api_key: $('#rp-ob-ai-key').val() || '', model: '' };
   }
-  function saveAiSettings(){ return saveStep('ai', aiProviderData()); }
   $('#rp-ob-ai-provider').on('change', function () {
     var isWp = $(this).val() === 'wordpress';
     $('#rp-ob-ai-key-wrap').prop('hidden', isWp);
+    clearInlineError();
+    state.testOk = false;
+    $('#rp-ob-ai-key').removeAttr('aria-invalid');
     aiStatus('', isWp ? 'Test to check your site’s built-in AI connection.' : 'Add your API key, then save & test.');
-    saveAiSettings();
   });
-  $('#rp-ob-ai-key').on('blur', function () { saveAiSettings(); });
+  $('#rp-ob-ai-key-toggle').on('click', function () {
+    var $button = $(this), $input = $('#rp-ob-ai-key');
+    var show = $input.attr('type') === 'password';
+    $input.attr('type', show ? 'text' : 'password');
+    $button.attr({ 'aria-pressed': show ? 'true' : 'false', 'aria-label': show ? 'Hide API key' : 'Show API key' });
+    $button.find('.dashicons').toggleClass('dashicons-visibility', !show).toggleClass('dashicons-hidden', show);
+    $input.trigger('focus');
+  });
+  $('#rp-ob-ai-key').on('input', function () { state.testOk = false; $(this).removeAttr('aria-invalid'); });
   function aiStatus(state, msg){ $('#rp-ob-ai-status-text').removeClass('is-ok is-error is-loading').addClass(state ? ('is-' + state) : '').text(msg); }
+  function testAiConnection(){
+    clearInlineError();
+    $('#rp-ob-ai-key').removeAttr('aria-invalid');
+    aiStatus('loading', 'Testing connection…');
+    return ajax('rpress_onboarding_test_ai', { data: aiProviderData() })
+      .done(function (res) { state.testOk = true; clearInlineError(); aiStatus('ok', (res && res.data && res.data.message) || 'Connected'); })
+      .fail(function (xhr) {
+        state.testOk = false;
+        var data = errorData(xhr);
+        aiStatus('error', data.status_message || data.message || 'Connection test failed');
+        inlineError(data);
+      });
+  }
   $('#rp-ob-ai-test').on('click', function () {
     var $b = $(this); $b.prop('disabled', true);
-    aiStatus('loading', 'Testing connection…');
-    ajax('rpress_onboarding_test_ai', { data: aiProviderData() })
-      .done(function (res) { aiStatus('ok', (res && res.data && res.data.message) || 'Connected'); })
-      .fail(function (xhr) { var m = xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message; aiStatus('error', m || 'Not connected yet'); })
-      .always(function () { $b.prop('disabled', false); });
+    testAiConnection().always(function () { $b.prop('disabled', false); });
   });
 
   /* progress UI */
@@ -428,24 +503,57 @@
       fd.append('nonce', cfg.nonce);
       fd.append('consent', $('#rp-ob-consent').is(':checked') ? 'yes' : 'no');
       fd.append('generate_descriptions', $('#rp-ob-gendesc').is(':checked') ? 'yes' : 'no');
+      fd.append('ai_provider', $('#rp-ob-ai-provider').val() || 'wordpress');
+      fd.append('ai_api_key', $('#rp-ob-ai-key').val() || '');
       fd.append('menu_file', file);
       $.ajax({
         url: cfg.ajaxUrl, method: 'POST', data: fd, processData: false, contentType: false,
         xhr: function () { var x = new window.XMLHttpRequest(); if (x.upload && onUp) { x.upload.addEventListener('progress', function (e) { if (e.lengthComputable) onUp(e.loaded / e.total); }); } return x; }
       }).done(function (res) {
         if (res && res.success && res.data) { d.resolve({ items: flattenPayload(res.data.payload), jobId: res.data.job_id || 0 }); }
-        else { d.reject((res && res.data && res.data.message) || cfg.errorText); }
-      }).fail(function (xhr) { d.reject((xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) || cfg.errorText); });
+        else {
+          var responseData = errorData(res && res.data);
+          responseData.jobId = responseData.job_id || responseData.jobId || 0;
+          d.reject(responseData);
+        }
+      }).fail(function (xhr) {
+        var data = errorData(xhr);
+        data.jobId = data.job_id || data.jobId || 0;
+        d.reject(data);
+      });
     }).promise();
+  }
+
+  function discardJobs(ids){
+    (ids || []).forEach(function (id) { if (id) { ajax('rpress_onboarding_delete_import', { job_id: id }); } });
   }
 
   // Parse one or more files sequentially, merging results, with a progress bar.
   function uploadMenu(fileList){
-    saveAiSettings(); // persist the chosen provider/key before parsing
     var files = Array.prototype.slice.call(fileList || []);
     if (!files.length) { return; }
+    if (!$('#rp-ob-consent').is(':checked')) {
+      inlineError('Please confirm AI processing consent before uploading a menu.');
+      return;
+    }
+    var invalid = files.filter(function (file) { return file.size <= 0 || file.size > 10485760 || !/\.(pdf|jpe?g|png|webp|csv|xlsx)$/i.test(file.name); });
+    if (invalid.length) {
+      inlineError('Use non-empty PDF, JPG, PNG, WebP, CSV or XLSX files up to 10 MB each.');
+      return;
+    }
+    // A newly entered direct-provider key must pass a real request before the
+    // file upload starts. This saves the key and removes the first-import race.
+    if ($('#rp-ob-ai-provider').val() !== 'wordpress' && !state.testOk) {
+      clearInlineError();
+      showProgress('Saving and testing the AI connection…');
+      testAiConnection()
+        .done(function () { hideProgress(); uploadMenu(files); })
+        .fail(function () { hideProgress(); $('#rp-ob-dzhint').text('Fix the connection issue above, then choose the file again.'); });
+      return;
+    }
     clearInlineError();
     var merged = [], i = 0, total = files.length;
+    state.jobId = 0; state.jobIds = [];
     showProgress(total > 1 ? ('Parsing file 1 of ' + total + '…') : 'Uploading…');
     function step(){
       if (i >= total) {
@@ -455,8 +563,20 @@
       }
       $('#rp-ob-parse-label').text(total > 1 ? ('Parsing file ' + (i + 1) + ' of ' + total + '…') : 'Reading your menu with AI…');
       uploadOne(files[i], function (frac) { setProgress((i + frac * 0.9) / total); })
-        .done(function (r) { merged = merged.concat(r.items); if (r.jobId) state.jobId = r.jobId; i++; setProgress(i / total); step(); })
-        .fail(function (msg) { hideProgress(); inlineError(msg); notice(msg, 'error'); $('#rp-ob-dzhint,#rp-ob-csvhint').text('Try again'); });
+        .done(function (r) {
+          merged = merged.concat(r.items);
+          if (r.jobId) { state.jobId = r.jobId; state.jobIds.push(r.jobId); }
+          i++; setProgress(i / total); step();
+        })
+        .fail(function (err) {
+          if (err && err.jobId) { state.jobIds.push(err.jobId); }
+          discardJobs(state.jobIds); state.jobId = 0; state.jobIds = [];
+          hideProgress(); inlineError(err);
+          if (err && err.provider_error) {
+            aiStatus('error', err.status_message || 'AI connection failed — follow the steps above, then test and retry.');
+          }
+          $('#rp-ob-dzhint,#rp-ob-csvhint').text('Fix the issue above, then choose the file again.');
+        });
     }
     step();
   }
@@ -470,6 +590,7 @@
           name: it.name || '', cat: cat.name || 'Menu', price: it.price || '',
           desc: it.description || '', dietary: it.dietary || [],
           variants: it.variants || [], modifiers: it.modifiers || [],
+          food_type: it.food_type || '', image_id: it.image_id || 0,
           conf: typeof it.confidence === 'number' ? Math.round(it.confidence * 100) : 100,
           warnings: it.warnings || []
         }));
@@ -747,19 +868,26 @@
   function commitMenu(){
     var $n = $('#rp-ob-next'); $n.prop('disabled', true);
     var n = state.items.length;
-    var finish = function () {
+    var finish = function (res) {
+      var result = res && res.data && res.data.result;
+      var saved = result ? result.created : n;
+      var failed = result ? result.failed : 0;
+      if (failed) {
+        $n.prop('disabled', false);
+        inlineError((result.errors || []).join(' · ') || 'Some menu items could not be created. Please retry.');
+      }
       if (menuImportMode) {
-        notice(n + ' ' + (cfg.publishedText || 'menu items published.'), 'success');
+        notice((res && res.data && res.data.message) || (saved + ' ' + (cfg.publishedText || 'menu items published.')), failed ? 'warn' : 'success');
         var url = $root.data('menu-list');
-        if (url) { setTimeout(function () { window.location = url; }, 900); }
+        if (url && !failed) { setTimeout(function () { window.location = url; }, 900); }
         return;
       }
-      state.completed.menu = true; $('#rp-ob-vmenu').text(n + ' items live on the ordering page'); refreshPreview(); advance();
+      state.completed.menu = true; $('#rp-ob-vmenu').text(saved + ' items live on the ordering page'); refreshPreview(); advance();
     };
     var fail = function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); };
     var payload = JSON.stringify({ categories: regroup() });
     if (state.jobId) {
-      ajax('rpress_onboarding_publish_menu', { job_id: state.jobId, mode: 'publish', payload: payload }).done(finish).fail(fail);
+      ajax('rpress_onboarding_publish_menu', { job_id: state.jobId, job_ids: JSON.stringify(state.jobIds), mode: 'publish', payload: payload }).done(finish).fail(fail);
     } else {
       ajax('rpress_onboarding_publish_items', { payload: payload, mode: 'publish', is_sample: state.isSample ? 1 : 0 }).done(finish).fail(fail);
     }
@@ -767,7 +895,7 @@
   function regroup(){
     var byCat = {};
     state.items.forEach(function (i) {
-      (byCat[i.cat || 'Menu'] = byCat[i.cat || 'Menu'] || []).push({ name: i.name, price: i.price, description: i.desc, dietary: i.dietary, food_type: i.food_type || '', variants: i.variants, modifiers: i.modifiers, image_id: i.image_id || 0 });
+      (byCat[i.cat || 'Menu'] = byCat[i.cat || 'Menu'] || []).push({ name: i.name, price: i.price, description: i.desc, dietary: i.dietary, food_type: i.food_type || '', variants: i.variants, modifiers: i.modifiers, image_id: i.image_id || 0, confidence: typeof i.conf === 'number' ? i.conf / 100 : 0.7, warnings: i.warnings || [] });
     });
     return Object.keys(byCat).map(function (c) { return { name: c, items: byCat[c] }; });
   }

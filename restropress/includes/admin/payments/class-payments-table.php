@@ -1687,7 +1687,7 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 		$order_number = apply_filters( 'rpress_orders_table_order_number', $order_number, $payment );
 
 		$details_url = add_query_arg( 'id', $payment->ID, admin_url( 'admin.php?page=rpress-payment-history&view=view-order-details' ) );
-		$order_date  = strtotime( $payment->date );
+		$order_date  = rpress_get_payment_gmt_timestamp( $payment );
 
 		// State dot (left of order number) - colour matches the order status.
 		$order_status = rpress_get_order_status( $payment->ID );

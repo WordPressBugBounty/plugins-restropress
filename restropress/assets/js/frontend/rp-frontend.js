@@ -107,6 +107,16 @@ function rp_clear_old_ui_service_cookies() {
 }
 /* Get RestroPress Storage Data */
 function rp_get_storage_data() {
+  var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
+  var $ = (typeof jQuery !== 'undefined') ? jQuery : null;
+  if (oldUiUxEnabled && $) {
+    var cartQty = parseInt((typeof rp_scripts !== 'undefined' ? rp_scripts.cart_quantity : 0) || 0, 10);
+    var hasCartItemElements = $('ul.rpress-cart > li.rpress-cart-item').length > 0;
+    if (cartQty === 0 && !hasCartItemElements && !window.rpJustSelectedService) {
+      return false;
+    }
+  }
+
   var serviceType = (rp_getCookie('service_type') || '')
     .toString()
     .trim()
@@ -115,7 +125,7 @@ function rp_get_storage_data() {
     return false;
   }
 
-  if (!rp_is_old_ui_ux_enabled()) {
+  if (!oldUiUxEnabled) {
     return true;
   }
 
@@ -1562,6 +1572,10 @@ jQuery(function ($) {
       var fooditem_id = _self.attr('data-fooditem-id');
       var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
       var hasRequiredServiceContext = rp_get_storage_data();
+      if (window.rpJustSelectedService) {
+        window.rpJustSelectedService = false;
+        hasRequiredServiceContext = true;
+      }
       var $serviceTypeScope = $('.rpress-delivery-wrap .rpress-tabs-wrapper:visible').first();
       var activeServiceTypeForValidation = rp_get_active_service_type(
         $serviceTypeScope.length ? $serviceTypeScope : $(document),
@@ -1698,7 +1712,7 @@ jQuery(function ($) {
         }
         return;
       }
-      var rp_get_delivery_data = rp_get_storage_data();
+      var rp_get_delivery_data = hasRequiredServiceContext;
       $('#rpressModal')
         .removeClass('rpress-delivery-options rpress-food-options checkout-error');
       $('#rpressModal .qty')
@@ -2455,23 +2469,32 @@ jQuery(function ($) {
                 return false;
               }
             }
-            $('#rpressModal')
-              .removeClass('show-service-options');
+            var $modal = $('#rpressModal');
+            $modal.removeClass('show-service-options loading');
             if (foodItemId) {
-              $('#rpressModal')
-                .addClass('loading');
-              $('#rpress_fooditem_' + foodItemId)
-                .find('.rpress-add-to-cart')
-                .trigger('click');
-              $('#rpressModal')
-                .removeAttr('data-pending-fooditem-id data-service-modal-context');
-              MicroModal.close('rpressModal');
-            } else {
-              $('#rpressModal')
-                .removeAttr('data-pending-fooditem-id data-service-modal-context');
-              if (jQuery('#rpressModal').length) {
+              window.rpJustSelectedService = true;
+              $modal.removeAttr('data-pending-fooditem-id data-service-modal-context');
+              if (typeof MicroModal !== 'undefined') {
                 MicroModal.close('rpressModal');
               }
+              $modal.find('.modal-title').empty();
+              $modal.find('.modal-body').empty();
+              setTimeout(function () {
+                var $targetBtn = $('#rpress_fooditem_' + foodItemId).find('.rpress-add-to-cart').first();
+                if (!$targetBtn.length) {
+                  $targetBtn = $('.rpress-add-to-cart[data-fooditem-id="' + foodItemId + '"]').first();
+                }
+                if ($targetBtn.length) {
+                  $targetBtn.trigger('click');
+                }
+              }, 150);
+            } else {
+              $modal.removeAttr('data-pending-fooditem-id data-service-modal-context');
+              if (typeof MicroModal !== 'undefined') {
+                MicroModal.close('rpressModal');
+              }
+              $modal.find('.modal-title').empty();
+              $modal.find('.modal-body').empty();
               var selectedDateLabel = normalizedSelection.serviceDateText || rp_getCookie('delivery_date') || serviceDate || '';
               if (serviceType && serviceTime) {
                 $('.delivery-wrap .delivery-opts')
@@ -2482,7 +2505,6 @@ jQuery(function ($) {
                   .html('<span class="delMethod">' + serviceLabel + ',</span> <span class="delTime"> ' + selectedDateLabel + '</span>');
               }
             }
-
             //Trigger checked slot event so that it can be used by theme/plugins
             if (typeof response.total !== 'undefined') {
               rp_update_mobile_cart_summary(response.total, response.cart_quantity);
@@ -5455,6 +5477,22 @@ jQuery(document).ready(function ($) {
 jQuery(document).ready(function ($) {
 
   var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
+
+  if (oldUiUxEnabled) {
+    var cartQty = parseInt((typeof rp_scripts !== 'undefined' ? rp_scripts.cart_quantity : 0) || 0, 10);
+    var hasCartItemElements = $('ul.rpress-cart > li.rpress-cart-item').length > 0;
+    var isCartEmpty = (cartQty === 0) && !hasCartItemElements;
+
+    var isSuccessPage = (typeof rp_scripts !== 'undefined' && String(rp_scripts.is_success_page || '') === '1') ||
+      ($('#rpress_receipt_history, .rpress_purchase_receipt, .rp-order-confirmation-wrap, .rpress-receipt-wrap, .rpress_checkout_receipt').length > 0) ||
+      (window.location.href.indexOf('payment-confirmation') !== -1) ||
+      (window.location.href.indexOf('payment-id') !== -1) ||
+      (window.location.href.indexOf('order-confirmation') !== -1);
+
+    if (isSuccessPage || isCartEmpty) {
+      rp_clear_service_selection_cookies(false);
+    }
+  }
   var $selectionScope = $('#rpressDateTime-content');
   if (!$selectionScope.length) {
     $selectionScope = $('#rpressDateTime');

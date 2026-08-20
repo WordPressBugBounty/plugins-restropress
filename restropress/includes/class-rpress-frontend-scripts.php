@@ -376,6 +376,7 @@ class RP_Frontend_Scripts
       'close_hours' => (rpress_get_option('enable_always_open')) ? '11:59pm' : rpress_get_option('close_time'),
       'closed_message' => $closed_message,
       'old_ui_ux' => !empty(rpress_get_option('old_ui_ux')) ? '1' : '0',
+      'is_success_page' => (function_exists('rpress_is_success_page') && rpress_is_success_page()) ? '1' : '0',
     );
     $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) : $default_service;
     $cookie_service = apply_filters('rpress_current_service_type', $cookie_service);

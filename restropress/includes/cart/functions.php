@@ -607,3 +607,50 @@ add_action( 'rpress_weekly_scheduled_events', 'rpress_delete_saved_carts' );
 function rpress_generate_cart_token() {
 	return RPRESS()->cart->generate_token();
 }
+
+
+/**
+ * Clear all storefront service selection cookies.
+ *
+ * @since 3.4.3
+ * @return void
+ */
+function rpress_clear_service_cookies() {
+	$old_ui_ux_enabled = ! empty( rpress_get_option( "old_ui_ux" ) );
+	if ( ! $old_ui_ux_enabled ) {
+		return;
+	}
+
+	$cookie_keys = array(
+		"service_type",
+		"service_time",
+		"service_time_text",
+		"service_date",
+		"delivery_date",
+		"service_date_manual",
+	);
+
+	$domain = defined( "COOKIE_DOMAIN" ) && COOKIE_DOMAIN ? COOKIE_DOMAIN : "";
+
+	foreach ( $cookie_keys as $key ) {
+		if ( isset( $_COOKIE[ $key ] ) ) {
+			unset( $_COOKIE[ $key ] );
+		}
+		if ( ! headers_sent() ) {
+			setcookie( $key, "", time() - 3600, "/" );
+			if ( ! empty( $domain ) ) {
+				setcookie( $key, "", time() - 3600, "/", $domain );
+			}
+		}
+	}
+}
+add_action( "rpress_empty_cart", "rpress_clear_service_cookies" );
+add_action( "rpress_complete_purchase", "rpress_clear_service_cookies" );
+
+function rpress_clear_cookies_on_success_page() {
+	if ( function_exists( "rpress_is_success_page" ) && rpress_is_success_page() ) {
+		rpress_clear_service_cookies();
+	}
+}
+add_action( "template_redirect", "rpress_clear_cookies_on_success_page" );
+

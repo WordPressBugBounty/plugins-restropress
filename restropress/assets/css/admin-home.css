@@ -43,7 +43,15 @@
 .rp-ob-brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;margin-bottom:20px;font-size:15px}
 .rp-ob-logo-img{height:30px;width:auto;display:block}
 .rp-ob-hide{display:none!important}
-.rp-ob-inline-err{margin:0 0 14px;border-color:var(--rp-color-danger-border,#efb7bf)!important;border-left:4px solid var(--rp-color-danger,#b42318)!important;background:var(--rp-color-danger-soft,#fceaea)!important;color:#7a1d14}
+.rp-ob-inline-err{display:block!important;margin:0 0 18px;padding:16px 18px;border:1px solid var(--rp-color-danger-border,#efb7bf)!important;border-left:4px solid var(--rp-color-danger,#b42318)!important;border-radius:10px;background:var(--rp-color-danger-soft,#fceaea)!important;color:#651b16;box-shadow:0 4px 18px rgba(180,35,24,.08)}
+.rp-ob-inline-err-title{display:block;margin:0 0 4px;font-size:15px;color:#651b16}
+.rp-ob-inline-err-message{margin:0!important;color:#7a1d14}
+.rp-ob-inline-err-steps{margin:10px 0 0 20px;padding:0;color:#651b16}
+.rp-ob-inline-err-steps li{margin:4px 0}
+.rp-ob-inline-err-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.rp-ob-inline-err-details{margin-top:10px;font-size:12px}
+.rp-ob-inline-err-details summary{cursor:pointer;font-weight:600}
+.rp-ob-inline-err:focus{outline:2px solid var(--rp-color-danger,#b42318);outline-offset:2px}
 
 /* Toasts (tata) in wp-admin: clear the 32px admin bar and follow the
    RestroPress design language + per-type colors. */
@@ -51,6 +59,7 @@ body.wp-admin .tata{border-radius:10px;font-size:13.5px;font-family:var(--rp-fon
 body.wp-admin .tata.top-right,body.wp-admin .tata.top-mid{top:44px}
 body.wp-admin .tata.success{background:var(--rp-color-success,#1f7a4d)}
 body.wp-admin .tata.error{background:var(--rp-color-danger,#b42318)}
+body.wp-admin .tata.error .tata-title,body.wp-admin .tata.error .tata-text,body.wp-admin .tata.error .tata-close{color:#fff!important}
 body.wp-admin .tata.warn{background:var(--rp-color-warning,#b8772b)}
 body.wp-admin .tata.info{background:var(--rp-color-info,#2271b1)}
 body.wp-admin .tata .tata-title:empty{display:none}
@@ -93,7 +102,12 @@ body.wp-admin .tata .tata-title:empty{display:none}
 .rp-ob-hint{color:var(--muted);font-size:12px;margin-top:5px}
 /* Inputs/selects/textarea inherit the UI-kit field styling via .rp-admin-scope;
    only force full-width so they fill the onboarding columns. */
-.rp-onboard input[type=text],.rp-onboard input[type=email],.rp-onboard input[type=number],.rp-onboard input[type=time],.rp-onboard select,.rp-onboard textarea{width:100%;max-width:100%}
+.rp-onboard input[type=text],.rp-onboard input[type=password],.rp-onboard input[type=email],.rp-onboard input[type=number],.rp-onboard input[type=time],.rp-onboard select,.rp-onboard textarea{width:100%;max-width:100%}
+.rp-ob-secret{position:relative}
+.rp-onboard .rp-ob-secret input{padding-right:44px}
+.rp-ob-secret-toggle{position:absolute;top:1px;right:1px;bottom:1px;width:42px;border:0;border-left:1px solid var(--line);border-radius:0 4px 4px 0;background:#fff;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.rp-ob-secret-toggle:hover,.rp-ob-secret-toggle:focus{color:var(--ink);background:#f6f7f7}
+.rp-ob-secret-toggle:focus{outline:2px solid var(--blue);outline-offset:1px}
 .rp-ob-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:560px){.rp-ob-two{grid-template-columns:1fr}}
 .rp-ob-seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;flex-wrap:wrap}

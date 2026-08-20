@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.0
-Stable tag: 3.4.2
+Stable tag: 3.4.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -154,6 +154,11 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
+
+= Version 3.4.3 (2026-08-20) =
+* Fixed: Issue where updating service options from the legacy modal on an empty cart caused double modal AJAX calls and broken food item customization popup rendering.
+* Fixed: Automatic cookie clearing when emptying the cart and on purchase completion.
+* Fixed: Order creation timestamp and relative creation time ('placed ago') calculation to be timezone-agnostic across all site and server timezones.
 
 = Version 3.4.2 (2026-08-13) =
 * Fixed: Wrapped all hardcoded strings in registration template, cart sidebar, category navigation, user dashboard, and email template with WordPress i18n functions and restropress text domain.
@@ -521,7 +526,7 @@ RestroPress 3.3 is a major update: a guided setup wizard with AI menu import, a 
 
 == Upgrade Notice ==
 
-= 3.4.2 =
+= 3.4.3 =
 A major update: a guided setup wizard with AI menu import, a real time Live Orders board, a redesigned Dashboard and Orders screen, a built-in Sold Out toggle, dietary labels on your menu, and faster Reports. "Food Items" is now labelled "Menu Items" throughout the admin (your links, shortcodes, and data keep working). Please back up your site before upgrading.
 
 = 3.2.8.8.6 =

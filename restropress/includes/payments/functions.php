@@ -136,7 +136,7 @@ function rpress_insert_payment( $payment_data = array() ) {
 		$resume_payment = $payment->is_recoverable();
 	}
 	if ( $resume_payment ) {
-		$payment->date = gmdate( 'Y-m-d G:i:s', current_time( 'timestamp' ) );
+		$payment->date = current_time( 'mysql' );
 		$payment->add_note( __( 'Payment recovery processed', 'restropress' ) );
 		// Since things could have been added/removed since we first crated this...rebuild the cart details.
 		foreach ( $payment->fees as $fee_index => $fee ) {
@@ -1839,3 +1839,50 @@ function rpress_get_discount_price_by_payment_id( $payment_id = 0 ) {
     $discount_value = apply_filters( 'rpress_discount_price_by_payment', $discount );
     return rpress_currency_filter( rpress_format_amount( $discount_value ) );
 }
+
+/**
+ * Retrieve the GMT UNIX timestamp for a payment or post.
+ * Guaranteed to be timezone-agnostic across all timezones.
+ *
+ * @since 3.3.1
+ * @param int|WP_Post|RPRESS_Payment $payment Payment ID, WP_Post, or RPRESS_Payment object.
+ * @return int GMT timestamp
+ */
+function rpress_get_payment_gmt_timestamp( $payment ) {
+	$payment_id = 0;
+	if ( is_numeric( $payment ) ) {
+		$payment_id = absint( $payment );
+	} elseif ( $payment instanceof RPRESS_Payment ) {
+		$payment_id = $payment->ID;
+	} elseif ( $payment instanceof WP_Post ) {
+		$payment_id = $payment->ID;
+	}
+
+	if ( ! $payment_id ) {
+		return time();
+	}
+
+	$gmt_date = get_post_field( 'post_date_gmt', $payment_id );
+	if ( $gmt_date && '0000-00-00 00:00:00' !== $gmt_date ) {
+		$ts = strtotime( $gmt_date . ' UTC' );
+		if ( $ts ) {
+			return (int) $ts;
+		}
+	}
+
+	$ts = get_post_time( 'U', true, $payment_id );
+	if ( $ts ) {
+		return (int) $ts;
+	}
+
+	$local_date = get_post_field( 'post_date', $payment_id );
+	if ( $local_date && '0000-00-00 00:00:00' !== $local_date ) {
+		$ts = strtotime( get_gmt_from_date( $local_date ) . ' UTC' );
+		if ( $ts ) {
+			return (int) $ts;
+		}
+	}
+
+	return time();
+}
+

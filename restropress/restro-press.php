@@ -3,7 +3,7 @@
  * Plugin Name: RestroPress
  * Plugin URI: https://www.restropress.com
  * Description: RestroPress is an online ordering system for WordPress.
- * Version: 3.4.2
+ * Version: 3.4.3
  * Author: MagniGenie
  * Author URI: https://magnigenie.com
  * Requires PHP: 7.4

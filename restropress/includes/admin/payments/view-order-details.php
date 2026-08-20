@@ -35,7 +35,7 @@ $cart_items = $payment->cart_details;
 $trash = $payment->post_status;
 $user_id = $payment->user_id;
 $tax_rate = $payment->tax_rate;
-$payment_date = strtotime($payment->date);
+$payment_date = rpress_get_payment_gmt_timestamp($payment);
 $unlimited = $payment->has_unlimited_fooditems;
 $user_info = rpress_get_payment_meta_user_info($payment_id);
 $address = $payment->address;
@@ -100,7 +100,12 @@ if ('' === trim((string) $payment_status_label) && '' !== trim((string) $payment
 }
 $service_label = !empty($service_type) ? rpress_service_label($service_type) : __('Service', 'restropress');
 $service_badge_slug = sanitize_html_class(str_replace('_', '-', strtolower((string) $service_type)));
-$placed_ago = human_time_diff($payment_date, current_time('timestamp')) . ' ' . esc_html__('ago', 'restropress');
+$time_diff = time() - $payment_date;
+if ( $time_diff < 60 && $time_diff >= 0 ) {
+	$placed_ago = esc_html__( 'just now', 'restropress' );
+} else {
+	$placed_ago = human_time_diff( $payment_date, time() ) . ' ' . esc_html__( 'ago', 'restropress' );
+}
 $service_date_display = !empty($service_date) ? rpress_local_date($service_date) : '';
 $service_time_display = !empty($service_time) ? $service_time : __('ASAP', 'restropress');
 $customer_url = !empty($customer->id) ? admin_url('admin.php?page=rpress-customers&view=overview&id=' . $customer->id) : '';

@@ -1436,9 +1436,15 @@ function rpress_pre_validate_order() {
         );
     }
 
+    $old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
+    $is_cart_empty = function_exists( 'rpress_get_cart_quantity' ) ? ( rpress_get_cart_quantity() == 0 ) : true;
+    $should_set_cookies = ! ( $old_ui_ux_enabled && $is_cart_empty && empty( $_POST['rpress_service_type'] ) && empty( $_POST['serviceType'] ) );
+
     $service_type = $normalized_service_type;
-    setcookie( 'service_type', $service_type, time() + ( 86400 * 30 ), '/' );
-    $_COOKIE['service_type'] = $service_type;
+    if ( $should_set_cookies ) {
+        setcookie( 'service_type', $service_type, time() + ( 86400 * 30 ), '/' );
+        $_COOKIE['service_type'] = $service_type;
+    }
 
     $service_time_raw = !empty($_POST['rpress_service_time'])
         ? sanitize_text_field(wp_unslash($_POST['rpress_service_time']))
@@ -1452,18 +1458,22 @@ function rpress_pre_validate_order() {
             ? sanitize_text_field(wp_unslash($_COOKIE['service_date']))
             : '');
 
-    if ( ! empty( $_POST['rpress_service_date'] ) ) {
+    if ( ! empty( $_POST['rpress_service_date'] ) && $should_set_cookies ) {
       setcookie( 'service_date_manual', $service_date_raw, time() + ( 86400 * 30 ), '/' );
       $_COOKIE['service_date_manual'] = $service_date_raw;
     }
 
     $service_date = rpress_get_first_available_service_date( $service_type, $service_date_raw );
-    setcookie( 'service_date', $service_date, time() + ( 86400 * 30 ), '/' );
-    $_COOKIE['service_date'] = $service_date;
+    if ( $should_set_cookies ) {
+      setcookie( 'service_date', $service_date, time() + ( 86400 * 30 ), '/' );
+      $_COOKIE['service_date'] = $service_date;
+    }
 
     $service_display_date = rpress_format_service_date( $service_date );
-    setcookie( 'delivery_date', $service_display_date, time() + ( 86400 * 30 ), '/' );
-    $_COOKIE['delivery_date'] = $service_display_date;
+    if ( $should_set_cookies ) {
+      setcookie( 'delivery_date', $service_display_date, time() + ( 86400 * 30 ), '/' );
+      $_COOKIE['delivery_date'] = $service_display_date;
+    }
 
     if ( ! rpress_is_store_open( $service_type, $service_date ) ) {
         return array(
@@ -1497,10 +1507,12 @@ function rpress_pre_validate_order() {
         );
       }
 
-      setcookie( 'service_time', $service_time_raw, time() + ( 86400 * 30 ), '/' );
-      setcookie( 'service_time_text', $service_time_raw, time() + ( 86400 * 30 ), '/' );
-      $_COOKIE['service_time'] = $service_time_raw;
-      $_COOKIE['service_time_text'] = $service_time_raw;
+      if ( $should_set_cookies ) {
+        setcookie( 'service_time', $service_time_raw, time() + ( 86400 * 30 ), '/' );
+        setcookie( 'service_time_text', $service_time_raw, time() + ( 86400 * 30 ), '/' );
+        $_COOKIE['service_time'] = $service_time_raw;
+        $_COOKIE['service_time_text'] = $service_time_raw;
+      }
     }
 
     $service_time = empty( $service_time_raw ) ? 0 : rpress_get_wp_timestamp( $service_date . ' ' . $service_time_raw );

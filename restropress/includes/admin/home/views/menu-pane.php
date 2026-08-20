@@ -37,21 +37,24 @@ defined( 'ABSPATH' ) || exit;
 								<option value="wordpress" <?php selected( $ai_provider, 'wordpress' ); ?>><?php esc_html_e( 'WordPress AI (built-in)', 'restropress' ); ?></option>
 								<option value="openai" <?php selected( $ai_provider, 'openai' ); ?>><?php esc_html_e( 'OpenAI (your key)', 'restropress' ); ?></option>
 								<option value="gemini" <?php selected( $ai_provider, 'gemini' ); ?>><?php esc_html_e( 'Google Gemini (your key)', 'restropress' ); ?></option>
+								<option value="claude" <?php selected( $ai_provider, 'claude' ); ?>><?php esc_html_e( 'Anthropic Claude (your key)', 'restropress' ); ?></option>
 							</select>
-							<p class="rp-ob-hint rp-help-text"><?php esc_html_e( 'Use WordPress’ built-in AI if your site already has an AI provider connected (WordPress 6.8+), or bring your own OpenAI / Gemini key.', 'restropress' ); ?></p>
+							<p class="rp-ob-hint rp-help-text"><?php esc_html_e( 'Use WordPress’ built-in AI if your site already has an AI provider connected (WordPress 6.8+), or bring your own OpenAI, Gemini, or Claude key.', 'restropress' ); ?></p>
 						</div>
 						<div class="rp-ob-field" id="rp-ob-ai-key-wrap"<?php echo 'wordpress' === $ai_provider ? ' hidden' : ''; ?>>
-							<label><?php esc_html_e( 'API key', 'restropress' ); ?></label>
-							<input type="text" id="rp-ob-ai-key" autocomplete="off" name="rp_ai_key_field" placeholder="<?php echo $ai_has_key ? esc_attr__( 'Saved - enter a new key to replace', 'restropress' ) : esc_attr__( 'Paste your provider API key', 'restropress' ); ?>">
+							<label for="rp-ob-ai-key"><?php esc_html_e( 'API key', 'restropress' ); ?></label>
+							<div class="rp-ob-secret">
+								<input type="password" id="rp-ob-ai-key" autocomplete="off" autocapitalize="none" spellcheck="false" name="rp_ai_key_field" placeholder="<?php echo $ai_has_key ? esc_attr__( 'Saved - enter a new key to replace', 'restropress' ) : esc_attr__( 'Paste your provider API key', 'restropress' ); ?>">
+								<button type="button" class="rp-ob-secret-toggle" id="rp-ob-ai-key-toggle" aria-label="<?php esc_attr_e( 'Show API key', 'restropress' ); ?>" aria-pressed="false"><span class="dashicons dashicons-visibility" aria-hidden="true"></span></button>
+							</div>
 							<p class="rp-ob-hint rp-help-text"><?php esc_html_e( 'Stored securely; only used to read your menu.', 'restropress' ); ?></p>
 						</div>
 					</div>
 					<div class="rp-ob-ai-status">
 						<button type="button" class="rp-btn rp-btn-secondary rp-ob-btn-sm" id="rp-ob-ai-test"><?php esc_html_e( 'Save & test connection', 'restropress' ); ?></button>
-						<span id="rp-ob-ai-status-text" class="rp-ob-ai-msg <?php echo ! empty( $ai_status['ready'] ) ? 'is-ok' : ''; ?>" data-ready="<?php echo ! empty( $ai_status['ready'] ) ? '1' : '0'; ?>"><?php
+						<span id="rp-ob-ai-status-text" class="rp-ob-ai-msg" data-ready="<?php echo ! empty( $ai_status['ready'] ) ? '1' : '0'; ?>"><?php
 							if ( ! empty( $ai_status['ready'] ) ) {
-								/* translators: %s: provider label. */
-								echo esc_html( sprintf( __( 'Connected - %s', 'restropress' ), isset( $ai_status['provider_label'] ) ? $ai_status['provider_label'] : __( 'ready', 'restropress' ) ) );
+								esc_html_e( 'Configured - test the connection before importing.', 'restropress' );
 							} else {
 								esc_html_e( 'Not connected yet - choose a provider and test.', 'restropress' );
 							}
