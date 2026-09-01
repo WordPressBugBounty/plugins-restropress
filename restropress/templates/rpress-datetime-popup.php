@@ -246,6 +246,7 @@ foreach ( $popup_services as $popup_service ) {
                         type="button"
                         class="btn btn-default rpress-editaddress-cancel-btn <?php echo esc_attr($button_style); ?>"
                         data-dismiss="modal"
+                        data-micromodal-close
                     >
                         <?php esc_html_e('Cancel', 'restropress'); ?>
                     </button>

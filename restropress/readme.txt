@@ -4,8 +4,8 @@ Tags: Online ordering, Restaurant Ordering, Food Delivery, Takeaway, Restaurant 
 Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
-Tested up to: 7.0
-Stable tag: 3.4.3
+Tested up to: 7.1
+Stable tag: 3.4.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -154,6 +154,15 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
+
+= Version 3.4.4 (2026-09-01) =
+* Fixed: Pending order count badge recalculation and object cache invalidation (`wp_cache_delete` for `rpress_orders_needs_attention_*`) so the badge resets to 0 when all orders are completed.
+* Fixed: Auto-loading of `RPRESS_Payment_History_Table` class during AJAX calls (`admin-ajax.php`) and non-orders pages for synchronized pending order badge counts.
+* Fixed: Pending order count refresh button desynchronization and added live AJAX badge counter recount capability.
+* Fixed: Permanent item deletion option from Trash view in food items admin table.
+* Fixed: Compatibility with Store Timing pre-order service hours and multi-format time parsing (`12-hour` and `24-hour`).
+* Fixed: Category selection filtering logic on time-based menu storefront.
+* Fixed: Checkout pickup/delivery time dropdown cookie persistence and ASAP selection reset issue.
 
 = Version 3.4.3 (2026-08-20) =
 * Fixed: Issue where updating service options from the legacy modal on an empty cart caused double modal AJAX calls and broken food item customization popup rendering.
@@ -526,7 +535,7 @@ RestroPress 3.3 is a major update: a guided setup wizard with AI menu import, a 
 
 == Upgrade Notice ==
 
-= 3.4.3 =
+= 3.4.4 =
 A major update: a guided setup wizard with AI menu import, a real time Live Orders board, a redesigned Dashboard and Orders screen, a built-in Sold Out toggle, dietary labels on your menu, and faster Reports. "Food Items" is now labelled "Menu Items" throughout the admin (your links, shortcodes, and data keep working). Please back up your site before upgrading.
 
 = 3.2.8.8.6 =

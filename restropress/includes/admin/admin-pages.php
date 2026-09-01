@@ -35,6 +35,12 @@ class RP_Admin_Menus
 		add_action('rpress_insert_payment', array($this, 'bump_menu_pending_version'));
 		add_action('rpress_update_order_status', array($this, 'bump_menu_pending_version'));
 		add_action('rpress_update_payment_status', array($this, 'bump_menu_pending_version'));
+		add_action('save_post_rpress_payment', array($this, 'on_save_rpress_payment'), 10, 2);
+		add_action('wp_trash_post', array($this, 'on_trash_rpress_payment'));
+		add_action('untrash_post', array($this, 'on_trash_rpress_payment'));
+		add_action('delete_post', array($this, 'on_trash_rpress_payment'));
+		add_action('updated_post_meta', array($this, 'on_post_meta_updated'), 10, 4);
+		add_action('added_post_meta', array($this, 'on_post_meta_updated'), 10, 4);
 
 		//Custom menu ordering
 		add_filter('custom_menu_order', '__return_true');
@@ -139,22 +145,36 @@ class RP_Admin_Menus
 			return (int) $cached;
 		}
 
-		// Count by the fulfilment status (_order_status meta), matching the
-		// Orders list's Pending filter, not the payment post_status.
-		global $wpdb;
-		$count = (int) $wpdb->get_var($wpdb->prepare(
-			"SELECT COUNT(DISTINCT pm.post_id)
-			FROM {$wpdb->postmeta} pm
-			INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-			WHERE pm.meta_key = %s
-			  AND pm.meta_value = %s
-			  AND p.post_type = %s
-			  AND p.post_status <> %s",
-			'_order_status',
-			'pending',
-			'rpress_payment',
-			'trash'
-		));
+		// Ensure RPRESS_Payment_History_Table class is loaded if available.
+		if ( ! class_exists( 'RPRESS_Payment_History_Table' ) && defined( 'RPRESS_PLUGIN_DIR' ) && file_exists( RPRESS_PLUGIN_DIR . 'includes/admin/payments/class-payments-table.php' ) ) {
+			require_once RPRESS_PLUGIN_DIR . 'includes/admin/payments/class-payments-table.php';
+		}
+
+		// Calculate pending order count synchronized with Orders list table needs-attention operational window.
+		if ( class_exists( 'RPRESS_Payment_History_Table' ) && method_exists( 'RPRESS_Payment_History_Table', 'get_needs_attention_ids' ) ) {
+			$needs_attention_ids = RPRESS_Payment_History_Table::get_needs_attention_ids( null, null, false );
+			$count               = count( $needs_attention_ids );
+		} else {
+			global $wpdb;
+			$count = (int) $wpdb->get_var($wpdb->prepare(
+				"SELECT COUNT(DISTINCT pm.post_id)
+				FROM {$wpdb->postmeta} pm
+				INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+				WHERE pm.meta_key = %s
+				  AND pm.meta_value = %s
+				  AND p.post_type = %s
+				  AND p.post_status NOT IN (%s, %s, %s, %s, %s, %s)",
+				'_order_status',
+				'pending',
+				'rpress_payment',
+				'trash',
+				'cancelled',
+				'refunded',
+				'failed',
+				'abandoned',
+				'completed'
+			));
+		}
 
 		set_transient($cache_key, $count, 2 * MINUTE_IN_SECONDS);
 		return $count;
@@ -173,6 +193,64 @@ class RP_Admin_Menus
 	{
 		$version = (int) get_option('rpress_menu_pending_version', 1);
 		update_option('rpress_menu_pending_version', $version + 1, false);
+		if (function_exists('wp_cache_flush_group')) {
+			wp_cache_flush_group('rpress');
+		}
+	}
+
+	/**
+	 * Synchronize post_status and bump cache version when an order is saved.
+	 *
+	 * @since 3.3.1
+	 * @param int      $post_id
+	 * @param \WP_Post $post
+	 * @return void
+	 */
+	public function on_save_rpress_payment($post_id, $post = null)
+	{
+		if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+			return;
+		}
+
+		if (!$post || $post->post_type !== 'rpress_payment') {
+			return;
+		}
+
+		// Keep post_status in sync with _order_status if order is completed/finished
+		$order_status = get_post_meta($post_id, '_order_status', true);
+		$completed_statuses = array('completed', 'cancelled', 'refunded', 'failed', 'abandoned');
+		if (in_array($order_status, $completed_statuses, true) && $post->post_status === 'pending') {
+			wp_update_post(array(
+				'ID'          => $post_id,
+				'post_status' => 'publish',
+			));
+		}
+
+		$this->bump_menu_pending_version();
+	}
+
+	/**
+	 * Invalidate cache when post meta for _order_status changes.
+	 *
+	 * @since 3.3.1
+	 */
+	public function on_post_meta_updated($meta_id, $object_id, $meta_key, $_meta_value)
+	{
+		if ($meta_key === '_order_status' && get_post_type($object_id) === 'rpress_payment') {
+			$this->bump_menu_pending_version();
+		}
+	}
+
+	/**
+	 * Invalidate cache when an order post is trashed, untrashed, or deleted.
+	 *
+	 * @since 3.3.1
+	 */
+	public function on_trash_rpress_payment($post_id)
+	{
+		if (get_post_type($post_id) === 'rpress_payment') {
+			$this->bump_menu_pending_version();
+		}
 	}
 
 	/**

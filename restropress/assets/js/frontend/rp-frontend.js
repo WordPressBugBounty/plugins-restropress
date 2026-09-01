@@ -4577,10 +4577,7 @@ jQuery(document).ready(function ($) {
         var isDateTimeModalOpen = $dateTimeModal.length &&
           ($dateTimeModal.hasClass('is-open') || $dateTimeModal.attr('aria-hidden') === 'false');
 
-        // Avoid replacing modal HTML while it is open; this causes the popup to flash and close.
-        if (!isDateTimeModalOpen) {
-          updataModalOnServiceTypeChange(serviceType);
-        }
+        updataModalOnServiceTypeChange(serviceType);
         if (oldUiUxEnabled) {
           if (typeof window.rp_prepare_old_ui_modal_selection === 'function') {
             window.rp_prepare_old_ui_modal_selection($wrapper.length ? $wrapper : $(document));
@@ -4615,38 +4612,27 @@ jQuery(document).ready(function ($) {
         return;
       }
 
-      var currentServiceType = String(rp_getCookie('service_type') || '')
-        .toLowerCase();
-      if (requestedServiceType && currentServiceType && requestedServiceType !== currentServiceType) {
-        return;
-      }
-
       if (res && res.success && res.data.modal_html && res.data.time_option_html) {
+        rp_setCookie('service_type', requestedServiceType, rp_scripts.expire_cookie_time);
+
         var $existingDateTimeModal = $("#rpressDateTime");
         var wasDateTimeModalOpen = $existingDateTimeModal.length &&
           ($existingDateTimeModal.hasClass('is-open') || $existingDateTimeModal.attr('aria-hidden') === 'false');
 
-        // Do not replace DOM while popup is open; that causes instant close/flicker.
         if (wasDateTimeModalOpen) {
-          var isOldUiUxEnabled = (typeof window.rp_is_old_ui_ux_enabled === 'function') && window.rp_is_old_ui_ux_enabled();
-          if (isOldUiUxEnabled && typeof window.rp_prepare_old_ui_modal_selection === 'function') {
-            window.rp_prepare_old_ui_modal_selection($('#rpressDateTime-content'));
-          } else if (typeof window.rp_apply_service_defaults === 'function') {
-            var openSelection = window.rp_apply_service_defaults($('#rpressDateTime-content'), requestedServiceType || currentServiceType);
-            if (openSelection.serviceDateText) {
-              $("#deliveryDate").text(openSelection.serviceDateText);
-            }
-            if (openSelection.serviceTimeText) {
-              $("#deliveryTime").text(openSelection.serviceTimeText);
-            }
+          var $newModal = $(res.data.modal_html);
+          var $newContainer = $newModal.find('.modal__container');
+          if ($newContainer.length) {
+            $("#rpressDateTime .modal__container").html($newContainer.html());
           }
-          return;
+        } else {
+          $("#rpressDateTime").replaceWith(res.data.modal_html);
         }
 
-        $("#rpressDateTime").replaceWith(res.data.modal_html);
         $(".rpress-option-col.rpress-edit-address-wrap").html(
           `<span class="left-brdr"></span>${res.data.time_option_html}`
         );
+
         if (typeof window.rp_prepare_old_ui_modal_selection === 'function') {
           window.rp_prepare_old_ui_modal_selection($('#rpressDateTime-content'));
         }
@@ -4654,21 +4640,21 @@ jQuery(document).ready(function ($) {
           var oldUiUxEnabled = (typeof window.rp_is_old_ui_ux_enabled === 'function') && window.rp_is_old_ui_ux_enabled();
           var selection = window.rp_apply_service_defaults(
             $('#rpressDateTime-content'),
-            service_type,
+            requestedServiceType,
             !oldUiUxEnabled,
             oldUiUxEnabled
           );
-          if (selection.serviceDateText) {
+          if (selection && selection.serviceDateText) {
             $("#deliveryDate").text(selection.serviceDateText);
           }
-          if (selection.serviceTimeText) {
+          if (selection && selection.serviceTimeText) {
             $("#deliveryTime").text(selection.serviceTimeText);
           }
         }
 
       }
-    })
-  }
+    });
+  };
 });
 
 /* Global cross-page order status watcher for browser notifications */
@@ -5242,9 +5228,20 @@ jQuery(function ($) {
     $('body').removeClass('cd-overlay-open');
     $('.rpress-cat-overlay').remove();
   });
-  $('.rpress-editaddress-cancel-btn').on('click', function () {
+  $(document).on('click', '.rpress-editaddress-cancel-btn', function (e) {
+    if (e) {
+      e.preventDefault();
+    }
     $('.rpress-mobile-cart-icons').show();
-    MicroModal.close('rpressDateTime');
+    if (typeof MicroModal !== 'undefined') {
+      try {
+        MicroModal.close('rpressDateTime');
+      } catch (err) {}
+    }
+    var $modal = $('#rpressDateTime');
+    if ($modal.length) {
+      $modal.removeClass('is-open').attr('aria-hidden', 'true');
+    }
   });
   $('.cd-dropdown-trigger').on('click', function (event) {
     event.preventDefault();

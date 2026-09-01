@@ -2957,11 +2957,17 @@ function rpress_get_service_context( $service_type_override = '' ): array
 
   /* ---------------- Cookies / Request ---------------- */
 
-  $context['service_type'] = isset($_GET['service_type'])
-    ? sanitize_text_field(wp_unslash($_GET['service_type']))
-    : ($_COOKIE['service_type'] ?? '');
+  if ( ! empty( $service_type_override ) ) {
+    $context['service_type'] = sanitize_text_field( wp_unslash( $service_type_override ) );
+  } elseif ( isset( $_REQUEST['service_type'] ) && '' !== trim( (string) $_REQUEST['service_type'] ) ) {
+    $context['service_type'] = sanitize_text_field( wp_unslash( $_REQUEST['service_type'] ) );
+  } elseif ( isset( $_COOKIE['service_type'] ) && '' !== trim( (string) $_COOKIE['service_type'] ) ) {
+    $context['service_type'] = sanitize_text_field( wp_unslash( $_COOKIE['service_type'] ) );
+  } else {
+    $context['service_type'] = rpress_get_default_enabled_service();
+  }
 
-  $context['service_type'] = sanitize_text_field(wp_unslash($context['service_type']));
+  $context['service_type'] = sanitize_text_field( wp_unslash( $context['service_type'] ) );
 
   $context['service_time'] = isset($_COOKIE['service_time'])
     ? sanitize_text_field(wp_unslash($_COOKIE['service_time']))

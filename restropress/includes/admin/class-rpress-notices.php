@@ -177,6 +177,9 @@ class RPRESS_Notices {
 					case 'payment-note-deleted' :
 						$notices['updated']['rpress-payment-note-deleted'] = esc_html__( 'The payment note has been deleted.', 'restropress' );
 						break;
+					case 'pending_count_refreshed' :
+						$notices['updated']['rpress-pending-count-refreshed'] = esc_html__( 'Pending order count has been refreshed and recalculated.', 'restropress' );
+						break;
 				}
 			}
 			// Shop settings errors

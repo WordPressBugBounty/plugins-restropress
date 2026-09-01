@@ -450,6 +450,9 @@ function rpress_orders_list_table_process_bulk_actions() {
 	$action = isset( $_REQUEST['action'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		? sanitize_text_field( wp_unslash( $_REQUEST['action'] ) )
 		: '';
+	if ( ( empty( $action ) || '-1' === $action ) && isset( $_REQUEST['action2'] ) ) {
+		$action = sanitize_text_field( wp_unslash( $_REQUEST['action2'] ) );
+	}
 
 	// Bail if we aren't processing bulk actions.
 	if ( empty( $action ) || '-1' === $action ) {
@@ -481,7 +484,7 @@ function rpress_orders_list_table_process_bulk_actions() {
 	}
 
 	// If this is a 'delete' action, the capability changes from edit to delete.
-	$cap = 'delete' === $action ? 'delete_shop_payments' : 'edit_shop_payments';
+	$cap = ( 'delete' === $action || 'delete_permanently' === $action ) ? 'delete_shop_payments' : 'edit_shop_payments';
 	if ( ! current_user_can( $cap ) ) {
 		return;
 	}
@@ -507,6 +510,7 @@ function rpress_orders_list_table_process_bulk_actions() {
 				rpress_restore_order( $id );
 				break;
 			case 'delete':
+			case 'delete_permanently':
 				rpress_delete_order( $id );
 				break;
 			case 'set-payment-status-paid':
@@ -562,3 +566,37 @@ function rpress_orders_list_table_process_bulk_actions() {
 	exit;
 }
 add_action( 'admin_init', 'rpress_orders_list_table_process_bulk_actions' );
+
+/**
+ * Process the Refresh Pending Order Count action.
+ *
+ * Recalculates the exact pending orders count from the database and updates
+ * the transient and menu badge version.
+ *
+ * @since 3.4.4
+ * @return void
+ */
+function rpress_trigger_refresh_pending_count() {
+	if ( empty( $_GET['rpress-action'] ) || 'refresh_pending_count' !== $_GET['rpress-action'] ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'edit_shop_payments' ) ) {
+		return;
+	}
+
+	if ( empty( $_GET['_wpnonce'] ) || ! wp_verify_nonce( $_GET['_wpnonce'], 'rpress_refresh_pending_count_nonce' ) ) {
+		return;
+	}
+
+	// Recalculate pending order count and invalidate all stale transients/options.
+	rpress_recount_pending_orders_count();
+
+	$redirect_url = remove_query_arg( array( 'rpress-action', '_wpnonce', 'rpress-message' ) );
+	$redirect_url = add_query_arg( 'rpress-message', 'pending_count_refreshed', $redirect_url );
+
+	wp_safe_redirect( $redirect_url );
+	exit;
+}
+add_action( 'admin_init', 'rpress_trigger_refresh_pending_count' );
+

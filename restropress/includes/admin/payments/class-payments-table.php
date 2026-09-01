@@ -1210,12 +1210,6 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 	 * @return array $views All the views available
 	 */
 	public function get_views() {
-		// Operational segmented tabs are hidden in past mode - order-status
-		// filtering moves to a Status dropdown in the filter row instead.
-		if ( self::is_past_mode() ) {
-			return array();
-		}
-
 		// A search spans all statuses and all dates, so the today-scoped tab
 		// counts (e.g. "All 11") no longer describe the result set. Hide the
 		// tabs while searching so their stale counts can't mislead.
@@ -2272,6 +2266,15 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 	 * @return array $actions Array of the bulk actions
 	 */
 	public function get_bulk_actions() {
+		$status = $this->get_status();
+		if ( 'trash' === $status ) {
+			$actions = array(
+				'restore'            => esc_html__( 'Restore', 'restropress' ),
+				'delete_permanently' => esc_html__( 'Delete Permanently', 'restropress' ),
+			);
+			return apply_filters( 'rpress_payments_table_bulk_actions', $actions, $status );
+		}
+
 		$actions = array(
 			'set-payment-status-pending'     => esc_html__( 'Set Payment To Pending',		'restropress' ),
 			'set-payment-status-processing'  => esc_html__( 'Set Payment To Processing',	'restropress' ),
@@ -2282,21 +2285,16 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 		$order_statuses = rpress_get_order_statuses();
 		$order_actions = array();
 		if ( ! empty( $order_statuses ) ) {
-			foreach( $order_statuses as $status => $name ) {
-				$order_actions[ 'set-order-status-' . $status  ] = sprintf( esc_html__( 'Set Order To %s', 'restropress' ), $name );
+			foreach( $order_statuses as $order_status => $name ) {
+				$order_actions[ 'set-order-status-' . $order_status  ] = sprintf( esc_html__( 'Set Order To %s', 'restropress' ), $name );
 			}
 		}
 		$order_actions['resend-receipt'] = esc_html__( 'Resend Email Receipts','restropress' );
-		if ( 'trash' === $this->get_status() ) {
-			$actions = array(
-				'restore' => esc_html__( 'Restore', 'restropress' ),
-			);
-		} else {
-			$actions['trash'] = esc_html__( 'Move to Trash', 'restropress' );
-		}
+		$actions['trash']              = esc_html__( 'Move to Trash', 'restropress' );
+		$actions['delete_permanently'] = esc_html__( 'Delete Permanently', 'restropress' );
 		
 		$actions = array_merge( $actions, $order_actions );
-		return apply_filters( 'rpress_payments_table_bulk_actions', $actions );
+		return apply_filters( 'rpress_payments_table_bulk_actions', $actions, $status );
 	}
 	/**
 	 * Process the bulk actions
@@ -2306,6 +2304,28 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 	 */
 	public function process_bulk_action() {
 		_doing_it_wrong( __FUNCTION__, 'Orders list table bulk actions are now handled by rpress_orders_list_table_process_bulk_actions(). Please do not call this method directly.', 'RestroPress 3.0' );
+	}
+	/**
+	 * Override bulk_actions to append the Refresh Pending Count button next to Apply in the top toolbar.
+	 *
+	 * @since 3.4.4
+	 * @param string $which 'top' | 'bottom'
+	 */
+	protected function bulk_actions( $which = 'top' ) {
+		parent::bulk_actions( $which );
+
+		if ( 'top' === $which ) {
+			$refresh_url = wp_nonce_url(
+				add_query_arg( array( 'rpress-action' => 'refresh_pending_count' ), remove_query_arg( array( 'rpress-message', 'paged' ) ) ),
+				'rpress_refresh_pending_count_nonce'
+			);
+			?>
+			<a href="<?php echo esc_url( $refresh_url ); ?>" class="button rp-btn rp-btn-secondary rpress-refresh-pending-count-btn" style="margin-left: 6px; display: inline-flex; align-items: center; gap: 4px;" title="<?php esc_attr_e( 'Recalculate and sync the pending order count', 'restropress' ); ?>">
+				<span class="dashicons dashicons-update" style="font-size: 16px; width: 16px; height: 16px;"></span>
+				<?php esc_html_e( 'Refresh Count', 'restropress' ); ?>
+			</a>
+			<?php
+		}
 	}
 	/**
 	 * Retrieve the payment counts

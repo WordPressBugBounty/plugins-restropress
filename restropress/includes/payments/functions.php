@@ -710,6 +710,52 @@ function rpress_count_payments( $args = array() ) {
 	wp_cache_set( $cache_key, $stats, 'counts' );
 	return $stats;
 }
+
+/**
+ * Clear payment count and KPI caches when an order is created, updated, trashed, or deleted.
+ *
+ * @since 3.3.1
+ * @param int $payment_id Optional Payment ID.
+ * @return void
+ */
+function rpress_clear_payment_counts_cache( $payment_id = 0 ) {
+	if ( function_exists( 'wp_cache_flush_group' ) ) {
+		wp_cache_flush_group( 'counts' );
+		wp_cache_flush_group( 'rpress' );
+		wp_cache_flush_group( 'payments' );
+	}
+	if ( function_exists( 'wp_cache_flush' ) ) {
+		wp_cache_flush();
+	}
+	delete_transient( 'rpress_earnings_total' );
+	delete_transient( md5( 'rpress_earnings_this_monththis_month' ) );
+}
+add_action( 'rpress_insert_payment', 'rpress_clear_payment_counts_cache', 10, 1 );
+add_action( 'rpress_update_order_status', 'rpress_clear_payment_counts_cache', 10, 1 );
+add_action( 'rpress_payment_delete', 'rpress_clear_payment_counts_cache', 10, 1 );
+add_action( 'rpress_payment_deleted', 'rpress_clear_payment_counts_cache', 10, 1 );
+add_action( 'rpress_post_refund_order', 'rpress_clear_payment_counts_cache', 10, 1 );
+add_action( 'trashed_post', function( $post_id ) {
+	if ( 'rpress_payment' === get_post_type( $post_id ) ) {
+		rpress_clear_payment_counts_cache( $post_id );
+	}
+} );
+add_action( 'untrashed_post', function( $post_id ) {
+	if ( 'rpress_payment' === get_post_type( $post_id ) ) {
+		rpress_clear_payment_counts_cache( $post_id );
+	}
+} );
+add_action( 'before_delete_post', function( $post_id ) {
+	if ( 'rpress_payment' === get_post_type( $post_id ) ) {
+		rpress_clear_payment_counts_cache( $post_id );
+	}
+} );
+add_action( 'transition_post_status', function( $new_status, $old_status, $post ) {
+	if ( $post && 'rpress_payment' === $post->post_type && $new_status !== $old_status ) {
+		rpress_clear_payment_counts_cache( $post->ID );
+	}
+}, 10, 3 );
+
 /**
  * Check For Existing Payment
  *
@@ -1885,4 +1931,69 @@ function rpress_get_payment_gmt_timestamp( $payment ) {
 
 	return time();
 }
+
+/**
+ * Recalculate pending order count and clear cached count transients/options.
+ *
+ * @since 3.4.4
+ * @return int Fresh pending orders count.
+ */
+function rpress_recount_pending_orders_count() {
+	global $wpdb;
+
+	// 1. Bump the pending menu version to invalidate all versioned cache keys.
+	$version = (int) get_option( 'rpress_menu_pending_version', 1 ) + 1;
+	update_option( 'rpress_menu_pending_version', $version, false );
+
+	// 2. Clear known transient keys.
+	delete_transient( 'rpress_menu_pending_' . ( $version - 1 ) );
+	delete_transient( 'rpress_menu_pending_' . $version );
+
+	// 3. Clear object cache keys for needs_attention buckets.
+	$needs_attention_cache_key = 'rpress_orders_needs_attention_' . md5( '|range' );
+	wp_cache_delete( $needs_attention_cache_key, 'rpress' );
+	wp_cache_delete( 'rpress_orders_needs_attention_' . md5( '||range' ), 'rpress' );
+	wp_cache_delete( 'rpress_orders_needs_attention_' . md5( '||all' ), 'rpress' );
+
+	// 4. Ensure RPRESS_Payment_History_Table class is loaded if available.
+	if ( ! class_exists( 'RPRESS_Payment_History_Table' ) && defined( 'RPRESS_PLUGIN_DIR' ) && file_exists( RPRESS_PLUGIN_DIR . 'includes/admin/payments/class-payments-table.php' ) ) {
+		require_once RPRESS_PLUGIN_DIR . 'includes/admin/payments/class-payments-table.php';
+	}
+
+	// 5. Recalculate pending order count synchronized with Orders list table needs-attention operational window.
+	if ( class_exists( 'RPRESS_Payment_History_Table' ) && method_exists( 'RPRESS_Payment_History_Table', 'get_needs_attention_ids' ) ) {
+		$needs_attention_ids = RPRESS_Payment_History_Table::get_needs_attention_ids( null, null, false );
+		$count               = count( $needs_attention_ids );
+	} else {
+		$count = (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(DISTINCT pm.post_id)
+			FROM {$wpdb->postmeta} pm
+			INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			WHERE pm.meta_key = %s
+			  AND pm.meta_value = %s
+			  AND p.post_type = %s
+			  AND p.post_status NOT IN (%s, %s, %s, %s, %s, %s)",
+			'_order_status',
+			'pending',
+			'rpress_payment',
+			'trash',
+			'cancelled',
+			'refunded',
+			'failed',
+			'abandoned',
+			'completed'
+		) );
+	}
+
+	// 6. Store fresh transient.
+	set_transient( 'rpress_menu_pending_' . $version, $count, 2 * MINUTE_IN_SECONDS );
+
+	// 7. Invalidate object cache groups for order queries and needs-attention buckets.
+	if ( function_exists( 'wp_cache_flush' ) ) {
+		wp_cache_flush();
+	}
+
+	return $count;
+}
+
 

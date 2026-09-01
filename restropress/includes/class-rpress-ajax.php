@@ -2158,7 +2158,14 @@ class RP_AJAX {
   public static function update_modal_on_service_switch() {
     check_ajax_referer( 'service-type', 'security' );
 
-    $service_type = isset( $_GET['service_type'] ) ? sanitize_text_field( wp_unslash( $_GET['service_type'] ) ) : '';
+    $service_type = isset( $_REQUEST['service_type'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['service_type'] ) ) : '';
+
+    if ( ! empty( $service_type ) ) {
+      $_COOKIE['service_type'] = $service_type;
+      if ( function_exists( 'rpress_set_html_cookie' ) ) {
+        rpress_set_html_cookie( 'service_type', $service_type );
+      }
+    }
 
     /**
      * Fires when the storefront service toggle switches type, before the
