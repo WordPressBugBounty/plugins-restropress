@@ -215,13 +215,8 @@ jQuery(function ($) {
 		var isPickup = 'pickup' === type;
 		var hasTips = $wrap.find('.rpress-tips').length > 0;
 		$wrap.toggleClass('rpress-service-pickup', isPickup);
-		// Join the tips block onto the fulfillment card only while it shows.
-		$wrap.toggleClass('rpress-has-tips', hasTips && !isPickup);
-		// The tips UI is delivery-only; drop an applied tip when switching
-		// to pickup so the hidden fee cannot ride along on the order.
-		if (isPickup) {
-			$wrap.find('.rpress-remove-tip.enable').trigger('click');
-		}
+		// Join the tips block onto the fulfillment card while tips exist.
+		$wrap.toggleClass('rpress-has-tips', hasTips);
 	}
 	$(document).on('click', '#rpressdeliveryTab .nav-link, .single-service-selected', function () {
 		window.setTimeout(syncServiceClass, 300);

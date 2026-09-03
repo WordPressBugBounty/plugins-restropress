@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 3.4.4
+Stable tag: 3.4.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -155,6 +155,9 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 
 == Changelog ==
 
+= Version 3.4.5 (2026-09-03) =
+* Fixed: Allowed tips section display on pickup orders in checkout redesign.
+
 = Version 3.4.4 (2026-09-01) =
 * Fixed: Pending order count badge recalculation and object cache invalidation (`wp_cache_delete` for `rpress_orders_needs_attention_*`) so the badge resets to 0 when all orders are completed.
 * Fixed: Auto-loading of `RPRESS_Payment_History_Table` class during AJAX calls (`admin-ajax.php`) and non-orders pages for synchronized pending order badge counts.
@@ -177,10 +180,11 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 * Fixed: Percentage discount float calculation precision error when using comma decimal separators, preventing loss of cents on totals.
 * Fixed: Terms of Agreement checkbox visibility and touch target on mobile checkout viewports.
 * Fixed: Food item card width uniformity and price range wrapping for variable price items in mobile grid view.
+* Fixed: Service type switching (Delivery vs Pickup) on the checkout page.
 * Fixed: Checkout error message overlapping by the mobile sticky bottom bar, adding smooth scroll positioning and elevated contrast styling.
+* Fixed: Suppressed empty error containers to eliminate phantom red border outlines on storefront menu headers.
 
 = Version 3.4 (2026-07-28) =
-
 RestroPress 3.4 is the "open the door" release: a refreshed storefront you can restyle in one click, a free plan that can genuinely run a restaurant, RestroPress's first Gutenberg blocks, and a round of fixes for headless integrations, multisite, and staff accounts.
 
 * **A refreshed storefront with switchable template packs**
@@ -221,6 +225,8 @@ RestroPress 3.4 is the "open the door" release: a refreshed storefront you can r
     * New `rpress_get_store_hours_for_date()` helper resolves the open/close window and holiday status for any date.
     * New `rpress_service_type_switched` action fires when a customer changes delivery/pickup on the storefront.
     * All six blocks are registered as standard `block.json` blocks with server side rendering, so they can be filtered, extended, or restyled like any other WordPress block.
+
+= Version 3.3.2 (2026-07-12) =
 * Fixed: Checkout page cart removal breaks when removing the last item due to concurrent AJAX calls creating an infinite loop.
 * Fixed: Checkout page table row was not removed when deleting items from the cart due to an underscore vs hyphen class selector mismatch (`.rpress-cart-item` vs `.rpress_cart_item`).
 
@@ -252,9 +258,12 @@ RestroPress 3.3 is a major update: a guided setup wizard with AI menu import, a 
 * **Redesigned order details**
     * A clearer single-order screen: summary cards, a fulfilment status track with a one-click next step, a notes timeline, and billing details.
     * Edit order items (sizes, add-ons, quantities) right on the page, with the total kept in sync automatically.
-* **Smarter menu item editor**
-    * A cleaner, section-based editor with separate short (menu card) and full (order popup) descriptions, combined Category, Tags & Dietary, and a redesigned add-ons area.
-    * Built-in availability toggle: mark an item Sold Out from the editor or the list with no extra extension needed. Sold-out items show a clear badge on your storefront.
+* **Completely redesigned menu item editor**
+    * Rebuilt the menu item edit screen into one clean, section-based editor instead of scattered WordPress metaboxes.
+    * Separate short (menu card) and full (order popup) descriptions in clearly labelled fields.
+    * Combined Category, Tags & Dietary into one section, with a type-to-create tag selector.
+    * Redesigned add-ons area with card-style groups, drag-and-drop ordering, and an inline "new add-on group" form.
+    * Compact variable-price rows, plus a built-in Sold Out availability toggle right in the Publish box (no extra extension needed). Sold-out items show a clear badge on your storefront.
 * **Dietary labels and food type**
     * New dietary labels (Vegetarian, Vegan, Gluten-free, Dairy-free, Nut-free, Halal, Kosher, Spicy) that you set per item and that now show as chips on your storefront menu.
     * Veg / Non-veg marks are now an optional setting, aimed at India and similar markets.
@@ -279,11 +288,18 @@ RestroPress 3.3 is a major update: a guided setup wizard with AI menu import, a 
     * Fixed: a storefront and dashboard crash when a store's opening and closing times were equal or inverted.
     * Fixed: menu item tags could show twice on a storefront card in one layout; they now show once.
     * Fixed: the print icon in the order quick-view is now aligned with its label.
+    * Fixed: finishing the setup wizard now saves the store time format (12-hour or 24-hour) to both WordPress and the RestroPress storefront, so opening-hours labels on the menu page always match what you chose during setup.
     * Improved: Live Orders cards show the customer phone correctly, add-on and category names with apostrophes no longer break, and many smaller admin polish fixes.
 * **For developers**
     * New food item editor section hooks and a Live Orders extension surface (columns, time window, query args) let add-ons plug into the redesigned screens.
     * Order count, late-order, and cash-gateway logic is now shared and filterable for consistency across screens.
+    * New `rpress_default_notification_sound` filter lets add-ons or themes override the built-in alert sound without touching plugin files.
     * Full REST API support continues for building custom apps and integrations.
+
+= Version 3.4.4 (2026-08-25) =
+* Fixed: RestroPress grid view sticky sidebar height calculation feedback loop preventing page scroll to footer.
+* Fixed: Service type switch AJAX response processing to dynamically update modal content and storefront date/time options without dropping responses or flickering open modals.
+* Fixed: Schedule modal Cancel button click event listener to use delegated event handling for dynamically refreshed popup DOM.
 
 = Version 3.2.8.8.6(2026-06-09) =
 * Updated: Plugin version bump to 3.2.8.8.6
@@ -533,9 +549,726 @@ RestroPress 3.3 is a major update: a guided setup wizard with AI menu import, a 
 * Fixed: Ajax basis modal dom manipulation
 * Code Cleanup
 
+
+= Version 3.2.4.2(2025-11-29) =
+
+* Fixed: Css and js loading version 
+* Fixed: Removed unrequired service type label
+* Fixed: Category scrolling issue
+
+= Version 3.2.4(2025-11-28) =
+
+* Fixed: gmdate() issue conflict issue
+* Fixed: Category menu button issue
+* Fixed: Builder and theme compatibility issue
+* Fixed: PHP version 8.2 compatibility issue
+* Fixed: Discount coupon, setting option save issue 
+* Code optimized and cleanup
+
+= Version 3.2.3.7(2025-11-20) =
+* Fixed: REST API authorization issue
+* Fixed: Category menu text issue
+* Fixed: Store timing time slot issue 
+* Added: Mobile menu enable/disable option
+* Fixed: Sticky bar, item count issue for mobile view
+* Fixed: Date Time format issue
+
+= Version 3.2.3.6(2025-11-17) =
+* Fixed: Store timing pre-order issue
+* Fixed: Textdomain issue
+* Fixed: Dinein service type issue
+* Fixed: XSS security issue 
+
+= Version 3.2.3.5(2025-11-12) =
+
+* Fixed: Category menu button issue
+* Fixed: Builder compatibility issue
+* Code cleanup
+
+= Version 3.2.3.4(2025-11-10) =
+* Updated: Category menu button for mobile view
+* Fixed: double close message issue
+* Fixed: Delivery fee extension compatibility issue
+* Fixed: Default time order time setup issue
+* Fixed: XSS security issue
+* Code cleanup
+
+= Version 3.2.3.3(2025-11-09) =
+* Fixed: Float price value issue
+* Code Cleanup
+
+= Version 3.2.3.2(2025-11-07) =
+* Fixed: License key activation issue
+* Fixed: Store close message issue
+* Fixed: Addon quantity Compatibility issue
+* Code Cleanup
+
+
+= Version 3.2.3.1(2025-10-27) =
+* Added: Dinein table info added in order details
+* Fixed: Item popup extra space issue
+* Fixed: Escape html issue 
+* Fixed: Default gateway save issue 
+
+= Version 3.2.3(2025-10-22) =
+* Fixed: Store time extension compatibility issues
+* Added: Disable category option
+* Code cleanup
+
+= Version 3.2.2.2(2025-10-16) =
+* Fixed: Report section design issue
+* Fixed: Dashboard section design issue
+* Code Cleanup
+
+= Version 3.2.2.1(2025-10-15) =
+* Fixed: Add button design issue
+* Code Cleanup
+
+= Version 3.2.2(2025-09-25) =
+* Fixed: Security issues fixed
+* Code Cleanup
+
+= Version 3.2.1(2025-09-25) =
+* Fixed: Default service type validation
+* Fixed: Validate the empty address or zip code for delivery fee extension or multilocation extension.
+* Updated: Set a default color value for the required setting option
+* Fixed: Service type background color issue
+* Fixed: Double email trigger issue for customers
+* Fixed: Closing hour issue
+* Fixed: The default time value issue
+
+= Version 3.2(2025-09-23) =
+* Updated: New UI design implemented
+* Added: Add to cart button style option
+* Added: New button style option
+* Updated: Email template new design implemented
+* Fixed: Addon price reset issue on version update
+* Added: Predefined service type feature implemented
+* Added: Welcome setup widgets
+
+= Version 3.1.9.2(2025-08-04) =
+* Added: Dinein service type hook
+* Added: A New filter has been added to manage the pickup time slots
+* Fixed: Order service time issue fixed
+* Fixed: Service type option design and responsive issue fixed
+* Added: Firebase FCM implemented for restropress pos
+
+= Version 3.1.9.1(2025-06-13) =
+* Fixed: Minor bug issue
+
+= Version 3.1.9(2025-06-12) =
+
+* Added: Abandoned payment status
+* Added: Import/Export option directly on the food items screen
+* Updated: UI for the extensions page
+* Fixed: Variable product issue for order edit screen
+* Fixed: Subtotal calculation after changing product price on order edit screen
+* Fixed: Addon price update issue for variable products on the order edit screen
+* Fixed: UI issues on order edit screen
+* Fixed: Security issue with reorder option on the user's order list
+
+= Version 3.1.8.4(2024-12-03) =
+* Fixed: Inclusive Tax calculation issue
+
+= Version 3.1.8.3(2024-11-27) =
+* Added: Addon Minimum selection feature
+* Fixed: discount code issue for specific categories
+* Fixed: Dashboard total sales value decimal conversion issue
+
+= Version 3.1.8.2(2024-10-03) =
+* Fixed: Dashboard horizontal bar issue
+* Fixed: Addon update issue for variation items
+* Fixed: Security issues
+* Code cleanup
+
+= Version 3.1.8.1(2024-09-18) =
+* Fixed: Discount code fatal error issue
+* Code cleanup
+= Version 3.1.8(2024-09-16) =
+* Fixed: "ASAP" translation issue
+* Fixed: Email receipt link error
+* Fixed: Safari browser compatibility issue
+* Fixed: Discount code calculation issue in Percent and Flat mode
+* Added: Updated restropress Rest Api
+* Updated: Order details Data in the admin dashboard
+
+= Version 3.1.7(2024-06-07) = 
+* Fixed: Category-based shortcode issue
+* Fixed: Safari browser compatibility issue for ASAP option
+* Fixed: PayPal gateway failed status issue
+
+= Version 3.1.6(2024-06-03) = 
+* Added: Cheaper item discount feature
+* Fixed: Discount code calculation issue for paypal gateway
+* Fixed: bulk checkbox selection issue 
+= Version 3.1.5.4 (2024-05-27) = 
+* Fixed: Update notification issue for restropress extensions
+* Fixed: Code cleanup
+
+= Version 3.1.5.3 (2024-05-25) = 
+* Fixed: Code optimized
+* Fixed: Notice and warning errors removed
+
+= Version 3.1.5.2 (2024-05-23) = 
+* Fixed: Security warning errors.
+
+= Version 3.1.5 (2024-05-03) =
+* Fixed: Errors removed
+* Code optimized
+
+= Version 3.1.4 (2024-04-10) =
+* Fixed: Security errors
+* Fixed: Bulk delete issue
+* Code Cleanup
+
+= Version 3.1.3 (2024-03-27) =
+* Fixed: Required sanitizations added
+* Code cleanup
+
+= Version 3.1.2.2 (2024-03-16) =
+* Fixed: XSS security issues
+* Code cleanup
+
+= Version 3.1.2.1 (2024-03-09) =
+* Fixed: Status update security issue
+* Code cleanup
+
+= Version 3.1.2 (2024-03-06) =
+* Added: Order id prefix and postfix added for the user dashboard
+* Added: ASAP time limit option added as per the specific service type
+* Added: Lost password link added for checkout section login form
+* Added: Saved address option added for customer dashboard
+* Added: Default address implemented in checkout page
+* Added: Item not found image added for admin best selling section
+* Updated: Admin dashboard customer pie chart color design
+* Fixed: Customer registration issue fixed
+* Fixed: Admin dashboard export report CSS issue fixed
+* Fixed: Correct div format implemented for best selling product
+
+= Version 3.1.1.1 (2024-03-02) =
+* Fixed: Variable item double pricing issue 
+* Fixed: Admin dashboard best selling product description issue 
+* Code cleanup
+
+= Version 3.1.1 (2024-03-01) =
+* Fixed: Admin dashboard dynamic currency sign issue fixed
+* Fixed: Warning error issue
+* Updated: Load all available orders on User Dashboard
+
+= Version 3.1 (2024-02-29) =
+* Added: Admin dashboard
+* Added: User dashboard
+* Added: Reorder feature
+* Added: Service-based discount
+* Added: RestroPress POS new endpoints 
+* Fixed: Checkout page input field validation issue
+* Fixed: Place order button disable issue
+
+= Version 3.0.0 (2024-01-05) =
+* Fixed: Excluding tax issue.
+* Fixed: Double tooltip issue.
+* Fixed: PayPal payment issue.
+* Fixed: Addons, categories, and variable items Import/Export issue.
+* Fixed: Remove button of new category addon add issue.
+* Fixed: Addons pricing issue.
+* Updated: Instruction update to save variable pricing before adding addons.
+* Added: Rest API Added can be found more details on <a>https://docs.restropress.com/docs/rest-api/authentication/ </a>
+
+= Version 2.9.8 (2023-11-17) =
+* Fixed: "Store timing and delivery cutoff extension" current day holiday issue.
+* Fixed: Auto-update state list as per the selected country issue for checkout billing form.
+* Added: Blur section and warning message added for checkout page until payment completion.
+
+= Version 2.9.7 (2023-09-15) =
+* Fixed: PayPal live transaction issue "payment status is showing as failed even if customer has paid successfully"
+* Fixed: Cart cookie data clear issue after making the cart empty by removing items
+* Updated: Correct URL path "PayPal Identity Token" docs
+* Updated: Required columns for food items CSV
+* Updated: Show selected item variable name in receipt
+* Added: "Enable always order option" setting to make open the store for 24/7 hour
+* Added: Short code format to make exclude categories
+
+= Version 2.9.6 (2023-04-05) =
+* Fixed: Deprecated issue with PHP version 8.1.9
+* Fixed: Inclusive tax issue calculation issue for cart section
+* Fixed: Currency sign position issue for popup "add to cart" button
+* Fixed: Negative price validation issue for variables and addons
+* Fixed: Text input validation for addon price input field
+* Updated: Tips column added for order history reports CSV
+
+= Version 2.9.5 (2022-12-12) =
+* Fixed: Issue when user not able to make payment with Stripe payment method
+* Fixed: Tooltip text for payment extension page
+* Fixed: Admin dashboard export reports issue with variable food items
+* Fixed: Admin dashboard best selling product CSS issue
+* Updated: Include service type as a mandatory input for order history CSV
+
+= Version 2.9.4 (2022-09-15) =
+* Fixed: Variable price saving issue
+* Fixed: Tooltip text for menu add new popup
+* Fixed: Admin dashboard report and sales chart for variable food items
+* Updated: Login/Registration form
+* Updated: Default variable item image
+
+= Version 2.9.3 (2022-06-12) =
+* Fixed: Security issue with HTML injection
+* Fixed: Compatibility issue with WooCommerce
+* Updated: Documentation link added for "API Key" on admin settings
+
+= Version 2.9.2 (2022-02-15) =
+* Fixed: Issue with auto database update
+* Fixed: Tax calculation issue
+* Fixed: Receipt page CSS issue
+* Fixed: Admin settings issue with API Key
+* Updated: Order confirmation page template
+
+= Version 2.9.1.1 (2022-05-12) =
+* Fixed: Single addon selection issue
+* Fixed: Order filter issue in the admin section
+
+= Version 2.9.1 (2022-05-04) =
+* Fixed: List view food items page design issue fixed
+* Minor code cleanup
+
+= Version 2.9 (2022-05-03) =
+* Added: Food items category reorder feature
+* Added: ASAP feature added
+* Added: Option to filter orders by service type
+* Added: Option to filter orders by order status
+* Added: Option to switch the view of food items layout to Grid layout
+* Added: Option to disable categories menu on the frontend
+* Added: Adding live search button for admin extensions section
+* Added: Filter feature to get activated extensions
+* Added: Accounting settings section to set sequential order numbers, SKU, etc.
+* Added: Customer email, service type, service time, delivery address, and order instructions on the order history export report
+* Fixed: Date filter issue for orders
+* Fixed: Discount coupon-related issues
+* Fixed: Extensions price display issue in admin section
+* Fixed: Export order history issue for all statuses
+* Minor code cleanup
+
+= Version 2.8.5 (2021-10-30) =
+* Fixed: Subtotal display problem on food item page
+* Fixed: Total amount issue on the checkout page
+* Fixed: Issue with fee calculation when switching delivery/pickup option on the checkout page
+* Fixed: Tax calculation on the order confirmation page
+* New: Ability to re-arrange addons by drag & drop
+* New: Added select all option for add-ons
+* Fixed: Issue with the default checkbox on the add-on
+* Updated: Variation label for simple products
+* Updated: Print receipt text/design
+* Minor code cleanup
+* Fixed: Issue with child add-ons during import
+* Misc enhancements
+
+= Version 2.8.4 (2021-08-09) =
+* Added: Print receipt option to print orders from the dashboard
+* Added: Pending order count on orders menu
+* Updated: Migration script
+* Fixed: Admin settings issues
+
+= Version 2.8.3.2 (2021-07-20) =
+* Fixed: Add-on save Issue
+* Fixed: Payment history export issue
+* Updated: Ajax validation update
+
+= Version 2.8.3.1 (2021-07-15) =
+* Fixed: Ajax issue for orders
+* Fixed: Admin settings issue
+
+= Version 2.8.3 (2021-07-10) =
+* Fixed: Security issues
+* Removed unused files
+* Updated js/css files with latest version
+* Removed restropress bootstrap js/css
+* Removed admin setting for bootstrap option
+
+= Version 2.8.2 (2021-05-31) =
+* Fixed: Subtotal issue with the variation and multiple add-ons.
+* Fixed: Decimal point issue on Add to cart button.
+* Fixed: Email order receipt issue.
+* Cleared cart text update.
+
+= Version 2.8.1 (2021-05-23) =
+* Added: Option to set an add-on as default
+* Updated: Decimal point option
+* Updated: Allowed HTML on item names
+* Fixed: Responsive view issues
+* Fixed: Tax calculation issues
+* Fixed: Email receipt calculation issues
+* Fixed: Pick-up time issue on cart
+* Minor code cleanup
+
+= Version 2.8 (2021-04-30) =
+* Updated: The layout of the order history page
+* Updated: Extensions-related hooks
+* Updated: Store Address on order confirmation page
+* Updated: Service type on checkout page
+* Updated: Buttons loader added
+* Updated: Purchase receipt template updated
+* Fixed: fooditem_cart shortcode issue
+* Fixed: Addon price on tax calculation issue
+* Fixed: Category filter on item search issue
+* Fixed: Discount amount calculation issue
+* Minor code cleanup
+
+= Version 2.7.2.1 (2021-02-07) =
+* Fixed: Extension licensing issues.
+* Fixed: Issues with discount code calculation.
+
+= Version 2.7.2 (2021-02-04) =
+* Fixed: Empty service type/date/time issue.
+* Fixed: Update notification for the extensions.
+* Fixed: Issues with required and max selection option.
+* Fixed: Issue with discount calculation.
+* Updated: Admin veg/non-veg option to allow developers to add new option if needed.
+* Updated: Extensions page layout.
+* Minor code cleanup.
+
+= Version 2.7.1 (2021-01-18) =
+* Fixed: Issue with resend receipt option on order screen.
+* Fixed: Design issue with mobile cart.
+* Fixed: Issue with preparation time.
+* Minor code cleanup.
+
+= Version 2.7 (2021-01-14) =
+* Updated: Theme color option to specify color using color picker.
+* Updated: UI of the food items page.
+* Added: Option to mark the addons as required.
+* Added: Option to set maximum allowed selections for addons.
+* Added: Option of setting different prices to addons on variable food items.
+* Fixed: Issue with preparation time.
+* Fixed: Price calculation issue on order edit screen.
+* Minor code cleanup.
+
+= Version 2.6.3.2 (2020-12-02) =
+* Fixed: Email content issue.
+* Fixed: Customer name association issue.
+* Fixed: Issue with reports and export.
+* Minor code cleanup.
+
+= Version 2.6.3.1 (2020-10-22) =
+* Fixed: trailing comma issue.
+
+= Version 2.6.3 (2020-10-21) =
+* New - RestroPress admin option to set your Food Items page. This will avoid broken pages where the pages were created using page builders in some cases.
+* New - Added active class to category sidebar based on currently visible category.
+* Update - Addons will maintain the order as they are arranged in admin.
+* Fixed - Cart item was showing wrong quantity value if it was added multiple times.
+* Fixed - Email notifications were sent for wrong statuses.
+* Fixed - Order email showing wrong value of subtotal.
+* Fixed - Order confirmation email to admin were not sent under some conditions.
+* Fixed - Live price calculation was wrong while editing an cart item.
+* Fixed - Translatable text for Service Settings text with data sanitization.
+* Update - RestroPress documentation link updated for Help Tab.
+* Update - Other multiple code optimizations.
+
+= Version 2.6.2 =
+* New - Live price change on Variable Price or Addon Selection.
+* Update - Filter added to search orders with specific service date.
+* Fixed - 3x slower time with certain paid extensions has been fixed now.
+* Fixed - RestroPress assets affecting Non RestroPress Pages performance.
+* Fixed - Optimized CSS and JavaScripts files to enhance performance.
+* Fixed - Addons not getting selected while editing cart item.
+* Fixed - Modal windows not opening in Bootstrap 4 themes.
+* Fixed - Issue with exporting orders report.
+* Fixed - Discount value mismatch in order notification emails.
+* Fixed - Discount calculation considering chosen addon items.
+
+= Version 2.6.1 =
+* Fixed fooditem quantity issue
+* Fixed translation issue
+* Fixed tax calculation issue on fees.
+* Fixed order count issue.
+* Fixed food item display issue on the order details page.
+* Added selected variation name in the emails and order details.
+* Added food item description in the popup.
+* Added option for minimum order amount for pickup.
+
+= Version 2.6 =
+* Added variable pricing for food items.
+* Added Email notifications based on different order statuses.
+* Added filter for updating Order and Payment status color codes.
+* Updated Tax options.
+* Updated billing fields to have the option to enable/disable on tax settings.
+* Updated the Add/Edit food item page with item data tabs.
+* Updated admin order listing UI and functionality.
+* Fixed Email Tags and Labels for Tax.
+* Added category menu on mobile.
+* Code optimized for faster checkout.
+* UI improvements throughout the frontend and admin screens.
+* Fixed discount code functionalities.
+
+= Version 2.5.3 =
+* Updated order confirmation page template.
+* Updated food item list email tag.
+* Fixed issue with search box.
+* Checkout page css fixes.
+
+= Version 2.5.2 =
+* Updated food items page ui and responsive fixes.
+* Updated checkout page responsive issues.
+* Removed disable guest checkout option in favour of Login/Register option under checkout options.
+* Fixed date issue based on different timezones.
+* Fixed subtotal related issues.
+
+= Version 2.5.1 =
+* Added new bulk actions for orders.
+* Fixed admin order status column translation issue.
+* Fixed time slot issue.
+* Fixed bulk payment status change issue.
+
+= Version 2.5 =
+* Admin menu split into two parts.
+* Added missing translation strings to be translatable.
+* Added validation methods to the checkout page.
+* Added guest checkout option.
+* Updated admin templates loading method.
+* Updated PayPal standard payment gateway.
+* Updated checkout address fields.
+* Update email content and tags.
+* Cleaned unnecessary admin options.
+* Fixed issue related to order date.
+* Fixed issue with the delivery text translation.
+* Fixed date translation issue.
+* Fixed email tag issue with delivery/billing address.
+* Fixed add-on quantity on quick-view popup.
+
+= Version 2.4.1 =
+* Added validation for time slot checking on proceed to checkout.
+* Code cleanup & admin updates.
+* Fixed admin service date issue.
+* Fixed plugin conflict issues.
+
+= Version 2.4 =
+* Updated order history screen to display additonal columns.
+* Added option to quick view the order details.
+* Added new order statuses.
+* Fixed minimum order issue with tax and fees.
+* Fixed modal backdrop issue.
+* Fixed modal not opening issue.
+* FIxed issue with cart item edit.
+* Fixed tax column issue on checkout.
+
+= Version 2.3.5 =
+* Fixed update cart items issue
+* Fixed food items issue in the order history
+* Fixed backdrop issue
+* Added functionality for orders quick view
+
+= Version 2.3.4 =
+* Fixed date issue on the order confirmation page.
+* Fixed issue with order pickup/delivery time dropdown.
+* Updated delivery/pickup at text on cart/checkout pages.
+
+= Version 2.3.3 =
+* Fixed issue with tax calculation with fee.
+* Updated total/subtotal/fee position.
+* Fixed issue with address hide option on pickup.
+* Fixed issue with cart breaking in some themes.
+* Added special instructions to the fooditem_list email tag.
+
+= Version 2.3.2 =
+* Fixed addon price calculation issue when using fee
+* Fixed discount code issues
+* Fixed fooditems count issue in discount
+* Updated fooditem single to be not accessible by public
+* Updated push notification to show after payment
+* Updated free purchase to test payment
+* Updated fooditem category column to display food items
+* Updated checkout page cart to display subtotal
+* Minor css optimisation
+* Added nl_NL translation.
+
+= Version 2.3.1 =
+* Fixed extra div issue for popup
+* Fixed backdrop issue on closing popup
+* Functionality to show delivery date in the cart
+
+= Version 2.3 =
+* Fixed issue for the map_meta_cap in checkout page
+* Added order_id in the email tag
+* Fixed order_note email tag
+* Added parameters to [fooditems] shortcode
+* Added {service_type}, {service_date}, {payment_status} variables in the order push notifications
+
+= Version 2.2.4 =
+* Fixed bootstrap theme compatibility issue
+* Fixed flat number and phone email tag issue
+* Replaced addon category column with food categories on fooditem page
+* Fixed backdrop issue for the modal
+* Added option to have 24hr store time format
+
+= Version 2.2.3 =
+* Fixed order status filter issue
+
+= Version 2.2.2 =
+* Added order note functionality
+* Added email tag for order note
+
+= Version 2.2.1 =
+* Fixed delivery address for online payment gateways
+
+= Version 2.2 =
+* Fixed responsive design issue
+* Fixed customer delivery address issue
+* Added order status
+* Fixed currency issue for email tag
+* Fixed payment status when payment is done
+* Fixed delete icon issue from checkout page
+* Fixed delivery date issue
+
+= Version 2.1 =
+* Updated responsive design
+* Added sliding cart for mobile devices
+* Added option to set order prep/cooking time
+* Added option to set store closed message
+* Fixed the time dropdown for pickup and deliery
+* Updated plus(+) icon to ADD button.
+
+= Version 2.0.9 =
+* Fixed address field in the checkout page
+* Fixed address email tag in the mail tag list
+* Fixed translation issue for the service type
+* Fixed translation issue for the checkout fields
+
+= Version 2.0.8 =
+* Fixed issue with addon food category in the email receipt
+* Fixed issue with special instruction in the email receipt
+* Fixed delivery address email tag for email receipt
+* Fixed multiple email when using cash on delivery payment gateway
+
+= Version 2.0.7 =
+* Fixed issue with store delivery hours
+* Fixed email tag issue for service_type
+* Fixed email tag issue for service_time
+* Added email tags list in the admin screen
+
+= Version 2.0.6 =
+* Fixed issue with settings submenu
+* Fixed issue with store open time and close time
+* Added settings hook for notification
+
+= Version 2.0.5 =
+* Fixed issue with string offset notice with WordPress version 5.3
+* Fixed issue with no food items found message
+* Fixed issue with Gutenberg error
+* Fixed issue with default store open and close time
+* Fixed addon page css
+
+= Version 2.0.4 =
+* Fixed empty cart message
+* Added email tags for service time {service_time} and service type {service_type}
+* Added shortcode for showing fooditems by category wise
+* Fixed store timings
+* Updated admin settings
+* CSS and js optimized
+* Fixed issue for total costs on payment gateway
+* Code optimized.
+
+= Version 2.0.3 =
+* Fixed bugs with the price calculation.
+* Fixed issue with add-on price.
+* Fixed remove cart item reload issue.
+* Disabled past time display on dropdown of pickup/delivery time.
+* Updated delivery/pickup time options on admin.
+* Updated categories display.
+* Updated cart layout.
+= Version 2.0.2 =
+* Fixed issues with push notifications.
+* Fixed issues with emails.
+* Fixed subtotal calculation issue.
+* Fixed discount calculation issue.
+* Fixed problems with checkbox/radio options.
+* Fixed issues with the image popup display.
+* Updated to automatically create the food items page.
+* Updated admin settings.
+* Added option for to add sound to push notifications.
+= Version 2.0.1 =
+* Fixed popup z-index issue
+* fixed template part issue for before and after food items
+* Added prefix rp for bootstrap classes
+* Added option to open the food image in lightbox.
+* Removed the view option from admin food items
+* Removed the view option from admin add-on category
+* Removed view option from admin food category
+* Fixed cart shortcode template issue
+* Added delivery hours hooks for the add-on
+* Renamed food item add-on category into add-on category
+* Added option to choose if you want to disable the bootstrap files of the plugin.
+* Fixed email template issue when order is placed
+= Version 2.0 =
+* Changed checkout layout
+* Changed quantity box design
+* Fixed CSS issues
+* Fixed option for color theme
+* Js modified for change delivery options
+* Added the add-ons page in the admin
+= Version 1.0.7 =
+* Fixed email issue when order was placed
+* Fixed store open hours issue
+* Replaced Bootstrap modal with fancybox
+* Fixed responsive issues
+* Styles and script modified.
+= Version 1.0.6 =
+* Discount code functionality added.
+* Minimum order price option added.
+* Option to use Google address autocomplete on the checkout page.
+* Modified process to ask for pickup or delivery before adding item to cart.
+* Cash on delivery method added in the payment gateway
+* Fixed the issue with the address in the order history
+* Design fixes.
+= Version 1.0.5 =
+* Payment gateway link modified
+* Minor code optimized
+= Version 1.0.4 =
+* Fixed CSS conflict issue with the theme
+* Fixed JS issues
+* Optimized code
+* Fixed template override method
+* jQuery live search for food items implemented
+* Checked plugin compatibility with different themes
+* Removed slug generation from food items custom post type
+= Version 1.0.3 =
+* Added loader in pop-up when Ajax calls
+* Style fixed for the checkbox
+* Added label for delivery options
+* Added heading for delivery time selection
+= Version 1.0.2 =
+* Fixed issue with currency option in add-on food items.
+= Version 1.0.1 =
+* Fixed design issues.
+* CSS modified
+* JS issue fixed
+* Bugs Fixed
+= Version 1.0 =
+* Initial public release.
+
+
 == Upgrade Notice ==
 
 = 3.4.4 =
+Maintenance release resolving pending order count badge object cache invalidation, AJAX recount class auto-loading, trash item deletion, store timing pre-order compatibility, and checkout time cookie persistence.
+
+= 3.4.3 =
+Maintenance release resolving legacy service selection modal transitions, empty cart cookie clearing, and timezone-agnostic order creation timestamp calculations.
+
+= 3.4.2 =
+Maintenance release wrapping all hardcoded strings in registration, cart, category navigation, dashboard, and email templates with restropress text domain for full translation readiness.
+
+= 3.4.1 =
+Maintenance release resolving percentage discount precision with comma decimal separators, mobile checkout terms checkbox visibility, service type switching on checkout, and storefront error banner styling.
+
+= 3.4 =
+RestroPress 3.4 is the "open the door" release featuring storefront template packs, free configuration for delivery fees and store hours, Gutenberg blocks, PHP 8.x compatibility, Weglot URL translation redirection compatibility, and full localization support for login, registration, forgot password, and minimum order validation forms.
+
+= 3.3.2 =
+Fixes checkout page cart removal breaking when the last item is removed from the cart.
+
+= 3.3.1 =
+Minor update fixing live orders page sound overlay being unable to close/dismiss on live production sites when browser autoplay blocks audio.
+
+= 3.3 =
 A major update: a guided setup wizard with AI menu import, a real time Live Orders board, a redesigned Dashboard and Orders screen, a built-in Sold Out toggle, dietary labels on your menu, and faster Reports. "Food Items" is now labelled "Menu Items" throughout the admin (your links, shortcodes, and data keep working). Please back up your site before upgrading.
 
 = 3.2.8.8.6 =
@@ -548,4 +1281,3 @@ This program is free software; you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 For full details, please visit http://www.gnu.org/licenses/gpl-2.0.html
 For more information and support, visit the [RestroPress website](https://www.restropress.com/).
-

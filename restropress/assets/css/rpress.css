@@ -1,5 +1,25 @@
 /* Restropress Style */
 
+/* ===== RestroPress Order Online Footer Scroll Fix ===== */
+.rpress-section {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+.rpress-sidebar-cart.sticky-sidebar {
+    min-height: auto !important;
+}
+.rpress-section .rpress-sidebar-cart-wrap {
+    max-height: calc(100vh - 140px) !important;
+    overflow-y: auto !important;
+}
+.main-page-wrapper,
+.site-content,
+.wd-entry-content {
+    overflow: visible !important;
+    height: auto !important;
+}
+
 div.rpress-popup-actions .btn-count input[type="button"] {
   width: 36px !important;
   height: 31px !important;
