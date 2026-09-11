@@ -946,9 +946,15 @@ class RP_AJAX {
           $addon_item_like = isset( $addon_data[3] ) ? $addon_data[3] : 'checkbox';
           $addon_id     = ! empty( $addon_data[0] ) ? $addon_data[0] : '';
           $addon_qty    = ! empty( $addon_data[1] ) ? $addon_data[1] : '';
-          $addon_price  = ! empty( $addon_data[2] ) ? $addon_data[2] : '';
           $addon_details = get_term_by( 'id', $addon_id, 'addon_category' );
           if (  $addon_details ) {
+            // Security: never trust the addon price sent in the request. The
+            // packed value string carries a price field the browser filled in,
+            // but a tampered (e.g. negative) value there would lower the order
+            // total. Always resolve the real price for this addon on this food
+            // item server-side instead.
+            $addon_price = rpress_dynamic_addon_price( $fooditem_id, absint( $addon_id ), null, isset( $price_id ) ? $price_id : null );
+            $addon_price = ! empty( $addon_price ) ? floatval( $addon_price ) : 0;
             $addon_item_name = $addon_details->name;
             $options['addon_items'][$key]['addon_item_name'] = $addon_item_name;
             $options['addon_items'][$key]['addon_id'] = $addon_id;
@@ -1020,10 +1026,15 @@ class RP_AJAX {
                   if ( $addon_details ) {
                       $addon_item_name = $addon_details->name;
 
+                      // Security: ignore the price from the request and resolve
+                      // the real addon price server-side, so it cannot be
+                      // tampered to lower the order total.
+                      $addon_price = rpress_dynamic_addon_price( $fooditem_id, absint( $addon_id ), null, '' !== (string) $price_id ? $price_id : null );
+
                       $options['addon_items'][$key] = array(
                           'addon_item_name' => $addon_item_name,
                           'addon_id'        => absint( $addon_id ),
-                          'price'           => floatval( $addon_price ),
+                          'price'           => ! empty( $addon_price ) ? floatval( $addon_price ) : 0,
                           'quantity'        => absint( $addon_qty ),
                           'type'            => sanitize_key( $addon_type ),
                       );

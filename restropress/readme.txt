@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 3.4.5
+Stable tag: 3.4.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -154,6 +154,9 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
+
+= Version 3.4.6 (2026-09-09) =
+* Security: Fixed an order total tampering issue where the add-to-cart and update-cart requests trusted the addon price sent by the browser. Addon prices are now always resolved server-side from the food item, so a manipulated request can no longer lower the order total.
 
 = Version 3.4.5 (2026-09-03) =
 * Fixed: Allowed tips section display on pickup orders in checkout redesign.
