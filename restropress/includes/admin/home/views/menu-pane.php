@@ -39,7 +39,7 @@ defined( 'ABSPATH' ) || exit;
 								<option value="gemini" <?php selected( $ai_provider, 'gemini' ); ?>><?php esc_html_e( 'Google Gemini (your key)', 'restropress' ); ?></option>
 								<option value="claude" <?php selected( $ai_provider, 'claude' ); ?>><?php esc_html_e( 'Anthropic Claude (your key)', 'restropress' ); ?></option>
 							</select>
-							<p class="rp-ob-hint rp-help-text"><?php esc_html_e( 'Use WordPress’ built-in AI if your site already has an AI provider connected (WordPress 6.8+), or bring your own OpenAI, Gemini, or Claude key.', 'restropress' ); ?></p>
+							<p class="rp-ob-hint rp-help-text"><?php esc_html_e( 'WordPress AI requires WordPress 7.0+ or a compatible AI client plugin, with a provider connected. Provider API billing still applies; a ChatGPT subscription does not include API usage. Alternatively, enter your OpenAI, Gemini, or Claude API key.', 'restropress' ); ?></p>
 						</div>
 						<div class="rp-ob-field" id="rp-ob-ai-key-wrap"<?php echo 'wordpress' === $ai_provider ? ' hidden' : ''; ?>>
 							<label for="rp-ob-ai-key"><?php esc_html_e( 'API key', 'restropress' ); ?></label>

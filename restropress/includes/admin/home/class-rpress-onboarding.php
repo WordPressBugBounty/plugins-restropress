@@ -708,6 +708,10 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 */
 		protected static function test_ai_connection( $status ) {
 			if ( 'wordpress' === $status['provider'] ) {
+				if ( function_exists( 'wp_ai_client_prompt' ) ) {
+					$result = self::wordpress_native_text( 'Reply with the single word OK.' );
+					return is_wp_error( $result ) ? $result : ( '' !== trim( $result ) ? true : new WP_Error( 'rpress_wp_ai_empty_test', __( 'WordPress AI connected but returned an empty response.', 'restropress' ) ) );
+				}
 				try {
 					$prompt = \WordPress\AiClient\AiClient::prompt( 'Reply with the single word OK.' );
 					if ( class_exists( '\WordPress\AiClient\Providers\Http\DTO\RequestOptions' ) && method_exists( $prompt, 'usingRequestOptions' ) ) {
@@ -738,7 +742,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 							array(
 								'model'             => $model,
 								'input'             => 'Reply with OK.',
-								'max_output_tokens' => 8,
+								'max_output_tokens' => 16,
 								'store'             => false,
 							)
 						),
@@ -1360,7 +1364,36 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @param string $text Extracted text.
 		 * @return array|WP_Error
 		 */
+		protected static function wordpress_native_text( $text, $upload = null ) {
+			try {
+				$prompt = wp_ai_client_prompt( $text );
+				if ( class_exists( '\WordPress\AiClient\Providers\Http\DTO\RequestOptions' ) ) {
+					$options = new \WordPress\AiClient\Providers\Http\DTO\RequestOptions();
+					$options->setTimeout( null === $upload ? 20 : 60 );
+					$options->setConnectTimeout( 10 );
+					$prompt->using_request_options( $options );
+				}
+				if ( null !== $upload ) {
+					$prompt->as_json_response( self::get_menu_schema() );
+					if ( ! empty( $upload['file'] ) ) {
+						$prompt->with_file( $upload['file'], $upload['type'] );
+					}
+				}
+				$result = $prompt->generate_text();
+				if ( is_wp_error( $result ) ) {
+					return $result;
+				}
+				return is_string( $result ) ? $result : new WP_Error( 'rpress_wp_ai_failed', __( 'WordPress AI returned an unreadable response. Check the connected provider and try again.', 'restropress' ) );
+			} catch ( Throwable $e ) {
+				return new WP_Error( 'rpress_wp_ai_failed', $e->getMessage() );
+			}
+		}
+
 		protected static function parse_with_wordpress_ai( $upload, $ext, $text, $generate_descriptions = false ) {
+			if ( function_exists( 'wp_ai_client_prompt' ) ) {
+				$result = self::wordpress_native_text( self::get_menu_prompt( $text, $generate_descriptions ), empty( $text ) ? $upload : array() );
+				return is_wp_error( $result ) ? $result : self::json_to_payload( $result );
+			}
 			if ( ! class_exists( '\WordPress\AiClient\AiClient' ) ) {
 				return new WP_Error( 'rpress_wp_ai_missing', __( 'WordPress AI is not available on this site.', 'restropress' ) );
 			}
@@ -1471,7 +1504,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 				);
 				$details['error_code']     = 'rate_limit';
 				$details['status_message'] = __( 'AI provider usage limit reached.', 'restropress' );
-			} elseif ( false !== strpos( $lower, 'api key' ) || false !== strpos( $lower, 'unauthenticated' ) || false !== strpos( $lower, 'incorrect_api_key' ) || false !== strpos( $lower, 'invalid authentication' ) || false !== strpos( $lower, ' 401' ) ) {
+			} elseif ( false !== strpos( $lower, 'api key' ) || false !== strpos( $lower, 'api-key' ) || false !== strpos( $lower, 'unauthenticated' ) || false !== strpos( $lower, 'authentication_error' ) || false !== strpos( $lower, 'permission_denied' ) || false !== strpos( $lower, 'incorrect_api_key' ) || false !== strpos( $lower, 'invalid_api_key' ) || false !== strpos( $lower, 'api_key_invalid' ) || false !== strpos( $lower, 'invalid authentication' ) || false !== strpos( $lower, ' 401' ) || false !== strpos( $lower, ' 403' ) ) {
 				$details['title']          = sprintf( __( '%s rejected the API key', 'restropress' ), $label );
 				$details['message']        = __( 'The saved key is missing, invalid, revoked, or belongs to the wrong provider.', 'restropress' );
 				$details['steps']          = array(
@@ -1552,6 +1585,12 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 			$message    = isset( $body['error']['message'] ) ? sanitize_text_field( $body['error']['message'] ) : '';
 			$error_code = isset( $body['error']['code'] ) ? sanitize_key( $body['error']['code'] ) : '';
 			$error_type = isset( $body['error']['type'] ) ? sanitize_key( $body['error']['type'] ) : '';
+			if ( ! $error_type && isset( $body['error']['status'] ) ) {
+				$error_type = sanitize_key( $body['error']['status'] );
+			}
+			if ( ! $error_type && isset( $body['error']['details'][0]['reason'] ) ) {
+				$error_type = sanitize_key( $body['error']['details'][0]['reason'] );
+			}
 			if ( ! $message ) {
 				$message = sprintf(
 					/* translators: 1: provider name, 2: HTTP status code */
@@ -1607,7 +1646,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 				$content[] = array(
 					'type'      => 'input_file',
 					'filename'  => basename( $upload['file'] ),
-					'file_data' => base64_encode( $bytes ),
+					'file_data' => 'data:application/pdf;base64,' . base64_encode( $bytes ),
 				);
 			} elseif ( empty( $text ) ) {
 				return new WP_Error( 'rpress_openai_file_unsupported', __( 'OpenAI could not read this file type. Upload a PDF, image, CSV, or XLSX file.', 'restropress' ) );

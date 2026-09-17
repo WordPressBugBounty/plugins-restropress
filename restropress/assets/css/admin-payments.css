@@ -8144,3 +8144,28 @@ body.restropress_page_rpress-payment-history .ui-datepicker {
         margin-right: 2px;
     }
 }
+
+/* Order activity: compact, readable event cards and a separate composer. */
+.rp-order-details-page .rp-order-notes-layout { grid-template-columns:minmax(0,1.7fr) minmax(260px,1fr); gap:32px; padding:24px!important; align-items:start; }
+.rp-order-details-page .rp-order-note-entry { padding:0 0 16px 18px; }
+.rp-order-details-page .rp-order-note-body { position:relative; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; gap:10px; min-width:0; }
+.rp-order-details-page .rp-order-note-meta { flex-wrap:wrap; gap:6px 10px; padding-right:58px; }
+.rp-order-details-page .rp-order-note-meta .rp-note-kind { color:#334155; background:#e8eef5; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:700; }
+.rp-order-details-page .rp-order-note-meta time { font-size:12px; color:#526176; }
+.rp-order-details-page .rp-order-note-content { font-size:14px; line-height:1.6; overflow-wrap:anywhere; }
+.rp-order-details-page .rp-order-note-content a { color:#174ba0; font-weight:650; text-underline-offset:3px; }
+.rp-order-details-page .rp-order-note-dot { top:22px; }
+.rp-order-details-page .rp-order-notes-timeline::before { top:26px; bottom:36px; }
+.rp-order-details-page .rp-note-actions { position:absolute; right:8px; top:8px; z-index:1; font-size:12px; }
+.rp-order-details-page .rp-note-actions summary { cursor:pointer; list-style:none; color:#526176; min-height:44px; min-width:44px; display:flex; align-items:center; justify-content:center; padding:0 4px; border-radius:6px; }
+.rp-order-details-page .rp-note-actions[open] { background:white; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 12px #0f172a14; }
+.rp-order-details-page .rp-note-actions a { display:flex; min-height:44px; align-items:center; padding:0 14px; }
+.rp-order-details-page .rp-note-actions summary:focus-visible,.rp-order-details-page .rp-order-note-composer textarea:focus-visible { outline:2px solid #174ba0; outline-offset:2px; }
+.rp-order-details-page .rp-order-note-composer { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; gap:12px; }
+.rp-order-details-page .rp-order-note-composer label { color:#18243a; font-size:16px; }
+.rp-order-details-page .rp-note-help { font-size:13px; line-height:1.5; color:#526176; margin:0; }
+.rp-order-details-page .rp-order-note-composer textarea { min-height:130px; padding:12px; border-radius:8px; font-size:14px; box-sizing:border-box; }
+.rp-order-details-page .rp-order-note-composer .button-primary { min-height:44px; background:#c63808; border-color:#c63808; width:100%; }
+@media(max-width:782px) { .rp-order-details-page .rp-order-notes-layout { grid-template-columns:1fr; padding:16px!important; gap:24px; } .rp-order-details-page .rp-order-note-body { padding:12px; } }
+
+.rp-order-details-page .rp-order-note-composer textarea { font-family:inherit; border:1px solid #cbd5e1; background:#fff; }

@@ -44,7 +44,9 @@
     return cfg.errorText || 'Something went wrong. Please try again.';
   }
   function errorData(value){
-    var xhr = value && typeof value === 'object' && ('status' in value || 'responseText' in value) ? value : null;
+    // Provider error payloads also contain `status` (AI configuration), so
+    // only a numeric HTTP status or response fields identify an XHR.
+    var xhr = value && typeof value === 'object' && (typeof value.status === 'number' || 'responseText' in value || 'responseJSON' in value) ? value : null;
     var structured = !xhr;
     if (xhr && xhr.responseJSON) {
       value = xhr.responseJSON.data || xhr.responseJSON;
@@ -450,7 +452,7 @@
     $csvForm.on('click', '.rp-csv-change', function (e) { e.preventDefault(); resetCsv(); });
   })();
 
-  /* AI provider selection (WordPress AI / OpenAI / Gemini + key) */
+  /* AI provider selection (WordPress AI / OpenAI / Gemini / Claude + key) */
   function aiProviderData(){
     return { enabled: 'yes', provider: $('#rp-ob-ai-provider').val() || 'wordpress', api_key: $('#rp-ob-ai-key').val() || '', model: '' };
   }
@@ -459,8 +461,10 @@
     $('#rp-ob-ai-key-wrap').prop('hidden', isWp);
     clearInlineError();
     state.testOk = false;
-    $('#rp-ob-ai-key').removeAttr('aria-invalid');
-    aiStatus('', isWp ? 'Test to check your site’s built-in AI connection.' : 'Add your API key, then save & test.');
+    $('#rp-ob-ai-key').val('').attr('type', 'password').removeAttr('aria-invalid');
+    $('#rp-ob-ai-key-toggle').attr({ 'aria-pressed': 'false', 'aria-label': 'Show API key' })
+      .find('.dashicons').addClass('dashicons-visibility').removeClass('dashicons-hidden');
+    aiStatus('', isWp ? 'Test to check your site’s built-in AI connection.' : 'Enter this provider’s key, or leave it blank to use its saved key, then test.');
   });
   $('#rp-ob-ai-key-toggle').on('click', function () {
     var $button = $(this), $input = $('#rp-ob-ai-key');
@@ -543,7 +547,7 @@
     }
     // A newly entered direct-provider key must pass a real request before the
     // file upload starts. This saves the key and removes the first-import race.
-    if ($('#rp-ob-ai-provider').val() !== 'wordpress' && !state.testOk) {
+    if (!state.testOk) {
       clearInlineError();
       showProgress('Saving and testing the AI connection…');
       testAiConnection()

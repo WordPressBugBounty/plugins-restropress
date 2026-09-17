@@ -108,7 +108,7 @@ $message  = $phase_copy[ $phase ][1];
 
 // ETA: show the requested service time until the order is delivered/cancelled.
 $eta_hidden = in_array( $phase, array( 'delivered', 'cancelled' ), true ) || empty( $service_time );
-$eta_value  = 'transit' === $phase ? __( 'Any minute now', 'restropress' ) : $service_time;
+$eta_value  = ( 'transit' === $phase && $is_delivery ) ? __( 'Any minute now', 'restropress' ) : $service_time;
 
 // Payment badge/note. Trim a leading "Pay by/via/with" from the gateway label
 // so notes read "paid by cash" rather than "paid by Pay by cash".

@@ -139,23 +139,38 @@ if ('pending' === $order_status) {
 } elseif ('transit' === $order_status) {
 	$next_action_label = __('Complete delivery', 'restropress');
 }
+// Resolve rider aliases for display without changing the saved order/payment state.
+$fulfilment_status = get_post_meta($payment_id, '_order_status', true) ?: $order_status;
+$fulfilment_aliases = array(
+    'ridercomplete' => 'completed', 'complete' => 'completed', 'delivered' => 'completed',
+    'rideraccept' => 'accepted', 'riderreject' => 'cancelled', 'ridercancel' => 'cancelled',
+);
+$fulfilment_status = isset($fulfilment_aliases[strtolower($fulfilment_status)]) ? $fulfilment_aliases[strtolower($fulfilment_status)] : $fulfilment_status;
+$fulfilment_labels = $order_statuses;
+$fulfilment_labels['out_for_delivery'] = __('Out for Delivery', 'restropress');
+if ('delivery' === $service_type) {
+    $fulfilment_labels['transit'] = __('Picked Up', 'restropress');
+    $fulfilment_labels['completed'] = __('Delivered', 'restropress');
+}
 $fulfilment_status_keys = array('pending', 'accepted', 'processing', 'ready');
 if ('delivery' === $service_type) {
 	$fulfilment_status_keys[] = 'transit';
+	$fulfilment_status_keys[] = 'out_for_delivery';
 }
 $fulfilment_status_keys[] = 'completed';
-$fulfilment_status_keys = array_values(array_filter($fulfilment_status_keys, function ($status_key) use ($order_statuses) {
-	return isset($order_statuses[$status_key]);
+$fulfilment_status_keys = array_values(array_filter($fulfilment_status_keys, function ($status_key) use ($fulfilment_labels) {
+	return isset($fulfilment_labels[$status_key]);
 }));
 $fulfilment_status_descriptions = array(
 	'pending' => __('Order received', 'restropress'),
 	'accepted' => __('Order accepted', 'restropress'),
 	'processing' => __('Order is being prepared', 'restropress'),
 	'ready' => __('Order ready', 'restropress'),
-	'transit' => __('Out for delivery', 'restropress'),
-	'completed' => __('Order completed', 'restropress'),
+	'transit' => __('Food collected by rider', 'restropress'),
+	'out_for_delivery' => __('Rider is on the way', 'restropress'),
+	'completed' => 'delivery' === $service_type ? __('Food delivered', 'restropress') : __('Order completed', 'restropress'),
 );
-$current_fulfilment_index = array_search($order_status, $fulfilment_status_keys, true);
+$current_fulfilment_index = array_search($fulfilment_status, $fulfilment_status_keys, true);
 $payment_key_short = !empty($payment->key) ? substr($payment->key, 0, 14) . '...' : '';
 $trash_order_url = wp_nonce_url(
 	add_query_arg(
@@ -335,8 +350,8 @@ $order_title_extras = ob_get_clean();
 										<div class="rp-order-status-track" aria-label="<?php esc_attr_e('Order status progress', 'restropress'); ?>">
 											<?php foreach ($fulfilment_status_keys as $status_index => $status_key): ?>
 												<?php
-												$status_name = $order_statuses[$status_key];
-												$is_current_status = $status_key === $order_status;
+												$status_name = $fulfilment_labels[$status_key];
+												$is_current_status = $status_key === $fulfilment_status;
 												$is_complete_status = false !== $current_fulfilment_index && $status_index < $current_fulfilment_index;
 												$status_class = $is_current_status ? 'is-current' : ($is_complete_status ? 'is-complete' : '');
 												?>
@@ -1762,10 +1777,47 @@ $order_title_extras = ob_get_clean();
 								<div class="inside rp-order-notes-layout">
 									<div id="rpress-payment-notes-inner" class="rp-order-notes-timeline">
 										<?php
-										$notes = rpress_get_payment_notes($payment_id);
-										if (!empty($notes)):
+										// Keep operational events in the admin timeline; retain original audit records.
+                                        $format_admin_note = static function ($note) {
+                                            $text = trim($note->comment_content);
+                                            if (!empty($note->user_id)) return $text;
+                                            if (preg_match('/^Stripe payment verified\. Transaction ID:/', $text)) return __('Payment confirmed by Stripe.', 'restropress');
+                                            if ($text === 'Status changed from private to Paid') return __('Payment received.', 'restropress');
+                                            if (preg_match('/^Status changed from .+ to private$/', $text)) return null;
+                                            if (in_array($text, array('After payment actions processed.', 'Notification sent successfully.', 'Notification request recorded.'), true)) return null;
+                                            if (strpos($text, 'Notification sent !! ') === 0) {
+                                                if (strpos($text, 'WP_Error') !== false || preg_match('/\[success\]\s*=>\s*(?:0|false)\b/i', $text)) return __('Notification could not be sent.', 'restropress');
+                                                return null;
+                                            }
+                                            if (preg_match('/^rp[ _]dispatch:\s*dispatch eligible riders=0\b/', $text)) return __('No eligible riders available for this order.', 'restropress');
+                                            if (preg_match('/^rp[ _]dispatch:\s*(?:dispatch starting:|dispatch skipped:|dispatch eligible riders=)/', $text)) return null;
+                                            return $text;
+                                        };
+                                        $raw_notes = rpress_get_payment_notes($payment_id);
+                                        $notes = array();
+                                        $has_verified_payment = false;
+                                        foreach ($raw_notes as $raw_note) {
+                                            if (empty($raw_note->user_id) && strpos($raw_note->comment_content, 'Stripe payment verified. Transaction ID:') === 0) $has_verified_payment = true;
+                                        }
+                                        foreach ($raw_notes as $raw_note) {
+                                            if ($has_verified_payment && empty($raw_note->user_id) && trim($raw_note->comment_content) === 'Status changed from private to Paid') continue;
+                                            $display_text = $format_admin_note($raw_note);
+                                            if ($display_text === null) continue;
+                                            $display_note = clone $raw_note;
+                                            $display_note->comment_content = $display_text;
+                                            $notes[] = $display_note;
+                                        }
+
+										usort($notes, static function ($a, $b) { return strcmp($b->comment_date, $a->comment_date) ?: ((int)$b->comment_ID <=> (int)$a->comment_ID); });
+                                        if (!empty($notes)):
 											foreach ($notes as $note):
-												$note_user = __('RPRESS Bot', 'restropress');
+												$note_user = __('System', 'restropress');
+                                                $note_kind = 'Order update';
+                                                if (stripos($note->comment_content, 'Delivery photo:') === 0) $note_kind = 'Delivery proof';
+                                                elseif (preg_match('/could not|failed|no eligible/i', $note->comment_content)) $note_kind = 'Needs attention';
+                                                elseif (preg_match('/payment|refund/i', $note->comment_content)) $note_kind = 'Payment';
+                                                elseif (!empty($note->user_id)) $note_kind = 'Team note';
+                                                elseif (preg_match('/rider|driver|dispatch/i', $note->comment_content)) $note_kind = 'Rider update';
 												if (!empty($note->user_id)) {
 													$note_user_data = get_userdata($note->user_id);
 													if (!empty($note_user_data->display_name)) {
@@ -1789,13 +1841,13 @@ $order_title_extras = ob_get_clean();
 													<span class="rp-order-note-dot" aria-hidden="true"></span>
 													<div class="rp-order-note-body">
 														<div class="rp-order-note-meta">
-															<strong><?php echo esc_html($note_relative); ?></strong>
+															<span class="rp-note-kind"><?php echo esc_html($note_kind); ?></span><time title="<?php echo esc_attr($note->comment_date); ?>"><?php echo esc_html($note_relative); ?></time>
 															<span><?php echo esc_html($note_user); ?></span>
 														</div>
 														<div class="rp-order-note-content">
 															<?php echo wp_kses_post(make_clickable($note->comment_content)); ?>
 														</div>
-														<a href="<?php echo esc_url($delete_note_url); ?>" class="rpress-delete-payment-note rp-order-note-delete" data-note-id="<?php echo absint($note->comment_ID); ?>" data-payment-id="<?php echo absint($payment_id); ?>"><?php esc_html_e('Delete', 'restropress'); ?></a>
+														<details class="rp-note-actions"><summary aria-label="Actions for this note"><?php esc_html_e("Actions", "restropress"); ?></summary><a href="<?php echo esc_url($delete_note_url); ?>" class="rpress-delete-payment-note rp-order-note-delete" data-note-id="<?php echo absint($note->comment_ID); ?>" data-payment-id="<?php echo absint($payment_id); ?>"><?php esc_html_e('Delete', 'restropress'); ?></a></details>
 													</div>
 												</div>
 											<?php endforeach;
@@ -1805,8 +1857,8 @@ $order_title_extras = ob_get_clean();
 										<p class="rpress-no-payment-notes rp-order-notes-empty" <?php echo !empty($notes) ? 'hidden' : ''; ?>><?php esc_html_e('No order notes yet.', 'restropress'); ?></p>
 									</div>
 									<div class="rp-order-note-composer">
-										<label for="rpress-payment-note"><?php esc_html_e('Add internal note', 'restropress'); ?></label>
-										<textarea name="rpress-payment-note" id="rpress-payment-note" class="large-text" placeholder="<?php esc_attr_e('Type your note here...', 'restropress'); ?>"></textarea>
+										<label for="rpress-payment-note"><?php esc_html_e('Add a team note', 'restropress'); ?></label>
+										<p class="rp-note-help">Keep your team informed about this order.</p><textarea aria-describedby="rp-note-privacy" name="rpress-payment-note" id="rpress-payment-note" class="large-text" placeholder="<?php esc_attr_e('Add delivery instructions or a handover update…', 'restropress'); ?>"></textarea><p id="rp-note-privacy" class="rp-note-help">Internal only. Not sent to the customer.</p>
 										<button id="rpress-add-payment-note" class="button button-primary" data-payment-id="<?php echo absint($payment_id); ?>"><?php esc_html_e('Add note', 'restropress'); ?></button>
 									</div>
 								</div><!-- /.inside -->

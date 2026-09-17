@@ -1498,12 +1498,23 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 			break;
 			case 'order_status' :
 				// Order status - native select styled as an operational pill.
-				$order_statuses       = rpress_get_order_statuses();
+				$service_type         = rpress_get_service_type( $payment->ID );
+				$all_order_statuses   = rpress_get_order_statuses();
+				$order_statuses       = function_exists( 'rpress_get_order_statuses_for_service' )
+					? rpress_get_order_statuses_for_service( $service_type )
+					: $all_order_statuses;
 				$current_order_status = rpress_get_order_status( $payment->ID );
-				$current_status_label = isset( $order_statuses[ $current_order_status ] )
-					? (string) $order_statuses[ $current_order_status ]
-					: ucwords( str_replace( array( '-', '_' ), ' ', $current_order_status ) );
+				$current_status_label = isset( $all_order_statuses[ $current_order_status ] )
+					? (string) $all_order_statuses[ $current_order_status ]
+					: ( isset( $order_statuses[ $current_order_status ] )
+						? (string) $order_statuses[ $current_order_status ]
+						: ucwords( str_replace( array( '-', '_' ), ' ', $current_order_status ) ) );
 				$is_disabled = ( $payment->post_status === 'trash' );
+
+				// If current status is not in the service-scoped list (e.g. legacy/manually set), preserve it in dropdown.
+				if ( ! empty( $current_order_status ) && ! isset( $order_statuses[ $current_order_status ] ) && isset( $all_order_statuses[ $current_order_status ] ) ) {
+					$order_statuses[ $current_order_status ] = $all_order_statuses[ $current_order_status ];
+				}
 
 				// Statuses outside the operational set (refunded, failed, or
 				// anything custom) have no <option>, so a select would silently
