@@ -428,6 +428,14 @@ function rpress_recover_payment() {
 	if ( ! $payment->is_recoverable() ) {
 		return;
 	}
+	// Security: the payment_id is sequential and guessable, so gate recovery on
+	// the payment's secret purchase key (included in the recovery link). Without
+	// this an unauthenticated visitor could enumerate guest orders by id and
+	// resume/modify them. hash_equals avoids a timing side channel.
+	$provided_key = isset( $_GET['payment_key'] ) ? sanitize_text_field( $_GET['payment_key'] ) : '';
+	if ( empty( $payment->key ) || ! hash_equals( (string) $payment->key, $provided_key ) ) {
+		return;
+	}
 	if (
 		// Logged in, but wrong user ID
 		( is_user_logged_in() && $payment->user_id != get_current_user_id() )
@@ -439,6 +447,9 @@ function rpress_recover_payment() {
 		$redirect = get_permalink( rpress_get_option( 'order_history_page' ) );
 		rpress_set_error( 'rpress-payment-recovery-user-mismatch', __( 'Error resuming payment.', 'restropress' ) );
 		wp_safe_redirect( $redirect );
+		// Security: stop here. Without this exit, execution fell through to the
+		// order-note write and cart recovery below even when the check failed.
+		exit;
 	}
 	$payment->add_note( __( 'Payment recovery triggered URL', 'restropress' ) );
 	// Empty out the cart.

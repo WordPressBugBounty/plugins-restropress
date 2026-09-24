@@ -1740,7 +1740,7 @@ function rpress_process_paypal_web_accept_and_cart($data, $payment_id)
             rpress_insert_payment_note($payment_id, __('Payment failed due to invalid purchase key in PayPal IPN.', 'restropress'));
             return;
         }
-        if ('completed' == $payment_status || rpress_is_test_mode()) {
+        if ('completed' === $payment_status) {
             rpress_insert_payment_note($payment_id, sprintf(__('PayPal Transaction ID: %s', 'restropress'), $data['txn_id']));
             rpress_set_payment_transaction_id($payment_id, $data['txn_id']);
             rpress_update_payment_status($payment_id, 'publish');
@@ -1884,18 +1884,32 @@ function rpress_paypal_success_page_content($content)
     if (! isset($_REQUEST['payment-id']) && ! rpress_get_purchase_session()) {
         return $content;
     }
-    rpress_empty_cart();
     $payment_id = isset($_REQUEST['payment-id']) ? absint($_REQUEST['payment-id']) : false;
     if (! $payment_id) {
         $session    = rpress_get_purchase_session();
         $payment_id = rpress_get_purchase_id_by_key($session['purchase_key']);
     }
     $payment = new RPRESS_Payment($payment_id);
-    if ($payment->ID > 0 && 'pending' == $payment->status) {
-        // Payment is still pending so show processing indicator to fix the Race Condition, issue #
-        ob_start();
-        rpress_get_template_part('payment', 'processing');
-        $content = ob_get_clean();
+    if ($payment->ID > 0) {
+        if ('publish' === $payment->status) {
+            rpress_empty_cart();
+            return $content;
+        }
+
+        if (in_array($payment->status, array('pending', 'processing'), true)) {
+            // Payment is still pending/processing so show processing indicator to fix the Race Condition, issue #
+            ob_start();
+            rpress_get_template_part('payment', 'processing');
+            return ob_get_clean();
+        }
+
+        // If payment failed or incomplete, do not clear cart or show receipt.
+        $checkout_page = get_permalink(rpress_get_option('purchase_page', false));
+        $alert_message = sprintf(
+            __('Your payment could not be completed. Please <a href="%s">return to checkout</a> to try again.', 'restropress'),
+            esc_url($checkout_page)
+        );
+        return '<div class="rpress-alert rpress-alert-error">' . wp_kses_post($alert_message) . '</div>';
     }
     return $content;
 }

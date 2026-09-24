@@ -1628,7 +1628,9 @@ public function __set( $key, $value ) {
 		if ( ! $this->is_recoverable() ) {
 			return false;
 		}
-		$recovery_url = add_query_arg( array( 'rpress_action' => 'recover_payment', 'payment_id' => $this->ID ), rpress_get_checkout_uri() );
+		// Include the secret purchase key so recovery cannot be triggered by
+		// guessing the sequential payment_id (see rpress_recover_payment()).
+		$recovery_url = add_query_arg( array( 'rpress_action' => 'recover_payment', 'payment_id' => $this->ID, 'payment_key' => $this->key ), rpress_get_checkout_uri() );
 		return apply_filters( 'rpress_payment_recovery_url', $recovery_url, $this );
 	}
 	/**

@@ -117,7 +117,7 @@ if ( '' === $method_noun ) {
 	$method_noun = $payment_method;
 }
 $is_paid   = in_array( $payment->post_status, array( 'publish', 'complete' ), true ) || 'delivered' === $phase;
-$pay_label = $is_paid ? __( 'Paid', 'restropress' ) : __( 'Pay on delivery', 'restropress' );
+$pay_label = $is_paid ? __( 'Paid', 'restropress' ) : '';
 $pay_note  = $is_paid
 	? sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun )
 	: sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when your order arrives', 'restropress' ), $order_total, $method_noun );
@@ -326,7 +326,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 					<div class="rp-track-dp-text">
 						<div class="rp-track-dp-payhead">
 							<span class="rp-track-dp-label"><?php esc_html_e( 'Payment', 'restropress' ); ?></span>
-							<span class="rp-track-pay-badge<?php echo $is_paid ? ' is-paid' : ''; ?>" id="rp-track-pay-badge"><?php echo esc_html( $pay_label ); ?></span>
+							<span class="rp-track-pay-badge<?php echo $is_paid ? ' is-paid' : ''; ?>" id="rp-track-pay-badge"<?php echo ! $is_paid ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $pay_label ); ?></span>
 						</div>
 						<div class="rp-track-dp-detail" id="rp-track-pay-note"><?php echo esc_html( $pay_note ); ?></div>
 					</div>
@@ -467,6 +467,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 		if (phase === 'delivered' && elPayBadge && !elPayBadge.classList.contains('is-paid')) {
 			elPayBadge.classList.add('is-paid');
 			elPayBadge.textContent = CFG.i18n.paid;
+			elPayBadge.style.display = '';
 			if (elPayNote && CFG.i18n.paidNote) { elPayNote.textContent = CFG.i18n.paidNote; }
 		}
 	}

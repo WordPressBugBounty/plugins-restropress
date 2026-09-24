@@ -84,6 +84,20 @@ function rpress_is_gateway_active( $gateway ) {
 	return apply_filters( 'rpress_is_gateway_active', $ret, $gateway, $gateways );
 }
 /**
+ * Checks whether a payment gateway is an offline gateway (e.g. Cash on delivery, test manual payment).
+ *
+ * All other gateways (Stripe, PayPal, Razorpay, Authorize.Net, etc.) are third-party/online gateways.
+ *
+ * @since 3.4.8
+ * @param string $gateway Gateway slug.
+ * @return bool True if offline gateway, false if third-party/online gateway.
+ */
+function rpress_is_offline_gateway( $gateway = '' ) {
+	$gateway = sanitize_key( $gateway );
+	$offline_gateways = apply_filters( 'rpress_offline_payment_gateways', array( 'manual', 'cash_on_delivery', 'cod' ) );
+	return in_array( $gateway, (array) $offline_gateways, true );
+}
+/**
  * Gets the default payment gateway selected from the RPRESS Settings
  *
  * @since 1.0

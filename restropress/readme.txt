@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 3.4.7
+Stable tag: 3.4.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -154,6 +154,14 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
+
+= Version 3.4.8 (2026-09-25) =
+* Security: Hardened the payment recovery flow against unauthenticated order enumeration and order note modification. Resuming a recoverable order now requires the order's secret purchase key rather than just the sequential payment id, and a failed ownership check stops execution immediately instead of falling through to the recovery actions.
+* Fix: Added third-party payment gateway validation for "Order Auto Accepted" setting option so online orders (Stripe, PayPal, Razorpay, etc.) are only auto-accepted after payment completion.
+* Fix: Hardened PayPal Standard IPN test mode verification and protected checkout success page against premature cart clearing on incomplete payments.
+* Fix: Enhanced order receipt and tracking view to hide the "Paid" badge and payment confirmation notes when payments are pending or incomplete.
+* Fix: Scoped order status transition dropdowns in admin payments table by service type.
+* Improvement: Improved AI onboarding error handling and updated order details fulfillment notes display.
 
 = Version 3.4.7 (2026-09-17) =
 * Improved: AI onboarding error handling and provider connection testing with normalized error codes and guidance for OpenAI, Google Gemini, and Anthropic Claude.

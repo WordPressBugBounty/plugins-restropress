@@ -932,10 +932,12 @@ function rpress_get_registered_settings()
 						'type' => 'checkbox',
 					),
 					'order_auto_accepted' => array(
-						'id'   => 'order_auto_accepted',
-						'name' => esc_html__( 'Order Auto Accepted', 'restropress' ),
-						'desc' => esc_html__( 'Automatically update new orders to Accepted after 2 seconds.', 'restropress' ),
-						'type' => 'checkbox',
+						'id'            => 'order_auto_accepted',
+						'name'          => esc_html__( 'Order Auto Accepted', 'restropress' ),
+						'desc'          => esc_html__( 'Automatically update new orders to Accepted after 2 seconds. For third-party online payment gateways (Stripe, PayPal, etc.), orders are only auto-accepted once payment is successfully completed.', 'restropress' ),
+						'type'          => 'checkbox',
+						'tooltip_title' => esc_html__( 'Order Auto Accepted', 'restropress' ),
+						'tooltip_desc'  => esc_html__( 'When enabled, offline orders (Cash on Delivery) are accepted automatically, while online/third-party gateway orders require verified successful payment before auto-accepting.', 'restropress' ),
 					),
 				),
 				// Basic flat delivery fee (free tier). The Delivery Fee extension

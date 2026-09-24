@@ -14,6 +14,7 @@ if ( !defined( 'ABSPATH' ) ) exit;
 
 add_action( 'rpress_insert_payment', 'rpress_maybe_schedule_order_auto_accept', 20, 2 );
 add_action( 'rpress_order_auto_accept_scheduled', 'rpress_run_order_auto_accept', 10, 1 );
+add_action( 'rpress_update_payment_status', 'rpress_maybe_schedule_order_auto_accept_on_status_change', 20, 3 );
 /**
  * Retrieves an instance of RPRESS_Payment for a specified ID.
  *
@@ -241,7 +242,15 @@ function rpress_maybe_schedule_order_auto_accept( $payment_id = 0, $payment_data
 		return;
 	}
 
-	$payment_status = ! empty( $payment_data['status'] ) ? sanitize_key( $payment_data['status'] ) : 'pending';
+	$payment_status = ! empty( $payment_data['status'] ) ? sanitize_key( $payment_data['status'] ) : rpress_get_payment_status( $payment_id );
+	$gateway        = ! empty( $payment_data['gateway'] ) ? $payment_data['gateway'] : rpress_get_payment_gateway( $payment_id );
+	$is_offline     = function_exists( 'rpress_is_offline_gateway' ) ? rpress_is_offline_gateway( $gateway ) : in_array( $gateway, array( 'manual', 'cash_on_delivery', 'cod' ), true );
+
+	// Online/third-party payment gateways (Stripe, PayPal, Razorpay, etc.) must be completed/published before auto-accepting.
+	if ( ! $is_offline && ! in_array( $payment_status, array( 'publish', 'complete' ), true ) ) {
+		return;
+	}
+
 	$disallowed_statuses = array( 'failed', 'abandoned', 'refunded', 'revoked', 'trash' );
 	if ( in_array( $payment_status, $disallowed_statuses, true ) ) {
 		return;
@@ -256,6 +265,22 @@ function rpress_maybe_schedule_order_auto_accept( $payment_id = 0, $payment_data
 	$delay = max( 0, $delay );
 
 	wp_schedule_single_event( time() + $delay, 'rpress_order_auto_accept_scheduled', array( $payment_id ) );
+}
+
+/**
+ * Trigger auto-accept scheduling when payment status is updated to publish (e.g. online payment confirmed).
+ *
+ * @since 3.4.8
+ *
+ * @param int    $payment_id Payment ID.
+ * @param string $new_status New payment status.
+ * @param string $old_status Old payment status.
+ * @return void
+ */
+function rpress_maybe_schedule_order_auto_accept_on_status_change( $payment_id, $new_status, $old_status ) {
+	if ( in_array( sanitize_key( $new_status ), array( 'publish', 'complete' ), true ) ) {
+		rpress_maybe_schedule_order_auto_accept( $payment_id, array( 'status' => $new_status ) );
+	}
 }
 
 /**
@@ -287,6 +312,12 @@ function rpress_run_order_auto_accept( $payment_id = 0 ) {
 	}
 
 	$payment_status = sanitize_key( $payment->status );
+	$is_offline     = function_exists( 'rpress_is_offline_gateway' ) ? rpress_is_offline_gateway( $payment->gateway ) : in_array( $payment->gateway, array( 'manual', 'cash_on_delivery', 'cod' ), true );
+
+	// Online/third-party payment gateways (Stripe, PayPal, etc.) must be completed/published before auto-accepting.
+	if ( ! $is_offline && ! in_array( $payment_status, array( 'publish', 'complete' ), true ) ) {
+		return;
+	}
 	$disallowed_statuses = array( 'failed', 'abandoned', 'refunded', 'revoked', 'trash' );
 	if ( in_array( $payment_status, $disallowed_statuses, true ) ) {
 		return;
