@@ -276,14 +276,14 @@ class RP_REST_Reports_v1_Controller extends WP_REST_Controller
 	{
 		$query_params = parent::get_collection_params();
 		$query_params['start_date'] = array(
-			'description' => __('Start Date of the report.'),
+			'description' => __('Start Date of the report.', 'restropress'),
 			'type' => 'string',
 			'format' => 'date',
 			'sanitize_callback' => 'sanitize_text_field',
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 		$query_params['end_date'] = array(
-			'description' => __('End Date of the report.'),
+			'description' => __('End Date of the report.', 'restropress'),
 			'type' => 'string',
 			'format' => 'date',
 			'sanitize_callback' => 'sanitize_text_field',

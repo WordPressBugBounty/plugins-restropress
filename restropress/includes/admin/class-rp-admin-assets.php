@@ -259,6 +259,12 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
             'launchedText'      => esc_html__( 'Setup complete', 'restropress' ),
             'publishedText'     => esc_html__( 'menu items published.', 'restropress' ),
             'csvReadyText'      => esc_html__( 'Ready to import — click “Upload & map columns”.', 'restropress' ),
+            'saveMenuText'      => esc_html__( 'Save menu', 'restropress' ),
+            'continueText'      => esc_html__( 'Continue', 'restropress' ),
+            'loadSampleText'    => esc_html__( 'Load sample menu', 'restropress' ),
+            'fixConnectionText' => esc_html__( 'Fix the connection issue above, then choose the file again.', 'restropress' ),
+            'fixIssueText'      => esc_html__( 'Fix the issue above, then choose the file again.', 'restropress' ),
+            'usePhotoText'      => esc_html__( 'Use this photo', 'restropress' ),
           )
         );
       }
@@ -412,6 +418,8 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           'group_single'    => esc_js( __( '1 group', 'restropress' ) ),
           'group_plural'    => esc_js( __( 'groups', 'restropress' ) ),
           'variable_empty'  => esc_js( __( 'No options yet - click "+ Add Option" to add sizes or variants.', 'restropress' ) ),
+          'addon_cat_name'  => esc_js( __( 'Addon category Name', 'restropress' ) ),
+          'option_name'     => esc_js( __( 'Option Name', 'restropress' ) ),
         );
         wp_localize_script( 'rp-admin-fooditem-meta-boxes', 'fooditem_meta_boxes', $params );
       }
@@ -426,6 +434,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
             'ajax_url'      => admin_url( 'admin-ajax.php' ),
             'preview_nonce' => wp_create_nonce( 'rpress-preview-order' ),
             'order_nonce'   => wp_create_nonce( 'rpress-order' ),
+            'updating_text' => esc_html__( 'Updating...', 'restropress' ),
           )
         );
 
@@ -444,6 +453,16 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
           array( 'jquery', 'jquery-chosen' ),
           RP_VERSION,
           true
+        );
+        wp_localize_script(
+          'rpress-admin-payments',
+          'rpAdminPayments',
+          array(
+            'add_item'               => esc_html__( 'Add item', 'restropress' ),
+            'choose_menu_item'       => esc_html__( 'Choose a menu item', 'restropress' ),
+            'no_menu_items_found'    => esc_html__( 'No menu items found', 'restropress' ),
+            'choose_menu_item_first' => esc_html__( 'Choose a menu item first.', 'restropress' ),
+          )
         );
 
         // Command Center live refresh - dashboard page only.

@@ -31,7 +31,7 @@ if (is_array($get_all_items) && !empty($get_all_items)):
     <div class="container-actionmenu">
         <button id="actionburger" data-text-menu="<?php esc_attr_e('Menu', 'restropress'); ?>"
             data-text-close="<?php esc_attr_e('Close', 'restropress'); ?>" data-icon-menu="fa fa-cutlery"
-            data-icon-close="fa fa-times" class="<?php esc_html_e( $button_style )?>">
+            data-icon-close="fa fa-times" class="<?php echo esc_attr( $button_style ); ?>">
             <div><i class="fa fa-cutlery" aria-hidden="true"></i></div>
             <span class="menu-text"><?php esc_html_e('Menu', 'restropress'); ?></span>
         </button>

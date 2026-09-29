@@ -52,7 +52,7 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
             array(
                 'args' => array(
                     'id' => array(
-                        'description' => __('Unique identifier for the post.'),
+                        'description' => __('Unique identifier for the post.', 'restropress'),
                         'type' => 'integer',
                     ),
                 ),
@@ -76,7 +76,7 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
                         'force' => array(
                             'type' => 'boolean',
                             'default' => false,
-                            'description' => __('Whether to bypass Trash and force deletion.'),
+                            'description' => __('Whether to bypass Trash and force deletion.', 'restropress'),
                         ),
                     ),
                 ),
@@ -102,7 +102,7 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
             $response->set_data(array("deleted" => $is_deleted, "previous" => $response_collection_data));
             return $response;
         }
-        $response->set_data(array("deleted" => false, "message" => __("Please check ID you are providing", "Restropress")));
+        $response->set_data(array("deleted" => false, "message" => __("Please check ID you are providing", 'restropress')));
         $response->set_status(401);
         return $response;
     }
@@ -129,12 +129,12 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
                 }
             }
             $response = new WP_REST_Response();
-            $response->set_data(array("message" => __("Please check ID you are providing", "Restropress")));
+            $response->set_data(array("message" => __("Please check ID you are providing", 'restropress')));
             $response->set_status(401);
             return $response;
         }
         $response = new WP_REST_Response();
-        $response->set_data(array("message" => __("Please check ID you are providing", "Restropress")));
+        $response->set_data(array("message" => __("Please check ID you are providing", 'restropress')));
         $response->set_status(401);
         return $response;
     }
@@ -157,7 +157,7 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
             return $response;
         }
         $response = new WP_REST_Response();
-        $response->set_data(array("message" => __("Please check ID you are providing", "Restropress")));
+        $response->set_data(array("message" => __("Please check ID you are providing", 'restropress')));
         $response->set_status(401);
         return $response;
     }
@@ -176,7 +176,7 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
 
         if ($is_exist) {
             $response = new WP_REST_Response();
-            $response->set_data(array("message" => __("Email already existed.", "Restropress")));
+            $response->set_data(array("message" => __("Email already existed.", 'restropress')));
             $response->set_status(400);
             return $response;
         }
@@ -186,7 +186,7 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
             return $this->get_customer($request);
         }
         $response = new WP_REST_Response();
-        $response->set_data(array("message" => __("Something wrong happen please try again", "Restropress")));
+        $response->set_data(array("message" => __("Something wrong happen please try again", 'restropress')));
         $response->set_status(400);
         return $response;
     }
@@ -199,57 +199,57 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
     {
         $query_params = parent::get_collection_params();
         $query_params['order'] = array(
-            'description' => __('Order of the collection.'),
+            'description' => __('Order of the collection.', 'restropress'),
             'type' => 'string',
             'default' => "DESC",
             'sanitize_callback' => 'sanitize_text_field',
             'validate_callback' => 'rest_validate_request_arg',
         );
         $query_params['orderby'] = array(
-            'description' => __('Orderby of the collection.'),
+            'description' => __('Orderby of the collection.', 'restropress'),
             'type' => 'string',
             'default' => "id",
             'sanitize_callback' => 'sanitize_text_field',
             'validate_callback' => 'rest_validate_request_arg',
         );
         $query_params['email'] = array(
-            'description' => __('Search by email of the cutomer table.'),
+            'description' => __('Search by email of the customer table.', 'restropress'),
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'validate_callback' => 'rest_validate_request_arg',
         );
         $query_params['id'] = array(
-            'description' => __('Search by id of the cutomer table.'),
+            'description' => __('Search by ID of the customer table.', 'restropress'),
             'type' => 'integer',
             'sanitize_callback' => 'absint',
             'validate_callback' => 'rest_validate_request_arg',
         );
         $query_params['user_id'] = array(
-            'description' => __('Search by user_id of the cutomer table.'),
+            'description' => __('Search by user_id of the customer table.', 'restropress'),
             'type' => 'integer',
             'sanitize_callback' => 'absint',
             'validate_callback' => 'rest_validate_request_arg',
         );
         $query_params['name'] = array(
-            'description' => __('Search by name of the cutomer table.'),
+            'description' => __('Search by name of the customer table.', 'restropress'),
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'validate_callback' => 'rest_validate_request_arg',
         );
         $query_params['meta_key'] = array(
-            'description' => __('Search by meta_key of the cutomer table.'),
+            'description' => __('Search by meta_key of the customer table.', 'restropress'),
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'validate_callback' => 'rest_validate_request_arg',
         );
         $query_params['meta_value'] = array(
-            'description' => __('Search by meta_key of the cutomer table.'),
+            'description' => __('Search by meta_key of the customer table.', 'restropress'),
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'validate_callback' => 'rest_validate_request_arg',
         );
         $query_params['include'] = array(
-            'description' => __('Limit result set to specific IDs.'),
+            'description' => __('Limit result set to specific IDs.', 'restropress'),
             'type' => 'array',
             'items' => array(
                 'type' => 'integer',
@@ -257,7 +257,7 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
             'default' => array(),
         );
         $query_params['exclude'] = array(
-            'description' => __('Ensure result set excludes specific IDs.'),
+            'description' => __('Ensure result set excludes specific IDs.', 'restropress'),
             'type' => 'array',
             'items' => array(
                 'type' => 'integer',
@@ -265,7 +265,7 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
             'default' => array(),
         );
         $query_params['users_include'] = array(
-            'description' => __('Limit result set to specific user IDs.'),
+            'description' => __('Limit result set to specific user IDs.', 'restropress'),
             'type' => 'array',
             'items' => array(
                 'type' => 'integer',
@@ -273,7 +273,7 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
             'default' => array(),
         );
         $query_params['users_exclude'] = array(
-            'description' => __('Ensure result set excludes specific User IDs.'),
+            'description' => __('Ensure result set excludes specific user IDs.', 'restropress'),
             'type' => 'array',
             'items' => array(
                 'type' => 'integer',
@@ -281,17 +281,17 @@ class RP_REST_Customer_v1_Controller extends WP_REST_Controller
             'default' => array(),
         );
         $query_params['meta_query'] = array(
-            'description' => __('Search by meta_value of the cutomer table.'),
+            'description' => __('Search by meta_value of the customer table.', 'restropress'),
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'validate_callback' => 'rest_validate_request_arg',
         );
         $query_params['date'] = array(
-            'description' => __('Search by meta_value of the cutomer table.'),
+            'description' => __('Search by meta_value of the customer table.', 'restropress'),
             'type' => ['string', 'ojcet'],
             'properties' => array(
                 "start" => array(
-                    'description' => __('Start date'),
+                    'description' => __('Start date', 'restropress'),
                     'type' => 'string',
                 ),
                 "end" => array(

@@ -587,7 +587,7 @@ class RP_REST_Foods_V1_Controller extends RP_REST_Posts_Controller {
 	public function get_collection_params() {
 		$query_params = parent::get_collection_params();
 		$query_params['food_type'] = array(
-			'description' => __( 'Filter Food Item with Its type.' ),
+			'description' => __( 'Filter Food Item with Its type.', 'restropress' ),
 			'type'        => 'string',
 			'enum'        => array(
 				'veg',
@@ -595,7 +595,7 @@ class RP_REST_Foods_V1_Controller extends RP_REST_Posts_Controller {
 			),
 		);
 		$query_params['with_addons'] = array(
-			'description' => __( 'Item response will have selected addons of food.' ),
+			'description' => __( 'Item response will have selected addons of food.', 'restropress' ),
 			'type'        => 'string',
 			'enum'        => array(
 				'true',
@@ -603,7 +603,7 @@ class RP_REST_Foods_V1_Controller extends RP_REST_Posts_Controller {
 			),
 		);
 		$query_params['orderby_sales'] = array(
-			'description' => __( 'This will enable order by sales for food items.' ),
+			'description' => __( 'This will enable order by sales for food items.', 'restropress' ),
 			'type'        => 'string',
 			'enum'        => array(
 				'true',

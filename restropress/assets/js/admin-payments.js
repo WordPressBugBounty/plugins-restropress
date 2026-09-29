@@ -641,7 +641,9 @@ jQuery(document).ready(function($){
             this.key = null;
             this.$modal.removeAttr('hidden').attr('aria-hidden', 'false').addClass('is-open');
             this.$modal.find('.rp-order-item-modal__add-field').prop('hidden', false);
-            $('#rp-order-item-modal-title').text('Add item');
+            var addItemText = (typeof rpAdminPayments !== 'undefined' && rpAdminPayments.add_item) ? rpAdminPayments.add_item : 'Add item';
+            var chooseFirstText = (typeof rpAdminPayments !== 'undefined' && rpAdminPayments.choose_menu_item_first) ? rpAdminPayments.choose_menu_item_first : 'Choose a menu item first.';
+            $('#rp-order-item-modal-title').text(addItemText);
             $('#rp-order-item-modal-fooditem').val('');
             $('#rp-order-item-modal-fooditem').trigger('chosen:updated');
             this.populateVariations('', '');
@@ -649,7 +651,7 @@ jQuery(document).ready(function($){
             $('#rp-order-item-modal-qty').val(1);
             $('#rp-order-item-modal-instruction').val('');
             this.$modal.find('.rp-order-item-modal__thumb').html('<span class="dashicons dashicons-store" aria-hidden="true"></span>');
-            this.$modal.find('.rp-order-item-modal__addon-list').html('<p class="rp-order-item-modal__empty">Choose a menu item first.</p>');
+            this.$modal.find('.rp-order-item-modal__addon-list').html('<p class="rp-order-item-modal__empty">' + chooseFirstText + '</p>');
             this.calculate();
         },
 
@@ -865,8 +867,8 @@ jQuery(document).ready(function($){
         $('#rp-order-item-modal-fooditem').chosen({
             width: '100%',
             inherit_select_classes: true,
-            placeholder_text_single: 'Choose a menu item',
-            no_results_text: 'No menu items found'
+            placeholder_text_single: (typeof rpAdminPayments !== 'undefined' && rpAdminPayments.choose_menu_item) ? rpAdminPayments.choose_menu_item : 'Choose a menu item',
+            no_results_text: (typeof rpAdminPayments !== 'undefined' && rpAdminPayments.no_menu_items_found) ? rpAdminPayments.no_menu_items_found : 'No menu items found'
         });
     }
 

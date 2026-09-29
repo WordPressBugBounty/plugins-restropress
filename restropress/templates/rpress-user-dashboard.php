@@ -27,7 +27,7 @@ if ( ! is_user_logged_in() ) {
             <div style="text-align: center; padding-bottom:20px;"><?php echo esc_html(__( 'You are not logged in, please Log In', 'restropress' ) ); ?></div>
             <form action="<?php echo esc_url( $redirect_url ); ?>" method="post" style="text-align: center; padding-bottom:20px;">
                 <input type="hidden" name="redirect_to" value="<?php echo esc_url( $redirect_url ); ?>">
-                <input type="submit" value="Log In" />
+                <input type="submit" value="<?php esc_attr_e( 'Log In', 'restropress' ); ?>" />
             </form>
         </div>
     </div>
@@ -138,7 +138,7 @@ if ( ! is_user_logged_in() ) {
                                     </div>
                                 </div>
                                 <div class="text-end">
-                                    <input type="submit" name="submit_profile_form" value="Save Changes">
+                                    <input type="submit" name="submit_profile_form" value="<?php esc_attr_e( 'Save Changes', 'restropress' ); ?>">
                                 </div>
                             </form>
                         </div>
@@ -461,7 +461,7 @@ if ( ! is_user_logged_in() ) {
                                             </div>
                                             <input type="hidden" name="edit_user_address_index" id="edit_user_address_index" value="">
                                             <div class="text-end">
-                                                <input type="submit" name="submit_user_address" id="form_submit_button" value="Save Address">
+                                                <input type="submit" name="submit_user_address" id="form_submit_button" value="<?php esc_attr_e( 'Save Address', 'restropress' ); ?>">
                                             </div>
                                         </form>
                                     </div>
@@ -478,7 +478,7 @@ if ( ! is_user_logged_in() ) {
     <div class="modal__container modal-content" role="dialog" aria-modal="true">
       <header class="modal__header modal-header">
         <h2 class="modal__title modal-title"></h2>
-        <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+        <button class="modal__close" aria-label="<?php esc_attr_e( 'Close modal', 'restropress' ); ?>" data-micromodal-close></button>
       </header>
       <main class="modal__content modal-body">
       </main>

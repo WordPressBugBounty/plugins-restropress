@@ -671,10 +671,10 @@ jQuery(function ($) {
 
     var method = String((window.DeliveryFeeVars && window.DeliveryFeeVars.delivery_fee_method) || 'zip_based').toLowerCase();
     if (method === 'location_based') {
-      return (window.DeliveryFeeVars && (window.DeliveryFeeVars.error_empty_address || window.DeliveryFeeVars.error_invalid_location)) || 'Please enter your location';
+      return (window.DeliveryFeeVars && (window.DeliveryFeeVars.error_empty_address || window.DeliveryFeeVars.error_invalid_location)) || (window.rp_scripts && window.rp_scripts.enter_your_location) || 'Please enter your location';
     }
 
-    return (window.DeliveryFeeVars && window.DeliveryFeeVars.error_empty_zip) || 'Please enter your zip/postal code';
+    return (window.DeliveryFeeVars && window.DeliveryFeeVars.error_empty_zip) || (window.rp_scripts && window.rp_scripts.enter_your_zip) || 'Please enter your zip/postal code';
   }
 
   function rp_open_legacy_service_options_modal(fooditemId) {
@@ -725,10 +725,12 @@ jQuery(function ($) {
       return '';
     }
 
+    var helpLabel = (typeof rp_scripts !== 'undefined' && rp_scripts.delivery_address_help) ? rp_scripts.delivery_address_help : 'Delivery address help';
+    var helpTooltip = (typeof rp_scripts !== 'undefined' && rp_scripts.change_service_tooltip) ? rp_scripts.change_service_tooltip : 'Change service type, date and time';
     return '' +
       '<span class="rp-delivery-change-helper">' +
-      '<span class="rp-delivery-change-tooltip-icon" tabindex="0" aria-label="Delivery address help">?</span>' +
-      '<span class="rp-delivery-change-tooltip-text">Change service type, date and time</span>' +
+      '<span class="rp-delivery-change-tooltip-icon" tabindex="0" aria-label="' + helpLabel + '">?</span>' +
+      '<span class="rp-delivery-change-tooltip-text">' + helpTooltip + '</span>' +
       '</span>';
   }
 
@@ -744,7 +746,7 @@ jQuery(function ($) {
       '    <div class="modal__container modal-content" role="dialog" aria-modal="true">',
       '      <header class="modal__header modal-header">',
       '        <h2 class="modal__title modal-title"></h2>',
-      '        <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>',
+      '        <button class="modal__close" aria-label="' + ((typeof rp_scripts !== 'undefined' && rp_scripts.close_modal) ? rp_scripts.close_modal : 'Close modal') + '" data-micromodal-close></button>',
       '      </header>',
       '      <main class="modal__content modal-body"></main>',
       '    </div>',
@@ -1602,7 +1604,7 @@ jQuery(function ($) {
           // Check if the delivery zone input exists and has a value
           if ($rp_delivery_zone.length > 0 && !$rp_delivery_zone.val().trim()) {
             // Show error
-            tata.error('Error', 'Please enter ZIP code', { position: "tr" });
+            tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.enter_zip_code) ? rp_scripts.enter_zip_code : 'Please enter ZIP code', { position: "tr" });
 
             // Trigger Edit button click after 1 second
             setTimeout(function () {
@@ -1619,7 +1621,7 @@ jQuery(function ($) {
             // Check if the delivery zone input exists and has a value
             if ($rp_delivery_location.length > 0 && !$rp_delivery_location.val().trim()) {
               // Show error
-              tata.error('Error', 'Please enter location', { position: "tr" });
+              tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.enter_location) ? rp_scripts.enter_location : 'Please enter location', { position: "tr" });
 
               // Trigger Edit button click after 1 second
               setTimeout(function () {
@@ -1836,6 +1838,9 @@ jQuery(function ($) {
       _self.parents('.rpress-cart-item')
         .addClass('edited');
       var CartItemId = _self.attr('data-remove-item');
+      if (typeof CartItemId === 'undefined' || CartItemId === '{edit_food_item}' || CartItemId === '') {
+        CartItemId = _self.attr('data-cart-item') || _self.parents('.rpress-cart-item').attr('data-cart-key') || '0';
+      }
       var FoodItemId = _self.attr('data-item-id');
       var FoodItemName = _self.attr('data-item-name');
       var FoodQuantity = _self.parents('.rpress-cart-item')
@@ -2120,7 +2125,7 @@ jQuery(function ($) {
                   .html(orderInfo);
                 if ($('.delivery-wrap .delivery-change')
                   .length == 0) {
-                  var changeText = rp_is_old_ui_ux_enabled() ? 'Change' : (rp_scripts.change_txt || 'Change?');
+                  var changeText = rp_is_old_ui_ux_enabled() ? ((typeof rp_scripts !== 'undefined' && rp_scripts.change_old_txt) ? rp_scripts.change_old_txt : 'Change') : ((typeof rp_scripts !== 'undefined' && rp_scripts.change_txt) ? rp_scripts.change_txt : 'Change?');
                   var helperHtml = rp_is_old_ui_ux_enabled() ? rp_get_delivery_change_helper_html() : '';
                   $("<a href='#' class='delivery-change'><span class='rp-ajax-toggle-text'>" + changeText + "</span></a>" + helperHtml)
                     .insertAfter(".delivery-opts");
@@ -2366,7 +2371,7 @@ jQuery(function ($) {
       var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
       var hasMultipleServiceTabs = $updateScope.find('#rpressdeliveryTab .single-service-selected').length > 1;
       if (oldUiUxEnabled && hasMultipleServiceTabs && !serviceType) {
-        tata.error('Error', 'Please select a service type', { position: "tr" });
+        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_service_type) ? rp_scripts.select_service_type : 'Please select a service type', { position: "tr" });
         return false;
       }
 
@@ -2399,11 +2404,11 @@ jQuery(function ($) {
         serviceType
       ).length > 0;
       if (oldUiUxEnabled && hasServiceDateSelect && !serviceDate) {
-        tata.error('Error', 'Please select a date', { position: "tr" });
+        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_date) ? rp_scripts.select_date : 'Please select a date', { position: "tr" });
         return false;
       }
       if (oldUiUxEnabled && hasServiceTimeSelect && !rp_is_service_time_hidden(serviceType) && !serviceTime) {
-        tata.error('Error', 'Please select a time', { position: "tr" });
+        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_time) ? rp_scripts.select_time : 'Please select a time', { position: "tr" });
         return false;
       }
       var sDate = serviceDate || rp_getCookie('service_date') || '';
@@ -2555,7 +2560,7 @@ jQuery(function ($) {
       var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
       var hasMultipleServiceTabs = $updateScope.find('#rpressdeliveryTab .single-service-selected').length > 1;
       if (oldUiUxEnabled && hasMultipleServiceTabs && !serviceType) {
-        tata.error('Error', 'Please select a service type', { position: "tr" });
+        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_service_type) ? rp_scripts.select_service_type : 'Please select a service type', { position: "tr" });
         return false;
       }
 
@@ -2580,11 +2585,11 @@ jQuery(function ($) {
         serviceType
       ).length > 0;
       if (oldUiUxEnabled && hasServiceDateSelect && !serviceDate) {
-        tata.error('Error', 'Please select a date', { position: "tr" });
+        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_date) ? rp_scripts.select_date : 'Please select a date', { position: "tr" });
         return false;
       }
       if (oldUiUxEnabled && hasServiceTimeSelect && !rp_is_service_time_hidden(serviceType) && !serviceTime) {
-        tata.error('Error', 'Please select a time', { position: "tr" });
+        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_time) ? rp_scripts.select_time : 'Please select a time', { position: "tr" });
         return false;
       }
       var sDate = serviceDate || rp_getCookie('service_date') || '';

@@ -1,6 +1,7 @@
 <?php
 use Firebase\JWT\JWT;
 use WP_REST_Response as response;
+use Restropress\RestApi\Utilities\RP_JWT_Verifier;
 /**
  * Description of RP_REST_Auth_V1_Controller
  *
@@ -166,27 +167,27 @@ class RP_REST_Auth_V1_Controller {
 			$error = $exc->getMessage();
 			$this->response->set_status( 401 );
 			$this->response->add_headers( array( 'X-WP-RP-error' => $error ) );
-			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', __( $error, 'restropress' ) ) ) );
+			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', RP_JWT_Verifier::get_translatable_error( $error ) ) ) );
 		} catch ( DomainException $exc ) {
 			$error = $exc->getMessage();
 			$this->response->set_status( 401 );
 			$this->response->add_headers( array( 'X-WP-RP-error' => $error ) );
-			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', __( $error, 'restropress' ) ) ) );
+			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', RP_JWT_Verifier::get_translatable_error( $error ) ) ) );
 		} catch ( BeforeValidException $exc ) {
 			$error = $exc->getMessage();
 			$this->response->set_status( 401 );
 			$this->response->add_headers( array( 'X-WP-RP-error' => $error ) );
-			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', __( $error, 'restropress' ) ) ) );
+			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', RP_JWT_Verifier::get_translatable_error( $error ) ) ) );
 		} catch ( UnexpectedValueException $exc ) {
 			$error = $exc->getMessage();
 			$this->response->set_status( 401 );
 			$this->response->add_headers( array( 'X-WP-RP-error' => $error ) );
-			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', __( $error, 'restropress' ) ) ) );
+			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', RP_JWT_Verifier::get_translatable_error( $error ) ) ) );
 		} catch ( Exception $exc ) {
 			$error = $exc->getMessage();
 			$this->response->set_status( 401 );
 			$this->response->add_headers( array( 'X-WP-RP-error' => $error ) );
-			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', __( $error, 'restropress' ) ) ) );
+			$this->response->set_data( array( 'message' => apply_filters( 'rp_api_token_generate_error_message', RP_JWT_Verifier::get_translatable_error( $error ) ) ) );
 		}
 		// Return response;
 		return $this->response;

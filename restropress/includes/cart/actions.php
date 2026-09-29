@@ -131,7 +131,7 @@ function rpress_process_cart_update( $data ) {
 	foreach( $data['rpress-cart-fooditems'] as $key => $cart_fooditem_id ) {
 		$options  = json_decode( stripslashes( $data['rpress-cart-fooditem-' . $key . '-options'] ), true );
 		$quantity = absint( $data['rpress-cart-fooditem-' . $key . '-quantity'] );
-		rpress_set_cart_item_quantity( $cart_fooditem_id, $quantity, $options );
+		rpress_set_cart_item_quantity( $cart_fooditem_id, $quantity, $options, $key );
 	}
 }
 add_action( 'rpress_update_cart', 'rpress_process_cart_update' );

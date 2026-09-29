@@ -67,7 +67,7 @@ class RP_JWT_Verifier {
 				$error = $exc->getMessage();
 				return new WP_Error(
 					'rest_forbidden',
-					apply_filters( 'rp_api_not_valid_error_message', __( $error, 'restropress' ) ),
+					apply_filters( 'rp_api_not_valid_error_message', self::get_translatable_error( $error ) ),
 					array( 'status' => rest_authorization_required_code() )
 				);
 			}
@@ -148,6 +148,25 @@ class RP_JWT_Verifier {
 				apply_filters( 'rp_api_not_valid_error_message', __( 'User is not valid !!!', 'restropress' ) ),
 				array( 'status' => rest_authorization_required_code() )
 			);
+		}
+	}
+
+	/**
+	 * Map JWT error message to translatable string.
+	 *
+	 * @param string $error
+	 * @return string
+	 */
+	public static function get_translatable_error( $error ) {
+		switch ( $error ) {
+			case 'Expired token':
+				return __( 'Expired token', 'restropress' );
+			case 'Signature verification failed':
+				return __( 'Signature verification failed', 'restropress' );
+			case 'Key ID not found':
+				return __( 'Key ID not found', 'restropress' );
+			default:
+				return ! empty( $error ) ? esc_html( $error ) : __( 'Invalid token', 'restropress' );
 		}
 	}
 }

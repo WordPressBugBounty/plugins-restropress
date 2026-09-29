@@ -296,11 +296,10 @@ function get_special_instruction($items)
 function rpress_get_instruction_by_key($cart_key)
 {
   $instruction = '';
-  if ($cart_key !== '') {
+  if ($cart_key !== '' && null !== $cart_key) {
     $cart_items = rpress_get_cart_contents();
-    $cart_items = $cart_items[$cart_key];
-    if (isset($cart_items['instruction'])) {
-      $instruction = !empty($cart_items['instruction']) ? $cart_items['instruction'] : '';
+    if (is_array($cart_items) && isset($cart_items[$cart_key]['instruction'])) {
+      $instruction = !empty($cart_items[$cart_key]['instruction']) ? $cart_items[$cart_key]['instruction'] : '';
     }
   }
   return $instruction;
@@ -1114,16 +1113,16 @@ function rpress_fooditem_update_messages($messages)
     if ($post_type == 'fooditem') {
       $messages[$post_type] = array(
         0 => '', // Unused. Messages start at index 1.
-        1 => sprintf(__('%s updated.'), $post_object->labels->singular_name),
-        2 => __('Custom field updated.'),
-        3 => __('Custom field deleted.'),
-        4 => sprintf(__('%s updated.'), $post_object->labels->singular_name),
-        5 => isset($_GET['revision']) ? sprintf(__('%s restored to revision from %s'), $post_object->labels->singular_name, wp_post_revision_title((int) sanitize_text_field($_GET['revision']), false)) : false,
-        6 => sprintf(__('%s published.'), $post_object->labels->singular_name),
-        7 => sprintf(__('%s saved.'), $post_object->labels->singular_name),
-        8 => sprintf(__('%s submitted'), $post_object->labels->singular_name),
-        9 => sprintf(__('%s scheduled for: <strong>%1$s</strong>'), $post_object->labels->singular_name, date_i18n(__('M j, Y @ G:i'), strtotime($post->post_date)), $post_object->labels->singular_name),
-        10 => sprintf(__('%s draft updated.'), $post_object->labels->singular_name),
+        1 => sprintf(__('%s updated.', 'restropress'), $post_object->labels->singular_name),
+        2 => __('Custom field updated.', 'restropress'),
+        3 => __('Custom field deleted.', 'restropress'),
+        4 => sprintf(__('%s updated.', 'restropress'), $post_object->labels->singular_name),
+        5 => isset($_GET['revision']) ? sprintf(__('%s restored to revision from %s', 'restropress'), $post_object->labels->singular_name, wp_post_revision_title((int) sanitize_text_field($_GET['revision']), false)) : false,
+        6 => sprintf(__('%s published.', 'restropress'), $post_object->labels->singular_name),
+        7 => sprintf(__('%s saved.', 'restropress'), $post_object->labels->singular_name),
+        8 => sprintf(__('%s submitted', 'restropress'), $post_object->labels->singular_name),
+        9 => sprintf(__('%s scheduled for: <strong>%1$s</strong>', 'restropress'), $post_object->labels->singular_name, date_i18n(__('M j, Y @ G:i', 'restropress'), strtotime($post->post_date)), $post_object->labels->singular_name),
+        10 => sprintf(__('%s draft updated.', 'restropress'), $post_object->labels->singular_name),
       );
     }
   }

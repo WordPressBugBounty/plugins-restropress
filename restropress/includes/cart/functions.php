@@ -109,8 +109,21 @@ function rpress_item_quantities_enabled() {
  * @param array $options Download options, such as price ID
  * @return mixed New Cart array
  */
-function rpress_set_cart_item_quantity( $fooditem_id = 0, $quantity = 1, $options = array() ) {
-	return RPRESS()->cart->set_item_quantity( $fooditem_id, $quantity, $options );
+function rpress_set_cart_item_quantity( $fooditem_id = 0, $quantity = 1, $options = array(), $cart_key = null ) {
+	return RPRESS()->cart->set_item_quantity( $fooditem_id, $quantity, $options, $cart_key );
+}
+/**
+ * Set Cart Item Quantity by exact Cart Key
+ *
+ * @since 3.4.9
+ *
+ * @param int|string $cart_key
+ * @param int        $quantity
+ * @param array      $options
+ * @return array
+ */
+function rpress_set_cart_item_quantity_by_key( $cart_key = 0, $quantity = 1, $options = array() ) {
+	return RPRESS()->cart->set_item_quantity_by_key( $cart_key, $quantity, $options );
 }
 /**
  * Get Cart Item Quantity

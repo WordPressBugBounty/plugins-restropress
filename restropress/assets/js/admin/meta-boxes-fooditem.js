@@ -176,7 +176,8 @@ jQuery( function( $ ) {
 				_self.parents( '.rp-metabox.create-new-addon' ).find( '.addon_category_name' ).text( category_name );
 			}
 		} else {
-			_self.parents( '.rp-metabox.create-new-addon' ).find( '.addon_category_name' ).text( 'Addon category Name' );
+			var defaultCatName = (typeof fooditem_meta_boxes !== 'undefined' && fooditem_meta_boxes.addon_cat_name) ? fooditem_meta_boxes.addon_cat_name : 'Addon category Name';
+			_self.parents( '.rp-metabox.create-new-addon' ).find( '.addon_category_name' ).text( defaultCatName );
 		}
 	});
 
@@ -189,7 +190,8 @@ jQuery( function( $ ) {
 				_self.parents( '.rp-metabox.variable-price' ).find( '.price_name' ).text( option_name );
 			}
 		} else {
-			_self.parents( '.rp-metabox.variable-price' ).find( '.price_name' ).text( 'Option Name' );
+			var defaultOptName = (typeof fooditem_meta_boxes !== 'undefined' && fooditem_meta_boxes.option_name) ? fooditem_meta_boxes.option_name : 'Option Name';
+			_self.parents( '.rp-metabox.variable-price' ).find( '.price_name' ).text( defaultOptName );
 		}
 	});
 

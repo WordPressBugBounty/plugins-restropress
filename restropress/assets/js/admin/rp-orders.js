@@ -312,7 +312,8 @@ jQuery(function ($) {
       return;
     }
 
-    $btn.prop('disabled', true).addClass('is-loading').text('Updating...');
+    var updatingText = (typeof rp_orders_params !== 'undefined' && rp_orders_params.updating_text) ? rp_orders_params.updating_text : 'Updating...';
+    $btn.prop('disabled', true).addClass('is-loading').text(updatingText);
 
     jQuery.ajax({
       url: rp_orders_params.ajax_url,

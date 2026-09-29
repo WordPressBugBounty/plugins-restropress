@@ -3033,7 +3033,7 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 	                <div class="rp-order-preview">
 		                  <div class="rp-grid rp-grid-2 rp-order-preview-summary">
                     <div class="rp-order-preview-address">
-                      <h2><?php esc_html_e( sprintf( __( '%s address', 'restropress' ), '{{ data.service_type }}' ) ); ?></h2>
+                      <h2><?php echo esc_html( sprintf( __( '%s address', 'restropress' ), '{{ data.service_type }}' ) ); ?></h2>
                       <# if ( data.customer_details.address || data.customer_details.flat || data.customer_details.city || data.customer_details.postcode ) { #>
                         <# if ( data.customer_details.address ) { #>{{ data.customer_details.address }}<br /><# } #>
                         <# if ( data.customer_details.flat ) { #>{{ data.customer_details.flat }}<br /><# } #>

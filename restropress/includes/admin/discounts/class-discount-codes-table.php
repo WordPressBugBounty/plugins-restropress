@@ -134,9 +134,9 @@ class RPRESS_Discount_Codes_Table extends WP_List_Table {
 	public function get_views() {
 		$base           = admin_url( 'admin.php?page=rpress-discounts' );
 		$current        = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ): '';
-		$total_count    = '&nbsp;<span class="count">(' . esc_html__( $this->total_count, 'restropress' )    . ')</span>';
-		$active_count   = '&nbsp;<span class="count">(' . esc_html__( $this->active_count, 'restropress' ) . ')</span>';
-		$inactive_count = '&nbsp;<span class="count">(' . esc_html__( $this->inactive_count, 'restropress' )  . ')</span>';
+		$total_count    = '&nbsp;<span class="count">(' . absint( $this->total_count )    . ')</span>';
+		$active_count   = '&nbsp;<span class="count">(' . absint( $this->active_count ) . ')</span>';
+		$inactive_count = '&nbsp;<span class="count">(' . absint( $this->inactive_count )  . ')</span>';
 		$views = array(
 			'all'      => sprintf( '<a href="%s"%s>%s</a>', remove_query_arg( 'status', $base ), $current === 'all' || $current == '' ? ' class="current"' : '', esc_html__( 'All', 'restropress' ) . $total_count ),
 			'active'   => sprintf( '<a href="%s"%s>%s</a>', add_query_arg( 'status', 'active', $base ), $current === 'active' ? ' class="current"' : '', esc_html__( 'Active', 'restropress' ) . $active_count ),

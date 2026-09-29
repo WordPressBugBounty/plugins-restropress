@@ -388,7 +388,7 @@ class RPRESS_Cart {
 			$item_id = isset( $cart[ $key ]['id'] ) ? $cart[ $key ]['id'] : null;
 			unset( $cart[ $key ] );
 		}
-		$this->contents = $cart;
+		$this->contents = array_values( $cart );
 		$this->update_cart();
 		do_action( 'rpress_post_remove_from_cart', $key, $item_id );
 		rpress_clear_errors();
@@ -676,21 +676,52 @@ class RPRESS_Cart {
 		$cart = $this->get_contents();
 		if ( ! is_array( $cart ) ) {
 			return false;
-		} else {
-			foreach ( $cart as $position => $item ) {
-				if( !isset($item['id']) )
-					return;
-				if ( $item['id'] == $fooditem_id ) {
-					if ( isset( $options['price_id'] ) && isset( $item['options']['price_id'] ) ) {
-						if ( (int) $options['price_id'] == (int) $item['options']['price_id'] ) {
-							return $position;
+		}
+
+		if ( isset( $options['cart_key'] ) && isset( $cart[ $options['cart_key'] ] ) ) {
+			return $options['cart_key'];
+		}
+
+		foreach ( $cart as $position => $item ) {
+			if ( ! isset( $item['id'] ) ) {
+				continue;
+			}
+			if ( (int) $item['id'] === (int) $fooditem_id ) {
+				if ( isset( $options['price_id'] ) && isset( $item['options']['price_id'] ) ) {
+					if ( (int) $options['price_id'] !== (int) $item['options']['price_id'] ) {
+						continue;
+					}
+				} elseif ( isset( $options['price_id'] ) xor isset( $item['options']['price_id'] ) ) {
+					continue;
+				}
+
+				if ( isset( $options['addon_items'] ) && is_array( $options['addon_items'] ) ) {
+					$item_addons = isset( $item['options']['addon_items'] ) ? $item['options']['addon_items'] : ( isset( $item['addon_items'] ) ? $item['addon_items'] : array() );
+					if ( is_array( $item_addons ) ) {
+						$opt_ids  = array();
+						$item_ids = array();
+						foreach ( $options['addon_items'] as $oa ) {
+							if ( isset( $oa['addon_id'] ) ) {
+								$opt_ids[] = (int) $oa['addon_id'];
+							}
 						}
-					} else {
-						return $position;
+						foreach ( $item_addons as $ia ) {
+							if ( isset( $ia['addon_id'] ) ) {
+								$item_ids[] = (int) $ia['addon_id'];
+							}
+						}
+						sort( $opt_ids );
+						sort( $item_ids );
+						if ( $opt_ids !== $item_ids ) {
+							continue;
+						}
 					}
 				}
+
+				return $position;
 			}
 		}
+
 		return false;
 	}
 	/**
@@ -718,9 +749,13 @@ class RPRESS_Cart {
 	 * @param int   $fooditem_id Download ID of the item
 	 * @param int   $quantity    Updated quantity of the item
  	 * @param array $options
+ 	 * @param int|null $cart_key Optional exact cart line key.
 	 * @return array $contents Updated cart object.
 	 */
-	public function set_item_quantity( $fooditem_id = 0, $quantity = 1, $options = array() ) {
+	public function set_item_quantity( $fooditem_id = 0, $quantity = 1, $options = array(), $cart_key = null ) {
+		if ( null !== $cart_key ) {
+			return $this->set_item_quantity_by_key( $cart_key, $quantity, $options );
+		}
 		$key  = $this->get_item_position( $fooditem_id, $options );
 		if ( false === $key ) {
 			return $this->contents;
@@ -736,6 +771,44 @@ class RPRESS_Cart {
 		$this->contents[ $key ]['addon_items'] = $addon_items;
 		$this->contents[ $key ]['price_id'] = $price_id;
 		$this->update_cart();
+		do_action( 'rpress_after_set_cart_item_quantity', $fooditem_id, $quantity, $options, $this->contents );
+		return $this->contents;
+	}
+	/**
+	 * Update a specific cart line by its exact cart key.
+	 *
+	 * set_item_quantity() re-derives the line from the food item id via
+	 * get_item_position(), which returns the FIRST line matching that id. When
+	 * the same food item is in the cart more than once (different size/add-ons),
+	 * that overwrites the wrong line. This variant updates the exact line the
+	 * caller identified, so duplicate products can be edited independently.
+	 *
+	 * @since 3.4.9
+	 *
+	 * @param int|string $cart_key Position/key of the cart line to update.
+	 * @param int        $quantity Updated quantity of the item.
+	 * @param array      $options
+	 * @return array $contents Updated cart object.
+	 */
+	public function set_item_quantity_by_key( $cart_key = 0, $quantity = 1, $options = array() ) {
+		$this->get_contents();
+		// Note: strict-null so cart key 0 (the first line) is honoured.
+		if ( null === $cart_key || '' === $cart_key ) {
+			return $this->contents;
+		}
+		$cart_key = absint( $cart_key );
+		if ( ! isset( $this->contents[ $cart_key ] ) ) {
+			return $this->contents;
+		}
+		if ( $quantity < 1 ) {
+			$quantity = 1;
+		}
+		$this->contents[ $cart_key ]['quantity']    = $quantity;
+		$this->contents[ $cart_key ]['instruction'] = isset( $options['instruction'] ) ? $options['instruction'] : '';
+		$this->contents[ $cart_key ]['addon_items'] = isset( $options['addon_items'] ) ? $options['addon_items'] : '';
+		$this->contents[ $cart_key ]['price_id']    = isset( $options['price_id'] ) ? $options['price_id'] : '';
+		$this->update_cart();
+		$fooditem_id = isset( $this->contents[ $cart_key ]['id'] ) ? $this->contents[ $cart_key ]['id'] : 0;
 		do_action( 'rpress_after_set_cart_item_quantity', $fooditem_id, $quantity, $options, $this->contents );
 		return $this->contents;
 	}

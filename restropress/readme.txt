@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 3.4.8
+Stable tag: 3.4.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -154,6 +154,15 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
+
+= Version 3.4.9 (2026-09-29) =
+* Fix: Updating the quantity or options of a cart line no longer changes the wrong line when the same food item is in the cart more than once (different size or add-ons). Cart edits and the quantity stepper now act on the exact cart line rather than the first line matching the food item id.
+* Fix: Cart key 0 is no longer treated as empty in cart item update and edit popup AJAX handlers, preventing edits on the first line from failing or routing to another line.
+* Fix: Cart edit links now reliably resolve key 0 so the edit control never outputs the raw placeholder {edit_food_item}.
+* Fix: Cart contents are now re-indexed sequentially with array_values() on item removal, keeping the server-side session in sync with frontend line indices.
+* Fix: Enhanced get_item_position() to compare add-on items, verify price option IDs, and respect explicit cart keys.
+* Improvement: Full internationalization audit wrapping previously untranslated strings across JavaScript files, admin tables, REST API controllers, and templates with the restropress text domain.
+* Localization: Synchronized languages/restropress.pot catalog with all newly localized strings.
 
 = Version 3.4.8 (2026-09-25) =
 * Security: Hardened the payment recovery flow against unauthenticated order enumeration and order note modification. Resuming a recoverable order now requires the order's secret purchase key rather than just the sequential payment id, and a failed ownership check stops execution immediately instead of falling through to the recovery actions.

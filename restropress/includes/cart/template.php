@@ -146,18 +146,17 @@ function rpress_get_cart_item_template($cart_key, $item, $ajax = false, $data_ke
 	$item = str_replace('{cart_item_id}', absint($cart_key), $item);
 	$item = str_replace('{item_id}', absint($id), $item);
 	$item = str_replace('{remove_url}', $remove_url, $item);
-	if ($edit_item_url) {
+	if ( null !== $edit_item_url && false !== $edit_item_url ) {
 		$item = str_replace('{edit_food_item}', $edit_item_url, $item);
-
+	} else {
+		$item = str_replace('{edit_food_item}', absint($cart_key), $item);
 	}
 	$item = str_replace('{special_instruction}', $instruction, $item);
 	return apply_filters('rpress_cart_item', $item, $id);
 }
 function rpress_edit_cart_item($cart_key, $item)
 {
-	if (is_array($item) && !empty($item)) {
-		return $cart_key;
-	}
+	return absint( $cart_key );
 }
 function get_addon_item_formatted($addon_items)
 {

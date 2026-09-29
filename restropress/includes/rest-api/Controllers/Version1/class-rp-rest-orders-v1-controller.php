@@ -66,11 +66,11 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			array(
 				'args' => array(
 					'id'           => array(
-						'description' => __( 'Unique identifier for the order id.' ),
+						'description' => __( 'Unique identifier for the order id.', 'restropress' ),
 						'type'        => 'integer',
 					),
 					'order_status' => array(
-						'description' => __( 'Order status key.' ),
+						'description' => __( 'Order status key.', 'restropress' ),
 						'type'        => 'string',
 					),
 				),
@@ -109,7 +109,7 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			do_action( 'rpress_update_order_status', $request['id'], $request['order_status'] );
 		}
 		$response_array = array(
-			'message' => 'Order status successfully updated.',
+			'message' => __( 'Order status successfully updated.', 'restropress' ),
 		);
 		$response       = new WP_REST_Response( $response_array );
 		$response->set_status( 200 );
@@ -233,7 +233,7 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 		$query_params = parent::get_collection_params();
 		unset( $query_params['status'] );
 		$query_params['order_status']    = array(
-			'description' => __( 'Limits results to order with the given order status.' ),
+			'description' => __( 'Limits results to order with the given order status.', 'restropress' ),
 			'type'        => 'array',
 			'items'       => array(
 				'type' => 'string',
@@ -241,7 +241,7 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			),
 		);
 		$query_params['service_type']    = array(
-			'description' => __( 'Limits results to order with the given service type.' ),
+			'description' => __( 'Limits results to order with the given service type.', 'restropress' ),
 			'type'        => 'array',
 			'items'       => array(
 				'type' => 'string',
@@ -249,7 +249,7 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			),
 		);
 		$query_params['payment_status']  = array(
-			'description' => __( 'Limits results to order with the given payment status.' ),
+			'description' => __( 'Limits results to order with the given payment status.', 'restropress' ),
 			'type'        => 'array',
 			'items'       => array(
 				'type' => 'string',
@@ -257,39 +257,39 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			),
 		);
 		$query_params['customer']        = array(
-			'description'       => __( 'Search Order by customer id.' ),
+			'description'       => __( 'Search Order by customer ID.', 'restropress' ),
 			'type'              => 'integer',
 			'sanitize_callback' => 'absint',
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 		$query_params['start_date']      = array(
-			'description'       => __( 'Filter Order with Start Date.' ),
+			'description'       => __( 'Filter Order with Start Date.', 'restropress' ),
 			'type'              => 'string',
 			'format'            => 'date-time',
 			'sanitize_callback' => 'sanitize_text_field',
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 		$query_params['end_date']        = array(
-			'description'       => __( 'Filter order with End Date.' ),
+			'description'       => __( 'Filter order with End Date.', 'restropress' ),
 			'type'              => 'string',
 			'format'            => 'date-time',
 			'sanitize_callback' => 'sanitize_text_field',
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 		$query_params['gateway']         = array(
-			'description'       => __( 'Filter order with gateway.' ),
+			'description'       => __( 'Filter order with gateway.', 'restropress' ),
 			'type'              => 'string',
 			'sanitize_callback' => 'sanitize_text_field',
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 		$query_params['search_in_notes'] = array(
-			'description'       => __( 'Search in notes of Orders.' ),
+			'description'       => __( 'Search in notes of Orders.', 'restropress' ),
 			'type'              => 'string',
 			'sanitize_callback' => 'sanitize_text_field',
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 		$query_params['fooditem']        = array(
-			'description' => __( 'Limits results to order with the given food items Id.' ),
+			'description' => __( 'Limits results to order with the given food items ID.', 'restropress' ),
 			'type'        => 'array',
 			'items'       => array(
 				'type' => 'string',
@@ -389,7 +389,7 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			),
 		);
 		$additional_schema['order_status'] = array(
-			'description' => __( 'Give order status.' ),
+			'description' => __( 'Give order status.', 'restropress' ),
 			'type'        => 'string',
 			'items'       => array(
 				'type' => 'string',
@@ -397,7 +397,7 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			),
 		);
 		$additional_schema['service_type'] = array(
-			'description' => __( 'Give order service type.' ),
+			'description' => __( 'Give order service type.', 'restropress' ),
 			'type'        => 'string',
 			'items'       => array(
 				'type' => 'string',
@@ -405,23 +405,23 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 			),
 		);
 		$additional_schema['gateway']      = array(
-			'description' => __( 'Give payment gateway name.' ),
+			'description' => __( 'Give payment gateway name.', 'restropress' ),
 			'type'        => 'string',
 		);
 		$additional_schema['order_note']   = array(
-			'description' => __( 'Order note or instrucitons.' ),
+			'description' => __( 'Order note or instructions.', 'restropress' ),
 			'type'        => 'string',
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'readonly'    => true,
 		);
 		$additional_schema['service_time'] = array(
-			'description' => __( 'Order note or instrucitons.' ),
+			'description' => __( 'Order note or instructions.', 'restropress' ),
 			'type'        => 'time',
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'readonly'    => true,
 		);
 		$additional_schema['service_date'] = array(
-			'description' => __( 'Order note or instrucitons.' ),
+			'description' => __( 'Order note or instructions.', 'restropress' ),
 			'type'        => 'date',
 			'context'     => array( 'view', 'edit', 'embed' ),
 			'readonly'    => true,
@@ -501,7 +501,7 @@ class RP_REST_Orders_V1_Controller extends RP_REST_Posts_Controller {
 		if ( ! empty( $request['id'] ) ) {
 			return new WP_Error(
 				'rest_post_exists',
-				__( 'Cannot create existing post.' ),
+				__( 'Cannot create existing post.', 'restropress' ),
 				array( 'status' => 400 )
 			);
 		}

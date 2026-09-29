@@ -262,7 +262,7 @@ class RP_REST_Cart_V1_Controller extends WP_REST_Controller {
 	public function delete_cart_content( WP_REST_Request $request ): WP_REST_Response {
 		rpress_empty_cart();
 		$response = new WP_REST_Response();
-		$response->set_data( array( 'message' => __( 'Successfully cart emptied', 'Restropress' ) ) );
+		$response->set_data( array( 'message' => __( 'Successfully cart emptied', 'restropress' ) ) );
 		$response->set_status( 200 );
 		return $response;
 	}
@@ -278,7 +278,7 @@ class RP_REST_Cart_V1_Controller extends WP_REST_Controller {
 		if ( is_array( $cart_data ) && ! empty( $cart_data ) ) {
 			$posts = array();
 			for ( $index = 0; $index < count( $cart_data ); $index++ ) {
-				rpress_set_cart_item_quantity( (int) $cart_data[ $index ]->id, (int) $cart_data[ $index ]->quantity, (array) $cart_data[ $index ] );
+				rpress_set_cart_item_quantity( (int) $cart_data[ $index ]->id, (int) $cart_data[ $index ]->quantity, (array) $cart_data[ $index ], $index );
 			}
 			return $this->get_cart_content( $request );
 		}

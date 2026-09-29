@@ -25,7 +25,8 @@ jQuery('document').ready(function($) {
         dom: 'frtip',
         order: [[ 0, 'desc' ]],
         initComplete: function () {
-            $('#user-orders_filter input').attr('placeholder','Search orders');
+            var searchPlaceholder = (typeof users !== 'undefined' && users.search_orders_placeholder) ? users.search_orders_placeholder : 'Search orders';
+            $('#user-orders_filter input').attr('placeholder', searchPlaceholder);
         }
     });
 }

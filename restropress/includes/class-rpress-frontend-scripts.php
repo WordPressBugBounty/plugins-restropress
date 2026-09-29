@@ -240,6 +240,7 @@ class RP_Frontend_Scripts
       'add_address_title_text' => esc_html__( 'Add Delivery Address', 'restropress' ),
       'save_changes_text' => esc_html__( 'Save Changes', 'restropress' ),
       'save_address_text' => esc_html__( 'Save Address', 'restropress' ),
+      'search_orders_placeholder' => esc_html__( 'Search orders', 'restropress' ),
     );
     $user_dashboard_script_version = RP_VERSION;
     $user_dashboard_script_path = trailingslashit(RP_PLUGIN_DIR) . 'assets/js/user-dashboard.js';
@@ -377,6 +378,18 @@ class RP_Frontend_Scripts
       'closed_message' => $closed_message,
       'old_ui_ux' => !empty(rpress_get_option('old_ui_ux')) ? '1' : '0',
       'is_success_page' => (function_exists('rpress_is_success_page') && rpress_is_success_page()) ? '1' : '0',
+      'please_wait' => esc_html__( 'Please Wait...', 'restropress' ),
+      'enter_zip_code' => esc_html__( 'Please enter ZIP code', 'restropress' ),
+      'enter_location' => esc_html__( 'Please enter location', 'restropress' ),
+      'enter_your_location' => esc_html__( 'Please enter your location', 'restropress' ),
+      'enter_your_zip' => esc_html__( 'Please enter your zip/postal code', 'restropress' ),
+      'select_service_type' => esc_html__( 'Please select a service type', 'restropress' ),
+      'select_date' => esc_html__( 'Please select a date', 'restropress' ),
+      'select_time' => esc_html__( 'Please select a time', 'restropress' ),
+      'delivery_address_help' => esc_attr__( 'Delivery address help', 'restropress' ),
+      'change_service_tooltip' => esc_html__( 'Change service type, date and time', 'restropress' ),
+      'close_modal' => esc_attr__( 'Close modal', 'restropress' ),
+      'change_old_txt' => esc_html__( 'Change', 'restropress' ),
     );
     $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) : $default_service;
     $cookie_service = apply_filters('rpress_current_service_type', $cookie_service);

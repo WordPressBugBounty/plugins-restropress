@@ -835,8 +835,7 @@ class RP_AJAX {
    */
   public static function edit_cart_fooditem() {
     check_ajax_referer( 'edit-cart-fooditem', 'security' );
-    $cart_key  = ! empty( $_POST['cartitem_id'] ) ? sanitize_text_field( wp_unslash( $_POST['cartitem_id'] ) )  : 0 ;
-    $cart_key  = absint( $cart_key );
+    $cart_key  = isset( $_POST['cartitem_id'] ) && '' !== $_POST['cartitem_id'] ? absint( wp_unslash( $_POST['cartitem_id'] ) ) : 0;
     $fooditem_id = ! empty( $_POST['fooditem_id'] ) ? sanitize_text_field ( wp_unslash( $_POST['fooditem_id'] ) ) : NULL ;
     $food_title  = ! empty( $_POST['fooditem_name'] ) ? sanitize_text_field( wp_unslash( $_POST['fooditem_name'] ) ) : get_the_title( $fooditem_id );
     $fooditem_desc  = get_post_field( 'post_content', $fooditem_id );
@@ -988,11 +987,20 @@ class RP_AJAX {
    */
   public static function update_cart_items() {
     check_ajax_referer( 'update-cart-item', 'security' );
-    $cart_key     = isset( $_POST['fooditem_cartkey'] ) && ! empty( $_POST['fooditem_cartkey'] ) ? sanitize_text_field( wp_unslash( $_POST['fooditem_cartkey'] ) ) : NULL;
+    // Note: check against '' (not empty()) so cart key 0 (the first line) is
+    // kept. Treating 0 as empty made edits to the first line fall back to an
+    // id-based lookup that hit the wrong duplicate line.
+    $cart_key     = isset( $_POST['fooditem_cartkey'] ) && '' !== $_POST['fooditem_cartkey'] ? absint( wp_unslash( $_POST['fooditem_cartkey'] ) ) : NULL;
     $fooditem_id  = isset( $_POST['fooditem_id'] ) && ! empty( $_POST['fooditem_id'] ) ? sanitize_text_field( wp_unslash( $_POST['fooditem_id'] ) )  : NULL;
     $item_qty     = isset( $_POST['fooditem_qty'] ) && ! empty( $_POST['fooditem_qty'] ) ? sanitize_text_field( wp_unslash( $_POST['fooditem_qty'] ) )  : 1;
-    if ( empty( $cart_key ) && empty( $fooditem_id ) ) {
+    if ( null === $cart_key && empty( $fooditem_id ) ) {
       return;
+    }
+    if ( empty( $fooditem_id ) && null !== $cart_key ) {
+      $contents = rpress_get_cart_contents();
+      if ( isset( $contents[ $cart_key ]['id'] ) ) {
+        $fooditem_id = $contents[ $cart_key ]['id'];
+      }
     }
     
     $special_instruction = isset( $_POST['special_instruction'] ) ? sanitize_text_field( $_POST['special_instruction'] ) : '';
@@ -1043,7 +1051,14 @@ class RP_AJAX {
           }
       }
     }
-    RPRESS()->cart->set_item_quantity( $fooditem_id, $item_qty, $options );
+    // Update the exact line the edit popup identified, keyed by cart_key. Using
+    // the food item id here overwrote the first line with the same product when
+    // the cart held it more than once (different size/add-ons).
+    if ( null !== $cart_key ) {
+      RPRESS()->cart->set_item_quantity_by_key( $cart_key, $item_qty, $options );
+    } else {
+      RPRESS()->cart->set_item_quantity( $fooditem_id, $item_qty, $options );
+    }
     $item = array(
       'id'      => $fooditem_id,
       'options' => $options
@@ -1111,7 +1126,9 @@ class RP_AJAX {
       'price_id'    => isset( $line['price_id'] ) ? $line['price_id'] : ( isset( $line['options']['price_id'] ) ? $line['options']['price_id'] : '' ),
     );
 
-    RPRESS()->cart->set_item_quantity( $fooditem_id, $quantity, $options );
+    // Key by the exact line, not the food item id, so stepping the quantity on
+    // one of two duplicate products updates that line and not the first match.
+    RPRESS()->cart->set_item_quantity_by_key( $cart_key, $quantity, $options );
 
     $item  = apply_filters( 'rpress_ajax_pre_cart_item_template', array( 'id' => $fooditem_id, 'options' => $options ) );
     $items = rpress_get_cart_item_template( $cart_key, $item, true, '' );
@@ -1827,7 +1844,7 @@ class RP_AJAX {
           $message = $response->get_error_message();
         }
         else {
-          $message = __( 'An error occurred, please try again.' );
+          $message = __( 'An error occurred, please try again.', 'restropress' );
         }
       } else {
         $license_data = json_decode( wp_remote_retrieve_body( $response ) );
@@ -1835,28 +1852,28 @@ class RP_AJAX {
           switch( $license_data->error ) {
               case 'expired' :
                 $message = sprintf(
-                  __( 'Your license key expired on %s.' ),
+                  __( 'Your license key expired on %s.', 'restropress' ),
                   date_i18n( get_option( 'date_format' ), strtotime( $license_data->expires, current_time( 'timestamp' ) ) )
                 );
                 break;
               case 'revoked' :
-                $message = __( 'Your license key has been disabled.' );
+                $message = __( 'Your license key has been disabled.', 'restropress' );
                 break;
               case 'missing' :
-                $message = __( 'Invalid license.' );
+                $message = __( 'Invalid license.', 'restropress' );
                 break;
               case 'invalid' :
               case 'site_inactive' :
-                $message = __( 'Your license is not active for this URL.' );
+                $message = __( 'Your license is not active for this URL.', 'restropress' );
                 break;
               case 'item_name_mismatch' :
-                $message = sprintf( __( 'This appears to be an invalid license key for %s.' ), $name );
+                $message = sprintf( __( 'This appears to be an invalid license key for %s.', 'restropress' ), $name );
                 break;
               case 'no_activations_left':
-                $message = __( 'Your license key has reached its activation limit.' );
+                $message = __( 'Your license key has reached its activation limit.', 'restropress' );
                 break;
               default :
-                $message = __( 'An error occurred, please try again.' );
+                $message = __( 'An error occurred, please try again.', 'restropress' );
                 break;
           }
         }
@@ -1869,7 +1886,7 @@ class RP_AJAX {
         update_option( $license_key, $license );
         // $license_data->license will be either "valid" or "invalid"
         update_option( $license_key . '_status', $license_data->license );
-        $return = array( 'status' => 'updated', 'message' => 'Your license is successfully activated.' );
+        $return = array( 'status' => 'updated', 'message' => __( 'Your license is successfully activated.', 'restropress' ) );
       }
       echo wp_json_encode( $return );
       wp_die();
@@ -2159,7 +2176,7 @@ class RP_AJAX {
     RPRESS()->session->set('rpress_resume_payment', null);
     
     // You can also send a response back to the AJAX request if needed
-    $response = array('message' => 'Cart emptied successfully');
+    $response = array('message' => __( 'Cart emptied successfully', 'restropress' ));
     wp_send_json($response);
     
     // Make sure to exit to prevent any additional output

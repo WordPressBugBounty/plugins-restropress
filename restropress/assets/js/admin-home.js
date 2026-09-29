@@ -183,9 +183,9 @@
     // hide()/show() inline styles lose — toggle a class instead.
     $n.removeClass('rp-ob-hide');
     if (key === 'menu') {
-      if (state.menuSub === 'review' || state.menuSub === 'manual') { $n.text('Save menu'); }
-      else if (state.menuSub === 'choose') { $n.text('Continue'); }
-      else if (state.menuSub === 'sample') { $n.text('Load sample menu'); }
+      if (state.menuSub === 'review' || state.menuSub === 'manual') { $n.text(cfg.saveMenuText || 'Save menu'); }
+      else if (state.menuSub === 'choose') { $n.text(cfg.continueText || 'Continue'); }
+      else if (state.menuSub === 'sample') { $n.text(cfg.loadSampleText || 'Load sample menu'); }
       else { $n.addClass('rp-ob-hide'); }
     } else if (key === 'golive') {
       $n.text(cfg.finishText || 'Finish & go live').prop('disabled', !state.testOk);
@@ -552,7 +552,7 @@
       showProgress('Saving and testing the AI connection…');
       testAiConnection()
         .done(function () { hideProgress(); uploadMenu(files); })
-        .fail(function () { hideProgress(); $('#rp-ob-dzhint').text('Fix the connection issue above, then choose the file again.'); });
+        .fail(function () { hideProgress(); $('#rp-ob-dzhint').text(cfg.fixConnectionText || 'Fix the connection issue above, then choose the file again.'); });
       return;
     }
     clearInlineError();
@@ -579,7 +579,7 @@
           if (err && err.provider_error) {
             aiStatus('error', err.status_message || 'AI connection failed — follow the steps above, then test and retry.');
           }
-          $('#rp-ob-dzhint,#rp-ob-csvhint').text('Fix the issue above, then choose the file again.');
+          $('#rp-ob-dzhint,#rp-ob-csvhint').text(cfg.fixIssueText || 'Fix the issue above, then choose the file again.');
         });
     }
     step();
@@ -751,7 +751,7 @@
     var ix = +this.dataset.ix, it = state.items[ix]; if (!it) { return; }
     if (!window.wp || !wp.media) { notice(cfg.errorText || 'Media library unavailable', 'error'); return; }
     if (!state._mediaFrame) {
-      state._mediaFrame = wp.media({ title: 'Choose item photo', button: { text: 'Use this photo' }, multiple: false, library: { type: 'image' } });
+      state._mediaFrame = wp.media({ title: 'Choose item photo', button: { text: cfg.usePhotoText || 'Use this photo' }, multiple: false, library: { type: 'image' } });
       state._mediaFrame.on('select', function () {
         var att = state._mediaFrame.state().get('selection').first().toJSON();
         var t = state._mediaIx; var item = state.items[t]; if (!item) { return; }

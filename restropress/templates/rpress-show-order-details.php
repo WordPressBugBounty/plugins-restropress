@@ -97,7 +97,7 @@ $order_status_label = rpress_order_details_safe_text( $order_status_label );
 				<span class="button rpress-status"><?php echo esc_html( $order_status_label ); ?></span>
 			<?php endif; ?>
 		</h2>
-		<button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+		<button class="modal__close" aria-label="<?php esc_attr_e( 'Close modal', 'restropress' ); ?>" data-micromodal-close></button>
 	</header>
 	<main class="modal__content modal-body">
 		<div class="rpress-order-details">
