@@ -1841,7 +1841,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 							'output_config' => array(
 								'format' => array(
 									'type'   => 'json_schema',
-									'schema' => self::get_menu_schema(),
+									'schema' => self::close_schema_objects( self::get_menu_schema() ),
 								),
 							),
 						)
@@ -2148,6 +2148,24 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 				),
 				'required'   => array( 'categories' ),
 			);
+		}
+
+		/**
+		 * Claude structured outputs reject any object schema without additionalProperties: false.
+		 *
+		 * @param array $schema JSON schema.
+		 * @return array
+		 */
+		protected static function close_schema_objects( $schema ) {
+			if ( isset( $schema['type'] ) && 'object' === $schema['type'] ) {
+				$schema['additionalProperties'] = false;
+			}
+			foreach ( $schema as $key => $value ) {
+				if ( is_array( $value ) ) {
+					$schema[ $key ] = self::close_schema_objects( $value );
+				}
+			}
+			return $schema;
 		}
 
 		/**

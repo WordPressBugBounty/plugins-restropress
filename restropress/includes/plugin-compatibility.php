@@ -202,4 +202,273 @@ function rpress_weglot_translate_url( $url ) {
 add_filter( 'rpress_get_checkout_uri', 'rpress_weglot_translate_url', 999 );
 add_filter( 'rpress_get_success_page_uri', 'rpress_weglot_translate_url', 999 );
 add_filter( 'rpress_get_failed_transaction_uri', 'rpress_weglot_translate_url', 999 );
-add_filter( 'rpress_get_lostpassword_url', 'rpress_weglot_translate_url', 999 );
+add_filter( 'rpress_get_lostpassword_url', 'rpress_weglot_translate_url', 999 );
+
+/**
+ * Check if WPML is active
+ *
+ * @since 3.4.3
+ * @return bool
+ */
+if ( ! function_exists( 'rpress_wpml_is_active' ) ) {
+	function rpress_wpml_is_active() {
+		return ( defined( 'ICL_SITEPRESS_VERSION' ) || function_exists( 'icl_object_id' ) || has_filter( 'wpml_current_language' ) );
+	}
+}
+
+/**
+ * Get active language code in WPML
+ *
+ * @since 3.4.3
+ * @return string|null
+ */
+if ( ! function_exists( 'rpress_wpml_get_current_language' ) ) {
+	function rpress_wpml_get_current_language() {
+		if ( ! rpress_wpml_is_active() ) {
+			return null;
+		}
+
+		$current_lang = apply_filters( 'wpml_current_language', null );
+
+		// Fallback to WPML cookie if running in an AJAX or early context
+		if ( empty( $current_lang ) && isset( $_COOKIE['wp-wpml_current_language'] ) ) {
+			$current_lang = sanitize_text_field( wp_unslash( $_COOKIE['wp-wpml_current_language'] ) );
+		}
+
+		return $current_lang;
+	}
+}
+
+/**
+ * Translate a RestroPress core page URL into the active WPML language
+ *
+ * @since 3.4.3
+ * @param string $url The default URL
+ * @param string $page_key The RestroPress settings option key (e.g. 'success_page', 'purchase_page')
+ * @return string
+ */
+if ( ! function_exists( 'rpress_wpml_translate_page_url' ) ) {
+	function rpress_wpml_translate_page_url( $url, $page_key ) {
+		if ( ! rpress_wpml_is_active() || ! function_exists( 'rpress_get_option' ) ) {
+			return $url;
+		}
+
+		$page_id = rpress_get_option( $page_key, 0 );
+		if ( ! $page_id ) {
+			return $url;
+		}
+
+		$current_lang = rpress_wpml_get_current_language();
+		if ( empty( $current_lang ) ) {
+			return $url;
+		}
+
+		$translated_id = apply_filters( 'wpml_object_id', (int) $page_id, 'page', true, $current_lang );
+
+		if ( $translated_id && (int) $translated_id !== (int) $page_id ) {
+			$translated_url = get_permalink( $translated_id );
+			$query          = parse_url( $url, PHP_URL_QUERY );
+			if ( ! empty( $query ) ) {
+				parse_str( $query, $query_args );
+				$translated_url = add_query_arg( $query_args, $translated_url );
+			}
+			return $translated_url;
+		}
+
+		return $url;
+	}
+}
+
+if ( ! function_exists( 'rpress_wpml_filter_success_page_uri' ) ) {
+	function rpress_wpml_filter_success_page_uri( $url ) {
+		return rpress_wpml_translate_page_url( $url, 'success_page' );
+	}
+}
+
+if ( ! function_exists( 'rpress_wpml_filter_checkout_page_uri' ) ) {
+	function rpress_wpml_filter_checkout_page_uri( $url ) {
+		return rpress_wpml_translate_page_url( $url, 'purchase_page' );
+	}
+}
+
+if ( ! function_exists( 'rpress_wpml_filter_lostpassword_url' ) ) {
+	function rpress_wpml_filter_lostpassword_url( $url ) {
+		return rpress_wpml_translate_page_url( $url, 'order_login_page' );
+	}
+}
+
+/**
+ * Filter is_a_restropress_page for all translated RestroPress pages.
+ *
+ * @since 3.4.3
+ * @param bool $is_rp_page Current check
+ * @return bool
+ */
+if ( ! function_exists( 'rpress_wpml_filter_is_a_restropress_page' ) ) {
+	function rpress_wpml_filter_is_a_restropress_page( $is_rp_page ) {
+		if ( $is_rp_page ) {
+			return true;
+		}
+
+		if ( ! rpress_wpml_is_active() || ! function_exists( 'rpress_get_option' ) ) {
+			return $is_rp_page;
+		}
+
+		$current_lang = rpress_wpml_get_current_language();
+		if ( empty( $current_lang ) ) {
+			return $is_rp_page;
+		}
+
+		$pages_to_check = array();
+		foreach ( array( 'food_items_page', 'purchase_page', 'success_page' ) as $key ) {
+			$base_id = (int) rpress_get_option( $key, 0 );
+			if ( $base_id ) {
+				$trans_id = apply_filters( 'wpml_object_id', $base_id, 'page', false, $current_lang );
+				if ( $trans_id ) {
+					$pages_to_check[] = (int) $trans_id;
+				}
+			}
+		}
+
+		if ( ! empty( $pages_to_check ) && is_page( $pages_to_check ) ) {
+			return true;
+		}
+
+		$queried_id = (int) get_queried_object_id();
+		if ( ! empty( $pages_to_check ) && in_array( $queried_id, $pages_to_check, true ) ) {
+			return true;
+		}
+
+		return $is_rp_page;
+	}
+}
+
+/**
+ * Filter rpress_is_checkout for translated checkout pages.
+ *
+ * @since 3.4.3
+ * @param bool $is_checkout Current check
+ * @return bool
+ */
+if ( ! function_exists( 'rpress_wpml_filter_is_checkout' ) ) {
+	function rpress_wpml_filter_is_checkout( $is_checkout ) {
+		if ( $is_checkout ) {
+			return true;
+		}
+
+		if ( ! rpress_wpml_is_active() || ! function_exists( 'rpress_get_option' ) ) {
+			return $is_checkout;
+		}
+
+		$current_lang = rpress_wpml_get_current_language();
+		if ( empty( $current_lang ) ) {
+			return $is_checkout;
+		}
+
+		$checkout_page_id = (int) rpress_get_option( 'purchase_page', 0 );
+		if ( $checkout_page_id ) {
+			$trans_id = (int) apply_filters( 'wpml_object_id', $checkout_page_id, 'page', false, $current_lang );
+			if ( $trans_id && is_page( $trans_id ) ) {
+				return true;
+			}
+		}
+
+		return $is_checkout;
+	}
+}
+
+/**
+ * Prevent WordPress canonical redirects on translated RestroPress pages.
+ *
+ * Prevents redirect_canonical from erroneously redirecting translated confirmation
+ * or checkout pages back to parent or default URLs.
+ *
+ * @since 3.4.3
+ * @param string|false $redirect_url The target redirect URL
+ * @param string $requested_url The original requested URL
+ * @return string|false
+ */
+if ( ! function_exists( 'rpress_wpml_disable_canonical_redirect' ) ) {
+	function rpress_wpml_disable_canonical_redirect( $redirect_url, $requested_url ) {
+		if ( ! rpress_wpml_is_active() || ! function_exists( 'rpress_get_option' ) ) {
+			return $redirect_url;
+		}
+
+		$current_lang = rpress_wpml_get_current_language();
+		if ( empty( $current_lang ) ) {
+			return $redirect_url;
+		}
+
+		$success_page_id  = (int) rpress_get_option( 'success_page', 0 );
+		$checkout_page_id = (int) rpress_get_option( 'purchase_page', 0 );
+
+		$pages_to_check = array_filter( array(
+			(int) apply_filters( 'wpml_object_id', $success_page_id, 'page', false, $current_lang ),
+			(int) apply_filters( 'wpml_object_id', $checkout_page_id, 'page', false, $current_lang ),
+		) );
+
+		if ( ! empty( $pages_to_check ) && is_page( $pages_to_check ) ) {
+			return false;
+		}
+
+		$queried_id = get_queried_object_id();
+		if ( ! empty( $pages_to_check ) && in_array( $queried_id, $pages_to_check, true ) ) {
+			return false;
+		}
+
+		return $redirect_url;
+	}
+}
+
+/**
+ * Ensure rpress_is_success_page returns true on translated confirmation pages.
+ *
+ * @since 3.4.3
+ * @param bool $is_success Current determination
+ * @return bool
+ */
+if ( ! function_exists( 'rpress_wpml_filter_is_success_page' ) ) {
+	function rpress_wpml_filter_is_success_page( $is_success ) {
+		if ( $is_success ) {
+			return true;
+		}
+
+		$success_page_id = (int) rpress_get_option( 'success_page', 0 );
+		if ( $success_page_id ) {
+			$current_lang  = rpress_wpml_get_current_language();
+			$translated_id = apply_filters( 'wpml_object_id', $success_page_id, 'page', true, $current_lang );
+			if ( $translated_id && is_page( $translated_id ) ) {
+				return true;
+			}
+		}
+
+		return $is_success;
+	}
+}
+
+if ( ! has_filter( 'rpress_get_success_page_uri', 'rpress_wpml_filter_success_page_uri' ) ) {
+	add_filter( 'rpress_get_success_page_uri', 'rpress_wpml_filter_success_page_uri', 20 );
+}
+if ( ! has_filter( 'rpress_get_checkout_uri', 'rpress_wpml_filter_checkout_page_uri' ) ) {
+	add_filter( 'rpress_get_checkout_uri', 'rpress_wpml_filter_checkout_page_uri', 20 );
+}
+if ( ! has_filter( 'rpress_get_failed_transaction_uri', 'rpress_wpml_filter_checkout_page_uri' ) ) {
+	add_filter( 'rpress_get_failed_transaction_uri', 'rpress_wpml_filter_checkout_page_uri', 20 );
+}
+if ( ! has_filter( 'rpress_get_lostpassword_url', 'rpress_wpml_filter_lostpassword_url' ) ) {
+	add_filter( 'rpress_get_lostpassword_url', 'rpress_wpml_filter_lostpassword_url', 20 );
+}
+if ( ! has_filter( 'rpress_is_success_page', 'rpress_wpml_filter_is_success_page' ) ) {
+	add_filter( 'rpress_is_success_page', 'rpress_wpml_filter_is_success_page', 20 );
+}
+if ( ! has_filter( 'rpress_is_checkout', 'rpress_wpml_filter_is_checkout' ) ) {
+	add_filter( 'rpress_is_checkout', 'rpress_wpml_filter_is_checkout', 20 );
+}
+if ( ! has_filter( 'is_a_restropress_page', 'rpress_wpml_filter_is_a_restropress_page' ) ) {
+	add_filter( 'is_a_restropress_page', 'rpress_wpml_filter_is_a_restropress_page', 20 );
+}
+if ( ! has_filter( 'redirect_canonical', 'rpress_wpml_disable_canonical_redirect' ) ) {
+	add_filter( 'redirect_canonical', 'rpress_wpml_disable_canonical_redirect', 10, 2 );
+}
+
+

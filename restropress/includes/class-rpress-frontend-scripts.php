@@ -390,6 +390,11 @@ class RP_Frontend_Scripts
       'change_service_tooltip' => esc_html__( 'Change service type, date and time', 'restropress' ),
       'close_modal' => esc_attr__( 'Close modal', 'restropress' ),
       'change_old_txt' => esc_html__( 'Change', 'restropress' ),
+      'search_no_results_title' => esc_html__( 'No menu items found', 'restropress' ),
+      'search_no_results_desc' => esc_html__( 'No items matched your search query.', 'restropress' ),
+      /* translators: %s: the search term */
+      'search_no_results_query' => esc_html__( 'No menu items matched "%s". Try checking for spelling or searching for another term.', 'restropress' ),
+      'search_view_full_menu' => esc_html__( 'View Full Menu', 'restropress' ),
     );
     $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) : $default_service;
     $cookie_service = apply_filters('rpress_current_service_type', $cookie_service);
@@ -536,7 +541,12 @@ class RP_Frontend_Scripts
     }
 
     $success_page_id = absint(rpress_get_option('success_page', 0));
-    if ($success_page_id && is_page($success_page_id)) {
+    $post = get_post();
+    if (
+      ( function_exists('rpress_is_success_page') && rpress_is_success_page() )
+      || ( $success_page_id && is_page($success_page_id) )
+      || ( $post instanceof WP_Post && ( has_shortcode((string) $post->post_content, 'rpress_receipt') || ( function_exists('has_block') && has_block('rpress/receipt', $post) ) ) )
+    ) {
       self::enqueue_tracking_styles();
     }
 

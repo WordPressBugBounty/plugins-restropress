@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 3.4.9
+Stable tag: 3.4.10
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -154,6 +154,23 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
+
+= Version 3.4.10 (2026-10-16) =
+* Fix: Menu food item live search now strictly matches food item titles and properly hides non-matching items in modern template packs.
+* Fix: Positioned matched food items at the first position of the menu and synchronized category sidebar navigation, dropdowns, and tabs.
+* Fix: Added search input clear button and empty search results reset handler.
+* Fix: Category scroll spy and direct URL hash category scrolling improvements.
+* Fix: Multilingual category filtering and translation compatibility improvements.
+* Fix: Checkout session and guest payment processing refinements.
+* Fix: Order status changes are now saved together with their related order data under a row lock, so two simultaneous updates (for example the admin and the KDS app) can no longer overwrite each other. Only the order being updated is locked, so new orders are never held up. Sites whose database cannot use transactions fall back to a standard save.
+* Fix: Order status notifications now fire for every order in a bulk status change, not only the first one.
+* Fix: Status data left behind by permanently deleted orders is cleaned up on delete and when the pending order count is refreshed. Trashed orders keep their status, so restoring an order brings it back as it was.
+* Fix: WPML compatibility functions are guarded against redeclaration, and the checkout, success and login pages resolve to the translated page.
+* Fix: Guest customers can open their order receipt from the success page link without relying on the browser session.
+* Fix: Order receipt no longer breaks when a translation contains a malformed placeholder.
+* Fix: AI menu import with Anthropic Claude now sends strict structured output schemas.
+* Localization: Menu search empty state text is now translatable.
+* Dev: Added rpress_is_order_status_transaction() so add-ons listening to order meta changes can skip slow work (such as push notifications) while a status save is in progress and handle it on the rpress_update_order_status action instead.
 
 = Version 3.4.9 (2026-09-29) =
 * Fix: Updating the quantity or options of a cart line no longer changes the wrong line when the same food item is in the cart more than once (different size or add-ons). Cart edits and the quantity stepper now act on the exact cart line rather than the first line matching the food item id.

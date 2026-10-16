@@ -145,9 +145,18 @@ class RP_Admin_Menus
 			return (int) $cached;
 		}
 
+		// Validate and clean up any orphaned or deleted order statuses.
+		if ( function_exists( 'rpress_validate_and_cleanup_order_statuses' ) ) {
+			rpress_validate_and_cleanup_order_statuses();
+		}
+
 		// Ensure RPRESS_Payment_History_Table class is loaded if available.
-		if ( ! class_exists( 'RPRESS_Payment_History_Table' ) && defined( 'RPRESS_PLUGIN_DIR' ) && file_exists( RPRESS_PLUGIN_DIR . 'includes/admin/payments/class-payments-table.php' ) ) {
-			require_once RPRESS_PLUGIN_DIR . 'includes/admin/payments/class-payments-table.php';
+		$plugin_dir = defined( 'RP_PLUGIN_DIR' ) ? RP_PLUGIN_DIR : ( defined( 'RPRESS_PLUGIN_DIR' ) ? RPRESS_PLUGIN_DIR : ( defined( 'RP_PLUGIN_FILE' ) ? plugin_dir_path( RP_PLUGIN_FILE ) : '' ) );
+		if ( ! class_exists( 'WP_List_Table' ) && file_exists( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+		}
+		if ( ! class_exists( 'RPRESS_Payment_History_Table' ) && ! empty( $plugin_dir ) && file_exists( $plugin_dir . 'includes/admin/payments/class-payments-table.php' ) ) {
+			require_once $plugin_dir . 'includes/admin/payments/class-payments-table.php';
 		}
 
 		// Calculate pending order count synchronized with Orders list table needs-attention operational window.
@@ -249,6 +258,8 @@ class RP_Admin_Menus
 	public function on_trash_rpress_payment($post_id)
 	{
 		if (get_post_type($post_id) === 'rpress_payment') {
+			// Keep _order_status: a trashed order must come back with its status
+			// when restored. Status meta is removed only on permanent delete.
 			$this->bump_menu_pending_version();
 		}
 	}

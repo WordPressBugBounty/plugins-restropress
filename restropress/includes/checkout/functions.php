@@ -79,8 +79,19 @@ function rpress_get_success_page_uri( $query_string = null ) {
  * @return bool True if on the Success page, false otherwise.
  */
 function rpress_is_success_page() {
-	$is_success_page = rpress_get_option( 'success_page', false );
-	$is_success_page = isset( $is_success_page ) ? is_page( $is_success_page ) : false;
+	$success_page = rpress_get_option( 'success_page', false );
+	$is_success_page = false;
+	if ( $success_page ) {
+		$is_success_page = is_page( $success_page );
+	}
+	if ( ! $is_success_page && is_singular() ) {
+		$post = get_post();
+		if ( $post instanceof WP_Post ) {
+			if ( has_shortcode( (string) $post->post_content, 'rpress_receipt' ) || ( function_exists( 'has_block' ) && has_block( 'rpress/receipt', $post ) ) ) {
+				$is_success_page = true;
+			}
+		}
+	}
 	return apply_filters( 'rpress_is_success_page', $is_success_page );
 }
 /**
@@ -94,8 +105,15 @@ function rpress_is_success_page() {
 */
 function rpress_send_to_success_page( $query_string = null ) {
 	$redirect = rpress_get_success_page_uri();
-	if ( $query_string )
+	if ( empty( $query_string ) ) {
+		$session = rpress_get_purchase_session();
+		if ( ! empty( $session['purchase_key'] ) ) {
+			$query_string = '?payment_key=' . rawurlencode( $session['purchase_key'] );
+		}
+	}
+	if ( $query_string ) {
 		$redirect .= $query_string;
+	}
 	$gateway = isset( $_REQUEST['rpress-gateway'] ) ? sanitize_text_field( $_REQUEST['rpress-gateway'] ) : '';
 	wp_safe_redirect( apply_filters('rpress_success_page_redirect', $redirect, $gateway, $query_string) );
 	rpress_die();

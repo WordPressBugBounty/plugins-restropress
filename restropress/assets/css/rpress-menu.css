@@ -176,6 +176,10 @@ html {
 	background: none !important;
 	box-shadow: none !important;
 }
+.rpress-menu-v2 .rpress_fooditem.rp-search-hidden,
+.rpress_fooditem.rp-search-hidden {
+	display: none !important;
+}
 .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner {
 	display: flex;
 	flex: 1 1 auto; /* fill the card's stretched grid-cell height */

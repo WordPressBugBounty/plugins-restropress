@@ -381,6 +381,11 @@ function rpress_delete_purchase( $payment_id = 0, $update_customer = true, $dele
 		// Remove the payment ID from the customer
 		$customer->remove_payment( $payment_id );
 	}
+	// Explicitly delete order status and related metadata before post deletion.
+	delete_post_meta( $payment_id, '_order_status' );
+	delete_post_meta( $payment_id, '_rpress_order_status_updated_at' );
+	delete_post_meta( $payment_id, '_pre_trash_status' );
+
 	// Remove the payment
 	wp_delete_post( $payment_id, true );
 	// Remove related sale log entries
@@ -1964,6 +1969,50 @@ function rpress_get_payment_gmt_timestamp( $payment ) {
 }
 
 /**
+ * Validate and clean up order statuses when orders are deleted or orphaned.
+ *
+ * Removes status postmeta (_order_status, _rpress_order_status_updated_at,
+ * _pre_trash_status) left behind by orders that were permanently deleted. Runs on order deletion hooks and on the Refresh Count action.
+ *
+ * @since 3.4.10
+ * @return int Number of deleted orphaned/invalid status rows.
+ */
+function rpress_validate_and_cleanup_order_statuses() {
+	global $wpdb;
+
+	// Only remove status meta whose order post no longer exists. Trashed orders
+	// keep their status so a restore brings them back as they were, and other
+	// post types are left alone since the meta keys are generic.
+	return (int) $wpdb->query(
+		"DELETE pm FROM {$wpdb->postmeta} pm
+		LEFT JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+		WHERE pm.meta_key IN ('_order_status', '_rpress_order_status_updated_at', '_pre_trash_status')
+		  AND p.ID IS NULL"
+	);
+}
+
+/**
+ * Delete order status and related meta when an order post is deleted.
+ *
+ * @since 3.4.10
+ * @param int      $post_id Post ID.
+ * @param \WP_Post $post    Post object.
+ * @return void
+ */
+function rpress_clean_order_status_on_post_delete( $post_id, $post = null ) {
+	if ( ! $post ) {
+		$post = get_post( $post_id );
+	}
+	if ( $post && 'rpress_payment' === $post->post_type ) {
+		delete_post_meta( $post_id, '_order_status' );
+		delete_post_meta( $post_id, '_rpress_order_status_updated_at' );
+		delete_post_meta( $post_id, '_pre_trash_status' );
+	}
+}
+add_action( 'before_delete_post', 'rpress_clean_order_status_on_post_delete', 10, 2 );
+add_action( 'delete_post', 'rpress_clean_order_status_on_post_delete', 10, 2 );
+
+/**
  * Recalculate pending order count and clear cached count transients/options.
  *
  * @since 3.4.4
@@ -1971,6 +2020,9 @@ function rpress_get_payment_gmt_timestamp( $payment ) {
  */
 function rpress_recount_pending_orders_count() {
 	global $wpdb;
+
+	// 0. Validate and clean up any orphaned or deleted order statuses.
+	rpress_validate_and_cleanup_order_statuses();
 
 	// 1. Bump the pending menu version to invalidate all versioned cache keys.
 	$version = (int) get_option( 'rpress_menu_pending_version', 1 ) + 1;
@@ -1987,8 +2039,12 @@ function rpress_recount_pending_orders_count() {
 	wp_cache_delete( 'rpress_orders_needs_attention_' . md5( '||all' ), 'rpress' );
 
 	// 4. Ensure RPRESS_Payment_History_Table class is loaded if available.
-	if ( ! class_exists( 'RPRESS_Payment_History_Table' ) && defined( 'RPRESS_PLUGIN_DIR' ) && file_exists( RPRESS_PLUGIN_DIR . 'includes/admin/payments/class-payments-table.php' ) ) {
-		require_once RPRESS_PLUGIN_DIR . 'includes/admin/payments/class-payments-table.php';
+	$plugin_dir = defined( 'RP_PLUGIN_DIR' ) ? RP_PLUGIN_DIR : ( defined( 'RPRESS_PLUGIN_DIR' ) ? RPRESS_PLUGIN_DIR : ( defined( 'RP_PLUGIN_FILE' ) ? plugin_dir_path( RP_PLUGIN_FILE ) : '' ) );
+	if ( ! class_exists( 'WP_List_Table' ) && file_exists( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+	}
+	if ( ! class_exists( 'RPRESS_Payment_History_Table' ) && ! empty( $plugin_dir ) && file_exists( $plugin_dir . 'includes/admin/payments/class-payments-table.php' ) ) {
+		require_once $plugin_dir . 'includes/admin/payments/class-payments-table.php';
 	}
 
 	// 5. Recalculate pending order count synchronized with Orders list table needs-attention operational window.

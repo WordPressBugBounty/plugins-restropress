@@ -514,7 +514,7 @@ function rpress_cash_on_delivery_payment( $purchase_data ) {
 		rpress_update_order_status( $payment, 'pending' );
 		// Empty the shopping cart
 		rpress_empty_cart();
-		rpress_send_to_success_page();
+		rpress_send_to_success_page( '?payment_key=' . rawurlencode( $payment_data['purchase_key'] ) );
 	} else {
 		rpress_record_gateway_error( __( 'Payment Error', 'restropress' ), sprintf( __( 'Payment creation failed while processing with Cash On delivery order. Payment data: %s', 'restropress' ), wp_json_encode( $payment_data ) ), $payment );
 		// If errors are present, send the user back to the purchase page so they can be corrected

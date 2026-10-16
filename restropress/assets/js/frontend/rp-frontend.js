@@ -3266,18 +3266,21 @@ function rp_get_dynamic_scroll_offset() {
 }
 
 function rp_resolve_category_target($trigger, preferredSelector) {
-  if (!$trigger || !$trigger.length) {
-    return jQuery();
-  }
-
   var selector = '';
-  var dataId = parseInt($trigger.data('id'), 10);
-  if (!isNaN(dataId) && dataId > 0) {
-    selector = '#menu-category-' + dataId;
+  var $scope = jQuery();
+
+  if ($trigger && $trigger.length) {
+    var dataId = parseInt($trigger.data('id'), 10);
+    if (!isNaN(dataId) && dataId > 0) {
+      selector = '#menu-category-' + dataId;
+    } else if (typeof preferredSelector === 'string' && preferredSelector.length > 0) {
+      selector = preferredSelector;
+    } else {
+      selector = $trigger.attr('href') || '';
+    }
+    $scope = $trigger.closest('.rpress-section');
   } else if (typeof preferredSelector === 'string' && preferredSelector.length > 0) {
     selector = preferredSelector;
-  } else {
-    selector = $trigger.attr('href') || '';
   }
 
   if (!selector) {
@@ -3288,7 +3291,6 @@ function rp_resolve_category_target($trigger, preferredSelector) {
     selector = '#' + selector;
   }
 
-  var $scope = $trigger.closest('.rpress-section');
   var $target = jQuery();
 
   if ($scope.length) {
@@ -3311,18 +3313,40 @@ function rp_resolve_category_target($trigger, preferredSelector) {
     $target = jQuery(selector).first();
   }
 
-  // Fallback for theme overrides that still use slug anchors like "#beer".
+  // Fallback for theme overrides that still use slug anchors like "#beer" or "#milkshakes".
   if (!$target.length && selector.charAt(0) === '#') {
     var slug = selector.substring(1);
-    if (slug && slug.indexOf('menu-category-') !== 0) {
-      if ($scope.length) {
-        $target = $scope.find('.menu-category-wrap[data-cat-id="' + slug + '"]').first().closest('.rpress-element-title');
+    if (slug) {
+      var $byId = jQuery('#' + slug).first();
+      if ($byId.length) {
+        $target = $byId.closest('.rpress-element-title').length ? $byId.closest('.rpress-element-title') : $byId;
       }
-      if (!$target.length) {
-        $target = jQuery('.menu-category-wrap[data-cat-id="' + slug + '"]:visible').first().closest('.rpress-element-title');
-      }
-      if (!$target.length) {
-        $target = jQuery('.menu-category-wrap[data-cat-id="' + slug + '"]').first().closest('.rpress-element-title');
+
+      if (!$target.length && slug.indexOf('menu-category-') !== 0) {
+        if ($scope.length) {
+          $target = $scope.find('.menu-category-wrap[data-cat-id="' + slug + '"]').first().closest('.rpress-element-title');
+          if (!$target.length) {
+            $target = $scope.find('.menu-category-wrap[data-cat-id="' + slug + '"]').first();
+          }
+        }
+        if (!$target.length) {
+          $target = jQuery('.menu-category-wrap[data-cat-id="' + slug + '"]:visible').first().closest('.rpress-element-title');
+        }
+        if (!$target.length) {
+          $target = jQuery('.menu-category-wrap[data-cat-id="' + slug + '"]').first().closest('.rpress-element-title');
+        }
+        if (!$target.length) {
+          $target = jQuery('.menu-category-wrap[data-cat-id="' + slug + '"]').first();
+        }
+        if (!$target.length) {
+          var $matchedLink = jQuery('.rpress-category-link[href="#' + slug + '"]').first();
+          if ($matchedLink.length) {
+            var catTermId = $matchedLink.data('id');
+            if (catTermId) {
+              $target = jQuery('#menu-category-' + catTermId).first();
+            }
+          }
+        }
       }
     }
   }
@@ -3354,7 +3378,7 @@ function rp_resolve_category_target($trigger, preferredSelector) {
   };
 
   // Guard against mismatched link->href mappings by validating label vs heading.
-  if ($target.length) {
+  if ($target.length && $trigger && $trigger.length) {
     var linkLabel = getLinkLabel();
     var targetLabel = getHeadingLabel($target);
     var mismatch = (
@@ -3579,6 +3603,90 @@ jQuery(function ($) {
     }
   });
 
+  // Automatically scroll to and activate category section when opening URL with a hash (e.g. #milkshakes)
+  function rp_scroll_to_hash_category(hash) {
+    try {
+      rp_scroll_to_hash_category_target(hash);
+    } catch (e) {
+      // The hash is not a category (e.g. #gid=0) and is not a valid selector.
+    }
+  }
+
+  function rp_scroll_to_hash_category_target(hash) {
+    if (!hash || typeof hash !== 'string') {
+      return;
+    }
+    var cleanHash = hash.replace(/^#/, '').trim();
+    if (!cleanHash) {
+      return;
+    }
+
+    var $target = rp_resolve_category_target(null, '#' + cleanHash);
+    if (!$target.length) {
+      var $byId = $('#' + cleanHash);
+      if ($byId.length) {
+        $target = $byId.closest('.rpress-element-title').length ? $byId.closest('.rpress-element-title') : $byId;
+      }
+    }
+    if (!$target.length) {
+      var $link = $('.rpress-category-link[href="#' + cleanHash + '"], .rpress-category-link[href="#' + cleanHash.toLowerCase() + '"]').first();
+      if ($link.length) {
+        $target = rp_resolve_category_target($link);
+      }
+    }
+    if (!$target.length) {
+      var lowerSlug = cleanHash.toLowerCase();
+      $('.menu-category-wrap').each(function () {
+        var catId = ($(this).attr('data-cat-id') || '').toLowerCase();
+        if (catId === lowerSlug) {
+          $target = $(this).closest('.rpress-element-title').length ? $(this).closest('.rpress-element-title') : $(this);
+          return false;
+        }
+      });
+    }
+
+    if ($target && $target.length) {
+      var termId = $target.attr('data-term-id') || $target.find('.menu-category-wrap').first().data('cat-id') || cleanHash;
+      if (termId) {
+        $('.rpress-category-lists .rpress-category-link').removeClass('active');
+        $('.rpress-category-lists .rpress-category-link').parent().removeClass('current');
+        var $activeLink = $('.rpress-category-lists .rpress-category-link[href="#' + cleanHash + '"], .rpress-category-lists .rpress-category-link[data-id="' + termId + '"]').first();
+        if ($activeLink.length) {
+          $activeLink.addClass('active');
+          $activeLink.parent().addClass('current');
+        }
+
+        $('.pn-ProductNav_Link').removeAttr('aria-selected').removeClass('mnuactive');
+        $('.pn-ProductNav_Link[href="#menu-category-' + termId + '"], .pn-ProductNav_Link[href="#' + cleanHash + '"]')
+          .attr('aria-selected', 'true').addClass('mnuactive');
+        $('.cd-dropdown-content a').removeClass('mnuactive');
+        $('.cd-dropdown-content a[href="#menu-category-' + termId + '"], .cd-dropdown-content a[href="#' + cleanHash + '"]').addClass('mnuactive');
+      }
+
+      rp_scroll_to_category_target($target);
+    }
+  }
+
+  if (window.location.hash) {
+    setTimeout(function () {
+      rp_scroll_to_hash_category(window.location.hash);
+    }, 150);
+  }
+
+  $(window).on('load', function () {
+    if (window.location.hash) {
+      setTimeout(function () {
+        rp_scroll_to_hash_category(window.location.hash);
+      }, 200);
+    }
+  });
+
+  $(window).on('hashchange', function () {
+    if (window.location.hash) {
+      rp_scroll_to_hash_category(window.location.hash);
+    }
+  });
+
 });
 
 /* Cart Quantity Changer - Imported from cart-quantity-changer.js */
@@ -3683,86 +3791,274 @@ jQuery(function ($) {
     });
 });
 jQuery(function ($) {
-  // Detect whether list or grid is currently visible
-  function getCurrentViewContainer() {
-    if ($('.rpress_fooditems_list:visible').length) {
-      return $('.rpress_fooditems_list');
-    } else if ($('.rpress_fooditems_grid:visible').length) {
-      return $('.rpress_fooditems_grid');
-    } else {
-      return $('.rpress_fooditems_list'); // default fallback
-    }
+  var $searchInput = $('#rpress-food-search');
+  if (!$searchInput.length) {
+    return;
   }
 
-  // Step 1: Add searchable data attribute to all .rpress-title-holder elements (in both views)
-  $('.rpress-title-holder').each(function () {
-    $(this).attr('data-search-term', $(this).text().toLowerCase());
-  });
+  var $searchClearBtn = $('.rpress-search-clear');
+  var searchDebounceTimer = null;
 
-  // Step 2: Live search
-  $('#rpress-food-search').on('keyup', function () {
-    var searchTerm = $(this).val().toLowerCase();
-    var $viewContainer = getCurrentViewContainer();
-    var visibleTermIds = [];
+  // Unicode diacritics stripping and string normalization
+  function rpNormalizeSearchText(str) {
+    if (!str) return '';
+    return String(str)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 
-    // Reset states
-    $viewContainer.find('.rpress-element-title').removeClass('matched not-matched');
+  // Pre-index or retrieve food item title data
+  function getFoodItemTitleData($item) {
+    var data = $item.data('rpSearchData');
+    if (!data) {
+      var termId = String($item.attr('data-term-id') || $item.data('term-id') || '');
+      var $titleNode = $item.find('.food-title, .rpress_fooditem_title, .rpress-title-holder h3').first();
+      var title = $titleNode.text().trim();
+      var normalizedTitle = rpNormalizeSearchText(title);
 
-    $viewContainer.find('.rpress_fooditem').each(function () {
-      var $foodItem = $(this);
-      var $titleHolder = $foodItem.find('.rpress-title-holder');
-      var itemText = $titleHolder.data('search-term') || $titleHolder.text().toLowerCase();
-      var termId = $foodItem.attr('data-term-id');
+      data = {
+        termId: termId,
+        title: title,
+        normalized: normalizedTitle
+      };
+      $item.data('rpSearchData', data);
+    }
+    return data;
+  }
 
-      if (searchTerm === '' || itemText.includes(searchTerm)) {
-        $foodItem.show();
-        visibleTermIds.push(termId);
+  // Ensure "No search results" placeholder card exists in view containers
+  // Strings arrive already escaped (esc_html__) from rp_scripts.
+  function rpSearchText(key, fallback) {
+    return (typeof rp_scripts !== 'undefined' && rp_scripts[key]) ? rp_scripts[key] : fallback;
+  }
+
+  function ensureNoResultsPlaceholder($container) {
+    var $emptyState = $container.find('.rpress-no-search-results');
+    if (!$emptyState.length) {
+      $emptyState = $(
+        '<div class="rpress-no-search-results" style="display:none;">' +
+          '<div class="rpress-no-search-results-icon">&#128269;</div>' +
+          '<h4 class="rpress-no-search-results-title">' + rpSearchText('search_no_results_title', 'No menu items found') + '</h4>' +
+          '<p class="rpress-no-search-results-desc">' + rpSearchText('search_no_results_desc', 'No items matched your search query.') + '</p>' +
+          '<button type="button" class="rpress-no-search-results-reset">' + rpSearchText('search_view_full_menu', 'View Full Menu') + '</button>' +
+        '</div>'
+      );
+      var $firstItem = $container.find('.rpress-element-title, .rpress_fooditem, .rpress-grid-main-wrap').first();
+      if ($firstItem.length) {
+        $emptyState.insertBefore($firstItem);
       } else {
-        $foodItem.hide();
+        $container.append($emptyState);
+      }
+    }
+    return $emptyState;
+  }
+
+  // Reset entire menu back to normal state
+  function resetMenuSearchState() {
+    $searchClearBtn.hide();
+
+    // Reset items
+    $('.rpress_fooditem')
+      .removeClass('rp-search-hidden rp-search-match');
+
+    // Reset category headings
+    $('.rpress-element-title')
+      .removeClass('rp-search-hidden rp-search-match not-matched matched');
+
+    // Reset grid wrappers
+    $('.rpress-grid-main-wrap')
+      .removeClass('rp-search-hidden rp-search-match');
+
+    // Hide empty state cards
+    $('.rpress-no-search-results').hide();
+
+    // Reset all navigation links
+    $('.rpress-category-lists .rpress-category-item, .rpress-category-lists li').show();
+    $('.cd-dropdown-content li').show();
+    $('.pn-ProductNav_Contents .pn-ProductNav_Link, #pnProductNavContentsMobile .pn-ProductNav_Link').show();
+  }
+
+  // Perform the food title search
+  function performFoodSearch() {
+    var rawQuery = $.trim($searchInput.val() || '');
+
+    if (rawQuery === '') {
+      resetMenuSearchState();
+      return;
+    }
+
+    $searchClearBtn.show();
+
+    var normQuery = rpNormalizeSearchText(rawQuery);
+    var tokens = normQuery.split(/\s+/).filter(Boolean);
+
+    if (tokens.length === 0) {
+      resetMenuSearchState();
+      return;
+    }
+
+    var $containers = $('.rpress_fooditems_list, .rpress_fooditems_grid');
+    if (!$containers.length) {
+      $containers = $('.rpress-section');
+    }
+
+    var visibleTermIds = {};
+    var totalMatches = 0;
+
+    // Filter each container
+    $containers.each(function () {
+      var $container = $(this);
+      ensureNoResultsPlaceholder($container);
+
+      // Check all food items in container
+      $container.find('.rpress_fooditem').each(function () {
+        var $item = $(this);
+        var itemData = getFoodItemTitleData($item);
+
+        // Strict title match against all tokens (AND logic)
+        var isMatch = true;
+        for (var i = 0; i < tokens.length; i++) {
+          if (itemData.normalized.indexOf(tokens[i]) === -1) {
+            isMatch = false;
+            break;
+          }
+        }
+
+        if (isMatch) {
+          totalMatches++;
+          $item.removeClass('rp-search-hidden').addClass('rp-search-match');
+          if (itemData.termId) {
+            visibleTermIds[itemData.termId] = true;
+          }
+        } else {
+          $item.addClass('rp-search-hidden').removeClass('rp-search-match');
+        }
+      });
+
+      // Filter category titles in list view
+      $container.find('.rpress-element-title').each(function () {
+        var $title = $(this);
+        var catId = String($title.data('term-id') || $title.attr('data-term-id') || ($title.attr('id') || '').replace('menu-category-', ''));
+        if (visibleTermIds[catId]) {
+          $title
+            .removeClass('rp-search-hidden not-matched')
+            .addClass('rp-search-match matched');
+        } else {
+          $title
+            .addClass('rp-search-hidden not-matched')
+            .removeClass('rp-search-match matched');
+        }
+      });
+
+      // Filter grid wrappers in grid view
+      $container.find('.rpress-grid-main-wrap').each(function () {
+        var $wrap = $(this);
+        var hasVisibleItems = $wrap.find('.rpress_fooditem.rp-search-match').length > 0;
+        if (hasVisibleItems) {
+          $wrap.removeClass('rp-search-hidden').addClass('rp-search-match');
+          $wrap.find('.rpress-element-title').removeClass('rp-search-hidden not-matched').addClass('rp-search-match matched');
+        } else {
+          $wrap.addClass('rp-search-hidden').removeClass('rp-search-match');
+          $wrap.find('.rpress-element-title').addClass('rp-search-hidden not-matched').removeClass('rp-search-match matched');
+        }
+      });
+
+      // Show or hide empty state
+      var $emptyState = ensureNoResultsPlaceholder($container);
+      if (totalMatches === 0) {
+        var escapedQuery = $('<div>').text(rawQuery).html();
+        $emptyState.find('.rpress-no-search-results-desc').html(
+          rpSearchText('search_no_results_query', 'No menu items matched "%s". Try checking for spelling or searching for another term.')
+            .replace('%s', '<strong>' + escapedQuery + '</strong>')
+        );
+        $emptyState.show();
+      } else {
+        $emptyState.hide();
       }
     });
 
-    // Show/hide category headings
-    $viewContainer.find('.rpress-element-title').each(function () {
-      var termId = $(this).data('term-id');
-      if (visibleTermIds.includes(termId.toString())) {
-        $(this).show().addClass('matched');
-      } else {
-        $(this).hide().addClass('not-matched');
-      }
-    });
-
-    // === CATEGORY NAVIGATION HIDE/SHOW ===
+    // Update Category Navigation Links
+    // 1. Sidebar category list
     $('.rpress-category-lists .rpress-category-link').each(function () {
-      var termId = $(this).data('id');
-      if (visibleTermIds.includes(termId.toString())) {
-        $(this).parent().show();
+      var catId = String($(this).data('id') || $(this).attr('data-id') || '');
+      var $parentLi = $(this).closest('li, .rpress-category-item');
+      if (visibleTermIds[catId]) {
+        $parentLi.show();
       } else {
-        $(this).parent().hide();
+        $parentLi.hide();
       }
     });
 
-    // Dropdown menu in grid view
-    $('.cd-dropdown-content a[href^="#menu-category-"]').each(function () {
-      var termId = $(this).attr('href').replace('#menu-category-', '');
-      if (visibleTermIds.includes(termId)) {
+    // 2. Mobile dropdown menu
+    $('.cd-dropdown-content a[href*="#menu-category-"]').each(function () {
+      var href = $(this).attr('href') || '';
+      var catId = href.replace(/.*#menu-category-/, '');
+      if (visibleTermIds[catId]) {
         $(this).closest('li').show();
       } else {
         $(this).closest('li').hide();
       }
     });
 
-    // Horizontal nav in grid view
-    $('.pn-ProductNav_Contents .pn-ProductNav_Link').each(function () {
-      var termId = $(this).attr('href').replace('#menu-category-', '');
-      if (visibleTermIds.includes(termId)) {
+    // 3. Horizontal navigation tabs (desktop & mobile)
+    $('.pn-ProductNav_Contents .pn-ProductNav_Link, #pnProductNavContentsMobile .pn-ProductNav_Link').each(function () {
+      var href = $(this).attr('href') || '';
+      var catId = href.replace(/.*#menu-category-/, '').replace(/.*#/, '');
+      if (visibleTermIds[catId]) {
         $(this).show();
       } else {
         $(this).hide();
       }
     });
+  }
 
+  // Clear search and reset UI
+  function clearSearch() {
+    $searchInput.val('');
+    resetMenuSearchState();
+    $searchInput.focus();
+  }
+
+  // Event handlers
+  $searchInput.on('input keyup paste search change', function (e) {
+    if (e.which === 27) { // Escape key
+      clearSearch();
+      return;
+    }
+
+    var val = $(this).val();
+    if (!val) {
+      clearTimeout(searchDebounceTimer);
+      resetMenuSearchState();
+      return;
+    }
+
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(function () {
+      performFoodSearch();
+    }, 120);
   });
+
+  // Clear button click
+  $(document).on('click', '.rpress-search-clear', function (e) {
+    e.preventDefault();
+    clearSearch();
+  });
+
+  // Empty state "View full menu" button click
+  $(document).on('click', '.rpress-no-search-results-reset', function (e) {
+    e.preventDefault();
+    clearSearch();
+  });
+
+  // If page loaded with value already in search input
+  if ($searchInput.val()) {
+    performFoodSearch();
+  }
 });
 
 /* RestroPress active category highlighter */

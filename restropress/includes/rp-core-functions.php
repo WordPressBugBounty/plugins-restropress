@@ -177,7 +177,10 @@ if (!function_exists('rpress_search_form')) {
   {
     ?>
     <div class="rpress-search-wrap rpress-live-search">
-      <input id="rpress-food-search" type="text" placeholder="<?php esc_html_e('Search', 'restropress'); ?>" aria-label="<?php esc_attr_e('Search menu items', 'restropress'); ?>">
+      <div class="rpress-search-input-wrap">
+        <input id="rpress-food-search" type="search" placeholder="<?php esc_html_e('Search menu items...', 'restropress'); ?>" aria-label="<?php esc_attr_e('Search menu items', 'restropress'); ?>" autocomplete="off" spellcheck="false">
+        <button type="button" class="rpress-search-clear" aria-label="<?php esc_attr_e('Clear search', 'restropress'); ?>" title="<?php esc_attr_e('Clear search', 'restropress'); ?>" style="display:none;">&times;</button>
+      </div>
     </div>
     <?php
   }
@@ -2613,8 +2616,10 @@ function rpress_can_view_receipt($payment_key = '')
     }
   }
   $session = rpress_get_purchase_session();
-  if (!empty($session) && !is_user_logged_in()) {
-    if ($session['purchase_key'] === $payment_meta['key']) {
+  if (!is_user_logged_in() && rpress_is_guest_payment($rpress_receipt_args['id'])) {
+    if (!empty($session) && !empty($session['purchase_key']) && hash_equals((string) $session['purchase_key'], (string) $payment_meta['key'])) {
+      $return = true;
+    } elseif (!empty($payment_key) && hash_equals((string) $payment_key, (string) $payment_meta['key'])) {
       $return = true;
     }
   }

@@ -771,32 +771,162 @@ div.rpress-search-wrap {
 	flex-basis: unset;
 	flex-grow: 1;
 }
+div.rpress-search-wrap .rpress-search-input-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
 div.rpress-search-wrap input#rpress-food-search {
 	background-image: url('../svg/search-icon.svg');
 	background-repeat: no-repeat;
 	background-size: 17px;
-	background-position:12px center;
+	background-position: 12px center;
 	outline: none;
-	padding: 0 10px 0 35px;
+	padding: 0 34px 0 35px;
 	border: 0px solid #F7F7F7;
 	background-color: #F7F7F7;
-	border-radius:50px;	
+	border-radius: 50px;	
 	height: 39px;
 	line-height: 39px;
 	width: 100%;
 	min-width: 80px;
 	box-shadow: none;
 	font-size: 14px;
+	transition: background-color 0.2s, box-shadow 0.2s;
 }
-div.rpress-search-wrap input#rpress-food-search::placeholder{
-	color:#767876;
+div.rpress-search-wrap input#rpress-food-search:focus {
+	background-color: #ffffff;
+	box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+div.rpress-search-wrap input#rpress-food-search::-webkit-search-cancel-button,
+div.rpress-search-wrap input#rpress-food-search::-webkit-search-decoration {
+	-webkit-appearance: none;
+	appearance: none;
+}
+button.rpress-search-clear,
+.rpress-search-clear {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 22px;
+	height: 22px;
+	background: #d8d8d8 !important;
+	color: #444 !important;
+	border: none !important;
+	border-radius: 50% !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	line-height: 1;
+	cursor: pointer;
+	outline: none !important;
+	z-index: 3;
+	transition: background 0.15s, color 0.15s;
+}
+button.rpress-search-clear:hover,
+button.rpress-search-clear:focus,
+.rpress-search-clear:hover,
+.rpress-search-clear:focus {
+	background: #b5b5b5 !important;
+	color: #111 !important;
+	border: none !important;
+	outline: none !important;
+}
+div.rpress-search-wrap input#rpress-food-search::placeholder {
+	color: #767876;
 	font-weight: 400;
 }
-div.rpress-element-title.not-matched {
-	display: none;
+/* RestroPress Food Search Results & Visibility */
+body .rpress-menu-v2 .rpress_fooditem.rp-search-hidden,
+body .rpress_fooditems_list .rpress_fooditem.rp-search-hidden,
+body .rpress_fooditems_grid .rpress_fooditem.rp-search-hidden,
+.rpress_fooditem.rp-search-hidden {
+	display: none !important;
 }
-div.rpress-element-title.matched {
-	display: block;
+
+body .rpress-menu-v2 .rpress_fooditem.rp-search-match,
+body .rpress_fooditems_list .rpress_fooditem.rp-search-match,
+body .rpress_fooditems_grid .rpress_fooditem.rp-search-match,
+.rpress_fooditem.rp-search-match {
+	display: flex !important;
+}
+
+body .rpress-menu-v2 .rpress-element-title.rp-search-hidden,
+body .rpress_fooditems_list .rpress-element-title.rp-search-hidden,
+body .rpress_fooditems_grid .rpress-element-title.rp-search-hidden,
+.rpress-element-title.rp-search-hidden,
+.rpress-element-title.not-matched {
+	display: none !important;
+}
+
+body .rpress-menu-v2 .rpress-element-title.rp-search-match,
+body .rpress_fooditems_list .rpress-element-title.rp-search-match,
+body .rpress_fooditems_grid .rpress-element-title.rp-search-match,
+.rpress-element-title.rp-search-match,
+.rpress-element-title.matched {
+	display: block !important;
+}
+
+body .rpress-menu-v2 .rpress-grid-main-wrap.rp-search-hidden,
+body .rpress_fooditems_grid .rpress-grid-main-wrap.rp-search-hidden,
+.rpress-grid-main-wrap.rp-search-hidden {
+	display: none !important;
+}
+
+body .rpress-menu-v2 .rpress-grid-main-wrap.rp-search-match,
+body .rpress_fooditems_grid .rpress-grid-main-wrap.rp-search-match,
+.rpress-grid-main-wrap.rp-search-match {
+	display: block !important;
+}
+.rpress-no-search-results {
+	padding: 35px 20px;
+	margin: 20px 0 30px;
+	text-align: center;
+	background: #fafafa;
+	border: 1px dashed #dedede;
+	border-radius: 12px;
+	clear: both;
+	width: 100%;
+}
+.rpress-no-search-results-icon {
+	font-size: 32px;
+	line-height: 1;
+	margin-bottom: 10px;
+	color: #999;
+}
+.rpress-no-search-results-title {
+	font-size: 17px;
+	font-weight: 600;
+	color: #333;
+	margin: 0 0 6px;
+}
+.rpress-no-search-results-desc {
+	font-size: 14px;
+	color: #666;
+	margin: 0 0 14px;
+}
+.rpress-no-search-results-reset {
+	display: inline-block;
+	background: #222;
+	color: #fff;
+	border: none;
+	border-radius: 20px;
+	padding: 8px 18px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	text-decoration: none;
+	transition: background 0.2s;
+}
+.rpress-no-search-results-reset:hover {
+	background: #444;
+	color: #fff;
 }
 .rpress_fooditem_inner .thumbnail-holder {
 	float: left;

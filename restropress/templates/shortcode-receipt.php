@@ -91,10 +91,24 @@ foreach ( $status_model as $skey => $sinfo ) {
 $phase        = isset( $phase_map[ $order_status_key ] ) ? $phase_map[ $order_status_key ] : 'pending';
 $current_step = isset( $step_map[ $order_status_key ] ) ? $step_map[ $order_status_key ] : 0;
 
+$pending_msg = __( "We've sent your order to %s — it usually takes a minute or two to confirm.", 'restropress' );
+try {
+	$pending_msg = sprintf( /* translators: %s store name */ $pending_msg, $store_name );
+} catch ( \Throwable $e ) {
+	$pending_msg = str_replace( '%s', $store_name, $pending_msg );
+}
+
+$accepted_msg = __( '%s has accepted your order and will start preparing it shortly.', 'restropress' );
+try {
+	$accepted_msg = sprintf( /* translators: %s store name */ $accepted_msg, $store_name );
+} catch ( \Throwable $e ) {
+	$accepted_msg = str_replace( '%s', $store_name, $accepted_msg );
+}
+
 // Headline + message per phase (service-aware wording).
 $phase_copy   = array(
-	'pending'   => array( __( 'Waiting for confirmation', 'restropress' ), sprintf( /* translators: %s store name */ __( "We've sent your order to %s — it usually takes a minute or two to confirm.", 'restropress' ), $store_name ) ),
-	'accepted'  => array( __( 'Order confirmed', 'restropress' ), sprintf( /* translators: %s store name */ __( '%s has accepted your order and will start preparing it shortly.', 'restropress' ), $store_name ) ),
+	'pending'   => array( __( 'Waiting for confirmation', 'restropress' ), $pending_msg ),
+	'accepted'  => array( __( 'Order confirmed', 'restropress' ), $accepted_msg ),
 	'preparing' => array( __( 'In the kitchen', 'restropress' ), __( 'Your food is being prepared right now.', 'restropress' ) ),
 	'ready'     => $is_delivery
 		? array( __( 'Ready to go', 'restropress' ), __( 'Your order is packed and waiting for a rider to pick it up.', 'restropress' ) )
@@ -118,9 +132,15 @@ if ( '' === $method_noun ) {
 }
 $is_paid   = in_array( $payment->post_status, array( 'publish', 'complete' ), true ) || 'delivered' === $phase;
 $pay_label = $is_paid ? __( 'Paid', 'restropress' ) : '';
-$pay_note  = $is_paid
-	? sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun )
-	: sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when your order arrives', 'restropress' ), $order_total, $method_noun );
+try {
+	$pay_note  = $is_paid
+		? sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun )
+		: sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when your order arrives', 'restropress' ), $order_total, $method_noun );
+} catch ( \Throwable $e ) {
+	$pay_note  = $is_paid
+		? trim( $order_total . ' ' . $method_noun )
+		: trim( $order_total . ' ' . $method_noun );
+}
 
 // Inline status icons (Lucide-style). Shared between PHP render and JS updates.
 $phase_icons = array(
@@ -381,7 +401,15 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 			liveOff: <?php echo wp_json_encode( __( 'Enable live updates', 'restropress' ) ); ?>,
 			anyMinute: <?php echo wp_json_encode( __( 'Any minute now', 'restropress' ) ); ?>,
 			paid: <?php echo wp_json_encode( __( 'Paid', 'restropress' ) ); ?>,
-			paidNote: <?php echo wp_json_encode( sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun ) ); ?>
+			paidNote: <?php
+			$paid_note_js = '';
+			try {
+				$paid_note_js = sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun );
+			} catch ( \Throwable $e ) {
+				$paid_note_js = trim( $order_total . ' ' . $method_noun );
+			}
+			echo wp_json_encode( $paid_note_js );
+			?>
 		}
 	};
 

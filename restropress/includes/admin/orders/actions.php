@@ -14,20 +14,176 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  *
  * @access      private
  * @since       2.2
- * @return      void
+ * @return      bool Whether the status was saved or was already current.
 */
-function rpress_update_order_status( $payment_id = 0, $new_status = 'completed' ) {
-  if ( empty( $payment_id ) ) {
-    return;
+function rpress_update_order_status( $payment_id = 0, $new_status = 'completed', $expected_status = null ) {
+  $result = rpress_update_order_status_with_meta( $payment_id, $new_status, $expected_status );
+  // Preserve the boolean contract used by existing integrations.
+  return ! is_wp_error( $result ) && $result;
+}
+
+/**
+ * Whether order status updates can use a locked InnoDB transaction.
+ *
+ * Checked once per request. Filter 'rpress_order_status_use_transaction'
+ * to force either path.
+ *
+ * @since 3.4.10
+ * @return bool
+ */
+function rpress_order_status_supports_transactions() {
+  global $wpdb;
+  static $supported = null;
+  if ( null === $supported ) {
+    $engines = $wpdb->get_col( $wpdb->prepare(
+      'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN (%s, %s)',
+      $wpdb->posts, $wpdb->postmeta
+    ) );
+    $supported = is_array( $engines ) && 2 === count( $engines ) && ! array_filter( $engines, function ( $engine ) { return 'innodb' !== strtolower( (string) $engine ); } );
   }
-  if ( 0 >= did_action( 'rpress_update_order_status' ) ) {
+  return (bool) apply_filters( 'rpress_order_status_use_transaction', $supported );
+}
+
+/**
+ * Whether rpress_update_order_status_with_meta() is currently writing order metadata.
+ *
+ * Meta hook listeners (added_post_meta, updated_post_meta) can run inside the
+ * status transaction while the order row is locked. Return early when this is
+ * true and do slow work (HTTP requests, emails) on the 'rpress_update_order_status'
+ * action instead, which fires after commit.
+ *
+ * @since 3.4.10
+ * @param int $payment_id Optional. Limit the check to one order.
+ * @return bool
+ */
+function rpress_is_order_status_transaction( $payment_id = 0 ) {
+  $saving = isset( $GLOBALS['rpress_order_status_saving'] ) ? (array) $GLOBALS['rpress_order_status_saving'] : array();
+  $payment_id = absint( $payment_id );
+  return $payment_id ? isset( $saving[ $payment_id ] ) : ! empty( $saving );
+}
+
+/**
+ * Save a status and its related metadata together, then notify listeners.
+ *
+ * Owns a short InnoDB transaction. Refuses an already active transaction rather
+ * than implicitly committing work owned by another plugin. The existing order
+ * and payment hooks run after commit, with the complete metadata available.
+ *
+ * @return bool|WP_Error False for a stale status, WP_Error for storage failures.
+ */
+function rpress_update_order_status_with_meta( $payment_id, $new_status, $expected_status = null, $order_meta = array() ) {
+  global $wpdb;
+  static $updating = array();
+  $payment_id = absint( $payment_id );
+  $new_status = sanitize_key( $new_status );
+  if ( ! $payment_id || ! $new_status || isset( $updating[ $payment_id ] ) ) {
+    return false;
+  }
+  $allowed_meta = array( 'dinein_order_current_time', 'dinein_order_take_time',
+    'rp_order_cancel_reason', '_rpress_payment_gateway',
+    '_rpress_kds_completed_by', '_rpress_kds_completed_at' );
+  foreach ( $order_meta as $key => $value ) {
+    if ( ! in_array( $key, $allowed_meta, true ) || ! is_scalar( $value ) ) {
+      return new WP_Error( 'rpress_order_meta', __( 'Invalid order update metadata.', 'restropress' ) );
+    }
+  }
+  if ( ! rpress_order_status_supports_transactions() ) {
+    // MyISAM, SQLite (Playground) or an unreadable information_schema: save
+    // without row locking rather than refusing every status change.
+    $updating[ $payment_id ] = true;
+    try {
+      if ( null !== $expected_status && rpress_get_order_status( $payment_id ) !== $expected_status ) {
+        return false;
+      }
+      if ( get_post_meta( $payment_id, '_order_status', true ) === $new_status ) {
+        return true;
+      }
+      $order_meta['_order_status'] = $new_status;
+      $order_meta['_rpress_order_status_updated_at'] = current_time( 'timestamp', true );
+      $GLOBALS['rpress_order_status_saving'][ $payment_id ] = true;
+      try {
+        foreach ( $order_meta as $key => $value ) {
+          update_post_meta( $payment_id, $key, wp_slash( (string) $value ) );
+        }
+      } finally {
+        unset( $GLOBALS['rpress_order_status_saving'][ $payment_id ] );
+      }
+      if ( 'completed' === $new_status ) {
+        rpress_update_payment_status( $payment_id, 'publish' );
+      }
+      do_action( 'rpress_update_order_status', $payment_id, $new_status );
+      return true;
+    } finally {
+      unset( $updating[ $payment_id ] );
+    }
+  }
+
+  $updating[ $payment_id ] = true;
+  $transaction = false;
+  $cache_suspended = wp_suspend_cache_addition();
+  try {
+    try {
+      // SET TRANSACTION without SESSION fails inside an existing transaction.
+      // Do not replace this with an unconditional START TRANSACTION (implicit commit).
+      if ( false === $wpdb->query( 'SET TRANSACTION READ WRITE' ) || false === $wpdb->query( 'START TRANSACTION' ) ) {
+        return new WP_Error( 'rpress_order_transaction', __( 'Unable to start the order update. Please try again.', 'restropress' ) );
+      }
+      $transaction = true;
+      $exists = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE ID = %d FOR UPDATE", $payment_id ) );
+      if ( ! $exists ) {
+        return false;
+      }
+      // The posts row lock alone serializes status updates for this order. Do not
+      // lock postmeta by post_id: the next-key locks reach the index supremum and
+      // block metadata inserts for every newer order until commit.
+      wp_suspend_cache_addition( true );
+      wp_cache_delete( $payment_id, 'post_meta' );
+      $stored_status = get_post_meta( $payment_id, '_order_status', true );
+      if ( null !== $expected_status && rpress_get_order_status( $payment_id ) !== $expected_status ) {
+        return false;
+      }
+      if ( $stored_status === $new_status ) {
+        return true;
+      }
+
+      $order_meta['_order_status'] = $new_status;
+      $order_meta['_rpress_order_status_updated_at'] = current_time( 'timestamp', true );
+      $GLOBALS['rpress_order_status_saving'][ $payment_id ] = true;
+      foreach ( $order_meta as $key => $value ) {
+        // With the order row locked, update_post_meta handles both an absent row and
+        // an existing empty row without the empty-prev-value CAS ambiguity.
+        $value = (string) $value;
+        $saved = update_post_meta( $payment_id, $key, wp_slash( $value ) );
+        if ( false === $saved && (string) get_post_meta( $payment_id, $key, true ) !== $value ) {
+          throw new RuntimeException( 'Unable to save order metadata.' );
+        }
+      }
+      unset( $GLOBALS['rpress_order_status_saving'][ $payment_id ] );
+      if ( false === $wpdb->query( 'COMMIT' ) ) {
+        throw new RuntimeException( 'Unable to commit order update.' );
+      }
+      $transaction = false;
+      wp_cache_delete( $payment_id, 'post_meta' );
+      wp_suspend_cache_addition( $cache_suspended );
+    } catch ( Throwable $error ) {
+      return new WP_Error( 'rpress_order_save', __( 'The order could not be saved. Please try again.', 'restropress' ) );
+    } finally {
+      unset( $GLOBALS['rpress_order_status_saving'][ $payment_id ] );
+      if ( $transaction ) {
+        $wpdb->query( 'ROLLBACK' );
+        wp_cache_delete( $payment_id, 'post_meta' );
+      }
+      wp_suspend_cache_addition( $cache_suspended );
+    }
+
+    if ( 'completed' === $new_status ) {
+      rpress_update_payment_status( $payment_id, 'publish' );
+    }
     do_action( 'rpress_update_order_status', $payment_id, $new_status );
+    return true;
+  } finally {
+    unset( $updating[ $payment_id ] );
   }
-  if ( $new_status == 'completed' ) {
-    rpress_update_payment_status( $payment_id, 'publish' );
-  }
-  update_post_meta( $payment_id, '_order_status', $new_status );
-  update_post_meta( $payment_id, '_rpress_order_status_updated_at', current_time( 'timestamp', true ) );
 }
 /**
  * Get order ststus by payment id
@@ -205,6 +361,11 @@ global $rpress_logs;
     // Remove the payment ID from the customer
     $customer->remove_payment( $payment_id );
   }
+  // Explicitly delete order status and related metadata before post deletion.
+  delete_post_meta( $payment_id, '_order_status' );
+  delete_post_meta( $payment_id, '_rpress_order_status_updated_at' );
+  delete_post_meta( $payment_id, '_pre_trash_status' );
+
   // Remove the payment
   wp_delete_post( $payment_id, true );
   // Remove related sale log entries
