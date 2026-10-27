@@ -377,7 +377,6 @@ function rpress_core_stripe_process_purchase( $purchase_data ) {
 		'mode'                => 'payment',
 		'success_url'         => $success_url,
 		'cancel_url'          => $cancel_url,
-		'payment_method_types' => array( 'card' ),
 		'line_items'          => array(
 			array(
 				'price_data' => array(

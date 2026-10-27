@@ -3262,19 +3262,15 @@ function rpress_order_notification_settings_callback($args)
 			if (!empty($admin_notification['enable_notification'])):
 				echo '<span class="status-enabled" data-tip="' . esc_attr__('Enabled', 'restropress') . '"></span>';
 			else:
-				echo '<span class="status-enabled" data-tip="' . esc_attr__('Enabled', 'restropress') . '"></span>';
+				echo '<span class="status-disabled" data-tip="' . esc_attr__('Disabled', 'restropress') . '"></span>';
 			endif;
 			echo '</td>';
 			echo '<td>';
 			esc_html_e('Admin Order Notification', 'restropress');
 			echo '</td>';
 			echo '<td>';
-			$admin_recipients = !empty($admin_notification['admin_recipients']) ? $admin_notification['admin_recipients'] : '';
-			if (!empty($admin_recipients)) {
-				$admin_recipients = trim($admin_recipients);
-				$admin_recipients = str_replace(' ', ',', $admin_recipients);
-				echo esc_html($admin_recipients);
-			}
+			// Show who actually receives it, including the site admin email fallback.
+			echo esc_html( implode( ', ', array_filter( (array) rpress_get_admin_notice_emails() ) ) );
 			echo '</td>';
 			echo '<td class="rpress-email-settings-table">
                     <a class="button alignright" href="' . esc_url(admin_url('admin.php?page=rpress-settings&tab=emails&section=order_notifications&rpress_order_status=' . strtolower('admin_notification'))) . '">' . esc_html__('Manage', 'restropress') . '</a>

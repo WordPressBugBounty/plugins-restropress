@@ -670,6 +670,16 @@ body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list > .rp-col-lg-8 {
 	padding: 0 !important;
 	float: none !important;
 }
+/* The base menu stacks this list into a column at 1024px and below. There
+   the items column must size to its content: the flex-basis 0 above collapses
+   it to ~1px in a column (the grid's min-height:1px blocks auto growth), so
+   the menu overflowed and the theme footer was drawn over it. */
+@media (max-width: 1024px) {
+	body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list > .rp-col-lg-8 {
+		flex: 0 0 auto !important;
+		width: 100% !important;
+	}
+}
 @media (max-width: 880px) {
 	body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list { flex-direction: column !important; }
 	body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .cat-lists {

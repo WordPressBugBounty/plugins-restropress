@@ -1207,6 +1207,29 @@ $order_title_extras = ob_get_clean();
 														<span><?php esc_html_e('Subtotal', 'restropress'); ?></span>
 														<strong><?php echo wp_kses_post(rpress_currency_filter(rpress_format_amount($payment->subtotal), $currency_code)); ?></strong>
 													</div>
+													<?php
+													$order_fees = !empty($payment->fees) && is_array($payment->fees) ? $payment->fees : array();
+													if (!empty($order_fees)):
+														foreach ($order_fees as $fee):
+															$fee_amt = isset($fee['amount']) ? (float) $fee['amount'] : 0.0;
+															if ($fee_amt == 0 && empty($fee['label'])) {
+																continue;
+															}
+															$fee_lbl = isset($fee['label']) ? trim($fee['label'], ": \t\n\r\0\x0B") : __('Fee', 'restropress');
+															?>
+															<div class="rp-order-items-total-fee" data-fee-id="<?php echo esc_attr(isset($fee['id']) ? $fee['id'] : ''); ?>">
+																<span><?php echo esc_html($fee_lbl); ?></span>
+																<strong><?php echo wp_kses_post(rpress_currency_filter(rpress_format_amount($fee_amt), $currency_code)); ?></strong>
+															</div>
+														<?php endforeach;
+													endif;
+													?>
+													<?php if (!empty($discount)): ?>
+														<div class="rp-order-items-total-discount">
+															<span><?php esc_html_e('Coupon', 'restropress'); echo !empty($discount_code) ? ' (' . esc_html($discount_code) . ')' : ''; ?></span>
+															<strong>-<?php echo wp_kses_post(rpress_currency_filter(rpress_format_amount($discount), $currency_code)); ?></strong>
+														</div>
+													<?php endif; ?>
 													<div>
 														<span><?php echo esc_html(rpress_use_taxes() ? rpress_get_tax_name() : __('Tax', 'restropress')); ?></span>
 														<strong><?php echo wp_kses_post(rpress_currency_filter(rpress_format_amount($payment->tax), $currency_code)); ?></strong>

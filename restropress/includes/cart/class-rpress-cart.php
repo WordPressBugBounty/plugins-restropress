@@ -364,12 +364,50 @@ class RPRESS_Cart {
 			'id'       => $fooditem_id,
 			'quantity' => $quantity,
 		);
-		$this->contents[] = $options;
+		// Adding an item identical to an existing line (same size, add-ons and
+		// instructions) raises that line's quantity instead of adding a new line.
+		$key = apply_filters( 'rpress_merge_identical_cart_items', true, $fooditem_id, $options ) ? $this->find_identical_item( $fooditem_id, $options ) : null;
+		if ( null !== $key ) {
+			$add_qty = isset( $options['quantity'] ) ? max( 1, absint( $options['quantity'] ) ) : 1;
+			$this->contents[ $key ]['quantity'] = max( 1, absint( $this->contents[ $key ]['quantity'] ) ) + $add_qty;
+		} else {
+			$this->contents[] = $options;
+			$key = count( $this->contents ) - 1;
+		}
 		$this->update_cart();
 		do_action( 'rpress_post_add_to_cart', $fooditem_id, $options, $items );
 		// Clear all the checkout errors, if any
 		rpress_clear_errors();
-		return count( $this->contents ) - 1;
+		return $key;
+	}
+	/**
+	 * Find a cart line identical to the item being added.
+	 *
+	 * @since 3.4.11
+	 * @param int   $fooditem_id Food item ID.
+	 * @param array $options     Cart options of the item being added.
+	 * @return int|null Cart key of the matching line, or null.
+	 */
+	private function find_identical_item( $fooditem_id, $options ) {
+		$signature = function ( $id, $line ) {
+			$addons = array();
+			$items = isset( $line['addon_items'] ) && is_array( $line['addon_items'] ) ? $line['addon_items'] : array();
+			foreach ( $items as $addon ) {
+				if ( ! is_array( $addon ) ) {
+					continue;
+				}
+				$addons[] = absint( isset( $addon['addon_id'] ) ? $addon['addon_id'] : 0 ) . 'x' . absint( isset( $addon['quantity'] ) ? $addon['quantity'] : 1 );
+			}
+			sort( $addons );
+			return implode( '|', array( absint( $id ), isset( $line['price_id'] ) ? (string) $line['price_id'] : '', implode( ',', $addons ), trim( isset( $line['instruction'] ) ? (string) $line['instruction'] : '' ) ) );
+		};
+		$wanted = $signature( $fooditem_id, $options );
+		foreach ( (array) $this->contents as $key => $line ) {
+			if ( is_array( $line ) && isset( $line['id'] ) && $signature( $line['id'], $line ) === $wanted ) {
+				return $key;
+			}
+		}
+		return null;
 	}
 	/**
 	 * Remove from cart
@@ -610,7 +648,9 @@ class RPRESS_Cart {
 					$discounted_price = 0;
 				}
 			}
-			$amount = round( ( $price - apply_filters( 'rpress_get_cart_item_discounted_amount', $discounted_price, $discounts, $item, $price ) ), rpress_currency_decimal_filter() );
+			// Pre-round away float noise (79.75 - 71.775 = 7.97499...) so this per-line
+			// discount rounds like rpress_get_discount_value(), which sets the cart total.
+			$amount = round( round( $price - apply_filters( 'rpress_get_cart_item_discounted_amount', $discounted_price, $discounts, $item, $price ), 6 ), rpress_currency_decimal_filter() );
 		}
 		return $amount;
 	}

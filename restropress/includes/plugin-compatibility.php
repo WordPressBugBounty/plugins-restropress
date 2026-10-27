@@ -470,5 +470,229 @@ if ( ! has_filter( 'is_a_restropress_page', 'rpress_wpml_filter_is_a_restropress
 if ( ! has_filter( 'redirect_canonical', 'rpress_wpml_disable_canonical_redirect' ) ) {
 	add_filter( 'redirect_canonical', 'rpress_wpml_disable_canonical_redirect', 10, 2 );
 }
+/**
+ * Retrieve the language code for an order.
+ *
+ * @since 3.4.4
+ * @param int $payment_id Payment ID
+ * @return string|null
+ */
+if ( ! function_exists( 'rpress_wpml_get_payment_language' ) ) {
+	function rpress_wpml_get_payment_language( $payment_id ) {
+		if ( empty( $payment_id ) ) {
+			return null;
+		}
 
-
+		$lang = apply_filters( 'wpml_element_language_code', null, array(
+			'element_id'   => $payment_id,
+			'element_type' => 'post_rpress_payment',
+		) );
+
+		if ( empty( $lang ) ) {
+			$lang = get_post_meta( $payment_id, 'wpml_language', true );
+		}
+		if ( empty( $lang ) ) {
+			$lang = get_post_meta( $payment_id, '_order_language', true );
+		}
+
+		return ! empty( $lang ) ? $lang : null;
+	}
+}
+
+/**
+ * Save language code when an order is created.
+ *
+ * @since 3.4.4
+ * @param int $payment_id Payment ID
+ * @param array $payment_data Payment metadata
+ * @return void
+ */
+if ( ! function_exists( 'rpress_wpml_save_payment_language' ) ) {
+	function rpress_wpml_save_payment_language( $payment_id, $payment_data = array() ) {
+		if ( rpress_wpml_is_active() && ! empty( $payment_id ) ) {
+			$current_lang = rpress_wpml_get_current_language();
+			if ( ! empty( $current_lang ) ) {
+				update_post_meta( $payment_id, 'wpml_language', $current_lang );
+			}
+		}
+	}
+}
+
+/**
+ * Translate a setting value using WPML String Translation or per-language option.
+ *
+ * @since 3.4.4
+ * @param mixed $value Setting value
+ * @param string $key Setting key
+ * @param string $lang Target language code
+ * @param mixed $default Default fallback
+ * @return mixed
+ */
+if ( ! function_exists( 'rpress_wpml_translate_setting_value' ) ) {
+	function rpress_wpml_translate_setting_value( $value, $key, $lang, $default = false ) {
+		if ( empty( $lang ) ) {
+			return $value;
+		}
+
+		$context = 'admin_texts_rpress_settings';
+
+		if ( is_array( $value ) ) {
+			foreach ( $value as $sub_key => $sub_val ) {
+				if ( is_string( $sub_val ) ) {
+					$string_name = '[rpress_settings][' . $key . ']' . $sub_key;
+					$translated  = apply_filters( 'wpml_translate_single_string', $sub_val, $context, $string_name, $lang );
+
+					if ( $translated === $sub_val ) {
+						$string_name_alt = '[rpress_settings-en][' . $key . ']' . $sub_key;
+						$translated      = apply_filters( 'wpml_translate_single_string', $sub_val, 'admin_texts_rpress_settings-en', $string_name_alt, $lang );
+					}
+
+					if ( $translated === $sub_val ) {
+						$lang_options = get_option( 'rpress_settings-' . $lang );
+						if ( is_array( $lang_options ) && isset( $lang_options[ $key ][ $sub_key ] ) ) {
+							$translated = $lang_options[ $key ][ $sub_key ];
+						}
+					}
+
+					$value[ $sub_key ] = $translated;
+				}
+			}
+		} elseif ( is_string( $value ) ) {
+			$string_name = '[rpress_settings]' . $key;
+			$translated  = apply_filters( 'wpml_translate_single_string', $value, $context, $string_name, $lang );
+
+			if ( $translated === $value ) {
+				$string_name_alt = '[rpress_settings-en]' . $key;
+				$translated      = apply_filters( 'wpml_translate_single_string', $value, 'admin_texts_rpress_settings-en', $string_name_alt, $lang );
+			}
+
+			if ( $translated === $value ) {
+				$lang_options = get_option( 'rpress_settings-' . $lang );
+				if ( is_array( $lang_options ) && isset( $lang_options[ $key ] ) ) {
+					$translated = $lang_options[ $key ];
+				}
+			}
+
+			$value = $translated;
+		}
+
+		return $value;
+	}
+}
+
+/**
+ * Filter rpress_get_option to dynamically resolve translated strings via WPML.
+ *
+ * @since 3.4.4
+ * @param mixed $value Existing option value
+ * @param string $key Setting key
+ * @param mixed $default Default value
+ * @return mixed
+ */
+if ( ! function_exists( 'rpress_wpml_filter_rpress_get_option' ) ) {
+	function rpress_wpml_filter_rpress_get_option( $value, $key, $default ) {
+		if ( ! rpress_wpml_is_active() ) {
+			return $value;
+		}
+
+		global $rpress_wpml_email_lang;
+
+		$target_lang = ! empty( $rpress_wpml_email_lang ) ? $rpress_wpml_email_lang : rpress_wpml_get_current_language();
+
+		return rpress_wpml_translate_setting_value( $value, $key, $target_lang, $default );
+	}
+}
+
+/**
+ * Switch WPML context to the order language prior to email rendering.
+ *
+ * @since 3.4.4
+ * @param int $payment_id Payment ID
+ * @return void
+ */
+if ( ! function_exists( 'rpress_wpml_switch_language_for_order' ) ) {
+	function rpress_wpml_switch_language_for_order( $payment_id ) {
+		if ( ! rpress_wpml_is_active() || empty( $payment_id ) ) {
+			return;
+		}
+
+		$order_lang = rpress_wpml_get_payment_language( $payment_id );
+		if ( ! empty( $order_lang ) ) {
+			global $rpress_wpml_email_lang, $rpress_wpml_orig_lang;
+
+			$rpress_wpml_email_lang = $order_lang;
+
+			if ( $rpress_wpml_orig_lang === null ) {
+				$rpress_wpml_orig_lang = apply_filters( 'wpml_current_language', null );
+			}
+
+			do_action( 'wpml_switch_language', $order_lang );
+		}
+	}
+}
+
+/**
+ * Hook into rpress_purchase_from_name to ensure order language is switched before receipt email is constructed.
+ *
+ * @since 3.4.4
+ * @param string $from_name Sender name
+ * @param int $payment_id Payment ID
+ * @param array $payment_data Payment metadata
+ * @return string
+ */
+if ( ! function_exists( 'rpress_wpml_before_purchase_receipt_email' ) ) {
+	function rpress_wpml_before_purchase_receipt_email( $from_name, $payment_id, $payment_data = array() ) {
+		if ( ! empty( $payment_id ) ) {
+			rpress_wpml_switch_language_for_order( $payment_id );
+		}
+		return $from_name;
+	}
+}
+
+/**
+ * Restore original WPML language after email dispatch.
+ *
+ * @since 3.4.4
+ * @return void
+ */
+if ( ! function_exists( 'rpress_wpml_restore_language' ) ) {
+	function rpress_wpml_restore_language() {
+		global $rpress_wpml_email_lang, $rpress_wpml_orig_lang;
+
+		$rpress_wpml_email_lang = null;
+
+		if ( rpress_wpml_is_active() && $rpress_wpml_orig_lang !== null ) {
+			do_action( 'wpml_switch_language', $rpress_wpml_orig_lang );
+			$rpress_wpml_orig_lang = null;
+		}
+	}
+}
+
+// Hook into RestroPress option lookup to support WPML translations
+if ( ! has_filter( 'rpress_get_option', 'rpress_wpml_filter_rpress_get_option' ) ) {
+	add_filter( 'rpress_get_option', 'rpress_wpml_filter_rpress_get_option', 10, 3 );
+}
+
+// Order language tracking
+if ( ! has_action( 'rpress_insert_payment', 'rpress_wpml_save_payment_language' ) ) {
+	add_action( 'rpress_insert_payment', 'rpress_wpml_save_payment_language', 10, 2 );
+}
+
+// Switch order language when email triggers fire
+if ( ! has_action( 'rpress_complete_purchase', 'rpress_wpml_switch_language_for_order' ) ) {
+	add_action( 'rpress_complete_purchase', 'rpress_wpml_switch_language_for_order', 1, 1 );
+}
+if ( ! has_action( 'rpress_update_order_status', 'rpress_wpml_switch_language_for_order' ) ) {
+	add_action( 'rpress_update_order_status', 'rpress_wpml_switch_language_for_order', 1, 1 );
+}
+if ( ! has_filter( 'rpress_purchase_from_name', 'rpress_wpml_before_purchase_receipt_email' ) ) {
+	add_filter( 'rpress_purchase_from_name', 'rpress_wpml_before_purchase_receipt_email', 1, 3 );
+}
+
+// Restore original language after email dispatch
+if ( ! has_action( 'rpress_email_send_after', 'rpress_wpml_restore_language' ) ) {
+	add_action( 'rpress_email_send_after', 'rpress_wpml_restore_language', 999 );
+}
+if ( ! has_action( 'rpress_admin_order_notice', 'rpress_wpml_restore_language' ) ) {
+	add_action( 'rpress_admin_order_notice', 'rpress_wpml_restore_language', 999 );
+}

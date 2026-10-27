@@ -776,7 +776,7 @@ function rpress_cart_discounts_html() {
     );
 
     echo wp_kses(
-        rpress_get_cart_discounts_html(),
+        (string) rpress_get_cart_discounts_html(), // null when no discount is applied
         $allowed_html
     );
 }
@@ -1129,7 +1129,13 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
    	$cart_item_quanties  	= wp_list_pluck( rpress_get_cart_content_details(), 'quantity' );
    	$cart_items  			=  rpress_get_cart_content_details();
    	$cart_item_number 		= wp_list_pluck( rpress_get_cart_content_details(), 'item_number' );
-   	$cart_item_addon_items 	= array_column( $cart_item_number, 'addon_items' );
+   	// Keep add-ons aligned with their cart line: array_column() skips lines
+   	// without add-ons and renumbers the rest, which priced each line's
+   	// discount with another line's add-ons.
+   	$cart_item_addon_items 	= array();
+   	foreach ( (array) $cart_item_number as $line_key => $line_item ) {
+   		$cart_item_addon_items[ $line_key ] = ( is_array( $line_item ) && ! empty( $line_item['addon_items'] ) && is_array( $line_item['addon_items'] ) ) ? $line_item['addon_items'] : array();
+   	}
    	$discount_value 	 = 0 ;
 	
    	if( $subtotal < $discount_amount && 'flat' === $discount_type ) $discount_amount = $subtotal;
@@ -1148,7 +1154,7 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
 					$cart_item_addon_price = 0.00;
 				if ( ! empty( $cart_item_addon_items[ $key ] ) ) {
 
-					foreach ( $cart_item_addon_items[ $key ] as $key => $cart_item_addon_item ) {
+					foreach ( $cart_item_addon_items[ $key ] as $cart_item_addon_item ) {
 							$cart_item_addon_price = (float) $cart_item_addon_price + (float) (isset($cart_item_addon_item['price_without_tax'])? $cart_item_addon_item['price_without_tax']:$cart_item_addon_item['price']);
 					}
 				}
@@ -1176,7 +1182,7 @@ function rpress_get_discount_value( $discount, $type = 'currency' ) {
 					$cart_item_addon_price = 0.00;
     				if ( ! empty( $cart_item_addon_items[$key] ) ) {
     					
-        				foreach ( $cart_item_addon_items[ $key ] as $key => $cart_item_addon_item ) {
+        				foreach ( $cart_item_addon_items[ $key ] as $cart_item_addon_item ) {
         					$cart_item_addon_price = (float)$cart_item_addon_price + (float)$cart_item_addon_item['price'];
         				}
     				}

@@ -762,11 +762,6 @@ form.rpress_form p input:focus{
     outline: 0;
     border: 1px solid var(--rpress-theme-primary, #CD3857);
 }
-form.rpress_form p input[type="password"]{
-    background-image: url("../../assets/images/eye.svg");
-    background-repeat: no-repeat;
-    background-position: 98% 50%;
-}
 form.rpress_form p input::placeholder{
     color: #ABACAC;
 }

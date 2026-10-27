@@ -905,21 +905,23 @@ function rpress_tools_import_export_process_import()
 	if (rpress_get_file_extension(sanitize_file_name($_FILES['import_file']['name'])) != 'json') {
 		wp_die(esc_html__('Please upload a valid .json file', 'restropress'), esc_html__('Error', 'restropress'), array('response' => 400));
 	}
-	$import_file = sanitize_file_name($_FILES['import_file']['tmp_name']);
-	if (empty($import_file)) {
+	// The temporary upload path is absolute: sanitize_file_name() would strip its
+	// slashes and the read would fail, so verify it is a real upload instead.
+	$import_file = isset($_FILES['import_file']['tmp_name']) ? (string) $_FILES['import_file']['tmp_name'] : '';
+	if (empty($import_file) || !is_uploaded_file($import_file)) {
 		wp_die(esc_html__('Please upload a file to import', 'restropress'), esc_html__('Error', 'restropress'), array('response' => 400));
 	}
-	// Retrieve the settings from the file and convert the json object to an array
-	$settings = rpress_object_to_array(json_decode(file_get_contents($import_file)));
-	if (!isset($settings['rpress_settings'])) {
-		// Process a settings export from a pre 2.8 version of RPRESS
-		update_option('rpress_settings', $settings);
-	} else {
-		// Update the settings from a 2.8+ export file
-		$rpress_settings = $settings['rpress_settings'];
-		update_option('rpress_settings', $rpress_settings);
-		$rpress_tax_rates = $settings['rpress_tax_rates'];
-		update_option('rpress_tax_rates', $rpress_tax_rates);
+	// Decode straight to arrays so every key (store hours, gateways) is kept.
+	$settings = json_decode((string) file_get_contents($import_file), true);
+	// Never overwrite the store's settings with an unreadable or empty file.
+	$rpress_settings = isset($settings['rpress_settings']) ? $settings['rpress_settings'] : $settings;
+	if (empty($rpress_settings) || !is_array($rpress_settings)) {
+		wp_die(esc_html__('This file does not contain RestroPress settings. Nothing was imported.', 'restropress'), esc_html__('Error', 'restropress'), array('response' => 400));
+	}
+	update_option('rpress_settings', $rpress_settings);
+	// 2.8+ export files also carry the tax rates.
+	if (isset($settings['rpress_tax_rates']) && is_array($settings['rpress_tax_rates'])) {
+		update_option('rpress_tax_rates', $settings['rpress_tax_rates']);
 	}
 	// Return to wherever the import was started from (Settings now hosts the
 	// configuration import/export UI), falling back to the Settings page.
@@ -967,7 +969,7 @@ function rpress_settings_render_config_io()
 				<p class="rp-help-text"><?php esc_html_e( 'Download this site’s RestroPress settings as a .json file.', 'restropress' ); ?></p>
 				<input type="hidden" name="rpress_action" value="export_settings" />
 				<?php wp_nonce_field( 'rpress_export_nonce', 'rpress_export_nonce' ); ?>
-				<?php submit_button( esc_html__( 'Export', 'restropress' ), 'secondary', 'submit', false ); ?>
+				<?php submit_button( esc_html__( 'Export', 'restropress' ), 'secondary', 'rpress-export-settings', false ); ?>
 			</form>
 			<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin.php?page=rpress-settings&tab=misc&section=main' ) ); ?>">
 				<h4><?php esc_html_e( 'Import settings', 'restropress' ); ?></h4>
@@ -975,13 +977,13 @@ function rpress_settings_render_config_io()
 				<input type="file" name="import_file" accept=".json" />
 				<input type="hidden" name="rpress_action" value="import_settings" />
 				<?php wp_nonce_field( 'rpress_import_nonce', 'rpress_import_nonce' ); ?>
-				<?php submit_button( esc_html__( 'Import', 'restropress' ), 'secondary', 'submit', false ); ?>
+				<?php submit_button( esc_html__( 'Import', 'restropress' ), 'secondary', 'rpress-import-settings', false ); ?>
 			</form>
 		</div>
 	</div>
 	<?php
 }
-add_action( 'rpress_settings_tab_bottom_misc_main', 'rpress_settings_render_config_io' );
+add_action( 'rpress_settings_after_form_misc_main', 'rpress_settings_render_config_io' );
 
 /**
  * Menu Items -> Export screen. Exports the menu catalog (items, prices,

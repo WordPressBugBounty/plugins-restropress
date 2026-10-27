@@ -1298,8 +1298,38 @@ div#rpressModal {
 	box-shadow: 0px -4.21px 16.85px 0px #00000019;
 	padding:10px;
 }
-.addon-popup-wrap .rp-col-md-12.md-4-top.special-margin {
+.addon-popup-wrap .rp-col-md-12.md-4-top.special-margin,
+.addon-popup-wrap .special-margin,
+.addon-popup-wrap .special-inst,
+.view-food-item-wrap .special-margin,
+.view-food-item-wrap .special-inst {
 	padding: 10px 0;
+	width: 100%;
+	display: block;
+	clear: both;
+	box-sizing: border-box;
+}
+.addon-popup-wrap .special-instructions-link,
+.view-food-item-wrap .special-instructions-link {
+	display: block;
+	width: 100%;
+	margin-bottom: 8px;
+	font-weight: 500;
+	cursor: pointer;
+}
+.addon-popup-wrap textarea.special-instructions,
+.view-food-item-wrap textarea.special-instructions {
+	display: block;
+	width: 100% !important;
+	max-width: 100%;
+	min-height: 54px;
+	box-sizing: border-box;
+	clear: both;
+	margin: 6px 0 0 0;
+	padding: 8px 12px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	resize: vertical;
 }
 #rpressModal .rpress-popup-actions .submit-fooditem-button {
 	color: #fff;

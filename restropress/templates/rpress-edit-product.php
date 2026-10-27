@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<span class="special-instructions-link">
 			<?php echo esc_html( apply_filters( 'rpress_special_instruction_text', __('Special Instructions?', 'restropress' ) ) ); ?>
 		</span>
-		<textarea placeholder="<?php esc_html_e( 'e.g. allergies, extra spicy, etc.', 'restropress' ); ?>" class="rp-col-md-12 special-instructions" name="special_instruction">{cartinstructions}</textarea>
+		<textarea placeholder="<?php esc_html_e( 'e.g. allergies, extra spicy, etc.', 'restropress' ); ?>" class="rp-col-md-12 rp-col-xs-12 special-instructions" name="special_instruction">{cartinstructions}</textarea>
 	</div>
 	<?php endif; ?>
 </div>

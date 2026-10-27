@@ -669,14 +669,20 @@
 
 /* Sound unlock overlay */
 
+/* A hint, not a modal: clicks pass through so the first click on the board
+   (e.g. Accept) still works. Any click on the page unlocks audio. */
 .rp-live-sound-overlay {
     position: fixed;
-    inset: 0;
+    top: 48px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 10000;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(15, 23, 42, 0.45);
+    pointer-events: none;
+}
+
+.rp-live-sound-overlay-inner {
+    pointer-events: auto;
     cursor: pointer;
 }
 

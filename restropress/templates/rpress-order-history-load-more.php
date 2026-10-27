@@ -94,7 +94,7 @@ if ( $loop->have_posts() ) :
 
 			<footer class="rpress-history-card-footer">
 				<div class="rpress-history-total">
-					<span><?php esc_html_e( 'Total paid', 'restropress' ); ?></span>
+					<span><?php echo rpress_is_payment_complete( $payment->ID ) ? esc_html__( 'Total paid', 'restropress' ) : esc_html__( 'Total', 'restropress' ); ?></span>
 					<strong><?php echo esc_html( rpress_currency_filter( rpress_format_amount( $payment->total ), rpress_get_payment_currency_code( $payment->ID ) ) ); ?></strong>
 				</div>
 				<div class="rpess-view-details rpress-history-actions">

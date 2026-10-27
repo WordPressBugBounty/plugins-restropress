@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.4.10';
+	public $version = '3.4.11';
 	/**
 	 * The single instance of the class.
 	 *
@@ -402,21 +402,44 @@ final class RestroPress
 	 */
 	public function load_textdomain()
 	{
-		$site_locale = get_locale();
-		$user_locale = function_exists( 'determine_locale' ) ? determine_locale() : $site_locale;
+		$site_locale = apply_filters( 'plugin_locale', get_locale(), 'restropress' );
+		$user_locale = function_exists( 'determine_locale' ) ? apply_filters( 'plugin_locale', determine_locale(), 'restropress' ) : $site_locale;
 
-		// Load site locale first so storefront AJAX requests preserve translations
-		if ( ! empty( $site_locale ) ) {
-			$site_mofile = 'restropress-' . $site_locale . '.mo';
-			load_textdomain( 'restropress', WP_LANG_DIR . '/plugins/' . $site_mofile );
-			load_textdomain( 'restropress', RP_PLUGIN_DIR . 'languages/' . $site_mofile );
+		$locales = array_unique( array_filter( array( $user_locale, $site_locale ) ) );
+
+		// For English variants, check both 'en_US' and 'en' to handle Loco Translate / WP mismatch
+		$search_locales = array();
+		foreach ( $locales as $loc ) {
+			$search_locales[] = $loc;
+			if ( 'en' === $loc ) {
+				$search_locales[] = 'en_US';
+			} elseif ( 'en_US' === $loc ) {
+				$search_locales[] = 'en';
+			}
 		}
+		$search_locales = array_unique( $search_locales );
 
-		// Load user/determined locale if different
-		if ( ! empty( $user_locale ) && $user_locale !== $site_locale ) {
-			$user_mofile = 'restropress-' . $user_locale . '.mo';
-			load_textdomain( 'restropress', WP_LANG_DIR . '/plugins/' . $user_mofile );
-			load_textdomain( 'restropress', RP_PLUGIN_DIR . 'languages/' . $user_mofile );
+		// Priority order for translation directories (outside plugin folder first to prevent update loss):
+		// 1. Loco Translate Custom: WP_LANG_DIR/loco/plugins/
+		// 2. Custom Safe Folder: WP_LANG_DIR/restropress/
+		// 3. WordPress System Folder: WP_LANG_DIR/plugins/
+		// 4. Plugin Author Folder: RP_PLUGIN_DIR/languages/
+		$dirs = apply_filters( 'rpress_translation_directories', array(
+			trailingslashit( WP_LANG_DIR ) . 'loco/plugins/',
+			trailingslashit( WP_LANG_DIR ) . 'restropress/',
+			trailingslashit( WP_LANG_DIR ) . 'plugins/',
+			RP_PLUGIN_DIR . 'languages/',
+		), $search_locales );
+
+		foreach ( $search_locales as $locale ) {
+			foreach ( $dirs as $dir ) {
+				$mofile  = trailingslashit( $dir ) . 'restropress-' . $locale . '.mo';
+				$phpfile = trailingslashit( $dir ) . 'restropress-' . $locale . '.l10n.php';
+
+				if ( is_readable( $phpfile ) || is_readable( $mofile ) ) {
+					load_textdomain( 'restropress', $mofile );
+				}
+			}
 		}
 
 		load_plugin_textdomain( 'restropress', false, dirname( plugin_basename( RP_PLUGIN_FILE ) ) . '/languages/' );

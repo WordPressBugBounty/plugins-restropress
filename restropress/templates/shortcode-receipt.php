@@ -135,7 +135,9 @@ $pay_label = $is_paid ? __( 'Paid', 'restropress' ) : '';
 try {
 	$pay_note  = $is_paid
 		? sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun )
-		: sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when your order arrives', 'restropress' ), $order_total, $method_noun );
+		: ( 'pickup' === $service_type
+			? sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when you collect your order', 'restropress' ), $order_total, $method_noun )
+			: sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when your order arrives', 'restropress' ), $order_total, $method_noun ) );
 } catch ( \Throwable $e ) {
 	$pay_note  = $is_paid
 		? trim( $order_total . ' ' . $method_noun )

@@ -52,7 +52,7 @@ $condition_display = empty( $product_reqs ) ? ' style="display:none;"' : '';
 					<label for="rpress-code"><?php esc_html_e( 'Code', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input type="text" required="required" id="rpress-code" class="rp-input rp-field-md" name="code" value="<?php echo esc_attr( rpress_get_discount_code( $discount_id ) ); ?>" pattern="[a-zA-Z0-9-_]+" />
+					<input type="text" required="required" id="rpress-code" class="rp-input rp-field-md" name="code" value="<?php echo esc_attr( rpress_get_discount_code( $discount_id ) ); ?>" pattern="[a-zA-Z0-9_\-]+" />
 					<p class="description"><?php esc_html_e( 'Enter a code for this discount, such as 10PERCENT. Only alphanumeric characters are allowed.', 'restropress' ); ?></p>
 				</td>
 			</tr>

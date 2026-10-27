@@ -655,19 +655,23 @@ class RP_AJAX {
         );
       }
     }
+        $preorder_enabled = rpress_is_preorder_enabled( $service_type );
     if ( empty( $selected_date ) ) {
-      $selected_date = rpress_get_first_available_service_date( $service_type, '' );
+      $selected_date = rpress_get_selected_service_date( $service_type, '', false );
     } else {
       $selected_date_ts = rpress_get_wp_timestamp( $selected_date );
       if ( false === $selected_date_ts ) {
-        $selected_date = rpress_get_first_available_service_date( $service_type, '' );
+        $selected_date = rpress_get_selected_service_date( $service_type, '', false );
       } else {
         $selected_date = wp_date( 'Y-m-d', $selected_date_ts, rpress_get_wp_timezone() );
-        setcookie( 'service_date_manual', $selected_date, time() + ( 86400 * 30 ), '/' );
-        $_COOKIE['service_date_manual'] = $selected_date;
+        if ( $preorder_enabled ) {
+          setcookie( 'service_date_manual', $selected_date, time() + ( 86400 * 30 ), '/' );
+          $_COOKIE['service_date_manual'] = $selected_date;
+        }
       }
     }
 
+    $selected_date = rpress_get_selected_service_date( $service_type, $selected_date, $preorder_enabled );
     if ( empty( $selected_date ) ) {
       wp_send_json_error(
         array(
@@ -676,14 +680,13 @@ class RP_AJAX {
         )
       );
     }
-    $selected_date = rpress_get_first_available_service_date( $service_type, $selected_date );
     $service_time_hidden = function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $service_type );
     $allow_asap = ! empty( rpress_get_option( 'enable_asap_option' ) );
     $available_slots = rpress_get_available_service_slots( $service_type, $selected_date, true );
     $service_time = ! empty( $selected_time )
       ? $selected_time
       : ( isset( $_COOKIE['service_time'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_time'] ) ) : '' );
-    if ( ! rpress_is_store_open( $service_type, $selected_date ) ) {
+    if ( ! rpress_is_store_open( $service_type, $selected_date ) || ( empty( $available_slots ) && ! $preorder_enabled ) ) {
       $response = array( 'status' => 'error', 'error_msg' => rpress_store_closed_message( $service_type ) );
       wp_send_json_error( $response );
       die();
@@ -963,7 +966,16 @@ class RP_AJAX {
         }
       }
     }
+    $lines_before = count( (array) rpress_get_cart_contents() );
     $key = rpress_add_to_cart( $fooditem_id, $options );
+    // An identical line had its quantity raised instead of a line being added.
+    $merged = count( (array) rpress_get_cart_contents() ) === $lines_before;
+    if ( $merged ) {
+      $contents = rpress_get_cart_contents();
+      if ( isset( $contents[ $key ]['quantity'] ) ) {
+        $options['quantity'] = $contents[ $key ]['quantity'];
+      }
+    }
     $item = array(
       'id'      => $fooditem_id,
       'options' => $options
@@ -975,6 +987,7 @@ class RP_AJAX {
       array(
         'cart_item' => $items,
         'cart_key'  => $key,
+        'merged'    => $merged,
       )
     );
     $return = apply_filters( 'rpress_cart_data', $return );
@@ -2153,16 +2166,11 @@ class RP_AJAX {
   public static function checkout_service_fees() {
     $out = array();
     foreach ( array( 'delivery', 'pickup' ) as $service ) {
-      $amount = function_exists( 'rpress_get_checkout_service_fee_display' )
-        ? (float) rpress_get_checkout_service_fee_display( $service )
-        : 0;
-      $out[ $service ] = $amount > 0
-        ? sprintf(
-            /* translators: %s: formatted fee amount */
-            __( '%s fee', 'restropress' ),
-            html_entity_decode( rpress_currency_filter( rpress_format_amount( $amount ) ), ENT_COMPAT, 'UTF-8' )
-          )
-        : __( 'Free', 'restropress' );
+      $out[ $service ] = function_exists( 'rpress_get_checkout_service_fee_sublabel' )
+        ? rpress_get_checkout_service_fee_sublabel( $service )
+        : ( function_exists( 'rpress_get_checkout_service_fee_display' ) && (float) rpress_get_checkout_service_fee_display( $service ) > 0
+            ? sprintf( __( '%s fee', 'restropress' ), html_entity_decode( rpress_currency_filter( rpress_format_amount( (float) rpress_get_checkout_service_fee_display( $service ) ) ), ENT_COMPAT, 'UTF-8' ) )
+            : ( 'pickup' === $service ? __( 'Free', 'restropress' ) : '' ) );
     }
     wp_send_json_success( $out );
   }

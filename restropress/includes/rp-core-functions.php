@@ -309,6 +309,52 @@ function rpress_get_instruction_by_key($cart_key)
 }
 
 /**
+ * Determine if pre-order functionality is enabled via an active pre-order extension.
+ *
+ * Core RestroPress does not provide pre-ordering; pre-ordering requires a dedicated
+ * extension (such as Pre-Order for RestroPress or Store Timing & Delivery Cutoff).
+ *
+ * @since 3.4.1
+ * @param string $service_type Service type ('delivery', 'pickup', or empty).
+ * @return bool
+ */
+function rpress_is_preorder_enabled( $service_type = '' ) {
+  $enabled = false;
+
+  // 1. Standalone Pre-Order for RestroPress plugin.
+  if ( '1' === (string) rpress_get_option( 'enable_preorder', 0 ) ) {
+    $enabled = true;
+  }
+
+  // 2. Store Timing & Delivery Cutoff extension.
+  if ( ! $enabled && class_exists( 'RP_StoreTiming_Settings' ) ) {
+    $location_id = isset( $_COOKIE['branch'] ) ? absint( wp_unslash( $_COOKIE['branch'] ) ) : 0;
+    if ( $location_id <= 0 ) {
+      $rpress_settings = get_option( 'rpress_settings', array() );
+      $location_id     = ! empty( $rpress_settings['default_location'] ) ? absint( $rpress_settings['default_location'] ) : 0;
+    }
+    if ( $location_id <= 0 ) {
+      $multi_location_settings = get_option( 'rp_multi_location', array() );
+      $location_id             = ! empty( $multi_location_settings['default_location'] ) ? absint( $multi_location_settings['default_location'] ) : 0;
+    }
+    $timing_settings = RP_StoreTiming_Settings::rpress_timing_options( $location_id );
+    if ( ! empty( $service_type ) ) {
+      if ( 'delivery' === $service_type && ! empty( $timing_settings['pre_order'] ) ) {
+        $enabled = true;
+      } elseif ( 'pickup' === $service_type && ! empty( $timing_settings['pre_order_pickup'] ) ) {
+        $enabled = true;
+      }
+    } else {
+      if ( ! empty( $timing_settings['pre_order'] ) || ! empty( $timing_settings['pre_order_pickup'] ) ) {
+        $enabled = true;
+      }
+    }
+  }
+
+  return (bool) apply_filters( 'rpress_is_preorder_enabled', $enabled, $service_type );
+}
+
+/**
  * Get the selected service date from cookies for display.
  *
  * @param string $service_type Service type.
@@ -330,7 +376,7 @@ function rpress_get_service_date_cookie_display( $service_type = '' ) {
     return '';
   }
 
-  $allow_future = ! empty( $manual_service_date ) && $manual_service_date === $service_date_raw;
+  $allow_future = rpress_is_preorder_enabled( $service_type ) && ! empty( $manual_service_date ) && $manual_service_date === $service_date_raw;
   $selected_date = rpress_get_selected_service_date( $service_type, $requested_date, $allow_future );
 
   return rpress_format_service_date( $selected_date );
@@ -1266,9 +1312,17 @@ function rpress_get_available_service_slots( $service_type, $service_date = '', 
  */
 function rpress_get_first_available_service_date( $service_type, $requested_date = '', $lookahead_days = 30 ) {
   $service_type = sanitize_key( (string) $service_type );
+  $today_str    = rpress_get_wp_now()->format( 'Y-m-d' );
+
+  // Pre-ordering is handled exclusively by dedicated pre-order extensions.
+  // Core RestroPress does not advance service dates into future days.
+  if ( ! rpress_is_preorder_enabled( $service_type ) ) {
+    return $today_str;
+  }
+
   $seed_date    = rp_row_date( $requested_date, $service_type );
   $seed_dt      = rpress_parse_wp_datetime( $seed_date );
-  $today_dt     = rpress_parse_wp_datetime( rpress_get_wp_now()->format( 'Y-m-d' ) );
+  $today_dt     = rpress_parse_wp_datetime( $today_str );
 
   if ( false === $seed_dt ) {
     $seed_dt = $today_dt;
@@ -1328,7 +1382,8 @@ function rpress_get_selected_service_date( $service_type, $requested_date = '', 
     return $today_dt->format( 'Y-m-d' );
   }
 
-  if ( ! $allow_future && $seed_dt > $today_dt ) {
+  $can_preorder = $allow_future && rpress_is_preorder_enabled( $service_type );
+  if ( ! $can_preorder && $seed_dt > $today_dt ) {
     return $today_dt->format( 'Y-m-d' );
   }
 
@@ -1460,12 +1515,14 @@ function rpress_pre_validate_order() {
             ? sanitize_text_field(wp_unslash($_COOKIE['service_date']))
             : '');
 
-    if ( ! empty( $_POST['rpress_service_date'] ) && $should_set_cookies ) {
+    $preorder_enabled = rpress_is_preorder_enabled( $service_type );
+
+    if ( ! empty( $_POST['rpress_service_date'] ) && $should_set_cookies && $preorder_enabled ) {
       setcookie( 'service_date_manual', $service_date_raw, time() + ( 86400 * 30 ), '/' );
       $_COOKIE['service_date_manual'] = $service_date_raw;
     }
 
-    $service_date = rpress_get_first_available_service_date( $service_type, $service_date_raw );
+    $service_date = rpress_get_selected_service_date( $service_type, $service_date_raw, $preorder_enabled );
     if ( $should_set_cookies ) {
       setcookie( 'service_date', $service_date, time() + ( 86400 * 30 ), '/' );
       $_COOKIE['service_date'] = $service_date;
@@ -1477,7 +1534,9 @@ function rpress_pre_validate_order() {
       $_COOKIE['delivery_date'] = $service_display_date;
     }
 
-    if ( ! rpress_is_store_open( $service_type, $service_date ) ) {
+    $available_slots = rpress_get_available_service_slots( $service_type, $service_date, true );
+
+    if ( ! rpress_is_store_open( $service_type, $service_date ) || ( empty( $available_slots ) && ! $preorder_enabled ) ) {
         return array(
             'status' => 'error',
             'error_type' => 'service_closed',
@@ -2920,7 +2979,7 @@ function rpress_is_store_open($service_type, $selected_date = '')
   }
 
   if ($selected_date > $current_day) {
-    $is_open = $has_service_hours;
+    $is_open = rpress_is_preorder_enabled( $service_type ) ? $has_service_hours : false;
   } elseif ($selected_date < $current_day) {
     $is_open = false;
   }
@@ -3019,10 +3078,11 @@ function rpress_get_service_context( $service_type_override = '' ): array
   );
 
   /* ---------------- Date Formatting ---------------- */
+  $preorder_active = rpress_is_preorder_enabled( $context['service_type'] );
   $manual_service_date_cookie = ! empty( $_COOKIE['service_date_manual'] )
     ? sanitize_text_field( wp_unslash( $_COOKIE['service_date_manual'] ) )
     : '';
-  $manual_service_date = ! empty( $manual_service_date_cookie ) && $manual_service_date_cookie === $context['service_date_raw'];
+  $manual_service_date = $preorder_active && ! empty( $manual_service_date_cookie ) && $manual_service_date_cookie === $context['service_date_raw'];
   $raw = rpress_get_selected_service_date( $context['service_type'], $context['service_date_raw'], $manual_service_date );
   $context['service_date_raw'] = $raw;
 
@@ -3032,34 +3092,15 @@ function rpress_get_service_context( $service_type_override = '' ): array
     $context['service_date'] = rpress_format_service_date( rpress_get_wp_now()->format( 'Y-m-d' ) );
   }
 
-  // When the customer has not pinned a date, advance to the first date that
-  // actually has open slots. Without this an open store (in particular one set
-  // to always open) reads as "closed" late at night once today's slots are
-  // exhausted, even though tomorrow is wide open. rpress_get_first_available_
-  // service_date() returns the seed date unchanged when it already has slots,
-  // so daytime and genuinely-closed cases are untouched.
-  if ( ! $manual_service_date ) {
-    $first_available = rpress_get_first_available_service_date( $context['service_type'], $raw );
-    if ( ! empty( $first_available ) && $first_available !== $raw ) {
-      $raw = $first_available;
-      $context['service_date_raw'] = $first_available;
-      $context['service_date']     = rpress_format_service_date( $first_available );
-    }
-  }
+  // Pre-order auto-advance removed from core. The service date is not advanced
+  // to future dates in core RestroPress.
 
-  if ( ! $manual_service_date && ! empty( $raw ) ) {
-    // This context builder runs during template render (after wp_head has
-    // already sent output), so writing a real Set-Cookie header here triggers
-    // "headers already sent" warnings. Only set the browser cookie while
-    // headers are still open; the in-request superglobal is always updated and
-    // the storefront JS persists these cookies client-side regardless.
-    if ( ! headers_sent() ) {
-      setcookie( 'service_date', $raw, time() + ( 86400 * 30 ), '/' );
-      setcookie( 'delivery_date', $context['service_date'], time() + ( 86400 * 30 ), '/' );
-    }
-    $_COOKIE['service_date']  = $raw;
-    $_COOKIE['delivery_date'] = $context['service_date'];
+  if ( ! empty( $raw ) && ( ! headers_sent() ) ) {
+    setcookie( 'service_date', $raw, time() + ( 86400 * 30 ), '/' );
+    setcookie( 'delivery_date', $context['service_date'], time() + ( 86400 * 30 ), '/' );
   }
+  $_COOKIE['service_date']  = $raw;
+  $_COOKIE['delivery_date'] = $context['service_date'];
 
   /* ---------------- Time Handling ---------------- */
 
@@ -3107,7 +3148,7 @@ function rpress_get_service_context( $service_type_override = '' ): array
     ? rp_row_date($context['service_date_raw'], $context['service_type'])
     : rpress_get_wp_now()->format('Y-m-d');
 
-  if (!rpress_is_store_open($context['service_type'], $service_date_for_checks)) {
+  if ( ! rpress_is_store_open( $context['service_type'], $service_date_for_checks ) || ( empty( $context['store_timings'] ) && ! $preorder_active ) ) {
     $context['is_store_open'] = false;
   }
 

@@ -561,6 +561,12 @@ class RP_Live_Orders {
 		$payment_status = $payment_obj ? $payment_obj->status : get_post_status( $payment_id );
 		$payment_label  = rpress_get_payment_status_label( $payment_status );
 		$payment_label  = $payment_label ? $payment_label : ucfirst( (string) $payment_status );
+		// Staff need to know if the money is collected; "Processing" read like a kitchen status.
+		if ( 'publish' === $payment_status ) {
+			$payment_label = __( 'Paid', 'restropress' );
+		} elseif ( in_array( $payment_status, array( 'pending', 'processing' ), true ) ) {
+			$payment_label = __( 'Not paid yet', 'restropress' );
+		}
 		$gateway        = $payment_obj ? rpress_get_payment_gateway( $payment_id ) : '';
 		$gateway_label  = $gateway ? rpress_get_gateway_admin_label( $gateway ) : '';
 		$next_action    = self::get_next_action( $order_status, $service_filter_type );

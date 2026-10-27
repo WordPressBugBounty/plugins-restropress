@@ -137,6 +137,11 @@ function rpress_options_page() {
 				?>
 				<?php submit_button( null, 'primary rp-btn rp-btn-primary', 'submit', true ); ?>
 			</form>
+			<?php
+			// Panels with their own forms must render here: HTML forms cannot nest,
+			// and a nested form's fields would be posted with the settings save.
+			do_action( 'rpress_settings_after_form_' . $active_tab . '_' . $section );
+			?>
 		</div><!-- #tab_container-->
 	</div><!-- .wrap -->
 	<?php

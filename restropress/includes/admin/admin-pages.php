@@ -74,12 +74,22 @@ class RP_Admin_Menus
 		// the WooCommerce pattern, the pages are registered but hidden from the
 		// sidebar - they surface as buttons in the Menu Items list header
 		// (see rpress_fooditem_list_table_buttons) so the submenu stays clean.
-		add_submenu_page('edit.php?post_type=fooditem', esc_html__('Import Menu', 'restropress'), esc_html__('Import', 'restropress'), 'edit_products', 'rpress-menu-import', array('RPress_Onboarding', 'render_menu_importer'));
+		$hidden_pages = array();
+		$hidden_pages[ __( 'Import Menu', 'restropress' ) ] = add_submenu_page('edit.php?post_type=fooditem', esc_html__('Import Menu', 'restropress'), esc_html__('Import', 'restropress'), 'edit_products', 'rpress-menu-import', array('RPress_Onboarding', 'render_menu_importer'));
 		if ( function_exists( 'rpress_menu_export_page' ) ) {
-			add_submenu_page('edit.php?post_type=fooditem', esc_html__('Export Menu', 'restropress'), esc_html__('Export', 'restropress'), 'export_shop_reports', 'rpress-menu-export', 'rpress_menu_export_page');
+			$hidden_pages[ __( 'Export Menu', 'restropress' ) ] = add_submenu_page('edit.php?post_type=fooditem', esc_html__('Export Menu', 'restropress'), esc_html__('Export', 'restropress'), 'export_shop_reports', 'rpress-menu-export', 'rpress_menu_export_page');
 		}
 		remove_submenu_page('edit.php?post_type=fooditem', 'rpress-menu-import');
 		remove_submenu_page('edit.php?post_type=fooditem', 'rpress-menu-export');
+		// Removing the submenu entry also drops the page title, which leaves the
+		// admin <title> null (PHP 8.1+ deprecation). Set it before the header.
+		foreach ( $hidden_pages as $page_title => $hook ) {
+			if ( $hook ) {
+				add_action( 'load-' . $hook, function () use ( $page_title ) {
+					$GLOBALS['title'] = $page_title;
+				} );
+			}
+		}
 	}
 	public function rpress_dashboard_page()
 	{

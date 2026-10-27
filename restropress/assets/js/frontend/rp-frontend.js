@@ -22,14 +22,17 @@ function remove_show_service_options() {
 }
 /* Set default addons */
 function rp_checked_default_subaddon() {
-  if (jQuery('#fooditem-details .rp-addons-data-wrapper .food-item-list.active').length > 0) {
-    jQuery('#fooditem-details .rp-addons-data-wrapper .food-item-list.active').each(function () {
-      var element = jQuery(this).find('input');
-      if (element.hasClass('checked')) {
-        jQuery(this).find('input').prop('checked', true);
+  // Apply defaults only to add-on groups with nothing chosen, so a size change
+  // never overrides the customer's own pick. Covers the add and edit popups.
+  jQuery('#fooditem-details, #fooditem-update-details')
+    .find('.rp-addons-data-wrapper .addons-wrapper')
+    .each(function () {
+      var $active = jQuery(this).find('.food-item-list.active');
+      if ($active.find('input:checked').length) {
+        return;
       }
+      $active.find('input.checked').prop('checked', true);
     });
-  }
 }
 /* Set RestroPress Cookie */
 function rp_setCookie(cname, cvalue, ex_time) {
@@ -216,10 +219,24 @@ function show_dymanic_pricing(container, ele) {
   var price_key = ele.val();
   if (price_key !== 'undefined') {
     var $wrapper = jQuery('#' + container + ' .rp-addons-data-wrapper');
-    jQuery('#' + container + ' .rp-addons-data-wrapper .food-item-list')
-      .removeClass('active');
-    jQuery('#' + container + ' .rp-addons-data-wrapper .food-item-list.list_' + price_key)
-      .addClass('active');
+    var $lists = $wrapper.find('.food-item-list');
+    var $next = $lists.filter('.list_' + price_key);
+    // Each add-on is rendered once per size and only the active copy is shown.
+    // Carry the chosen add-ons (by add-on id) over to the new size's copies;
+    // radio copies share one name, so the hidden copy otherwise keeps the pick.
+    if (!$next.hasClass('active')) {
+      var chosen = {};
+      $lists.filter('.active').find('input:checked').each(function () {
+        chosen[String(this.value || '').split('|')[0]] = true;
+      });
+      $lists.removeClass('active');
+      $next.addClass('active');
+      if (!jQuery.isEmptyObject(chosen)) {
+        $next.find('input').each(function () {
+          this.checked = !!chosen[String(this.value || '').split('|')[0]];
+        });
+      }
+    }
     // remove border from the last active only
     $wrapper.find('.food-item-list.active').last().css('border-bottom', '0');
   }
@@ -470,6 +487,9 @@ jQuery(function ($) {
 
     $('.rp-mb-price').text(formattedTotal);
     $('.rp-mb-quantity').text(parsedQty);
+    if (typeof rp_scripts !== 'undefined' && rp_scripts.item_added_to_cart) {
+      $('.rp-mb-quantity-label').text(parsedQty === 1 ? rp_scripts.item_added_to_cart : rp_scripts.items_added_to_cart);
+    }
     $('span.rpress-cart-quantity').text(parsedQty);
 
     var hasItems = parsedQty > 0;
@@ -1934,6 +1954,16 @@ jQuery(function ($) {
                 var addonId = addon.addon_id;
                 var qty = addon.quantity;
 
+                // Radio copies (one per size) share a name, so only one can be
+                // checked: pick the copy shown for the line's size.
+                var $radios = $('#rpressModal .modal-body input[type="radio"][value^="' + addonId + '|"]');
+                if ($radios.length) {
+                  var $activeRadio = $radios.filter(function () {
+                    return $(this).closest('.food-item-list').hasClass('active');
+                  }).first();
+                  ($activeRadio.length ? $activeRadio : $radios.last()).prop('checked', true);
+                }
+
                 // Find all checkboxes that belong to this addon_id (multiple clones may exist)
                 var $checkboxes = $('#rpressModal .modal-body input[type="checkbox"][value^="' + addonId + '|"]');
 
@@ -2102,7 +2132,15 @@ jQuery(function ($) {
               $('ul.rpress-cart')
                 .find('li.cart_item.rpress-cart-meta.rpress_subtotal')
                 .remove();
-              $('ul.rpress-cart').append(response.cart_item);
+              var $mergedLine = response.merged
+                ? $('ul.rpress-cart > li.rpress-cart-item[data-cart-key="' + response.cart_key + '"]').first()
+                : $();
+              if ($mergedLine.length) {
+                // Same item and options already in the cart: its quantity went up.
+                $mergedLine.replaceWith($(response.cart_item).attr('data-cart-key', response.cart_key));
+              } else {
+                $('ul.rpress-cart').append(response.cart_item);
+              }
               if (float_menu.length > 0) {
                 float_menu.addClass("cart-has-items");
               }
@@ -2139,7 +2177,9 @@ jQuery(function ($) {
               // the checkout button stays hidden until a page refresh.
               $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').removeClass('empty-cart');
               if ($('div.rpress.item-order').length == 0) {
-                var orderitems = $('<div class="rpress item-order"><h4>Ordered menu</h4><span>1 items</span></div>');
+                // Same header as templates/cart/cart.php (string arrives escaped).
+                var cartTitle = (typeof rp_scripts !== 'undefined' && rp_scripts.cart_title) ? rp_scripts.cart_title : 'Your Order';
+                var orderitems = $('<div class="rpress item-order"><h4>' + cartTitle + '</h4></div>');
                 $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').prepend(orderitems);
               }
               if ($('li.rpress-cart-item')
@@ -2156,7 +2196,8 @@ jQuery(function ($) {
               $(document.body)
                 .trigger('rpress_added_to_cart', [response]);
               MicroModal.close('rpressModal');
-              tata.success(window.rp_scripts.success, self.attr('data-title') + window.rp_scripts.added_to_cart, {
+              var addedText = (response.merged && window.rp_scripts.quantity_updated_in_cart) ? window.rp_scripts.quantity_updated_in_cart : window.rp_scripts.added_to_cart;
+              tata.success(window.rp_scripts.success, self.attr('data-title') + addedText, {
                 position: "tr"
               })
             }

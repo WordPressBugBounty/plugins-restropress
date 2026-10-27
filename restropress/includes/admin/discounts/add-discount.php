@@ -38,7 +38,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 					<label for="rpress-code"><?php esc_html_e( 'Code', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input type="text" required="required" id="rpress-code" class="rp-input rp-field-md" name="code" value="" pattern="[a-zA-Z0-9-_]+" />
+					<input type="text" required="required" id="rpress-code" class="rp-input rp-field-md" name="code" value="" pattern="[a-zA-Z0-9_\-]+" />
 					<p class="description">
 						<?php 
 						echo wp_kses(

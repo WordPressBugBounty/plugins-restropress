@@ -271,16 +271,12 @@ class RP_Frontend_Scripts
       // Each service chip advertises the fee that applies to it. The currently
       // selected service has its fees on the cart, so this reflects whatever
       // fee extension is active (delivery zones, pickup/extra fees, …).
-      $fee_sub = function ($service) {
-        $amount = function_exists('rpress_get_checkout_service_fee_display')
-          ? (float) rpress_get_checkout_service_fee_display($service)
-          : 0;
-        return $amount > 0
-          ? sprintf(__('%s fee', 'restropress'), rpress_currency_filter(rpress_format_amount($amount)))
-          : __('Free', 'restropress');
-      };
-      $delivery_sub = $fee_sub('delivery');
-      $pickup_sub   = $fee_sub('pickup');
+      $delivery_sub = function_exists('rpress_get_checkout_service_fee_sublabel')
+        ? rpress_get_checkout_service_fee_sublabel('delivery')
+        : (function_exists('rpress_get_checkout_service_fee_display') && (float) rpress_get_checkout_service_fee_display('delivery') > 0 ? sprintf(__('%s fee', 'restropress'), rpress_currency_filter(rpress_format_amount((float) rpress_get_checkout_service_fee_display('delivery')))) : '');
+      $pickup_sub = function_exists('rpress_get_checkout_service_fee_sublabel')
+        ? rpress_get_checkout_service_fee_sublabel('pickup')
+        : (function_exists('rpress_get_checkout_service_fee_display') && (float) rpress_get_checkout_service_fee_display('pickup') > 0 ? sprintf(__('%s fee', 'restropress'), rpress_currency_filter(rpress_format_amount((float) rpress_get_checkout_service_fee_display('pickup')))) : __('Free', 'restropress'));
       $support_email = sanitize_email((string) get_option('admin_email'));
       $support_url = !empty($support_email) ? 'mailto:' . antispambot($support_email) : home_url('/');
 
@@ -340,6 +336,7 @@ class RP_Frontend_Scripts
       'add_to_cart' => $add_to_cart,
       'update_cart' => $update_cart,
       'added_to_cart' => $added_to_cart,
+      'quantity_updated_in_cart' => apply_filters('rp_quantity_updated_in_cart', __(' quantity updated in your cart', 'restropress')),
       'please_wait' => $please_wait_text,
       'at' => esc_html__('at', 'restropress'),
       'color' => $color,
@@ -395,6 +392,9 @@ class RP_Frontend_Scripts
       /* translators: %s: the search term */
       'search_no_results_query' => esc_html__( 'No menu items matched "%s". Try checking for spelling or searching for another term.', 'restropress' ),
       'search_view_full_menu' => esc_html__( 'View Full Menu', 'restropress' ),
+      'item_added_to_cart' => esc_html( _n( 'item added to cart', 'items added to cart', 1, 'restropress' ) ),
+      'items_added_to_cart' => esc_html( _n( 'item added to cart', 'items added to cart', 2, 'restropress' ) ),
+      'cart_title' => esc_html( apply_filters( 'rpress_cart_title', __( 'Your Order', 'restropress' ) ) ),
     );
     $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) : $default_service;
     $cookie_service = apply_filters('rpress_current_service_type', $cookie_service);

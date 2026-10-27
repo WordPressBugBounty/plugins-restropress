@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php echo esc_html( apply_filters('rpress_special_instruction_text', __('Special Instructions?', 'restropress')) ); ?>
 			</span>
 			<textarea placeholder="<?php esc_html_e('Add Instructions...', 'restropress') ?>"
-				class="rp-col-md-12 special-instructions " name="special_instruction"></textarea>
+				class="rp-col-md-12 rp-col-xs-12 special-instructions" name="special_instruction"></textarea>
 		</div>
 	<?php endif; ?>
 </div>

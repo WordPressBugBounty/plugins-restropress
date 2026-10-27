@@ -290,6 +290,41 @@ function rpress_setup_fooditem_taxonomies() {
 add_action( 'init', 'rpress_setup_fooditem_taxonomies', 0 );
 
 /**
+ * Keep the menu taxonomies out of the core XML sitemap. Food items are not
+ * publicly queryable, so their term archives are empty or 404 and would only
+ * send search engines to dead pages.
+ *
+ * @since 3.4.11
+ * @param array $taxonomies Taxonomy objects keyed by name.
+ * @return array
+ */
+function rpress_exclude_taxonomies_from_sitemap( $taxonomies ) {
+	foreach ( array( 'food-category', 'addon_category', 'fooditem_tag', 'dietary' ) as $taxonomy ) {
+		unset( $taxonomies[ $taxonomy ] );
+	}
+	return $taxonomies;
+}
+add_filter( 'wp_sitemaps_taxonomies', 'rpress_exclude_taxonomies_from_sitemap' );
+
+/**
+ * Restore a trashed menu item with the status it had before, so it returns to
+ * the menu. WordPress otherwise restores every post as a draft.
+ *
+ * @since 3.4.11
+ * @param string $new_status      Status WordPress would restore to.
+ * @param int    $post_id         Post ID.
+ * @param string $previous_status Status before the post was trashed.
+ * @return string
+ */
+function rpress_untrash_fooditem_status( $new_status, $post_id, $previous_status ) {
+	if ( 'fooditem' === get_post_type( $post_id ) && ! empty( $previous_status ) ) {
+		return $previous_status;
+	}
+	return $new_status;
+}
+add_filter( 'wp_untrash_post_status', 'rpress_untrash_fooditem_status', 10, 3 );
+
+/**
  * Seed the default dietary labels once (worldwide standard set).
  *
  * Runs after the taxonomy is registered; guarded by an option so it only

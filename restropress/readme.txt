@@ -5,7 +5,7 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.1
-Stable tag: 3.4.10
+Stable tag: 3.4.11
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
@@ -154,6 +154,32 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 7. Order details with status workflow and a printable kitchen ticket.
 
 == Changelog ==
+
+= Version 3.4.11 (2026-10-27) =
+* Fix: Modern template pack: on phones, tablets and small laptops (1024px and narrower) the menu collapsed to almost no height, so the theme's footer was drawn over the menu items. The menu now keeps its full height on every screen size and theme.
+* Fix: Removed deprecated payment_method_types parameter from core Stripe Checkout session creation to ensure compatibility with Stripe Dynamic Payment Methods.
+* Fix: Modern checkout service chips conditionally suppress "Free" sublabel for Delivery and Pickup when fee-related extensions are active with configured non-zero fees.
+* Fix: Display applied fees breakdown and coupon discounts in the admin order details totals box.
+* Fix: Settings import no longer erases all RestroPress settings. The uploaded file was never read, so every import saved an empty value; invalid or empty files are now rejected without changing anything.
+* Fix: Settings > Misc (debug mode, remove data on uninstall) now saves. The export/import panel was nested inside the settings form, so Save ran an export instead.
+* Fix: Changing the size of an item no longer resets the customer's chosen add-ons (for example a spice level reverting to the default), in both the add and edit popups. The edit popup now restores saved radio choices.
+* Fix: A menu item restored from the trash returns to the menu instead of staying a draft.
+* Fix: Food categories, add-on groups, tags and dietary labels are no longer listed in the WordPress XML sitemap, where every link led to an empty or missing page.
+* Fix: Discount code field pattern is valid in current browsers, so codes with spaces or symbols are rejected before saving.
+* Fix: PHP 8.1+ deprecation notices on the Import Menu and Export Menu screens and on checkout when no coupon is applied.
+* Fix: Removed a missing password icon and a corrupt inline image from the login and register forms.
+* Fix: The store-closed state now follows the current time; core no longer auto-advances closed stores to the next pre-order slot.
+* Fix: Custom translations in wp-content/languages (including Loco Translate) are loaded first and kept across plugin updates.
+* Fix: The special instructions box stacks full width on mobile in the item popup.
+* Fix: Percentage coupons are calculated on each item's own add-ons. When an item without add-ons came before items with add-ons, the discount was worked out with another item's add-ons, so the order total could be off by several paisa or rupees.
+* Fix: The coupon amount on the receipt now matches the amount actually taken off the order total (no more 1-paisa difference with percentage coupons).
+* Fix: Adding an item that is already in the cart with the same size, add-ons and instructions now raises that line's quantity instead of adding a duplicate line. Developers can turn this off with the rpress_merge_identical_cart_items filter.
+* Fix: The Live Orders sound prompt no longer blocks the board, so the first click (for example Accept) works.
+* Improvement: Live Orders cards say "Paid" or "Not paid yet" instead of the raw payment status, so staff know whether to collect money.
+* Improvement: When an added item merges into an existing cart line, the confirmation says the quantity was updated.
+* Fix: The Admin Order Notification shows its real status and its recipients (including the site admin email fallback) in Settings > Emails. It previously always showed Enabled.
+* Fix: Wording: "1 item added to cart", "Total" instead of "Total paid" on unpaid orders in order history, and "when you collect your order" on pickup receipts.
+* Localization: Restored translatable menu search texts and the cart heading added through the cart refresh.
 
 = Version 3.4.10 (2026-10-16) =
 * Fix: Menu food item live search now strictly matches food item titles and properly hides non-matching items in modern template packs.

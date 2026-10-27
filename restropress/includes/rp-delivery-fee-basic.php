@@ -77,6 +77,124 @@ function rpress_get_checkout_service_fee_display( $service_type ) {
 }
 
 /**
+ * The fee sublabel to display on a checkout service chip (e.g. '$5.00 fee', 'Free', or '').
+ *
+ * If any fees related extensions are in use and the fees value is not 0,
+ * "Free" should not appear below the service type label.
+ *
+ * @since 3.4.11
+ * @param string $service_type 'delivery' or 'pickup'.
+ * @return string
+ */
+function rpress_get_checkout_service_fee_sublabel( $service_type ) {
+	$current = isset( $_COOKIE['service_type'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['service_type'] ) ) : '';
+
+	// 1. Allow extensions to filter the sublabel directly.
+	$filtered = apply_filters( 'rpress_checkout_service_fee_sublabel', null, $service_type, $current );
+	if ( null !== $filtered ) {
+		return (string) $filtered;
+	}
+
+	// 2. Check calculated fee amount.
+	$amount = function_exists( 'rpress_get_checkout_service_fee_display' )
+		? (float) rpress_get_checkout_service_fee_display( $service_type )
+		: 0.0;
+
+	if ( $amount > 0 ) {
+		return sprintf( __( '%s fee', 'restropress' ), html_entity_decode( rpress_currency_filter( rpress_format_amount( $amount ) ), ENT_COMPAT, 'UTF-8' ) );
+	}
+
+	// 3. Check if any fee-related extension is active on the site with configured fees != 0.
+	$has_fee_extension      = false;
+	$fee_extension_non_zero = false;
+
+	// Check Delivery Fee extension
+	if ( class_exists( 'RP_Delivery_Fee' ) || function_exists( 'rpress_delivery_fee' ) ) {
+		$has_fee_extension = true;
+		$delivery_settings = get_option( 'rp_delivery_fee', array() );
+
+		if ( ! empty( $delivery_settings['delivery_fee'] ) && is_array( $delivery_settings['delivery_fee'] ) ) {
+			foreach ( $delivery_settings['delivery_fee'] as $tier ) {
+				if ( ! empty( $tier['fee_amount'] ) && (float) $tier['fee_amount'] > 0 ) {
+					$fee_extension_non_zero = true;
+					break;
+				}
+			}
+		}
+		if ( ! $fee_extension_non_zero && ! empty( $delivery_settings['delivery_zones'] ) && is_array( $delivery_settings['delivery_zones'] ) ) {
+			foreach ( $delivery_settings['delivery_zones'] as $zone ) {
+				if ( ! empty( $zone['fee'] ) && (float) $zone['fee'] > 0 ) {
+					$fee_extension_non_zero = true;
+					break;
+				}
+			}
+		}
+	}
+
+	// Check Extra Fees extension
+	if ( class_exists( 'Rpress_Extra_Fees' ) || function_exists( 'rp_get_extra_fee_settings' ) || (int) rpress_get_option( 'rpress_extra_fees_active' ) === 1 ) {
+		$has_fee_extension = true;
+		if ( (int) rpress_get_option( 'rpress_extra_fees_active' ) === 1 ) {
+			$fee_extension_non_zero = true;
+		}
+	}
+
+	// General filters for custom extensions
+	$has_fee_extension      = apply_filters( 'rpress_has_fee_extension', $has_fee_extension, $service_type );
+	$fee_extension_non_zero = apply_filters( 'rpress_fee_extension_non_zero', $fee_extension_non_zero, $service_type );
+
+	// 4. Handle Delivery service type
+	if ( 'delivery' === $service_type ) {
+		if ( class_exists( 'RP_Delivery_Fee' ) || function_exists( 'rpress_delivery_fee' ) ) {
+			$delivery_settings    = get_option( 'rp_delivery_fee', array() );
+			$free_delivery_amount = ! empty( $delivery_settings['free_delivery_amount'] ) ? (float) $delivery_settings['free_delivery_amount'] : 0.0;
+			$cart_subtotal        = function_exists( 'rpress_get_cart_subtotal' ) ? (float) rpress_get_cart_subtotal() : 0.0;
+
+			// If free delivery threshold is qualified, it is free.
+			if ( $free_delivery_amount > 0 && $cart_subtotal >= $free_delivery_amount ) {
+				return __( 'Free', 'restropress' );
+			}
+		}
+
+		// If fee extension is in use and fees value is not 0, "Free" should NOT appear!
+		if ( $has_fee_extension && $fee_extension_non_zero ) {
+			return '';
+		}
+
+		// Core flat fee check
+		$flat = (float) rpress_get_flat_delivery_fee();
+		if ( $flat > 0 ) {
+			return sprintf( __( '%s fee', 'restropress' ), html_entity_decode( rpress_currency_filter( rpress_format_amount( $flat ) ), ENT_COMPAT, 'UTF-8' ) );
+		}
+
+		// If no extension and flat fee is 0, delivery is free
+		return __( 'Free', 'restropress' );
+	}
+
+	// 5. Handle Pickup service type
+	if ( 'pickup' === $service_type ) {
+		// Allow developer override for pickup
+		$allow_pickup_free = apply_filters( 'rpress_pickup_show_free_label', null );
+		if ( null !== $allow_pickup_free ) {
+			return $allow_pickup_free ? __( 'Free', 'restropress' ) : '';
+		}
+
+		// If fee-related extensions are in use and fees value is not 0, conditionally remove "Free"
+		if ( $has_fee_extension && $fee_extension_non_zero ) {
+			return '';
+		}
+
+		$pickup_fee_managed = apply_filters( 'rpress_pickup_fee_managed', false );
+		if ( $pickup_fee_managed ) {
+			return '';
+		}
+		return __( 'Free', 'restropress' );
+	}
+
+	return '';
+}
+
+/**
  * Back-compat shim for the delivery-only helper introduced earlier in 3.4.
  *
  * @since 3.4

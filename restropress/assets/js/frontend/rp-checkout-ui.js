@@ -235,10 +235,13 @@ jQuery(function ($) {
 			$wrap.find('#rpressdeliveryTab .nav-link').each(function () {
 				var type = ($(this).attr('data-service-type') || '').toLowerCase();
 				var val = /pickup/.test(type) ? res.data.pickup : res.data.delivery;
+				var $sub = $(this).find('.rpress-service-tab-sub');
 				if (!val) {
+					if ($sub.length) {
+						$sub.remove();
+					}
 					return;
 				}
-				var $sub = $(this).find('.rpress-service-tab-sub');
 				if (!$sub.length) {
 					var $tw = $(this).find('.rpress-service-tab-textwrap');
 					if ($tw.length) {

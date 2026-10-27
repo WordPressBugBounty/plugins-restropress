@@ -1,0 +1,37 @@
+<wpml-config>
+    <admin-texts>
+        <key name="rpress_settings">
+            <key name="from_name" />
+            <key name="purchase_subject" />
+            <key name="purchase_heading" />
+            <key name="purchase_receipt" />
+            <key name="checkout_label" />
+            <key name="stripe_checkout_label" />
+            <key name="pending">
+                <key name="subject" />
+                <key name="heading" />
+                <key name="content" />
+            </key>
+            <key name="processing">
+                <key name="subject" />
+                <key name="heading" />
+                <key name="content" />
+            </key>
+            <key name="completed">
+                <key name="subject" />
+                <key name="heading" />
+                <key name="content" />
+            </key>
+            <key name="cancelled">
+                <key name="subject" />
+                <key name="heading" />
+                <key name="content" />
+            </key>
+            <key name="admin_notification">
+                <key name="subject" />
+                <key name="heading" />
+                <key name="content" />
+            </key>
+        </key>
+    </admin-texts>
+</wpml-config>
