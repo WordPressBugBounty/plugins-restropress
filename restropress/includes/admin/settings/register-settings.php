@@ -232,6 +232,27 @@ function rpress_settings_upsell_nudge($message, $url = '')
  * @param array $args Field arguments.
  * @return void
  */
+/**
+ * A saved time ("23:30", "11:30pm", "9:00 AM") shown in the Store Time Format.
+ * Unparseable values are returned unchanged.
+ *
+ * @since 3.5
+ * @param string $value Saved time.
+ * @return string
+ */
+function rpress_settings_display_time($value)
+{
+	$value = trim((string) $value);
+	if ('' === $value) {
+		return $value;
+	}
+	$ts = strtotime('2000-01-01 ' . $value . ' UTC');
+	if (false === $ts) {
+		return $value;
+	}
+	return gmdate('24hrs' === rpress_get_option('store_time_format', '12hrs') ? 'H:i' : 'g:ia', $ts);
+}
+
 function rpress_store_hours_callback($args)
 {
 	$value        = rpress_get_option('store_hours', array());
@@ -266,8 +287,8 @@ function rpress_store_hours_callback($args)
 		$base   = 'rpress_settings[store_hours][' . $day_number . ']';
 		$html .= '<div class="rpress-hours-row' . ($closed ? ' is-closed' : '') . '">';
 		$html .= '<span class="rpress-hours-day">' . esc_html($day_label) . '</span>';
-		$html .= '<span><input type="text" class="rpress_timings rpress-hours-time" name="' . esc_attr($base) . '[open]" value="' . esc_attr($open) . '" autocomplete="off"/></span>';
-		$html .= '<span><input type="text" class="rpress_timings rpress-hours-time" name="' . esc_attr($base) . '[close]" value="' . esc_attr($close) . '" autocomplete="off"/></span>';
+		$html .= '<span><input type="text" class="rpress_timings rpress-hours-time" name="' . esc_attr($base) . '[open]" value="' . esc_attr(rpress_settings_display_time($open)) . '" autocomplete="off"/></span>';
+		$html .= '<span><input type="text" class="rpress_timings rpress-hours-time" name="' . esc_attr($base) . '[close]" value="' . esc_attr(rpress_settings_display_time($close)) . '" autocomplete="off"/></span>';
 		$html .= '<span class="rpress-hours-closed-cell"><input type="checkbox" class="rpress-hours-closed" name="' . esc_attr($base) . '[closed]" value="1"' . checked($closed, true, false) . '/></span>';
 		$html .= '<span>' . ($first ? '<button type="button" class="rpress-hours-copy-all">' . esc_html__('Copy to all days', 'restropress') . '</button>' : '') . '</span>';
 		$html .= '</div>';
@@ -1212,7 +1233,7 @@ function rpress_get_registered_settings()
 					"mobile_menu_display_enable" => [
 						'id' => "mobile_menu_display_enable",
 						'name' => esc_html__('Category Button (Mobile)', 'restropress'),
-						'desc' => esc_html__('Show a floating button that opens the category list on small screens.', 'restropress'),
+						'desc' => esc_html__('Show a floating button that opens the category list on small screens. It only appears when the Category Menu bar is hidden, since that bar already lists the categories.', 'restropress'),
 						'type' => 'checkbox',
 					],
 					'button_header' => array(
@@ -3226,6 +3247,37 @@ function rpress_shop_states_callback($args)
 		)
 	);
 }
+/**
+ * Extra customer emails listed under Settings > Emails > Order Notifications.
+ *
+ * Features add an entry keyed by its option name (the settings are saved as
+ * rpress_settings[<key>][enable_notification|subject|heading|content]):
+ *   'label' (string), 'recipient' (string), 'enabled' (bool, current state),
+ *   'subject', 'heading', 'content' (default copy shown when nothing is saved).
+ *
+ * @since 3.5
+ * @return array
+ */
+function rpress_get_extra_order_notification_emails()
+{
+	$emails = apply_filters('rpress_order_notification_extra_emails', array());
+	$clean = array();
+	foreach ((array) $emails as $key => $email) {
+		$key = sanitize_key($key);
+		if ('' === $key || !is_array($email) || array_key_exists($key, rpress_get_order_statuses()) || 'admin_notification' === $key) {
+			continue;
+		}
+		$clean[$key] = wp_parse_args($email, array(
+			'label' => $key,
+			'recipient' => __('Customer', 'restropress'),
+			'enabled' => false,
+			'subject' => '',
+			'heading' => '',
+			'content' => '',
+		));
+	}
+	return $clean;
+}
 function rpress_order_notification_settings_callback($args)
 {
 	// wp_editor() output (below) is captured here and re-injected AFTER the
@@ -3321,10 +3373,38 @@ function rpress_order_notification_settings_callback($args)
 					echo '</tr>';
 				}
 			}
+			// Extra customer emails registered by features (3.5+), see rpress_get_extra_order_notification_emails().
+			foreach (rpress_get_extra_order_notification_emails() as $extra_key => $extra_email) {
+				echo '<tr>';
+				foreach ($columns as $key => $column) {
+					echo '<td class="rpress-email-settings-table-' . esc_attr($key) . '">';
+					switch ($key) {
+						case 'status':
+							if (!empty($extra_email['enabled'])) {
+								echo '<span class="status-enabled" data-tip="' . esc_attr__('Enabled', 'restropress') . '"></span>';
+							} else {
+								echo '<span class="status-disabled" data-tip="' . esc_attr__('Disabled', 'restropress') . '"></span>';
+							}
+							break;
+						case 'name':
+							echo esc_html($extra_email['label']);
+							break;
+						case 'recipient':
+							echo esc_html($extra_email['recipient']);
+							break;
+						case 'actions':
+							echo '<a class="button alignright" href="' . esc_url(admin_url('admin.php?page=rpress-settings&tab=emails&section=order_notifications&rpress_order_status=' . $extra_key)) . '">' . esc_html__('Manage', 'restropress') . '</a>';
+							break;
+					}
+					echo '</td>';
+				}
+				echo '</tr>';
+			}
 			?>
 		</tbody>
 	</table>
 	<?php
+	$extra_emails = rpress_get_extra_order_notification_emails();
 	$order_status = !empty($_GET['rpress_order_status']) ? strtolower(sanitize_text_field(wp_unslash($_GET['rpress_order_status']))) : '';
 	$order_statuses = rpress_get_order_statuses();
 	$order_status_names = array();
@@ -3334,8 +3414,11 @@ function rpress_order_notification_settings_callback($args)
 		}
 	}
 	//Cross check whether the status is a valid one
-	if (in_array($order_status, $order_status_names) || $order_status == 'admin_notification') {
-		if ($order_status == 'pending') {
+	$extra_email = isset($extra_emails[$order_status]) ? $extra_emails[$order_status] : null;
+	if (in_array($order_status, $order_status_names) || $order_status == 'admin_notification' || $extra_email) {
+		if ($extra_email) {
+			$status = $extra_email['label'];
+		} elseif ($order_status == 'pending') {
 			$status = esc_html__('New Order', 'restropress');
 		} elseif ($order_status == 'admin_notification') {
 			$status = esc_html__('Admin Order Notification', 'restropress');
@@ -3388,6 +3471,13 @@ function rpress_order_notification_settings_callback($args)
 		} else if ($order_status == 'admin_notification' && empty($email_content)) {
 			$email_content = rpress_get_option('order_notification');
 		}
+		if ($extra_email) {
+			// Features decide their own on/off default and default copy.
+			$enable_notification = !empty($extra_email['enabled']) ? 'checked' : '';
+			$email_subject = '' !== $email_subject ? $email_subject : $extra_email['subject'];
+			$email_heading = '' !== $email_heading ? $email_heading : $extra_email['heading'];
+			$email_content = '' !== $email_content ? $email_content : $extra_email['content'];
+		}
 		$email_content = $email_content ? stripslashes($email_content) : '';
 		$email_content = wpautop($email_content);
 		?>
@@ -3414,6 +3504,17 @@ function rpress_order_notification_settings_callback($args)
 						</label>
 					</td>
 				</tr>
+				<?php
+				/**
+				 * Extra rows on an order email Manage screen (a feature's own fields).
+				 * Output passes through the wp_kses() list at the end of this callback.
+				 *
+				 * @since 3.5
+				 * @param string $order_status   Email key being managed.
+				 * @param array  $order_settings Saved settings for that email.
+				 */
+				do_action('rpress_order_notification_manage_fields', $order_status, is_array($order_settings) ? $order_settings : array());
+				?>
 				<?php if ($order_status == 'admin_notification'): ?>
 					<tr>
 						<td>
@@ -3496,7 +3597,7 @@ function rpress_order_notification_settings_callback($args)
 			'h2' => array(),
 			'small' => array('class' => array()),
 			'label' => array('for' => array(), 'class' => array()),
-			'input' => array('id' => array(), 'type' => array(), 'name' => array(), 'value' => array(), 'checked' => array(), 'class' => array()),
+			'input' => array('id' => array(), 'type' => array(), 'name' => array(), 'value' => array(), 'checked' => array(), 'class' => array(), 'min' => array(), 'max' => array(), 'step' => array()),
 			'textarea' => array('id' => array(), 'name' => array(), 'rows' => array(), 'cols' => array(), 'class' => array()),
 			'select' => array('name' => array(), 'id' => array(), 'class' => array()),
 			'option' => array('value' => array(), 'selected' => array()),

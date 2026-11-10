@@ -21,12 +21,13 @@ $category_string = isset($data['excluded_category']) ? $data['excluded_category'
 $category_string = rtrim($category_string, ',');
 $category_array = explode(',', $category_string);
 $button_style = rpress_get_option('button_style', 'button');
-// This template is only loaded when the "Mobile menu button" setting is on, so
-// it must NOT also depend on "Disable Category Menu" (that hides the desktop
-// category bar). The mobile menu button is its own independent control: honour
-// mobile_menu_display_enable alone so hiding the category bar doesn't suppress
-// the mobile category button.
-if (is_array($get_all_items) && !empty($get_all_items)):
+// This template is only loaded when the "Category Button (Mobile)" setting is
+// on. The sticky category bar already has category tabs and a list icon, so the
+// floating button only shows when that bar is hidden ("Disable Category Menu"):
+// two ways to open the same list is clutter (Uber Eats/DoorDash use the bar alone).
+$show_button = (bool) rpress_get_option('disable_category_menu', false);
+$show_button = apply_filters('rpress_show_mobile_category_button', $show_button, $data);
+if ($show_button && is_array($get_all_items) && !empty($get_all_items)):
     ?>
     <div class="container-actionmenu">
         <button id="actionburger" data-text-menu="<?php esc_attr_e('Menu', 'restropress'); ?>"

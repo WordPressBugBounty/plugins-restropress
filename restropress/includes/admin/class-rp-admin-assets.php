@@ -258,7 +258,7 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
             'finishText'        => esc_html__( 'Finish & go live', 'restropress' ),
             'launchedText'      => esc_html__( 'Setup complete', 'restropress' ),
             'publishedText'     => esc_html__( 'menu items published.', 'restropress' ),
-            'csvReadyText'      => esc_html__( 'Ready to import — click “Upload & map columns”.', 'restropress' ),
+            'csvReadyText'      => esc_html__( 'Ready to import: click “Upload & map columns”.', 'restropress' ),
             'saveMenuText'      => esc_html__( 'Save menu', 'restropress' ),
             'continueText'      => esc_html__( 'Continue', 'restropress' ),
             'loadSampleText'    => esc_html__( 'Load sample menu', 'restropress' ),
@@ -378,6 +378,8 @@ if ( ! class_exists( 'RP_Admin_Assets', false ) ) :
         'selected_filter_nonce'       => wp_create_nonce( 'selected-filter' ),
         'bulk_edit_nonce'             => wp_create_nonce( 'rpress-bulk-edit' ),
         'get_states_nonce'            => wp_create_nonce( 'rpress_get_states_nonce' ),
+        // Time pickers follow Settings > Service & Hours > Store Time Format.
+        'time_format'                 => '24hrs' === rpress_get_option( 'store_time_format', '12hrs' ) ? 'H:i' : 'g:ia',
       );
       wp_localize_script( 'rp-admin', 'rpress_vars',
         $admin_params

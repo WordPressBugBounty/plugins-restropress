@@ -292,6 +292,10 @@ function rpress_maybe_schedule_order_auto_accept_on_status_change( $payment_id, 
  * @return void
  */
 function rpress_run_order_auto_accept( $payment_id = 0 ) {
+	// Runs from cron with an ID; ignore request arrays from the rpress_action dispatcher.
+	if ( ! is_scalar( $payment_id ) ) {
+		return;
+	}
 	$payment_id = absint( $payment_id );
 	if ( empty( $payment_id ) ) {
 		return;
@@ -563,15 +567,15 @@ function rpress_count_payments( $args = array() ) {
 			$field = '';
 		$join = "LEFT JOIN $wpdb->postmeta m ON (p.ID = m.post_id)";
 		if ( ! empty( $field ) ) {
-			$where .= "
-				AND m.meta_key = '_rpress_payment_user_{$field}'
-				AND m.meta_value = '{$args['user']}'";
+			$where .= $wpdb->prepare( "
+				AND m.meta_key = %s
+				AND m.meta_value = %s", '_rpress_payment_user_' . $field, $args['user'] );
 		}
 	} elseif ( ! empty( $args['customer'] ) ) {
 		$join = "LEFT JOIN $wpdb->postmeta m ON (p.ID = m.post_id)";
-		$where .= "
+		$where .= $wpdb->prepare( "
 			AND m.meta_key = '_rpress_payment_customer_id'
-			AND m.meta_value = '{$args['customer']}'";
+			AND m.meta_value = %s", $args['customer'] );
 	// Count payments for a search
 	} elseif( ! empty( $args['s'] ) ) {
 		if ( is_email( $args['s'] ) || strlen( $args['s'] ) == 32 ) {

@@ -143,6 +143,7 @@ class RP_Live_Orders {
 		$now       = rpress_get_wp_now();
 		$today     = $now->format( 'Y-m-d' );
 		$yesterday = $now->modify( '-1 day' )->format( 'Y-m-d' );
+		$tomorrow  = $now->modify( '+1 day' )->format( 'Y-m-d' );
 
 		// Yesterday's service date is included so a still-active order from
 		// last night (e.g. never accepted or never completed) stays on the
@@ -155,7 +156,7 @@ class RP_Live_Orders {
 			'meta_query'       => array(
 				array(
 					'key'     => '_rpress_delivery_date',
-					'value'   => array( $yesterday, $today ),
+					'value'   => array( $yesterday, $today, $tomorrow ),
 					'compare' => 'IN',
 				),
 			),
@@ -209,8 +210,22 @@ class RP_Live_Orders {
 			}
 		}
 
+		// Tomorrow's orders only show when they are due soon, so an order placed
+		// just before midnight for a slot after midnight is not hidden, while
+		// tomorrow's pre-orders stay off today's board.
+		$lookahead = (int) apply_filters( 'rpress_live_orders_lookahead', 3 * HOUR_IN_SECONDS );
+		$cutoff    = current_time( 'timestamp' ) + $lookahead;
+
 		$matched = array();
 		foreach ( $posts as $post ) {
+			if ( $tomorrow === get_post_meta( $post->ID, '_rpress_delivery_date', true ) ) {
+				$time_str = (string) get_post_meta( $post->ID, '_rpress_delivery_time', true );
+				$is_asap  = false !== stripos( $time_str, 'ASAP' );
+				$due      = self::parse_service_timestamp( $post->ID, $tomorrow, trim( str_ireplace( 'ASAP', '', $time_str ) ), $is_asap );
+				if ( ! $due || $due > $cutoff ) {
+					continue;
+				}
+			}
 			$status = rpress_get_order_status( $post->ID );
 			if ( in_array( $status, $all_statuses, true ) ) {
 				$matched[] = $post;
@@ -562,7 +577,9 @@ class RP_Live_Orders {
 		$payment_label  = rpress_get_payment_status_label( $payment_status );
 		$payment_label  = $payment_label ? $payment_label : ucfirst( (string) $payment_status );
 		// Staff need to know if the money is collected; "Processing" read like a kitchen status.
-		if ( 'publish' === $payment_status ) {
+		if ( $payment_obj && function_exists( 'rpress_get_payment_paid_label' ) ) {
+			$payment_label = rpress_get_payment_paid_label( $payment_obj );
+		} elseif ( 'publish' === $payment_status ) {
 			$payment_label = __( 'Paid', 'restropress' );
 		} elseif ( in_array( $payment_status, array( 'pending', 'processing' ), true ) ) {
 			$payment_label = __( 'Not paid yet', 'restropress' );
@@ -622,6 +639,26 @@ class RP_Live_Orders {
 				<span><?php echo esc_html( $payment_label ); ?><?php echo $gateway_label ? esc_html( ' · ' . $gateway_label ) : ''; ?></span>
 				<strong><?php echo wp_kses( $total, array( 'span' => array( 'class' => array() ) ) ); ?></strong>
 			</div>
+			<?php
+			/**
+			 * Extra card content (for example courier status), echoed below the payment row.
+			 *
+			 * @since 3.5
+			 * @param int    $payment_id   Order ID.
+			 * @param string $order_status Order status.
+			 * @param string $service_type Normalised service type.
+			 */
+			do_action( 'rpress_live_orders_card_after_payment', $payment_id, $order_status, $service_filter_type );
+
+			/**
+			 * Fires inside a Live Orders card, above the action footer (for example print status, alert controls).
+			 *
+			 * @since 3.5
+			 * @param int    $payment_id   Order ID.
+			 * @param string $order_status Order status.
+			 */
+			do_action( 'rpress_live_orders_card_before_footer', $payment_id, $order_status );
+			?>
 			<footer class="rp-live-card-footer">
 				<?php if ( $next_action ) : ?>
 					<button type="button"

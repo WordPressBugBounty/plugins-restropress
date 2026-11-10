@@ -269,8 +269,12 @@ class RPRESS_Fees {
 	public function record_fees( $payment_meta, $payment_data ) {
 		if ( $this->has_fees( 'all' ) ) {
 			$payment_meta['fees'] = $this->get_fees( 'all' );
-			// Only clear fees from session when status is not pending
-			if( ! empty( $payment_data['status'] ) && 'pending' !== strtolower( $payment_data['status'] ) ) {
+			// Only clear the session fees once the purchase went through. A failed
+			// or abandoned payment keeps them, so a retry (for example after a
+			// declined card) still charges the delivery fee. Successful
+			// checkouts also empty the cart, which clears the fees.
+			$unfinished = array( 'pending', 'failed', 'abandoned', 'cancelled', 'revoked', 'refunded' );
+			if( ! empty( $payment_data['status'] ) && ! in_array( strtolower( $payment_data['status'] ), $unfinished, true ) ) {
 				RPRESS()->session->set( 'rpress_cart_fees', null );
 			}
 		}

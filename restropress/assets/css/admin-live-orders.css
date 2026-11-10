@@ -723,3 +723,31 @@
         min-width: 100%;
     }
 }
+
+/* Six KPI tiles side by side leave about 125px each on a 1024px tablet, too
+   narrow for the icon plus labels like "Preparing". Stack the icon above. */
+@media (max-width: 1360px) {
+    .rp-live-kpi {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: 'icon' 'label' 'count';
+        gap: 6px;
+        padding: 14px;
+    }
+
+    .rp-live-kpi .dashicons {
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+        line-height: 36px;
+    }
+}
+
+/* The grid utility shares the width equally (minmax(0, 1fr)), but columns
+   keep min-width: 220px, so below about 1250px each column overflowed its
+   track and painted over the previous one's cards. Size the tracks to the
+   column minimum and let the board scroll sideways instead. */
+@media screen and (min-width: 961px) {
+    .rp-live-kanban.rp-grid-5 {
+        grid-template-columns: repeat(5, minmax(220px, 1fr));
+    }
+}

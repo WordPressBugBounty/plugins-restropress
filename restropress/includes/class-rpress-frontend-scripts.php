@@ -236,6 +236,7 @@ class RP_Frontend_Scripts
       'delete_success_text' => esc_html__( 'Address Deleted', 'restropress' ),
       'delete_failed_text' => esc_html__( 'Unable to delete the address. Please try again.', 'restropress' ),
       'delete_error_text' => esc_html__( 'Something went wrong while deleting the address. Please try again.', 'restropress' ),
+      'order_details_error_text' => esc_html__( 'Could not load this order. Please try again.', 'restropress' ),
       'edit_address_title_text' => esc_html__( 'Edit Delivery Address', 'restropress' ),
       'add_address_title_text' => esc_html__( 'Add Delivery Address', 'restropress' ),
       'save_changes_text' => esc_html__( 'Save Changes', 'restropress' ),
@@ -304,8 +305,8 @@ class RP_Frontend_Scripts
         'delivery_sub' => $delivery_sub,
         'pickup_sub' => $pickup_sub,
         'gateways' => array(
-          'cash_on_delivery' => array('sub' => __('Pay the driver on delivery', 'restropress'), 'icon' => 'cash'),
-          'cod' => array('sub' => __('Pay the driver on delivery', 'restropress'), 'icon' => 'cash'),
+          'cash_on_delivery' => array('sub' => __('Pay in cash when you get your order', 'restropress'), 'icon' => 'cash'),
+          'cod' => array('sub' => __('Pay in cash when you get your order', 'restropress'), 'icon' => 'cash'),
           'stripe' => array('sub' => __('Pay securely online now', 'restropress'), 'icon' => 'card', 'icons' => function_exists('rpress_get_accepted_card_icon_urls') ? rpress_get_accepted_card_icon_urls() : array()),
         ),
       )));
@@ -342,6 +343,12 @@ class RP_Frontend_Scripts
       'color' => $color,
       'checkout_page' => rpress_get_checkout_uri(),
       'add_to_cart_nonce' => wp_create_nonce('add-to-cart'),
+      /* translators: shown under an option group in the item popup when nothing was picked */
+      'addon_required_text' => __('Please choose an option.', 'restropress'),
+      /* translators: %d: minimum number of options to pick in the item popup */
+      'addon_min_text' => __('Please choose at least %d.', 'restropress'),
+      /* translators: %d: maximum number of options allowed in the item popup */
+      'addon_max_text' => __('Please choose no more than %d.', 'restropress'),
       'service_type_nonce' => wp_create_nonce('service-type'),
       'order_details_nonce' => wp_create_nonce('show-order-details'),
       'service_options' => $service_options,
@@ -555,7 +562,15 @@ class RP_Frontend_Scripts
     if (
       $post instanceof WP_Post
       && ( has_shortcode((string) $post->post_content, 'fooditems')
-        || ( function_exists('has_block') && has_block('rpress/food-menu', $post) ) )
+        || ( function_exists('has_block') && has_block('rpress/food-menu', $post) )
+        // 3.5 block storefront (includes/features/block-storefront).
+        || ( function_exists('rpress_block_storefront_in_post') && rpress_block_storefront_in_post($post) ) )
+    ) {
+      self::enqueue_menu_styles();
+    } elseif (
+      // Checkout upsell opens the item popup on checkout: it needs the popup styles.
+      function_exists('rpress_checkout_upsell_is_active') && function_exists('rpress_is_checkout')
+      && rpress_is_checkout() && rpress_checkout_upsell_is_active()
     ) {
       self::enqueue_menu_styles();
     }
@@ -700,8 +715,9 @@ class RP_Frontend_Scripts
 
     $vars = sprintf(
       // The item and schedule modals render outside the menu wrapper, so the
-      // tokens must reach them too for pack skins.
-      '.rpress-menu-v2,#rpressModal,#rpressDateTime{--rpc-primary:%1$s;--rpc-primary-hover:%2$s;--rpc-primary-press:%3$s;--rpc-primary-tint:%4$s;--rpc-primary-tint-border:%5$s;--rpc-primary-shadow:rgba(%6$s,0.24);--rpc-primary-rgb:%6$s;}',
+      // tokens must reach them too for pack skins. .rpress-sf = the 3.5
+      // storefront blocks.
+      '.rpress-menu-v2,.rpress-sf,#rpressModal,#rpressDateTime{--rpc-primary:%1$s;--rpc-primary-hover:%2$s;--rpc-primary-press:%3$s;--rpc-primary-tint:%4$s;--rpc-primary-tint-border:%5$s;--rpc-primary-shadow:rgba(%6$s,0.24);--rpc-primary-rgb:%6$s;}',
       $primary,
       self::mix_hex_color($primary, '#000000', 12),
       self::mix_hex_color($primary, '#000000', 28),
@@ -712,7 +728,7 @@ class RP_Frontend_Scripts
     wp_add_inline_style('rpress-menu', $vars);
     // The settings-driven add-button CSS must print AFTER the pack skin so
     // merchant choices (shape, colors) beat the pack's defaults.
-    $final_handle = self::enqueue_pack_assets('rpress-menu', '.rpress-menu-v2,#rpressModal,#rpressDateTime');
+    $final_handle = self::enqueue_pack_assets('rpress-menu', '.rpress-menu-v2,.rpress-sf,#rpressModal,#rpressDateTime');
     wp_add_inline_style($final_handle ? $final_handle : 'rpress-menu', self::menu_add_button_styles());
   }
 
@@ -1114,8 +1130,8 @@ class RP_Frontend_Scripts
       body.rpress-checkout #rpress_checkout_wrap a:not(.button):not(.btn):not(.rpress-submit):not(.rpress-add-to-cart),
       form.rpress_form a,
       .custom-reset-password a,
-      .user-dashboard-wrapper a,
-      #rpress_user_history.rpress-order-history a:not(.rpress-view-order-btn):not(.rpress-reorder-btn) {
+      .user-dashboard-wrapper a:not(.rpress-track-order-btn):not(.rpress-reorder-btn):not(.rpress-account-res-book),
+      #rpress_user_history.rpress-order-history a:not(.rpress-view-order-btn):not(.rpress-reorder-btn):not(.rpress-track-order-btn) {
         color: var(--rpress-theme-link) !important;
       }
 
@@ -1143,20 +1159,16 @@ class RP_Frontend_Scripts
       .user-dashboard-wrapper .light-gray-bg,
       .user-dashboard-wrapper .address-wrap,
       .user-dashboard-wrapper table#user-orders,
-      .user-dashboard-wrapper table#user-orders tbody tr,
-      #rpressModal.show-order-details.rpress-order-details-context .modal__container,
-      #rpressModal.show-order-details.rpress-order-details-context .rp-order-section-md-data,
-      #rpressModal.show-order-details.rpress-order-details-context .rp-order-list-main-wrap ul.rpress-cart {
+      .user-dashboard-wrapper table#user-orders tbody tr {
         background: linear-gradient(180deg, #ffffff 0%, var(--rpress-theme-section-bg-soft) 100%) !important;
         border-color: var(--rpress-theme-border-soft) !important;
       }
       #rpress_user_history.rpress-order-history .rpress-order-history-count,
       #rpress_user_history.rpress-order-history .rpress-history-meta-item,
       .user-dashboard-wrapper table#user-orders thead th,
-      .user-dashboard-wrapper .viewbg,
+      .user-dashboard-wrapper .viewbg .rpress-view-order-btn,
       .user-dashboard-wrapper div#user-orders_filter input[type="search"],
-      .user-dashboard-wrapper .rp-order-dropdown,
-      #rpressModal.show-order-details.rpress-order-details-context .modal__close {
+      .user-dashboard-wrapper .rp-order-dropdown {
         background: var(--rpress-theme-section-bg) !important;
         border-color: var(--rpress-theme-border-soft) !important;
       }

@@ -1,0 +1,282 @@
+/* RestroPress allergens (3.5): menu badges, popup block and the filter. */
+
+.rp-allergens .rp-sr-only,
+.rp-allergen-filter .rp-sr-only {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Badge "icon": a round code (MI, GL, ...). Amber reads as a caution cue
+   and stays apart from the green dietary chips. */
+.rp-allergen__code {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 22px;
+	height: 22px;
+	border: 1px solid #f0c27a;
+	border-radius: 50%;
+	background: #fff6e6;
+	color: #7a4100;
+	font-size: 9.5px;
+	font-weight: 700;
+	line-height: 1;
+	letter-spacing: .02em;
+	text-transform: uppercase;
+	box-sizing: border-box;
+}
+.rp-allergen--trace .rp-allergen__code {
+	border-style: dashed;
+	background: #fff;
+}
+
+/* Card */
+.rp-allergens--card {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px;
+	margin: 6px 0 2px;
+	position: relative;
+}
+.rp-allergens--card .rp-allergen {
+	display: inline-flex;
+	cursor: help;
+}
+
+/* Popup */
+.rp-allergens--popup {
+	margin: 0 0 14px;
+	padding: 12px 14px;
+	border: 1px solid #f3dcb4;
+	border-radius: 10px;
+	background: #fffbf3;
+	font-size: 13px;
+	line-height: 1.4;
+	color: #3a2a12;
+}
+.rp-allergens--popup .rp-allergens__label {
+	margin: 0 0 6px;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+	color: #7a4100;
+}
+.rp-allergens--popup .rp-allergens__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 0 10px;
+	padding: 0;
+	list-style: none;
+}
+.rp-allergens--popup .rp-allergen {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	padding: 2px 10px 2px 2px;
+	border: 1px solid #f0c27a;
+	border-radius: 999px;
+	background: #fff;
+}
+.rp-allergens--popup .rp-allergen--trace { border-style: dashed; }
+.rp-allergens--popup .rp-allergens__note {
+	margin: 0;
+	font-size: 11.5px;
+	color: #6b5a40;
+}
+
+/* Filter: sits beside the search box (falls below it without :has()). */
+.rpress-option-col.rpress-search-wrap:has(> .rp-allergen-filter) {
+	display: flex !important;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.rpress-option-col.rpress-search-wrap:has(> .rp-allergen-filter) > .rpress-live-search {
+	flex: 1 1 160px;
+	margin-left: 0;
+	min-width: 0;
+}
+.rp-allergen-filter {
+	position: relative;
+	flex: 0 0 auto;
+	font-size: 13px;
+}
+.rp-allergen-filter__details > summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 39px;
+	padding: 0 14px;
+	border: 1px solid #e3e3e3;
+	border-radius: 999px;
+	background: #fff;
+	color: #222;
+	font-weight: 600;
+	cursor: pointer;
+	list-style: none;
+	user-select: none;
+	box-sizing: border-box;
+}
+.rp-allergen-filter__details > summary::-webkit-details-marker { display: none; }
+.rp-allergen-filter__details > summary:focus-visible,
+.rp-allergen-chip:focus-visible,
+.rp-allergen-filter__clear:focus-visible {
+	outline: 2px solid var(--rpc-primary, var(--rpress-theme-primary, #ed5575));
+	outline-offset: 2px;
+}
+.rp-allergen-filter__count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	border-radius: 999px;
+	background: var(--rpc-primary, var(--rpress-theme-primary, #ed5575));
+	color: #fff;
+	font-size: 11px;
+	line-height: 1;
+	box-sizing: border-box;
+}
+.rp-allergen-filter__count[hidden] { display: none; }
+.rp-allergen-filter__panel {
+	position: absolute;
+	z-index: 30;
+	top: calc(100% + 6px);
+	inset-inline-end: 0;
+	width: 320px;
+	max-width: calc(100vw - 32px);
+	padding: 14px;
+	border: 1px solid #e3e3e3;
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
+	color: #222;
+	box-sizing: border-box;
+	text-align: start;
+}
+.rp-allergen-filter__panel.is-flipped {
+	inset-inline-end: auto;
+	inset-inline-start: 0;
+}
+.rp-allergen-filter__title {
+	margin: 0 0 10px;
+	font-weight: 700;
+}
+.rp-allergen-filter__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.rp-allergen-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	padding: 3px 10px 3px 3px;
+	border: 1px solid #e3e3e3;
+	border-radius: 999px;
+	background: #fff;
+	color: #222;
+	font: inherit;
+	font-size: 12.5px;
+	line-height: 1.2;
+	cursor: pointer;
+	text-transform: none;
+	box-shadow: none;
+}
+.rp-allergen-chip:hover { border-color: #c9c9c9; background: #fafafa; color: #222; }
+.rp-allergen-chip[aria-pressed="true"] {
+	border-color: #7a4100;
+	background: #7a4100;
+	color: #fff;
+}
+.rp-allergen-chip[aria-pressed="true"] .rp-allergen__code {
+	border-color: #fff;
+	background: #fff;
+	color: #7a4100;
+	text-decoration: line-through;
+}
+.rp-allergen-filter__traces {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 12px 0 0;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 1.35;
+	cursor: pointer;
+}
+.rp-allergen-filter__traces input { margin: 0; }
+.rp-allergen-filter__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 10px;
+}
+.rp-allergen-filter__status { color: #555; font-size: 12px; }
+.rp-allergen-filter__clear {
+	margin: 0;
+	padding: 4px 10px;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--rpc-primary, var(--rpress-theme-primary, #ed5575));
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: none;
+}
+.rp-allergen-filter__note {
+	margin: 10px 0 0;
+	font-size: 11.5px;
+	color: #666;
+	line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+	.rp-allergen-filter__panel { position: fixed; top: auto; bottom: 16px; left: 16px; right: 16px; width: auto; max-width: none; }
+}
+
+/* Filtered out. Separate from the search classes so both can apply. The
+   search "match" rules in rpress.css are display:block !important at up to
+   (0,3,1), so a matching search re-showed filtered items. :not(#id) lifts
+   these above any class-based rule. */
+.rpress_fooditem.rp-allergen-hidden:not(#rp-allergen-none),
+.rpress-element-title.rp-allergen-hidden:not(#rp-allergen-none),
+.rpress-grid-main-wrap.rp-allergen-hidden:not(#rp-allergen-none) {
+	display: none !important;
+}
+
+/* RTL: mirror the asymmetric boxes above. */
+[dir="rtl"] .rp-allergens--popup .rp-allergen {
+	padding: 2px 2px 2px 10px;
+}
+[dir="rtl"] .rp-allergen-chip {
+	padding: 3px 3px 3px 10px;
+}
+[dir="rtl"] .rpress-option-col.rpress-search-wrap:has(> .rp-allergen-filter) > .rpress-live-search {
+	margin-right: 0;
+}
+
+/* Touch screens: 44px tap targets for the filter toggle and chips. */
+@media (pointer: coarse) {
+	.rp-allergen-filter__details > summary,
+	.rp-allergen-chip,
+	.rp-allergen-filter__clear {
+		min-height: 44px;
+	}
+}

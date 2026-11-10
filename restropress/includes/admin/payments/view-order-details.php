@@ -91,7 +91,8 @@ $receipt_available = rpress_is_payment_complete($payment_id);
 $order_title_number = rpress_get_option('enable_sequential') ? $number : $order_id;
 $list_url = admin_url('admin.php?page=rpress-payment-history&view=list');
 $order_status_label = function_exists('rpress_get_order_status_label') ? rpress_get_order_status_label($order_status) : ucwords(str_replace('-', ' ', $order_status));
-$payment_status_label = function_exists('rpress_get_payment_status_label') ? rpress_get_payment_status_label($payment->status) : ucwords(str_replace('-', ' ', $payment->status));
+// Paid / Not paid yet / Awaiting payment / Refunded: same wording as Live Orders and the receipt.
+$payment_status_label = function_exists('rpress_get_payment_paid_label') ? rpress_get_payment_paid_label($payment) : (function_exists('rpress_get_payment_status_label') ? rpress_get_payment_status_label($payment->status) : ucwords(str_replace('-', ' ', $payment->status)));
 if ('' === trim((string) $order_status_label) && '' !== trim((string) $order_status)) {
 	$order_status_label = ucwords(str_replace(array('-', '_'), ' ', (string) $order_status));
 }
@@ -242,7 +243,7 @@ $order_title_extras = ob_get_clean();
 					<?php esc_html_e('Print', 'restropress'); ?>
 				</button>
 				<?php if ($receipt_available): ?>
-					<a href="<?php echo esc_url(add_query_arg(array('rpress-action' => 'email_links', 'purchase_id' => $payment_id))); ?>" id="<?php echo count($receipt_emails) > 1 ? 'rpress-select-receipt-email' : 'rpress-resend-receipt'; ?>" class="button rp-btn rp-btn-secondary rp-order-detail-button rp-order-detail-receipt">
+					<a href="<?php echo esc_url(wp_nonce_url(add_query_arg(array('rpress-action' => 'email_links', 'purchase_id' => $payment_id)), 'rpress_resend_receipt')); ?>" id="<?php echo count($receipt_emails) > 1 ? 'rpress-select-receipt-email' : 'rpress-resend-receipt'; ?>" class="button rp-btn rp-btn-secondary rp-order-detail-button rp-order-detail-receipt">
 						<span class="dashicons dashicons-email-alt" aria-hidden="true"></span>
 						<?php esc_html_e('Send receipt', 'restropress'); ?>
 					</a>
@@ -1234,6 +1235,7 @@ $order_title_extras = ob_get_clean();
 														<span><?php echo esc_html(rpress_use_taxes() ? rpress_get_tax_name() : __('Tax', 'restropress')); ?></span>
 														<strong><?php echo wp_kses_post(rpress_currency_filter(rpress_format_amount($payment->tax), $currency_code)); ?></strong>
 													</div>
+													<?php do_action('rpress_admin_order_after_tax_row', $payment->ID, 'admin'); ?>
 													<div class="rp-order-items-total-final">
 														<span><?php esc_html_e('Total', 'restropress'); ?></span>
 														<strong><?php echo wp_kses_post(rpress_currency_filter(rpress_format_amount($payment->total), $currency_code)); ?></strong>

@@ -1084,6 +1084,9 @@ form.rpress_form p.register-link-wrap .reglink:focus{
     }
     table#user-orders tbody td:last-child {
         align-items: start;
+        /* Label on its own line, buttons (view, track, reorder) use the full card width. */
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
     }
     .viewbg {
         justify-self: start;
@@ -1538,3 +1541,91 @@ form.rpress_form p.register-link-wrap .reglink:focus{
 		padding: 12px 14px 14px;
 	}
 }
+
+/* Reservations (3.5) */
+.rpress-account-res-empty {
+    padding: 24px;
+}
+.rpress-account-res-empty p {
+    margin: 8px 0 16px;
+    color: #475467;
+}
+.rpress-account-res-book {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    background: var(--rpress-theme-primary, #4E4BF5);
+    color: #fff !important;
+    font-weight: 600;
+    text-decoration: none !important;
+}
+.rpress-account-reservations + .rpress-account-reservations {
+    margin-top: 16px;
+}
+.rpress-account-res-note {
+    margin-top: 2px;
+    color: #667085;
+    font-size: 13px;
+}
+.rpress-account-res-guests {
+    display: none;
+}
+/* Phones and small tablets: one card per reservation (date and status, then time and guests). */
+@media (max-width: 767px) {
+    .rpress-account-res-table,
+    .rpress-account-res-table tbody {
+        display: block;
+        width: 100%;
+    }
+    .rpress-account-res-table thead {
+        display: none;
+    }
+    .rpress-account-res-table tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 4px 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid #EAECF0;
+    }
+    .rpress-account-res-table td {
+        display: block;
+        padding: 0 !important;
+        border: 0 !important;
+        background: none !important;
+        text-align: left !important;
+    }
+    .rpress-account-res-table td:nth-child(1) {
+        grid-column: 1;
+        grid-row: 1;
+        font-weight: 600;
+    }
+    .rpress-account-res-table td:nth-child(4) {
+        grid-column: 2;
+        grid-row: 1;
+        white-space: nowrap;
+    }
+    .rpress-account-res-table td:nth-child(2),
+    .rpress-account-res-table td:nth-child(3) {
+        grid-row: 2;
+        color: #475467;
+    }
+    .rpress-account-res-table td:nth-child(2) {
+        grid-column: 1;
+    }
+    .rpress-account-res-table td:nth-child(3) {
+        grid-column: 2;
+        text-align: right !important;
+    }
+    .rpress-account-res-table .rpress-account-res-note {
+        font-weight: 400;
+    }
+    .rpress-account-res-count {
+        display: none;
+    }
+    .rpress-account-res-guests {
+        display: inline;
+    }
+}
+

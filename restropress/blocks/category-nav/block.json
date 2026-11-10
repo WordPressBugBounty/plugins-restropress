@@ -1,0 +1,57 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/category-nav",
+	"title": "Menu Categories",
+	"category": "restropress",
+	"description": "Sticky category navigation for the menu. Highlights the section in view and can filter the item grid.",
+	"keywords": [
+		"categories",
+		"sticky",
+		"navigation",
+		"menu"
+	],
+	"textdomain": "restropress",
+	"attributes": {
+		"categories": {
+			"type": "string",
+			"default": ""
+		},
+		"categoryExclude": {
+			"type": "string",
+			"default": ""
+		},
+		"filter": {
+			"type": "boolean",
+			"default": false
+		},
+		"sticky": {
+			"type": "boolean",
+			"default": true
+		},
+		"orientation": {
+			"type": "string",
+			"enum": [
+				"horizontal",
+				"vertical"
+			],
+			"default": "horizontal"
+		}
+	},
+	"supports": {
+		"html": false,
+		"interactivity": true,
+		"align": [
+			"wide",
+			"full"
+		],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"editorScript": "rpress-storefront-blocks-editor",
+	"style": "rpress-storefront-blocks",
+	"viewScriptModule": "@restropress/storefront",
+	"render": "file:./render.php"
+}

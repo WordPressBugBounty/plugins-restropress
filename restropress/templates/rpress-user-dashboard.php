@@ -14,9 +14,20 @@ $args = array(
     'post_status'       => 'any',
     'posts_per_page'    => -1, 
     'paged'             => $paged, 
-    'order'             => 'DSC', 
+    'orderby'           => 'date',
+    'order'             => 'DESC',
     'author'            => get_current_user_id()
 );
+// Same orders as the Order History page: every order linked to the customer
+// record (including ones placed as a guest with the same email), not only
+// those whose post author is this user.
+if ( is_user_logged_in() && class_exists( 'RPRESS_Customer' ) ) {
+    $rpress_dashboard_customer = new RPRESS_Customer( get_current_user_id(), true );
+    if ( ! empty( $rpress_dashboard_customer->payment_ids ) ) {
+        unset( $args['author'] );
+        $args['post__in'] = array_map( 'absint', explode( ',', $rpress_dashboard_customer->payment_ids ) );
+    }
+}
 if ( ! is_user_logged_in() ) {
     // Set the redirect URL
     $redirect_url = wp_login_url();
@@ -40,6 +51,7 @@ if ( ! is_user_logged_in() ) {
     <script src="https://unpkg.com/micromodal/dist/micromodal.min.js
 "></script>
   
+    <?php do_action( 'rpress_user_dashboard_before' ); ?>
     <div class="user-dashboard-wrapper user-profile">
         <div class="row">
             <div class="col-lg-3 col-12">
@@ -47,25 +59,33 @@ if ( ! is_user_logged_in() ) {
                     <ul class="sidebar-menu">   
                         <li class="active user-profile">
                             <div>
-                                <img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/profile.png' ); ?>" />
+                                <img alt="" src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/profile.png' ); ?>" />
                                 <span><?php echo  esc_html(__( 'Profile', 'restropress' ) ); ?></span>
                             </div>
                         </li>
                         <li class="user-my-orders">
                             <div>
-                                <img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/my-order.png'); ?>" />
-                                <span><?php echo esc_html(__( 'My Orders', 'restropress' ) ); ?></span>
+                                <img alt="" src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/my-order.png'); ?>" />
+                                <span><?php echo esc_html(__( 'Orders', 'restropress' ) ); ?></span>
                             </div>
                         </li>
                         <li class="user-my-address">
                             <div>
-                                <img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/address.png'); ?>" />
-                                <span><?php echo esc_html(__( 'Saved Address', 'restropress' ) ); ?></span>
+                                <img alt="" src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/address.png'); ?>" />
+                                <span><?php echo esc_html(__( 'Addresses', 'restropress' ) ); ?></span>
                             </div>
                         </li>
+                        <?php
+                        /**
+                         * Extra sidebar items. Each <li> class "user-xyz" opens the panel with id "user-xyz".
+                         *
+                         * @since 3.5
+                         */
+                        do_action( 'rpress_user_dashboard_menu_items' );
+                        ?>
                         <li class="logout">
                             <a href="<?php echo esc_url( wp_logout_url(home_url()) ); ?>">
-                                <img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/logout.png' ); ?>" />
+                                <img alt="" src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/logout.png' ); ?>" />
                                 <span><?php echo esc_html(__( 'Logout', 'restropress' ) ); ?></span>
                             </a>
                         </li>
@@ -88,7 +108,7 @@ if ( ! is_user_logged_in() ) {
                                         )
                                     ) );
                                 } else {
-                                    ?><img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/avatar-1.png' ); ?>" class="rounded-circle"><?php
+                                    ?><img alt="" src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/avatar-1.png' ); ?>" class="rounded-circle"><?php
                                 } ?>
                             </a>
                             <div class="avtar-details-wrap">
@@ -138,6 +158,7 @@ if ( ! is_user_logged_in() ) {
                                     </div>
                                 </div>
                                 <div class="text-end">
+                                    <?php do_action( 'rpress_user_dashboard_profile_form_fields' ); ?>
                                     <input type="submit" name="submit_profile_form" value="<?php esc_attr_e( 'Save Changes', 'restropress' ); ?>">
                                 </div>
                             </form>
@@ -209,10 +230,10 @@ if ( ! is_user_logged_in() ) {
                                             $items_purchased = implode( ', ', $order_items );
                                             ?>
                                                 <tr>
-                                                    <td>#<?php echo esc_html($sequential_prefix. $payment->number.$sequential_postfix ); ?></td>        
-                                                    <td><?php echo esc_html( date_i18n( get_option('date_format'), strtotime( $payment->date ) ) ); ?></td>   
-                                                    <td><?php echo wp_kses_post( rpress_currency_filter( rpress_format_amount( $payment->total ) ) ) ; ?></td>                                   
-                                                     <td>
+                                                    <td data-label="<?php esc_attr_e( 'Order ID', 'restropress' ); ?>" data-order="<?php echo esc_attr( $payment->ID ); ?>">#<?php echo esc_html($sequential_prefix. $payment->number.$sequential_postfix ); ?></td>        
+                                                    <td data-label="<?php esc_attr_e( 'Date', 'restropress' ); ?>"><?php echo esc_html( date_i18n( get_option('date_format'), strtotime( $payment->date ) ) ); ?></td>   
+                                                    <td data-label="<?php esc_attr_e( 'Price', 'restropress' ); ?>"><?php echo wp_kses_post( rpress_currency_filter( rpress_format_amount( $payment->total ) ) ) ; ?></td>                                   
+                                                     <td data-label="<?php esc_attr_e( 'Status', 'restropress' ); ?>"><span class="order-status-wrap">
                                                         <?php 
                                                         if( esc_html( $order_status ) == "completed" ) {
                                                             ?>
@@ -252,8 +273,8 @@ if ( ! is_user_logged_in() ) {
                                                         }
                                                         ?>
                                                         
-                                                    </td>
-                                                    <td>
+                                                    </span></td>
+                                                    <td data-label="<?php esc_attr_e( 'Action', 'restropress' ); ?>">
                                                         <div class="viewbg">
                                                             <a href="#" class="rpress-view-order-btn"data-order-id="<?php echo esc_html( $payment->ID ); ?>">
                                                             <span class="rp-ajax-toggle-text"></span>                                                                                         
@@ -262,6 +283,7 @@ if ( ! is_user_logged_in() ) {
                                                                     <path d="M7.1928 2.86892C6.71532 2.97144 6.2935 3.2673 6.0533 3.67155C5.87461 3.96741 5.81602 4.1871 5.81895 4.53862C5.81895 4.87842 5.85117 5.0161 5.98592 5.30024C6.11188 5.56095 6.47512 5.92418 6.74168 6.05307C7.68199 6.50711 8.77462 6.04428 9.11442 5.05125C9.21109 4.76711 9.21402 4.32185 9.12028 4.02599C8.90644 3.34932 8.28543 2.8777 7.57361 2.85134C7.43007 2.84548 7.25724 2.85427 7.1928 2.86892Z" fill="#9F9F9F"></path>
                                                                 </svg>
                                                             </a>
+                                                            <?php do_action( 'rpress_user_dashboard_order_actions', $payment->ID ); ?>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -344,7 +366,7 @@ if ( ! is_user_logged_in() ) {
                                 // Display a message if no addresses are found
                                 ?>
                                 <div class="address-not-found-wrap">
-                                    <img src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/address-not-found.png' ); ?>"/>
+                                    <img alt="" src="<?php echo esc_url( RP_PLUGIN_URL . 'assets/images/user/address-not-found.png' ); ?>"/>
                                     <h2><?php esc_html_e( 'Address Not Found', 'restropress' ); ?></h2>
                                     <p>
                                         <?php esc_html_e( 'Please add your address information in your profile by clicking this button below.', 'restropress' ); ?>
@@ -460,6 +482,7 @@ if ( ! is_user_logged_in() ) {
                                                 </div>
                                             </div>
                                             <input type="hidden" name="edit_user_address_index" id="edit_user_address_index" value="">
+                                            <?php do_action( 'rpress_user_dashboard_address_form_fields' ); ?>
                                             <div class="text-end">
                                                 <input type="submit" name="submit_user_address" id="form_submit_button" value="<?php esc_attr_e( 'Save Address', 'restropress' ); ?>">
                                             </div>
@@ -471,13 +494,22 @@ if ( ! is_user_logged_in() ) {
                     </div>
                 </div>  
             </div> 
+            <?php
+            /**
+             * Extra panels, one per rpress_user_dashboard_menu_items entry:
+             * <div class="col-lg-9 col-12" id="user-xyz" style="display:none;">.
+             *
+             * @since 3.5
+             */
+            do_action( 'rpress_user_dashboard_panels' );
+            ?>
         </div>
     </div>
 <div class="modal micromodal-slide" id="rpressModal" aria-hidden="true">
   <div class="modal__overlay" tabindex="-1" data-micromodal-close>
-    <div class="modal__container modal-content" role="dialog" aria-modal="true">
+    <div class="modal__container modal-content" role="dialog" aria-modal="true" aria-labelledby="rpressModal-title">
       <header class="modal__header modal-header">
-        <h2 class="modal__title modal-title"></h2>
+        <h2 id="rpressModal-title" class="modal__title modal-title"></h2>
         <button class="modal__close" aria-label="<?php esc_attr_e( 'Close modal', 'restropress' ); ?>" data-micromodal-close></button>
       </header>
       <main class="modal__content modal-body">
@@ -508,12 +540,19 @@ if ( ! is_user_logged_in() ) {
 </div>
     <?php
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_profile_form']) ) {
+/**
+ * Whether a dashboard form POST is a genuine same-site request from a logged-in
+ * customer. Both forms carry the account hub nonce (rpress_account_hub_form_nonce).
+ */
+$rpress_dashboard_post_ok = is_user_logged_in()
+    && isset( $_POST['rpress_account_hub_nonce'] )
+    && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['rpress_account_hub_nonce'] ) ), 'rpress-account-hub' );
+if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['submit_profile_form'] ) && $rpress_dashboard_post_ok ) {
     // Get submitted form data
-    $new_user_fname = sanitize_text_field( $_POST['first_name']);
-    $new_user_lname = sanitize_text_field( $_POST['last_name']);
-    $new_user_email = sanitize_email( $_POST['email']);
-    $new_user_phone = sanitize_text_field( $_POST['phone']);
+    $new_user_fname = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+    $new_user_lname = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+    $new_user_email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+    $new_user_phone = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
     // Update user data
     $current_user = wp_get_current_user();
     $user_id = $current_user->ID;
@@ -526,7 +565,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_profile_form'])
         wp_update_user(array('ID' => $user_id, 'last_name' => $new_user_lname));
     }
     // Update email
-    if (!empty($new_user_email) && is_email($new_user_email)) {
+    $email_owner = ! empty( $new_user_email ) ? email_exists( $new_user_email ) : false;
+    if ( ! empty( $new_user_email ) && is_email( $new_user_email ) && ( ! $email_owner || (int) $email_owner === (int) $user_id ) ) {
         wp_update_user(array('ID' => $user_id, 'user_email' => $new_user_email));
     }
     // Update phone
@@ -539,12 +579,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_profile_form'])
 	echo '<script>window.location.href = "' . esc_url($_SERVER['REQUEST_URI']) . '";</script>';
     exit;
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_user_address'])) {
+if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['submit_user_address'] ) && $rpress_dashboard_post_ok ) {
     // Get current user ID
     $user_id = get_current_user_id();
     // Verify user ID
     if (!$user_id) {
-        echo "Error: Unable to get user ID.";
+        esc_html_e( 'Error: Unable to get user ID.', 'restropress' );
         exit; // Stop execution if user ID is not valid
     }
     // Get existing addresses
@@ -554,17 +594,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_user_address'])
         $existing_addresses = array(); // Initialize as empty array if no addresses exist
     }
     // Get form data
-    $firstName      = sanitize_text_field($_POST['first_name']);
-    $lastName       = sanitize_text_field($_POST['last_name']);
-    $phone          = sanitize_text_field($_POST['phone']);
-    $pincode        = sanitize_text_field($_POST['pincode']);
-    $street_address = sanitize_text_field($_POST['address']);
-    $apt_suite      = sanitize_text_field($_POST['apt_suite']);
-    $city           = sanitize_text_field($_POST['city']);
-    $addressType    = sanitize_text_field($_POST['address_type']);
+    $firstName      = ( isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '' );
+    $lastName       = ( isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '' );
+    $phone          = ( isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '' );
+    $pincode        = ( isset( $_POST['pincode'] ) ? sanitize_text_field( wp_unslash( $_POST['pincode'] ) ) : '' );
+    $street_address = ( isset( $_POST['address'] ) ? sanitize_text_field( wp_unslash( $_POST['address'] ) ) : '' );
+    $apt_suite      = ( isset( $_POST['apt_suite'] ) ? sanitize_text_field( wp_unslash( $_POST['apt_suite'] ) ) : '' );
+    $city           = ( isset( $_POST['city'] ) ? sanitize_text_field( wp_unslash( $_POST['city'] ) ) : '' );
+    $addressType    = ( isset( $_POST['address_type'] ) ? sanitize_text_field( wp_unslash( $_POST['address_type'] ) ) : '' );
     $isDefault      = isset($_POST['default_address']) ? 1 : 0;
     // If edit index is provided, update the address, otherwise add a new one
-    if ( $_POST['edit_user_address_index'] != "" ) {
+    if ( isset( $_POST['edit_user_address_index'] ) && '' !== $_POST['edit_user_address_index'] ) {
         $edit_index = intval( $_POST['edit_user_address_index'] );
     
         if ( isset( $existing_addresses[$edit_index] ) ) {

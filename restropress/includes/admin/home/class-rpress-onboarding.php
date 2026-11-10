@@ -7,6 +7,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Shared AI service (provider client, settings, errors). Also loaded by the
+// AI feature module; require_once keeps a single definition.
+require_once dirname( __DIR__, 2 ) . '/features/ai/class-rpress-ai.php';
+
 if ( ! class_exists( 'RPress_Onboarding' ) ) {
 	/**
 	 * Restaurant-first onboarding controller.
@@ -142,22 +146,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array
 		 */
 		public static function get_ai_settings() {
-			$defaults = array(
-				'enabled' => 'yes',
-				'provider' => 'wordpress',
-				'api_key' => '',
-				'api_keys' => array(),
-				'model' => '',
-			);
-
-			$settings = get_option( self::AI_SETTINGS, array() );
-			$settings = wp_parse_args( is_array( $settings ) ? $settings : array(), $defaults );
-			$settings['api_keys'] = is_array( $settings['api_keys'] ) ? $settings['api_keys'] : array();
-			if ( ! empty( $settings['api_key'] ) && 'wordpress' !== $settings['provider'] && empty( $settings['api_keys'][ $settings['provider'] ] ) ) {
-				$settings['api_keys'][ $settings['provider'] ] = $settings['api_key'];
-			}
-			$settings['api_key'] = isset( $settings['api_keys'][ $settings['provider'] ] ) ? $settings['api_keys'][ $settings['provider'] ] : '';
-			return $settings;
+			return RPRESS_AI::get_settings();
 		}
 
 		/**
@@ -166,49 +155,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array
 		 */
 		public static function get_ai_status() {
-			$settings = self::get_ai_settings();
-			$wp_ai    = class_exists( '\WordPress\AiClient\AiClient' );
-			$wp_configured = false;
-			$wp_provider_ids = array();
-			if ( $wp_ai ) {
-				try {
-					$registry = \WordPress\AiClient\AiClient::defaultRegistry();
-					$wp_provider_ids = method_exists( $registry, 'getRegisteredProviderIds' ) ? $registry->getRegisteredProviderIds() : array();
-					foreach ( $wp_provider_ids as $provider_id ) {
-						if ( method_exists( $registry, 'isProviderConfigured' ) && $registry->isProviderConfigured( $provider_id ) ) {
-							$wp_configured = true;
-							break;
-						}
-					}
-				} catch ( Throwable $e ) {
-					$wp_configured = false;
-				}
-			}
-			$direct   = 'wordpress' !== $settings['provider'] && ! empty( $settings['api_key'] );
-			$enabled  = 'yes' === $settings['enabled'];
-
-			$provider_label = __( 'Not configured', 'restropress' );
-			if ( $enabled && 'wordpress' === $settings['provider'] && $wp_configured ) {
-				$provider_label = __( 'WordPress AI', 'restropress' );
-			} elseif ( $enabled && 'openai' === $settings['provider'] && $direct ) {
-				$provider_label = __( 'OpenAI via RestroPress', 'restropress' );
-			} elseif ( $enabled && 'gemini' === $settings['provider'] && $direct ) {
-				$provider_label = __( 'Google Gemini via RestroPress', 'restropress' );
-			} elseif ( $enabled && 'claude' === $settings['provider'] && $direct ) {
-				$provider_label = __( 'Anthropic Claude via RestroPress', 'restropress' );
-			}
-
-			return array(
-				'enabled'          => $enabled,
-				'wp_ai_available'  => $wp_ai,
-				'wp_ai_configured' => $wp_configured,
-				'wp_ai_providers'  => array_values( $wp_provider_ids ),
-				'direct_available' => $direct,
-				'provider'         => sanitize_key( $settings['provider'] ),
-				'provider_label'   => $provider_label,
-				'ready'            => $enabled && ( ( 'wordpress' === $settings['provider'] && $wp_configured ) || $direct ),
-				'multimodal'       => $enabled && ( ( 'wordpress' === $settings['provider'] && $wp_configured ) || in_array( $settings['provider'], array( 'gemini', 'openai', 'claude' ), true ) ),
-			);
+			return RPRESS_AI::get_status();
 		}
 
 		/**
@@ -348,7 +295,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 					'enabled'  => 'yes',
 					'provider' => isset( $_POST['ai_provider'] ) ? sanitize_key( wp_unslash( $_POST['ai_provider'] ) ) : self::get_ai_settings()['provider'],
 					'api_key'  => isset( $_POST['ai_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['ai_api_key'] ) ) : '',
-					'model'    => '',
+					// No 'model' key: keep the default model chosen in AI settings.
 				)
 			);
 
@@ -610,7 +557,25 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 			self::verify_ajax( 'edit_products' );
 
 			$data = isset( $_POST['data'] ) ? self::sanitize_deep( wp_unslash( $_POST['data'] ) ) : array();
-			self::save_ai_settings( is_array( $data ) ? $data : array() );
+			$data = is_array( $data ) ? $data : array();
+			// Menu editors (edit_products) may test the saved connection, but only
+			// store managers may change the provider or API key.
+			if ( self::can_save_ai_settings() ) {
+				self::save_ai_settings( $data );
+			} elseif ( self::ai_settings_change_requested( $data ) ) {
+				wp_send_json_error(
+					array(
+						'title'          => __( 'You cannot change the AI provider', 'restropress' ),
+						'message'        => __( 'Only store managers can change the AI provider or API key. You can still test the connection that is already saved: clear the key field and test again, or ask a store manager to update it.', 'restropress' ),
+						'steps'          => array( __( 'Ask a store manager to save the AI provider and API key under RestroPress settings.', 'restropress' ) ),
+						'error_code'     => 'permission',
+						'provider_error' => false,
+						'status_message' => __( 'AI settings were not changed.', 'restropress' ),
+						'status'         => self::get_ai_status(),
+					),
+					403
+				);
+			}
 			$status = self::get_ai_status();
 
 			if ( ! $status['ready'] ) {
@@ -707,92 +672,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return true|WP_Error
 		 */
 		protected static function test_ai_connection( $status ) {
-			if ( 'wordpress' === $status['provider'] ) {
-				if ( function_exists( 'wp_ai_client_prompt' ) ) {
-					$result = self::wordpress_native_text( 'Reply with the single word OK.' );
-					return is_wp_error( $result ) ? $result : ( '' !== trim( $result ) ? true : new WP_Error( 'rpress_wp_ai_empty_test', __( 'WordPress AI connected but returned an empty response.', 'restropress' ) ) );
-				}
-				try {
-					$prompt = \WordPress\AiClient\AiClient::prompt( 'Reply with the single word OK.' );
-					if ( class_exists( '\WordPress\AiClient\Providers\Http\DTO\RequestOptions' ) && method_exists( $prompt, 'usingRequestOptions' ) ) {
-						$request_options = new \WordPress\AiClient\Providers\Http\DTO\RequestOptions();
-						$request_options->setTimeout( 20 );
-						$request_options->setConnectTimeout( 10 );
-						$prompt->usingRequestOptions( $request_options );
-					}
-					$result = $prompt->generateTextResult();
-					return '' !== trim( $result->toText() ) ? true : new WP_Error( 'rpress_wp_ai_empty_test', __( 'WordPress AI connected but returned an empty response.', 'restropress' ) );
-				} catch ( Throwable $e ) {
-					return new WP_Error( 'rpress_wp_ai_test_failed', $e->getMessage() );
-				}
-			}
-
-			$settings = self::get_ai_settings();
-			if ( 'openai' === $status['provider'] ) {
-				$model = $settings['model'] ? $settings['model'] : 'gpt-4o-mini';
-				$response = wp_remote_post(
-					'https://api.openai.com/v1/responses',
-					array(
-						'timeout' => 20,
-						'headers' => array(
-							'Authorization' => 'Bearer ' . $settings['api_key'],
-							'Content-Type'  => 'application/json',
-						),
-						'body'    => wp_json_encode(
-							array(
-								'model'             => $model,
-								'input'             => 'Reply with OK.',
-								'max_output_tokens' => 16,
-								'store'             => false,
-							)
-						),
-					)
-				);
-			} elseif ( 'gemini' === $status['provider'] ) {
-				$model = self::gemini_model( $settings['model'] );
-				$generation_config = array( 'maxOutputTokens' => 8 );
-				if ( 0 === strpos( $model, 'gemini-3' ) ) {
-					$generation_config['thinkingConfig'] = array( 'thinkingLevel' => 'minimal' );
-				}
-				$response = wp_remote_post(
-					'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode( $model ) . ':generateContent',
-					array(
-						'timeout' => 20,
-						'headers' => array(
-							'x-goog-api-key' => $settings['api_key'],
-							'Content-Type'   => 'application/json',
-						),
-						'body'    => wp_json_encode(
-							array(
-								'contents'         => array( array( 'parts' => array( array( 'text' => 'Reply with OK.' ) ) ) ),
-								'generationConfig' => $generation_config,
-							)
-						),
-					)
-				);
-			} else {
-				$model = $settings['model'] ? $settings['model'] : 'claude-haiku-4-5';
-				$response = wp_remote_post(
-					'https://api.anthropic.com/v1/messages',
-					array(
-						'timeout' => 20,
-						'headers' => array(
-							'x-api-key'         => $settings['api_key'],
-							'anthropic-version' => '2023-06-01',
-							'Content-Type'      => 'application/json',
-						),
-						'body'    => wp_json_encode(
-							array(
-								'model'      => $model,
-								'max_tokens' => 8,
-								'messages'   => array( array( 'role' => 'user', 'content' => 'Reply with OK.' ) ),
-							)
-						),
-					)
-				);
-			}
-
-			return self::remote_response_error( $response, $status['provider'] );
+			return RPRESS_AI::test_connection( $status );
 		}
 
 		/**
@@ -1154,26 +1034,43 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return void
 		 */
 		protected static function save_ai_settings( $data ) {
-			$current  = self::get_ai_settings();
-			$provider = isset( $data['provider'] ) ? sanitize_key( $data['provider'] ) : $current['provider'];
-			$api_keys = is_array( $current['api_keys'] ) ? $current['api_keys'] : array();
-			if ( isset( $data['api_key'] ) && '' !== $data['api_key'] && 'wordpress' !== $provider ) {
-				$api_keys[ $provider ] = sanitize_text_field( $data['api_key'] );
+			// The provider and API key are store-wide secrets: managers only.
+			if ( ! self::can_save_ai_settings() ) {
+				return;
 			}
-			$settings = array(
-				'enabled'  => ! empty( $data['enabled'] ) ? 'yes' : 'no',
-				'provider' => $provider,
-				'api_key'  => isset( $api_keys[ $provider ] ) ? $api_keys[ $provider ] : '',
-				'api_keys' => $api_keys,
-				'model'    => isset( $data['model'] ) ? sanitize_text_field( $data['model'] ) : $current['model'],
-			);
+			RPRESS_AI::save_settings( $data );
+		}
 
-			if ( ! in_array( $settings['provider'], array( 'wordpress', 'openai', 'gemini', 'claude' ), true ) ) {
-				$settings['provider'] = 'wordpress';
-				$settings['api_key']  = '';
+		/**
+		 * Whether the current user may change the AI provider and API key.
+		 *
+		 * @return bool
+		 */
+		public static function can_save_ai_settings() {
+			return current_user_can( 'manage_shop_settings' );
+		}
+
+		/**
+		 * Whether submitted AI data would change the saved provider, key or model.
+		 *
+		 * @param array $data Submitted AI settings.
+		 * @return bool
+		 */
+		public static function ai_settings_change_requested( $data ) {
+			if ( ! is_array( $data ) ) {
+				return false;
 			}
-
-			update_option( self::AI_SETTINGS, $settings, false );
+			$current = self::get_ai_settings();
+			if ( isset( $data['provider'] ) && '' !== $data['provider'] && sanitize_key( $data['provider'] ) !== $current['provider'] ) {
+				return true;
+			}
+			if ( isset( $data['api_key'] ) && '' !== trim( (string) $data['api_key'] ) ) {
+				return true;
+			}
+			if ( ! empty( $data['remove_key'] ) ) {
+				return true;
+			}
+			return isset( $data['model'] ) && (string) $data['model'] !== (string) $current['model'];
 		}
 
 		/**
@@ -1365,66 +1262,11 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array|WP_Error
 		 */
 		protected static function wordpress_native_text( $text, $upload = null ) {
-			try {
-				$prompt = wp_ai_client_prompt( $text );
-				if ( class_exists( '\WordPress\AiClient\Providers\Http\DTO\RequestOptions' ) ) {
-					$options = new \WordPress\AiClient\Providers\Http\DTO\RequestOptions();
-					$options->setTimeout( null === $upload ? 20 : 60 );
-					$options->setConnectTimeout( 10 );
-					$prompt->using_request_options( $options );
-				}
-				if ( null !== $upload ) {
-					$prompt->as_json_response( self::get_menu_schema() );
-					if ( ! empty( $upload['file'] ) ) {
-						$prompt->with_file( $upload['file'], $upload['type'] );
-					}
-				}
-				$result = $prompt->generate_text();
-				if ( is_wp_error( $result ) ) {
-					return $result;
-				}
-				return is_string( $result ) ? $result : new WP_Error( 'rpress_wp_ai_failed', __( 'WordPress AI returned an unreadable response. Check the connected provider and try again.', 'restropress' ) );
-			} catch ( Throwable $e ) {
-				return new WP_Error( 'rpress_wp_ai_failed', $e->getMessage() );
-			}
+			return RPRESS_AI::wordpress_request( $text, null === $upload ? null : self::get_menu_schema(), is_array( $upload ) ? $upload : array(), null === $upload ? 20 : 60 );
 		}
 
 		protected static function parse_with_wordpress_ai( $upload, $ext, $text, $generate_descriptions = false ) {
-			if ( function_exists( 'wp_ai_client_prompt' ) ) {
-				$result = self::wordpress_native_text( self::get_menu_prompt( $text, $generate_descriptions ), empty( $text ) ? $upload : array() );
-				return is_wp_error( $result ) ? $result : self::json_to_payload( $result );
-			}
-			if ( ! class_exists( '\WordPress\AiClient\AiClient' ) ) {
-				return new WP_Error( 'rpress_wp_ai_missing', __( 'WordPress AI is not available on this site.', 'restropress' ) );
-			}
-
-			try {
-				add_filter( 'http_request_timeout', array( __CLASS__, 'bump_ai_request_timeout' ), 10, 2 );
-
-				$prompt = \WordPress\AiClient\AiClient::prompt( self::get_menu_prompt( $text, $generate_descriptions ) );
-				if ( class_exists( '\WordPress\AiClient\Providers\Http\DTO\RequestOptions' ) && method_exists( $prompt, 'usingRequestOptions' ) ) {
-					$request_options = new \WordPress\AiClient\Providers\Http\DTO\RequestOptions();
-					$request_options->setTimeout( 60 );
-					$request_options->setConnectTimeout( 15 );
-					$prompt->usingRequestOptions( $request_options );
-				}
-
-				$prompt->asJsonResponse( self::get_menu_schema() );
-
-				if ( empty( $text ) ) {
-					if ( ! method_exists( $prompt, 'withFile' ) ) {
-						return new WP_Error( 'rpress_wp_ai_file_unsupported', __( 'The installed WordPress AI client cannot send files. Update it or choose OpenAI, Gemini, or Claude.', 'restropress' ) );
-					}
-					$prompt->withFile( $upload['file'], $upload['type'] );
-				}
-
-				$result = $prompt->generateTextResult();
-				return self::json_to_payload( $result->toText() );
-			} catch ( Throwable $e ) {
-				return new WP_Error( 'rpress_wp_ai_failed', $e->getMessage() );
-			} finally {
-				remove_filter( 'http_request_timeout', array( __CLASS__, 'bump_ai_request_timeout' ), 10 );
-			}
+			return self::extract_menu( 'wordpress', $upload, $ext, $text, $generate_descriptions );
 		}
 
 		/**
@@ -1435,11 +1277,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return int
 		 */
 		public static function bump_ai_request_timeout( $timeout, $url ) {
-			if ( false !== strpos( $url, 'generativelanguage.googleapis.com' ) || false !== strpos( $url, 'api.openai.com' ) || false !== strpos( $url, 'api.anthropic.com' ) ) {
-				return 60;
-			}
-
-			return $timeout;
+			return RPRESS_AI::bump_request_timeout( $timeout, $url );
 		}
 
 		/**
@@ -1450,107 +1288,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array
 		 */
 		protected static function ai_error_details( $error, $provider = '' ) {
-			$message  = sanitize_text_field( $error->get_error_message() );
-			$code     = method_exists( $error, 'get_error_code' ) ? (string) $error->get_error_code() : '';
-			$data     = method_exists( $error, 'get_error_data' ) ? $error->get_error_data() : array();
-			$data     = is_array( $data ) ? $data : array();
-			$provider = $provider ? sanitize_key( $provider ) : self::get_ai_settings()['provider'];
-			$labels   = array(
-				'openai'    => 'OpenAI',
-				'gemini'    => 'Google Gemini',
-				'claude'    => 'Anthropic Claude',
-				'wordpress' => 'WordPress AI',
-			);
-			$label    = isset( $labels[ $provider ] ) ? $labels[ $provider ] : __( 'AI provider', 'restropress' );
-			$lower    = strtolower( $message . ' ' . $code . ' ' . implode( ' ', array_filter( array_map( 'strval', $data ) ) ) );
-			$details  = array(
-				'title'          => __( 'AI import could not continue', 'restropress' ),
-				'message'        => $message ? $message : __( 'The AI provider returned an unknown error.', 'restropress' ),
-				'steps'          => array( __( 'Click Save & test connection, then try the import again.', 'restropress' ) ),
-				'error_code'     => 'provider',
-				'provider_error' => true,
-				'status_message' => __( 'AI connection failed.', 'restropress' ),
-			);
-
-			$billing_error = false !== strpos( $lower, 'insufficient_quota' ) || false !== strpos( $lower, 'billing' ) || false !== strpos( $lower, 'credit balance' ) || false !== strpos( $lower, 'hard limit' );
-			$rate_error    = false !== strpos( $lower, 'rate limit' ) || false !== strpos( $lower, 'resource_exhausted' ) || false !== strpos( $lower, 'quota exceeded' ) || false !== strpos( $lower, ' 429' );
-
-			if ( $billing_error ) {
-				$details['title']          = sprintf( __( '%s billing or credits need attention', 'restropress' ), $label );
-				$details['message']        = sprintf( __( '%s rejected the request because this API account has no available quota.', 'restropress' ), $label );
-				$details['steps']          = array(
-					sprintf( __( 'Open %s billing and add credits or raise the project spending limit.', 'restropress' ), $label ),
-					__( 'Wait a few minutes for the provider to apply the change.', 'restropress' ),
-					__( 'Return here, click Save & test connection, then upload the menu again.', 'restropress' ),
-				);
-				$details['error_code']     = 'billing';
-				$details['status_message'] = sprintf( __( '%s has no usable API quota.', 'restropress' ), $label );
-				if ( 'openai' === $provider ) {
-					$details['action_url']   = 'https://platform.openai.com/settings/organization/billing/overview';
-					$details['action_label'] = __( 'Open OpenAI billing', 'restropress' );
-				} elseif ( 'gemini' === $provider ) {
-					$details['action_url']   = 'https://aistudio.google.com/usage';
-					$details['action_label'] = __( 'Open Gemini usage', 'restropress' );
-				} elseif ( 'claude' === $provider ) {
-					$details['action_url']   = 'https://console.anthropic.com/settings/billing';
-					$details['action_label'] = __( 'Open Claude billing', 'restropress' );
-				}
-			} elseif ( $rate_error ) {
-				$details['title']          = sprintf( __( '%s usage limit was reached', 'restropress' ), $label );
-				$details['message']        = __( 'The provider is temporarily refusing more requests because an API rate or usage limit was reached.', 'restropress' );
-				$details['steps']          = array(
-					__( 'Wait one minute and try the connection test again.', 'restropress' ),
-					__( 'If it continues, check the provider project usage limits or upload fewer pages at once.', 'restropress' ),
-				);
-				$details['error_code']     = 'rate_limit';
-				$details['status_message'] = __( 'AI provider usage limit reached.', 'restropress' );
-			} elseif ( false !== strpos( $lower, 'api key' ) || false !== strpos( $lower, 'api-key' ) || false !== strpos( $lower, 'unauthenticated' ) || false !== strpos( $lower, 'authentication_error' ) || false !== strpos( $lower, 'permission_denied' ) || false !== strpos( $lower, 'incorrect_api_key' ) || false !== strpos( $lower, 'invalid_api_key' ) || false !== strpos( $lower, 'api_key_invalid' ) || false !== strpos( $lower, 'invalid authentication' ) || false !== strpos( $lower, ' 401' ) || false !== strpos( $lower, ' 403' ) ) {
-				$details['title']          = sprintf( __( '%s rejected the API key', 'restropress' ), $label );
-				$details['message']        = __( 'The saved key is missing, invalid, revoked, or belongs to the wrong provider.', 'restropress' );
-				$details['steps']          = array(
-					sprintf( __( 'Create or copy an active key from your %s account.', 'restropress' ), $label ),
-					__( 'Paste it in the API key field above and click Save & test connection.', 'restropress' ),
-				);
-				$details['error_code']     = 'authentication';
-				$details['status_message'] = __( 'API key rejected.', 'restropress' );
-				if ( 'openai' === $provider ) {
-					$details['action_url']   = 'https://platform.openai.com/api-keys';
-					$details['action_label'] = __( 'Open OpenAI API keys', 'restropress' );
-				} elseif ( 'gemini' === $provider ) {
-					$details['action_url']   = 'https://aistudio.google.com/app/apikey';
-					$details['action_label'] = __( 'Open Gemini API keys', 'restropress' );
-				} elseif ( 'claude' === $provider ) {
-					$details['action_url']   = 'https://console.anthropic.com/settings/keys';
-					$details['action_label'] = __( 'Open Claude API keys', 'restropress' );
-				}
-			} elseif ( false !== strpos( $lower, 'timed out' ) || false !== strpos( $lower, 'curl error 28' ) ) {
-				$details['title']          = __( 'The AI provider took too long to respond', 'restropress' );
-				$details['message']        = __( 'The request timed out before the menu could be read.', 'restropress' );
-				$details['steps']          = array(
-					__( 'Try again with a smaller file or fewer menu pages.', 'restropress' ),
-					__( 'If it keeps happening, check the site connection to the AI provider.', 'restropress' ),
-				);
-				$details['error_code']     = 'timeout';
-				$details['status_message'] = __( 'AI provider timed out.', 'restropress' );
-			} elseif ( false !== strpos( $lower, 'network error' ) || false !== strpos( $lower, 'could not resolve host' ) || false !== strpos( $lower, 'connection refused' ) ) {
-				$details['title']          = __( 'Could not reach the AI provider', 'restropress' );
-				$details['message']        = __( 'The site could not connect to the selected AI service.', 'restropress' );
-				$details['steps']          = array( __( 'Check the site internet connection or firewall, then click Save & test connection again.', 'restropress' ) );
-				$details['error_code']     = 'network';
-				$details['status_message'] = __( 'AI provider is unreachable.', 'restropress' );
-			} elseif ( false !== strpos( $lower, 'model' ) && ( false !== strpos( $lower, 'not found' ) || false !== strpos( $lower, 'does not exist' ) || false !== strpos( $lower, 'unsupported' ) ) ) {
-				$details['title']          = __( 'The configured AI model is unavailable', 'restropress' );
-				$details['message']        = __( 'The provider no longer offers the selected model or this API project cannot use it.', 'restropress' );
-				$details['steps']          = array( __( 'Update RestroPress or choose another AI provider, then test the connection again.', 'restropress' ) );
-				$details['error_code']     = 'model';
-				$details['status_message'] = __( 'AI model unavailable.', 'restropress' );
-			}
-
-			if ( $message && $message !== $details['message'] ) {
-				$details['technical'] = $message;
-			}
-
-			return $details;
+			return RPRESS_AI::error_details( $error, $provider, 'import' );
 		}
 
 		/**
@@ -1572,43 +1310,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return true|WP_Error
 		 */
 		protected static function remote_response_error( $response, $provider ) {
-			if ( is_wp_error( $response ) ) {
-				return $response;
-			}
-
-			$code = (int) wp_remote_retrieve_response_code( $response );
-			if ( $code >= 200 && $code < 300 ) {
-				return true;
-			}
-
-			$body       = json_decode( wp_remote_retrieve_body( $response ), true );
-			$message    = isset( $body['error']['message'] ) ? sanitize_text_field( $body['error']['message'] ) : '';
-			$error_code = isset( $body['error']['code'] ) ? sanitize_key( $body['error']['code'] ) : '';
-			$error_type = isset( $body['error']['type'] ) ? sanitize_key( $body['error']['type'] ) : '';
-			if ( ! $error_type && isset( $body['error']['status'] ) ) {
-				$error_type = sanitize_key( $body['error']['status'] );
-			}
-			if ( ! $error_type && isset( $body['error']['details'][0]['reason'] ) ) {
-				$error_type = sanitize_key( $body['error']['details'][0]['reason'] );
-			}
-			if ( ! $message ) {
-				$message = sprintf(
-					/* translators: 1: provider name, 2: HTTP status code */
-					__( '%1$s returned HTTP %2$d.', 'restropress' ),
-					ucfirst( $provider ),
-					$code
-				);
-			}
-
-			return new WP_Error(
-				'rpress_' . sanitize_key( $provider ) . '_http_error',
-				$message,
-				array(
-					'status'              => $code,
-					'provider_error_code' => $error_code,
-					'provider_error_type' => $error_type,
-				)
-			);
+			return RPRESS_AI::remote_response_error( $response, $provider );
 		}
 
 		/**
@@ -1620,93 +1322,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array|WP_Error
 		 */
 		protected static function parse_with_openai( $upload, $ext, $text, $generate_descriptions = false ) {
-			$settings = self::get_ai_settings();
-			$model    = $settings['model'] ? $settings['model'] : 'gpt-4o-mini';
-			$content  = array(
-				array(
-					'type' => 'input_text',
-					'text' => self::get_menu_prompt( $text, $generate_descriptions ),
-				),
-			);
-
-			if ( empty( $text ) && in_array( $ext, array( 'jpg', 'jpeg', 'png', 'webp' ), true ) ) {
-				$bytes = file_get_contents( $upload['file'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				if ( false === $bytes ) {
-					return new WP_Error( 'rpress_file_read_failed', __( 'The uploaded menu file could not be read.', 'restropress' ) );
-				}
-				$content[] = array(
-					'type'      => 'input_image',
-					'image_url' => 'data:' . $upload['type'] . ';base64,' . base64_encode( $bytes ),
-				);
-			} elseif ( empty( $text ) && 'pdf' === $ext ) {
-				$bytes = file_get_contents( $upload['file'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				if ( false === $bytes ) {
-					return new WP_Error( 'rpress_file_read_failed', __( 'The uploaded menu file could not be read.', 'restropress' ) );
-				}
-				$content[] = array(
-					'type'      => 'input_file',
-					'filename'  => basename( $upload['file'] ),
-					'file_data' => 'data:application/pdf;base64,' . base64_encode( $bytes ),
-				);
-			} elseif ( empty( $text ) ) {
-				return new WP_Error( 'rpress_openai_file_unsupported', __( 'OpenAI could not read this file type. Upload a PDF, image, CSV, or XLSX file.', 'restropress' ) );
-			}
-
-			$response = wp_remote_post(
-				'https://api.openai.com/v1/responses',
-				array(
-					'timeout' => 60,
-					'headers' => array(
-						'Authorization' => 'Bearer ' . $settings['api_key'],
-						'Content-Type'  => 'application/json',
-					),
-					'body'    => wp_json_encode(
-						array(
-							'model' => $model,
-							'store' => false,
-							'text'  => array(
-								'format' => array(
-									'type'   => 'json_schema',
-									'name'   => 'restropress_menu',
-									'schema' => self::get_menu_schema(),
-									'strict' => false,
-								),
-							),
-							'input' => array(
-								array(
-									'role'    => 'user',
-									'content' => $content,
-								),
-							),
-						)
-					),
-				)
-			);
-
-			$error = self::remote_response_error( $response, 'openai' );
-			if ( is_wp_error( $error ) ) {
-				return $error;
-			}
-
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			$output_text = '';
-			if ( ! empty( $body['output'] ) && is_array( $body['output'] ) ) {
-				foreach ( $body['output'] as $output ) {
-					if ( empty( $output['content'] ) || ! is_array( $output['content'] ) ) {
-						continue;
-					}
-					foreach ( $output['content'] as $part ) {
-						if ( isset( $part['text'] ) ) {
-							$output_text .= $part['text'];
-						}
-					}
-				}
-			}
-			if ( '' === trim( $output_text ) ) {
-				return new WP_Error( 'rpress_openai_failed', __( 'OpenAI did not return a menu payload.', 'restropress' ) );
-			}
-
-			return self::json_to_payload( $output_text );
+			return self::extract_menu( 'openai', $upload, $ext, $text, $generate_descriptions );
 		}
 
 		/**
@@ -1718,61 +1334,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array|WP_Error
 		 */
 		protected static function parse_with_gemini( $upload, $ext, $text, $generate_descriptions = false ) {
-			$settings = self::get_ai_settings();
-			$model    = self::gemini_model( $settings['model'] );
-			$parts    = array( array( 'text' => self::get_menu_prompt( $text, $generate_descriptions ) ) );
-			$generation_config = array(
-				'response_mime_type' => 'application/json',
-				'maxOutputTokens'    => 16384,
-				'temperature'        => 0.1,
-			);
-			if ( 0 === strpos( $model, 'gemini-3' ) ) {
-				// Menu import is extraction, not open-ended reasoning. Gemini 3.x
-				// defaults to more thinking, which can exceed common proxy timeouts.
-				$generation_config['thinkingConfig'] = array( 'thinkingLevel' => 'minimal' );
-			}
-
-			if ( empty( $text ) ) {
-				$bytes = file_get_contents( $upload['file'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				if ( false === $bytes ) {
-					return new WP_Error( 'rpress_file_read_failed', __( 'The uploaded menu file could not be read.', 'restropress' ) );
-				}
-				$parts[] = array(
-					'inline_data' => array(
-						'mime_type' => $upload['type'],
-						'data'      => base64_encode( $bytes ),
-					),
-				);
-			}
-
-			$response = wp_remote_post(
-				'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode( $model ) . ':generateContent',
-				array(
-					'timeout' => 60,
-					'headers' => array(
-						'Content-Type'   => 'application/json',
-						'x-goog-api-key' => $settings['api_key'],
-					),
-					'body'    => wp_json_encode(
-						array(
-							'contents'         => array( array( 'parts' => $parts ) ),
-							'generationConfig' => $generation_config,
-						)
-					),
-				)
-			);
-
-			$error = self::remote_response_error( $response, 'gemini' );
-			if ( is_wp_error( $error ) ) {
-				return $error;
-			}
-
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( empty( $body['candidates'][0]['content']['parts'][0]['text'] ) ) {
-				return new WP_Error( 'rpress_gemini_failed', __( 'Gemini did not return a menu payload.', 'restropress' ) );
-			}
-
-			return self::json_to_payload( $body['candidates'][0]['content']['parts'][0]['text'] );
+			return self::extract_menu( 'gemini', $upload, $ext, $text, $generate_descriptions );
 		}
 
 		/**
@@ -1785,89 +1347,59 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array|WP_Error
 		 */
 		protected static function parse_with_claude( $upload, $ext, $text, $generate_descriptions = false ) {
-			$settings = self::get_ai_settings();
-			$model    = $settings['model'] ? $settings['model'] : 'claude-haiku-4-5';
-			$content  = array();
+			return self::extract_menu( 'claude', $upload, $ext, $text, $generate_descriptions );
+		}
 
-			if ( empty( $text ) ) {
-				$bytes = file_get_contents( $upload['file'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				if ( false === $bytes ) {
-					return new WP_Error( 'rpress_file_read_failed', __( 'The uploaded menu file could not be read.', 'restropress' ) );
-				}
-
-				if ( in_array( $ext, array( 'jpg', 'jpeg', 'png', 'webp' ), true ) ) {
-					$content[] = array(
-						'type'   => 'image',
-						'source' => array(
-							'type'       => 'base64',
-							'media_type' => $upload['type'],
-							'data'       => base64_encode( $bytes ),
-						),
-					);
-				} elseif ( 'pdf' === $ext ) {
-					$content[] = array(
-						'type'   => 'document',
-						'source' => array(
-							'type'       => 'base64',
-							'media_type' => 'application/pdf',
-							'data'       => base64_encode( $bytes ),
-						),
-					);
-				} else {
-					return new WP_Error( 'rpress_claude_file_unsupported', __( 'Claude could not read this file type. Upload a PDF, image, CSV, or XLSX file.', 'restropress' ) );
-				}
-			}
-
-			$content[] = array(
-				'type' => 'text',
-				'text' => self::get_menu_prompt( $text, $generate_descriptions ),
+		/**
+		 * Read a menu through the shared AI service (RPRESS_AI).
+		 *
+		 * Text imports (CSV/XLSX) send only the prompt; PDFs and photos are
+		 * attached as files. Request shapes per provider live in RPRESS_AI.
+		 *
+		 * @param string $provider Provider slug.
+		 * @param array  $upload Upload data (file, type).
+		 * @param string $ext Extension.
+		 * @param string $text Extracted text.
+		 * @param bool   $generate_descriptions Generate missing descriptions.
+		 * @return array|WP_Error
+		 */
+		protected static function extract_menu( $provider, $upload, $ext, $text, $generate_descriptions = false ) {
+			$empty = array(
+				'wordpress' => __( 'WordPress AI returned an unreadable response. Check the connected provider and try again.', 'restropress' ),
+				'openai'    => __( 'OpenAI did not return a menu payload.', 'restropress' ),
+				'gemini'    => __( 'Gemini did not return a menu payload.', 'restropress' ),
+				'claude'    => __( 'Claude did not return a menu payload.', 'restropress' ),
 			);
+			$unsupported = array(
+				'openai' => __( 'OpenAI could not read this file type. Upload a PDF, image, CSV, or XLSX file.', 'restropress' ),
+				'claude' => __( 'Claude could not read this file type. Upload a PDF, image, CSV, or XLSX file.', 'restropress' ),
+			);
+			$attach = empty( $text ) && ! empty( $upload['file'] );
 
-			$response = wp_remote_post(
-				'https://api.anthropic.com/v1/messages',
+			return RPRESS_AI::extract_structured(
 				array(
-					'timeout' => 60,
-					'headers' => array(
-						'x-api-key'         => $settings['api_key'],
-						'anthropic-version' => '2023-06-01',
-						'Content-Type'      => 'application/json',
-					),
-					'body'    => wp_json_encode(
-						array(
-							'model'         => $model,
-							'max_tokens'    => 16384,
-							'temperature'   => 0.1,
-							'messages'      => array( array( 'role' => 'user', 'content' => $content ) ),
-							'output_config' => array(
-								'format' => array(
-									'type'   => 'json_schema',
-									'schema' => self::close_schema_objects( self::get_menu_schema() ),
-								),
-							),
-						)
+					'text' => self::get_menu_prompt( $text, $generate_descriptions ),
+					'file' => $attach ? $upload['file'] : '',
+					'mime' => $attach && isset( $upload['type'] ) ? $upload['type'] : '',
+					'ext'  => $ext,
+				),
+				self::get_menu_schema(),
+				array(
+					'provider'    => $provider,
+					'name'        => 'restropress_menu',
+					'max_tokens'  => 0,
+					'temperature' => 0.1,
+					'timeout'     => 60,
+					'schema_hint' => false,
+					'messages'    => array(
+						// Messages are already provider-specific, so no %s placeholder.
+						'empty'       => str_replace( '%', '%%', $empty[ $provider ] ),
+						'file_read'   => __( 'The uploaded menu file could not be read.', 'restropress' ),
+						'unsupported' => str_replace( '%', '%%', isset( $unsupported[ $provider ] ) ? $unsupported[ $provider ] : '' ),
+						'bad_json'    => __( 'AI returned an invalid menu format.', 'restropress' ),
 					),
 				)
 			);
-
-			$error = self::remote_response_error( $response, 'claude' );
-			if ( is_wp_error( $error ) ) {
-				return $error;
-			}
-
-			$body        = json_decode( wp_remote_retrieve_body( $response ), true );
-			$output_text = '';
-			if ( ! empty( $body['content'] ) && is_array( $body['content'] ) ) {
-				foreach ( $body['content'] as $part ) {
-					if ( isset( $part['text'] ) ) {
-						$output_text .= $part['text'];
-					}
-				}
-			}
-			if ( '' === trim( $output_text ) ) {
-				return new WP_Error( 'rpress_claude_failed', __( 'Claude did not return a menu payload.', 'restropress' ) );
-			}
-
-			return self::json_to_payload( $output_text );
 		}
 
 		/**
@@ -1877,10 +1409,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return string
 		 */
 		protected static function gemini_model( $configured = '' ) {
-			if ( ! $configured || in_array( $configured, array( 'gemini-2.0-flash', 'gemini-2.0-flash-001' ), true ) ) {
-				return 'gemini-3.5-flash-lite';
-			}
-			return sanitize_text_field( $configured );
+			return RPRESS_AI::gemini_model( $configured );
 		}
 
 		/**
@@ -2157,15 +1686,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array
 		 */
 		protected static function close_schema_objects( $schema ) {
-			if ( isset( $schema['type'] ) && 'object' === $schema['type'] ) {
-				$schema['additionalProperties'] = false;
-			}
-			foreach ( $schema as $key => $value ) {
-				if ( is_array( $value ) ) {
-					$schema[ $key ] = self::close_schema_objects( $value );
-				}
-			}
-			return $schema;
+			return RPRESS_AI::close_schema_objects( $schema );
 		}
 
 		/**
@@ -2175,19 +1696,7 @@ if ( ! class_exists( 'RPress_Onboarding' ) ) {
 		 * @return array|WP_Error
 		 */
 		protected static function json_to_payload( $json ) {
-			$json = trim( preg_replace( '/^```(?:json)?\s*|\s*```$/i', '', (string) $json ) );
-			$data = json_decode( $json, true );
-			if ( ! is_array( $data ) ) {
-				$start = strpos( $json, '{' );
-				$end   = strrpos( $json, '}' );
-				if ( false !== $start && false !== $end && $end > $start ) {
-					$data = json_decode( substr( $json, $start, $end - $start + 1 ), true );
-				}
-			}
-			if ( ! is_array( $data ) ) {
-				return new WP_Error( 'rpress_ai_bad_json', __( 'AI returned an invalid menu format.', 'restropress' ) );
-			}
-			return $data;
+			return RPRESS_AI::decode_json( $json, __( 'AI returned an invalid menu format.', 'restropress' ) );
 		}
 
 		/**

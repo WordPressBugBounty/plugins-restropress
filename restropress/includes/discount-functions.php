@@ -258,6 +258,17 @@ function rpress_get_discount_code( $code_id = null ) {
 	return $discount->code;
 }
 /**
+ * A stored discount date ("m/d/Y H:i:s") as the mm/dd/yyyy value the date picker uses.
+ *
+ * @since 3.5
+ * @param string $date Stored date.
+ * @return string
+ */
+function rpress_discount_date_for_input( $date ) {
+	$timestamp = $date ? strtotime( $date ) : false;
+	return $timestamp ? gmdate( 'm/d/Y', $timestamp ) : '';
+}
+/**
  * Retrieve the discount code start date.
  *
  * @since  1.0.0

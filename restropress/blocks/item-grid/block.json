@@ -1,0 +1,74 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/item-grid",
+	"title": "Menu Items",
+	"category": "restropress",
+	"description": "Menu items grouped by category, in a grid or list. Add buttons open the item options popup.",
+	"keywords": [
+		"menu",
+		"items",
+		"food",
+		"grid",
+		"list"
+	],
+	"textdomain": "restropress",
+	"attributes": {
+		"categories": {
+			"type": "string",
+			"default": ""
+		},
+		"categoryExclude": {
+			"type": "string",
+			"default": ""
+		},
+		"layout": {
+			"type": "string",
+			"enum": [
+				"grid",
+				"list"
+			],
+			"default": "grid"
+		},
+		"columns": {
+			"type": "number",
+			"default": 2
+		},
+		"showImage": {
+			"type": "boolean",
+			"default": true
+		},
+		"showDescription": {
+			"type": "boolean",
+			"default": true
+		},
+		"showPrice": {
+			"type": "boolean",
+			"default": true
+		},
+		"orderby": {
+			"type": "string",
+			"default": "title"
+		},
+		"order": {
+			"type": "string",
+			"default": "ASC"
+		}
+	},
+	"supports": {
+		"html": false,
+		"interactivity": true,
+		"align": [
+			"wide",
+			"full"
+		],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"editorScript": "rpress-storefront-blocks-editor",
+	"style": "rpress-storefront-blocks",
+	"viewScriptModule": "@restropress/storefront",
+	"render": "file:./render.php"
+}

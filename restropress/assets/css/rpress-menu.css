@@ -394,9 +394,16 @@ html {
 	margin-bottom: 11px;
 }
 /* No image: no photo to overlay, so let the + button flow in the centred
-   column instead of absolute-positioning against an empty box. */
+   column instead of absolute-positioning against an empty box. The mobile
+   overlay rules in rpress.css (body:not(...) .rpress-section ...) are more
+   specific and absolute-position it, which overlapped the veg badge and hung
+   past the card edge, so these need !important. */
+.rpress-menu-v2 .rp-no-img .rpress-list-view-image-wrapper {
+	width: auto !important;
+}
 .rpress-menu-v2 .rp-no-img .rpress-list-view-image-wrapper .rpress_fooditem_buy_button {
-	position: static;
+	position: static !important;
+	transform: none !important;
 }
 
 /* Add-to-cart button. The whole appearance block keeps !important: the legacy
@@ -556,6 +563,14 @@ body.admin-bar .rpress-menu-v2 .rpress-mobile-menu-wrap { top: 32px; }
 @media screen and (max-width: 782px) {
 	body.admin-bar .rpress-menu-v2 .make-me-sticky,
 	body.admin-bar .rpress-menu-v2 .rpress-mobile-menu-wrap { top: 46px; }
+}
+/* At 600px and below WordPress lets the admin bar scroll away
+   (position: absolute), so the bar sticks to the very top again. */
+@media screen and (max-width: 600px) {
+	body.admin-bar .rpress-menu-v2 .make-me-sticky,
+	body.admin-bar .rpress-menu-v2 .rpress-mobile-menu-wrap,
+	body.admin-bar .order-online .rpress-section .make-me-sticky,
+	body.admin-bar .order-online .rpress-section .make-me-sticky .scrollable-div-wrapper-main { top: 0; }
 }
 .rpress-menu-v2 .pn-ProductNav_Wrapper {
 	margin: 0 0 8px;

@@ -1,0 +1,82 @@
+/* RestroPress 3.5 setup wizard: additions on top of admin-home.css (scoped to .rp-onboard). */
+
+/* Rail: keyboard focus and skipped steps. */
+.rp-onboard .rp-ob-step:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rp-onboard .rp-ob-step.skipped .rp-ob-dot{background:#fff;border-color:#cfd3da;color:var(--muted)}
+.rp-onboard .rp-ob-title:focus{outline:none}
+.rp-onboard .rp-sw-label{display:block;font-weight:700;margin-bottom:6px;font-size:13px}
+.rp-onboard [hidden]{display:none!important}
+
+/* Mobile progress bar (the rail is hidden below 782px). */
+.rp-sw-mbar{display:none;height:4px;background:#eceef1}
+.rp-sw-mbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+@media(max-width:782px){
+  .rp-sw-mbar{display:block}
+  .rp-onboard .rp-ob-top,.rp-onboard .rp-ob-footer{padding-left:16px;padding-right:16px}
+}
+
+/* Footer: skip link next to the primary button. */
+.rp-sw-footer-right{display:flex;align-items:center;gap:16px}
+.rp-onboard .rp-sw-skip{color:var(--muted);text-decoration:underline;font-size:13px;cursor:pointer;min-height:44px}
+.rp-onboard .rp-sw-skip:hover,.rp-onboard .rp-sw-skip:focus{color:var(--ink)}
+
+/* Segmented buttons and switches: visible focus, buttons reset. */
+.rp-onboard .rp-ob-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.rp-onboard button.rp-ob-switch{border:0;padding:0;margin:0;appearance:none;-webkit-appearance:none}
+.rp-onboard button.rp-ob-switch:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Store basics. */
+.rp-onboard .rp-ob-field input[type="tel"]{width:100%}
+.rp-sw-tzwarn,.rp-sw-tzbrowser{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rp-sw-more{margin-top:18px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:0 16px}
+.rp-sw-more>summary{cursor:pointer;padding:14px 0;font-weight:700}
+.rp-sw-more[open]>summary{border-bottom:1px solid var(--line);margin-bottom:14px}
+
+/* Hours grid. */
+.rp-sw-allday{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px;margin:0 0 14px;background:#fff}
+.rp-sw-allday legend{font-weight:700;padding:0 4px}
+.rp-sw-week{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.rp-sw-day{display:grid;grid-template-columns:120px 1fr 1fr auto;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.rp-sw-day:first-child{border-top:0}
+.rp-sw-day.is-closed{background:var(--bg)}
+.rp-sw-day.is-closed input[type="time"]{opacity:.5}
+.rp-sw-dayname{font-weight:700}
+.rp-sw-day input[type="time"]{width:100%;min-height:36px}
+.rp-sw-closed{margin:0;white-space:nowrap}
+@media(max-width:560px){
+  .rp-sw-day{grid-template-columns:1fr 1fr;row-gap:6px}
+  .rp-sw-dayname{grid-column:1}
+  .rp-sw-day>span:last-child{grid-column:2;grid-row:1;justify-self:end}
+}
+
+/* Delivery. */
+.rp-sw-upsell{margin-top:4px}
+
+/* Payments: Stripe key fields inside the card. */
+.rp-onboard .rp-ob-paymeta .rp-ob-field{margin:10px 0 0}
+.rp-onboard .rp-ob-paymeta input{width:100%;font-family:Menlo,Consolas,monospace;font-size:12px}
+
+/* Menu: extra entry points. */
+.rp-sw-menu-links{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px}
+
+/* Launch checklist. */
+.rp-sw-checklist{margin:0;padding:0;list-style:none}
+.rp-sw-checklist li{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff}
+.rp-sw-ck-icon{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:13px}
+.rp-sw-checklist .is-done .rp-sw-ck-icon{background:var(--green);color:#fff}
+.rp-sw-checklist .is-missing .rp-sw-ck-icon{background:var(--amber-soft);color:var(--amber);border:1px solid var(--amber)}
+.rp-sw-ck-text{flex:1;min-width:0}
+.rp-sw-ck-text b{display:block}
+.rp-sw-ck-text small{display:block;color:var(--muted);font-size:12px}
+
+/* Done screen. */
+.rp-onboard .rp-sw-primary-card{border-color:var(--accent);background:var(--accent-soft)}
+
+/* Existing-store notice. */
+.rpress-setup-wizard-notice .button-link{margin-inline-start:12px}
+
+/* Keep the share button on one line next to the link field. */
+.rp-ob-share .rp-btn {
+	white-space: nowrap;
+	flex-shrink: 0;
+}

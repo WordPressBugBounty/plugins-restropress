@@ -1,0 +1,192 @@
+/**
+ * Missed-order protection on the Live Orders board.
+ *
+ * @since 3.5
+ */
+
+/* Card row: printer badge + Acknowledge */
+
+.rp-live-card .rp-oa-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 8px;
+}
+
+.rp-live-card .rp-oa-print {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 3px 4px 3px 8px;
+    border: 1px solid var(--rp-live-border, #e2e8f0);
+    border-radius: 999px;
+    background: var(--rp-live-soft, #f8fafc);
+    color: var(--rp-live-muted, #64748b);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+}
+
+.rp-live-card .rp-oa-print-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.rp-live-card .rp-oa-print .dashicons {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    line-height: 14px;
+}
+
+.rp-live-card .rp-oa-print-action {
+    padding: 0 8px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #2271b1;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    cursor: pointer;
+}
+
+.rp-live-card .rp-oa-print-action:hover,
+.rp-live-card .rp-oa-print-action:focus {
+    background: #e0ecf8;
+    outline: none;
+}
+
+.rp-live-card .rp-oa-print-action:disabled {
+    color: var(--rp-live-muted, #64748b);
+    cursor: default;
+}
+
+.rp-live-card .rp-oa-print--printed {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: var(--rp-live-success, #15803d);
+}
+
+.rp-live-card .rp-oa-print--failed {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: var(--rp-live-danger, #b91c1c);
+}
+
+.rp-live-card .rp-oa-print--failed .rp-oa-print-action {
+    background: var(--rp-live-danger, #b91c1c);
+    color: #fff;
+}
+
+.rp-live-card .rp-oa-print--failed .rp-oa-print-action:hover,
+.rp-live-card .rp-oa-print--failed .rp-oa-print-action:focus {
+    background: #991b1b;
+}
+
+.rp-live-card .rp-oa-ack.button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 26px;
+    margin-inline-start: auto;
+    padding: 0 10px;
+    border-color: #fdba74;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 24px;
+    box-shadow: none;
+}
+
+.rp-live-card .rp-oa-ack.button:hover,
+.rp-live-card .rp-oa-ack.button:focus {
+    border-color: #fb923c;
+    background: #ffedd5;
+    color: #7c2d12;
+}
+
+.rp-live-card .rp-oa-ack .dashicons {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    line-height: 14px;
+}
+
+.rp-live-card .rp-oa-ack[hidden],
+.rp-live-card .rp-oa-acked[hidden] {
+    display: none !important;
+}
+
+.rp-live-card .rp-oa-acked {
+    margin-inline-start: auto;
+    color: var(--rp-live-muted, #64748b);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Alerting state: card and New column pulse until accepted or acknowledged */
+
+.rp-live-card.rp-oa-alerting {
+    border-color: var(--rp-live-orange, #ff5a1f);
+    animation: rp-oa-card-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes rp-oa-card-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 90, 31, 0.45), 0 8px 22px rgba(15, 23, 42, 0.06); }
+    50%      { box-shadow: 0 0 0 6px rgba(255, 90, 31, 0), 0 8px 22px rgba(15, 23, 42, 0.06); }
+}
+
+.rp-live-column.rp-oa-column-alerting .rp-live-column-header {
+    animation: rp-oa-column-pulse 1.6s ease-in-out infinite;
+}
+
+.rp-live-column.rp-oa-column-alerting .rp-live-column-count {
+    background: var(--rp-live-orange, #ff5a1f);
+    color: #fff;
+}
+
+@keyframes rp-oa-column-pulse {
+    0%, 100% { background-color: transparent; }
+    50%      { background-color: rgba(255, 90, 31, 0.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rp-live-card.rp-oa-alerting,
+    .rp-live-column.rp-oa-column-alerting .rp-live-column-header {
+        animation: none;
+    }
+    .rp-live-card.rp-oa-alerting {
+        box-shadow: 0 0 0 3px rgba(255, 90, 31, 0.35);
+    }
+}
+
+/* Toolbar button */
+
+.rp-live-toolbar-right .rp-oa-notify-toggle[aria-pressed="true"] {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.rp-live-toolbar-right .rp-oa-notify-toggle.is-blocked {
+    color: var(--rp-live-muted, #64748b);
+}
+
+/* RTL: mirror the asymmetric boxes above. */
+[dir="rtl"] .rp-live-card .rp-oa-print {
+    padding: 3px 8px 3px 4px;
+}
+
+/* Keyboard focus: the background tint alone is too faint. */
+.rp-live-card .rp-oa-print-action:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 1px;
+}

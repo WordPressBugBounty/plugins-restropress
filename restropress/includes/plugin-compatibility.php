@@ -534,6 +534,15 @@ if ( ! function_exists( 'rpress_wpml_translate_setting_value' ) ) {
 			return $value;
 		}
 
+		$default_lang = apply_filters( 'wpml_default_language', null );
+		if ( ! empty( $default_lang ) && $lang === $default_lang ) {
+			return $value;
+		}
+
+		if ( is_admin() && isset( $_GET['page'] ) && $_GET['page'] === 'rpress-settings' ) {
+			return $value;
+		}
+
 		$context = 'admin_texts_rpress_settings';
 
 		if ( is_array( $value ) ) {
@@ -695,4 +704,58 @@ if ( ! has_action( 'rpress_email_send_after', 'rpress_wpml_restore_language' ) )
 }
 if ( ! has_action( 'rpress_admin_order_notice', 'rpress_wpml_restore_language' ) ) {
 	add_action( 'rpress_admin_order_notice', 'rpress_wpml_restore_language', 999 );
+}
+
+/**
+ * Synchronize updated RestroPress settings with WPML String Translation.
+ *
+ * @since 3.4.12
+ * @param mixed $old_value
+ * @param mixed $new_value
+ * @return void
+ */
+if ( ! function_exists( 'rpress_wpml_sync_settings_on_update' ) ) {
+	function rpress_wpml_sync_settings_on_update( $old_value, $new_value ) {
+		if ( ! rpress_wpml_is_active() || ! is_array( $new_value ) ) {
+			return;
+		}
+
+		$context = 'admin_texts_rpress_settings';
+		$top_level_keys = array( 'from_name', 'purchase_subject', 'purchase_heading', 'purchase_receipt', 'checkout_label', 'stripe_checkout_label' );
+		foreach ( $top_level_keys as $k ) {
+			if ( isset( $new_value[ $k ] ) && is_string( $new_value[ $k ] ) ) {
+				do_action( 'wpml_register_single_string', $context, '[rpress_settings]' . $k, $new_value[ $k ] );
+			}
+		}
+
+		$status_keys = array( 'pending', 'processing', 'completed', 'cancelled', 'admin_notification' );
+		foreach ( $status_keys as $status ) {
+			if ( isset( $new_value[ $status ] ) && is_array( $new_value[ $status ] ) ) {
+				foreach ( array( 'subject', 'heading', 'content' ) as $field ) {
+					if ( isset( $new_value[ $status ][ $field ] ) && is_string( $new_value[ $status ][ $field ] ) ) {
+						$string_name = '[rpress_settings][' . $status . ']' . $field;
+						do_action( 'wpml_register_single_string', $context, $string_name, $new_value[ $status ][ $field ] );
+
+						global $wpdb;
+						if ( isset( $wpdb->prefix ) ) {
+							$wpdb->update(
+								$wpdb->prefix . 'icl_strings',
+								array( 'value' => $new_value[ $status ][ $field ] ),
+								array( 'context' => $context, 'name' => $string_name ),
+								array( '%s' ),
+								array( '%s', '%s' )
+							);
+						}
+					}
+				}
+			}
+		}
+
+		if ( get_option( 'rpress_settings-en' ) !== false ) {
+			update_option( 'rpress_settings-en', $new_value );
+		}
+	}
+}
+if ( ! has_action( 'update_option_rpress_settings', 'rpress_wpml_sync_settings_on_update' ) ) {
+	add_action( 'update_option_rpress_settings', 'rpress_wpml_sync_settings_on_update', 10, 2 );
 }

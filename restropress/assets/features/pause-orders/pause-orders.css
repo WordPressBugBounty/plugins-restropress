@@ -1,0 +1,40 @@
+/**
+ * Pause orders: storefront banner.
+ *
+ * @since 3.5
+ */
+.rp-pause-banner {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0 0 16px;
+	padding: 12px 16px;
+	border: 1px solid #fecaca;
+	border-radius: 10px;
+	background: #fef2f2;
+	color: #991b1b;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.rp-pause-banner.is-busy {
+	border-color: #fde68a;
+	background: #fffbeb;
+	color: #92400e;
+}
+
+.rp-pause-banner-icon {
+	flex: 0 0 10px;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.rp-pause-banner-text {
+	flex: 1 1 auto;
+	min-width: 0;
+}

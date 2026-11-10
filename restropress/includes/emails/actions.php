@@ -42,7 +42,7 @@ function rpress_resend_purchase_receipt( $data ) {
 	if( empty( $purchase_id ) ) {
 		return;
 	}
-	if( ! current_user_can( 'edit_shop_payments' ) ) {
+	if( ! current_user_can( 'edit_shop_payments' ) || ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'rpress_resend_receipt' ) ) {
 		wp_die(
 			esc_html__( 'You do not have permission to edit this payment record', 'restropress' ),
 			esc_html__( 'Error', 'restropress' ),
@@ -72,7 +72,7 @@ add_action( 'rpress_email_links', 'rpress_resend_purchase_receipt' );
  * @return void
  */
 function rpress_send_test_email( $data ) {
-	if ( ! wp_verify_nonce( $data['_wpnonce'], 'rpress-test-email' ) ) {
+	if ( empty( $data['_wpnonce'] ) || ! wp_verify_nonce( $data['_wpnonce'], 'rpress-test-email' ) || ! current_user_can( 'manage_shop_settings' ) ) {
 		return;
 	}
 	// Send a test email

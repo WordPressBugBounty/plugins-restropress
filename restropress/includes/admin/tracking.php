@@ -141,7 +141,7 @@ class RPRESS_Tracking {
 	 * @return void
 	 */
 	public function check_for_optin( $data ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) || ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'rpress_tracking_choice' ) ) {
 			return;
 		}
 		rpress_update_option( 'allow_tracking', 1 );
@@ -154,7 +154,7 @@ class RPRESS_Tracking {
 	 * @return void
 	 */
 	public function check_for_optout( $data ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) || ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'rpress_tracking_choice' ) ) {
 			return;
 		}
 		rpress_delete_option( 'allow_tracking' );
@@ -206,8 +206,8 @@ class RPRESS_Tracking {
 		) {
 			update_option( 'rpress_tracking_notice', '1' );
 		} else {
-			$optin_url  = add_query_arg( 'rpress_action', 'opt_into_tracking' );
-			$optout_url = add_query_arg( 'rpress_action', 'opt_out_of_tracking' );
+			$optin_url  = wp_nonce_url( add_query_arg( 'rpress_action', 'opt_into_tracking' ), 'rpress_tracking_choice' );
+			$optout_url = wp_nonce_url( add_query_arg( 'rpress_action', 'opt_out_of_tracking' ), 'rpress_tracking_choice' );
 			$source         = substr( md5( get_bloginfo( 'name' ) ), 0, 10 );
 			$extensions_url = '';
 		}

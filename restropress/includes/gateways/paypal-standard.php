@@ -1571,7 +1571,7 @@ function rpress_process_paypal_ipn()
                 'post'         => '/cgi-bin/webscr HTTP/1.1',
                 'user-agent'   => 'RPRESS IPN Verification/' . RP_VERSION . '; ' . get_bloginfo('url')
             ),
-            'sslverify'   => false,
+            'sslverify'   => true,
             'body'        => $encoded_data_array
         );
         rpress_debug_log('Attempting to verify PayPal IPN. Data sent for verification: ' . print_r($remote_post_vars, true));
@@ -1959,7 +1959,7 @@ function rpress_paypal_process_pdt_on_return()
                 // 'post'         => '/cgi-bin/webscr HTTP/1.1',
                 // 'user-agent'   => 'RPRESS PDT Verification/' . RP_VERSION . '; ' . get_bloginfo( 'url' )
             ),
-            'sslverify'   => false,
+            'sslverify'   => true,
             'body'        => array(
                 'tx'  => sanitize_text_field($_REQUEST['tx']),
                 'at'  => $token,
@@ -1984,12 +1984,17 @@ function rpress_paypal_process_pdt_on_return()
                     $parsed_line = explode("=", $lines[$i], 2);
                     $data[urldecode($parsed_line[0])] = urldecode($parsed_line[1]);
                 }
+                // The transaction must belong to this order: PDT only proves the tx is real.
+                $pdt_problem = rpress_paypal_pdt_mismatch($data, $payment, sanitize_text_field(wp_unslash($_REQUEST['tx'])));
+                if ($pdt_problem) {
+                    rpress_debug_log('PayPal PDT rejected: ' . $pdt_problem . ' Data: ' . print_r($data, true));
+                    $payment->add_note(sprintf(__('PayPal PDT not applied: %s The order stays as it is until PayPal sends its IPN.', 'restropress'), $pdt_problem));
+                    return;
+                }
                 if (isset($data['mc_gross'])) {
                     $total = $data['mc_gross'];
                 } else if (isset($data['payment_gross'])) {
                     $total = $data['payment_gross'];
-                } else if (isset($_REQUEST['amt'])) {
-                    $total = sanitize_text_field($_REQUEST['amt']);
                 } else {
                     $total = null;
                 }
@@ -2039,6 +2044,41 @@ function rpress_paypal_process_pdt_on_return()
     }
 }
 add_action('template_redirect', 'rpress_paypal_process_pdt_on_return');
+/**
+ * Check that a PayPal PDT response belongs to the order it is applied to.
+ *
+ * @param array          $data    Parsed PDT response.
+ * @param RPRESS_Payment $payment Order being confirmed.
+ * @param string         $tx      Transaction ID from the return URL.
+ * @return string Empty when it matches, otherwise the reason.
+ */
+function rpress_paypal_pdt_mismatch($data, $payment, $tx)
+{
+    if ('paypal' !== $payment->gateway) {
+        return __('The order was not placed with PayPal.', 'restropress');
+    }
+    if (! isset($data['custom']) || absint($data['custom']) !== (int) $payment->ID) {
+        return __('The PayPal transaction is for a different order.', 'restropress');
+    }
+    if (isset($data['invoice']) && ! hash_equals((string) $payment->key, (string) $data['invoice'])) {
+        return __('The PayPal invoice does not match the order key.', 'restropress');
+    }
+    if (empty($data['mc_currency']) || strtolower($data['mc_currency']) !== strtolower($payment->currency)) {
+        return __('The PayPal currency does not match the order currency.', 'restropress');
+    }
+    $expected_id    = trim((string) rpress_get_option('paypal_id', ''));
+    $expected_email = strtolower(trim((string) rpress_get_option('paypal_email', '')));
+    $receiver_ok    = (! empty($expected_id) && isset($data['receiver_id']) && $data['receiver_id'] === $expected_id)
+        || (! empty($expected_email) && isset($data['receiver_email']) && strtolower($data['receiver_email']) === $expected_email);
+    if (! $receiver_ok) {
+        return __('The PayPal payment was not sent to this store\'s PayPal account.', 'restropress');
+    }
+    $used_by = (int) rpress_get_purchase_id_by_transaction_id($tx);
+    if ($used_by && $used_by !== (int) $payment->ID) {
+        return __('The PayPal transaction is already linked to another order.', 'restropress');
+    }
+    return '';
+}
 /**
  * Given a Payment ID, extract the transaction ID
  *

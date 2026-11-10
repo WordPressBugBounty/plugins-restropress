@@ -137,7 +137,7 @@ function rpress_price( $fooditem_id = 0, $echo = true, $price_id = false ) {
 		$fooditem_id = get_the_ID();
 	}
 	$price = rpress_get_fooditem_price( $fooditem_id );
-    $rate = (float) rpress_get_option( 'tax_rate', 0 );
+    $rate = rpress_get_fooditem_tax_percent( $fooditem_id );
     // Convert to a number we can use
     $item_tax = (float) $price - ( (float) $price / ( ( (float) $rate / 100 ) + 1 ) );
     $include_tax  = rpress_get_option( 'prices_include_tax', true );
@@ -395,7 +395,7 @@ function rpress_get_highest_price_option( $fooditem_id = 0 ) {
  * @return string $range A fully formatted price range
  */
 function rpress_price_range( $fooditem_id = 0 ) {
-	$rate = (float) rpress_get_option( 'tax_rate', 0 );
+	$rate = rpress_get_fooditem_tax_percent( $fooditem_id );
     // Convert to a number we can use
     $include_tax  = rpress_get_option( 'prices_include_tax', true );
     $tax_inc_exc_item_option = rpress_get_option('tax_item', true );

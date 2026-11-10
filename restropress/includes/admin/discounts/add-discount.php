@@ -267,7 +267,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 					<label for="rpress-start"><?php esc_html_e( 'Start date', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input name="start" id="rpress-start" type="text" value="" class="rpress_datepicker rp-input rp-field-md"/>
+					<input name="start" id="rpress-start" type="text" value="" class="rpress_datepicker rp-input rp-field-md" data-rp-date-format="mm/dd/yy" placeholder="mm/dd/yyyy" autocomplete="off"/>
 					<p class="description"><?php esc_html_e( 'Enter the start date for this discount code in the format of mm/dd/yyyy. For no start date, leave blank. If entered, the discount can only be used after or on this date.', 'restropress' ); ?></p>
 				</td>
 			</tr>
@@ -277,7 +277,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 					<label for="rpress-expiration"><?php esc_html_e( 'Expiration date', 'restropress' ); ?></label>
 				</th>
 				<td>
-					<input name="expiration" id="rpress-expiration" type="text" class="rpress_datepicker rp-input rp-field-md"/>
+					<input name="expiration" id="rpress-expiration" type="text" class="rpress_datepicker rp-input rp-field-md" data-rp-date-format="mm/dd/yy" placeholder="mm/dd/yyyy" autocomplete="off"/>
 					<p class="description"><?php esc_html_e( 'Enter the expiration date for this discount code in the format of mm/dd/yyyy. For no expiration, leave blank.', 'restropress' ); ?></p>
 				</td>
 			</tr>

@@ -207,7 +207,7 @@ class RPRESS_Cart {
 			$item['quantity'] 	= max( 1, $item['quantity'] ); // Force quantity to 1
 			$options 			= isset( $item['options'] ) ? $item['options'] : array();
 			$price_id 			= isset( $item['price_id'] ) ? $item['price_id'] : null;
-			$item_price 		= $this->get_item_price( $item['id'], $item, $options, $price_id, false, $item['price'] );
+			$item_price 		= $this->get_item_price( $item['id'], $item, $options, $price_id, false, isset( $item['price'] ) ? $item['price'] : 0.00 );
             $item_price = round($item_price,rpress_currency_decimal_filter());
             $discount   		= $this->get_item_discount_amount( $item );
 			$discount   		= apply_filters( 'rpress_get_cart_content_details_item_discount_amount', $discount, $item );
@@ -265,7 +265,13 @@ class RPRESS_Cart {
 				'tax'         => round( $tax, rpress_currency_decimal_filter() ),
 				'fees'        => $fees,
 				'price'       => round( $total, rpress_currency_decimal_filter() ),
-				'addon_items' => ! empty( $item['addon_items'] ) ? $item['addon_items'] : array()
+				'addon_items' => ! empty( $item['addon_items'] ) ? $item['addon_items'] : array(),
+				'tax_class'   => rpress_get_fooditem_tax_class( $item['id'] ),
+				'tax_rate'    => rpress_get_fooditem_tax_rate(
+					$item['id'],
+					! empty( $_POST['billing_country'] ) ? sanitize_text_field( $_POST['billing_country'] ) : false,
+					! empty( $_POST['card_state'] ) ? sanitize_text_field( $_POST['card_state'] ) : false
+				),
 			);
 			if ( $rpress_is_last_cart_item ) {
 				$rpress_is_last_cart_item   = false;
@@ -546,7 +552,7 @@ class RPRESS_Cart {
 		}
 		$amount = 0;
 		$price_id = isset( $item['price_id'] ) ? $item['price_id'] : false;
-		$price = $this->get_item_price( $item['id'], $item, $item['options'], $price_id, false, $item['price'] );
+		$price = $this->get_item_price( $item['id'], $item, isset( $item['options'] ) ? $item['options'] : array(), $price_id, false, isset( $item['price'] ) ? $item['price'] : 0.00 );
 		$price = round( $price, rpress_currency_decimal_filter() );
         /* Apply discounts on addon items */
         $addon_tax_price  = 0.0;
@@ -865,7 +871,7 @@ class RPRESS_Cart {
 	public function item_price( $item_id = 0, $item = array(),  $options = array() ) {
 		$label = '';
 		$price_id = isset( $options['price_id'] ) ? $options['price_id'] : false;
-		$price = $this->get_item_price( $item_id, $item, $options, $price_id, false, $item['price'] );
+		$price = $this->get_item_price( $item_id, $item, $options, $price_id, false, isset( $item['price'] ) ? $item['price'] : 0.00 );
 		$price = rpress_currency_filter( rpress_format_amount( $price ) );
 		return apply_filters( 'rpress_cart_item_price_label', $price . $label, $item_id, $options );
 	}
@@ -947,7 +953,7 @@ class RPRESS_Cart {
 		if ( ! rpress_fooditem_is_tax_exclusive( $fooditem_id ) ) {
 			$country = ! empty( $_POST['billing_country'] ) ? sanitize_text_field( $_POST['billing_country']  )  : false;
 			$state   = ! empty( $_POST['card_state'] )      ? sanitize_text_field( $_POST['card_state'] )     : false;
-			$tax = rpress_calculate_tax( $subtotal, $country, $state ,$ignore_inclusive);
+			$tax = rpress_calculate_tax( $subtotal, $country, $state ,$ignore_inclusive, rpress_get_fooditem_tax_rate( $fooditem_id, $country, $state ) );
 		}
 		$tax = max( $tax, 0 );
 		return apply_filters( 'rpress_get_cart_item_tax', (float) $tax, $fooditem_id, $item, $subtotal );
@@ -967,7 +973,10 @@ class RPRESS_Cart {
 		if ( rpress_addon_is_tax_exclusive( $addon_id ) != 'yes' ) {
 			$country = ! empty( $_POST['billing_country'] ) ? sanitize_text_field( $_POST['billing_country'] ): false;
 			$state   = ! empty( $_POST['card_state'] )      ? sanitize_text_field( $_POST['card_state'] )     : false;
-			$tax = rpress_calculate_tax( $subtotal, $country, $state, $ignore_inclusive );
+			// Add-ons are taxed at their food item's tax class rate.
+			$item_id = is_array( $options ) && ! empty( $options['id'] ) ? $options['id'] : 0;
+			$rate    = $item_id ? rpress_get_fooditem_tax_rate( $item_id, $country, $state ) : null;
+			$tax = rpress_calculate_tax( $subtotal, $country, $state, $ignore_inclusive, $rate );
 		}
 		$tax = max( $tax, 0 );
 		return apply_filters( 'rpress_get_cart_addon_tax', (float) $tax, $addon_id, $options, $subtotal );
@@ -1234,7 +1243,15 @@ class RPRESS_Cart {
 		$discount_id  = !empty( $discounts[0] ) ? rpress_get_discount_id_by_code( $discounts[0] ) : '';
 		$amount       = !empty( $discount_id ) ? rpress_get_discount_amount( $discount_id ) : '';
 		if ( !empty( $discount_id ) && 'flat' === rpress_get_discount_type( $discount_id ) ) {
-            $cart_tax = rpress_calculate_tax( $subtotal - $amount ,false,false,true);
+			if ( rpress_lines_have_mixed_tax_rates( $items ) ) {
+				// Mixed tax classes: tax each line's discounted amount at its own rate.
+				$cart_tax = 0;
+				foreach ( $items as $line ) {
+					$cart_tax += rpress_calculate_tax( (float) $line['subtotal'] - (float) $line['discount'], false, false, true, (float) $line['tax_rate'] );
+				}
+			} else {
+				$cart_tax = rpress_calculate_tax( $subtotal - $amount ,false,false,true, $items ? (float) reset( $items )['tax_rate'] : null );
+			}
 		}
 		$cart_tax = apply_filters( 'rpress_get_cart_tax', rpress_sanitize_amount( $cart_tax ) );
         return $cart_tax;
@@ -1350,10 +1367,18 @@ class RPRESS_Cart {
 		if ( ! $messages ) {
 			$messages = array();
 		}
+		// add_query_arg: plain permalinks already have "?page_id=N".
+		$restore_url = add_query_arg(
+			array(
+				'rpress_action'     => 'restore_cart',
+				'rpress_cart_token' => $token,
+			),
+			rpress_get_checkout_uri()
+		);
 		$messages['rpress_cart_save_successful'] = sprintf(
 			'<strong>%1$s</strong>: %2$s',
 			__( 'Success', 'restropress' ),
-			__( 'Cart saved successfully. You can restore your cart using this URL:', 'restropress' ) . ' ' . '<a href="' .  rpress_get_checkout_uri() . '?rpress_action=restore_cart&rpress_cart_token=' . $token . '">' .  rpress_get_checkout_uri() . '?rpress_action=restore_cart&rpress_cart_token=' . $token . '</a>'
+			__( 'Cart saved successfully. You can restore your cart using this URL:', 'restropress' ) . ' ' . '<a href="' . esc_url( $restore_url ) . '">' . esc_html( $restore_url ) . '</a>'
 		);
 		RPRESS()->session->set( 'rpress_cart_messages', $messages );
 		if ( $cart ) {

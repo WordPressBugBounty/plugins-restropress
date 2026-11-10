@@ -56,6 +56,9 @@ function rpress_do_ajax_import_file_upload() {
 	$import_class = sanitize_text_field( $_POST['rpress-import-class'] );
 	if ( $import_file && empty( $import_file['error'] ) ) {
 		do_action( 'rpress_batch_import_class_include', $import_class );
+		if ( ! class_exists( $import_class ) || ! is_subclass_of( $import_class, 'RPRESS_Batch_Import' ) ) {
+			wp_send_json_error( array( 'error' => esc_html__( 'Invalid import class.', 'restropress' ) ) );
+		}
 		$import = new $import_class( $import_file['file'] );
 		if( ! $import->can_import() ) {
 			wp_send_json_error( array( 'error' => esc_html__( 'You do not have permission to import data', 'restropress' ) ) );
@@ -103,7 +106,17 @@ function rpress_do_ajax_import() {
 	do_action( 'rpress_batch_import_class_include', sanitize_text_field( $_POST['class'] ) );
 	$step     = absint( $_POST['step'] );
 	$class    = sanitize_text_field( $_POST['class'] );
-	$import   = new $class( sanitize_text_field( $_POST['upload']['file'] ), $step );
+	// Only importer classes, and only files inside the uploads folder.
+	if ( ! class_exists( $class ) || ! is_subclass_of( $class, 'RPRESS_Batch_Import' ) ) {
+		wp_send_json_error( array( 'error' => esc_html__( 'Invalid import class.', 'restropress' ) ) );
+	}
+	$uploads     = wp_upload_dir();
+	$import_file = realpath( sanitize_text_field( $_POST['upload']['file'] ) );
+	$upload_base = realpath( $uploads['basedir'] );
+	if ( ! $import_file || ! $upload_base || 0 !== strpos( $import_file, trailingslashit( $upload_base ) ) ) {
+		wp_send_json_error( array( 'error' => esc_html__( 'Invalid import file.', 'restropress' ) ) );
+	}
+	$import   = new $class( $import_file, $step );
 	if( ! $import->can_import() ) {
 		wp_send_json_error( array( 'error' => esc_html__( 'You do not have permission to import data', 'restropress' ) ) );
 	}

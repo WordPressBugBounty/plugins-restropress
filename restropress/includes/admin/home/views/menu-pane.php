@@ -18,6 +18,12 @@ defined( 'ABSPATH' ) || exit;
 						<div class="rp-ob-track" data-track="sample"><span class="rp-ob-tag rp-ob-tag-g"><?php esc_html_e( 'No data? Start here', 'restropress' ); ?></span><div class="rp-ob-ic">🍽️</div><h3><?php esc_html_e( 'Sample menu', 'restropress' ); ?></h3><p><?php esc_html_e( 'One click loads a ready-made menu so you can see RestroPress working right away.', 'restropress' ); ?></p></div>
 					</div>
 					<p class="rp-ob-hint rp-help-text" style="margin-top:12px"><?php esc_html_e( 'Prefer a blank slate?', 'restropress' ); ?> <a href="#" class="rp-ob-pick-manual"><?php esc_html_e( 'Start from scratch', 'restropress' ); ?></a>.</p>
+					<ul class="rp-sw-menu-links">
+						<?php if ( function_exists( 'rpress_importer_url' ) ) : ?>
+							<li><a href="<?php echo esc_url( rpress_importer_url( '' ) ); ?>"><?php esc_html_e( 'Switching from another system? Use Switch to RestroPress', 'restropress' ); ?></a></li>
+						<?php endif; ?>
+						<li><a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=fooditem' ) ); ?>"><?php esc_html_e( 'Add your first item in the full editor', 'restropress' ); ?></a></li>
+					</ul>
 				</div>
 
 				<div data-sub="ai" hidden>
@@ -59,9 +65,13 @@ defined( 'ABSPATH' ) || exit;
 								esc_html_e( 'Not connected yet - choose a provider and test.', 'restropress' );
 							}
 						?></span>
+						<?php if ( current_user_can( 'manage_shop_settings' ) && class_exists( 'RPRESS_AI' ) ) : ?>
+							<a class="rp-ob-ai-settings-link" href="<?php echo esc_url( RPRESS_AI::settings_url() ); ?>"><?php esc_html_e( 'AI settings', 'restropress' ); ?></a>
+						<?php endif; ?>
 					</div>
 
-					<label class="rp-ob-aiopt on"><input type="checkbox" id="rp-ob-gendesc" checked><span><b><?php esc_html_e( 'Write menu descriptions with AI', 'restropress' ); ?></b><small><?php esc_html_e( 'Fills a short description for items that have none - you review before publishing.', 'restropress' ); ?></small></span></label>
+					<?php $ai_gendesc = ! isset( $ai_settings['generate_descriptions'] ) || 'no' !== $ai_settings['generate_descriptions']; ?>
+					<label class="rp-ob-aiopt<?php echo $ai_gendesc ? ' on' : ''; ?>"><input type="checkbox" id="rp-ob-gendesc"<?php checked( $ai_gendesc ); ?>><span><b><?php esc_html_e( 'Write menu descriptions with AI', 'restropress' ); ?></b><small><?php esc_html_e( 'Fills a short description for items that have none - you review before publishing.', 'restropress' ); ?></small></span></label>
 					<div class="rp-ob-dz" id="rp-ob-dz">
 						<input type="file" id="rp-ob-file" accept=".pdf,.jpg,.jpeg,.png,.webp,.csv,.xlsx" multiple hidden>
 						<div class="rp-ob-dz-big">⬆️</div><b><?php esc_html_e( 'Drop or choose your menu file(s)', 'restropress' ); ?></b><small id="rp-ob-dzhint"><?php esc_html_e( 'PDF, images, CSV or XLSX up to 10 MB each - select multiple pages at once', 'restropress' ); ?></small>

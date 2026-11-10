@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/reservation-form",
+	"title": "Table Reservation",
+	"category": "restropress",
+	"description": "A table reservation form with time slots from your store hours.",
+	"keywords": [
+		"reservation",
+		"booking",
+		"table",
+		"reserve",
+		"restaurant"
+	],
+	"textdomain": "restropress",
+	"attributes": {
+		"title": {
+			"type": "string",
+			"default": "Reserve a table"
+		}
+	},
+	"supports": {
+		"align": [ "wide", "full" ],
+		"html": false,
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"editorScript": "rpress-reservation-block",
+	"style": "rpress-reservation",
+	"viewScript": "rpress-reservation"
+}

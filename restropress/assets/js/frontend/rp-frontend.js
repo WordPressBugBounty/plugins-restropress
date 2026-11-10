@@ -339,6 +339,68 @@ function isStoreOpen() {
 
   return (now >= openTime && now <= closeTime);
 }
+/*
+ * Screen reader announcements. Toasts (cart updates, validation errors) are
+ * visual only, so every tata toast is mirrored into a visually hidden live
+ * region: errors and warnings are announced at once (role=alert), the rest
+ * politely (role=status).
+ */
+function rp_announce(message, assertive) {
+  var text = String(message || '');
+  if (!text) {
+    return;
+  }
+  if (typeof window.DOMParser === 'function') {
+    text = new window.DOMParser().parseFromString(text, 'text/html').body.textContent || '';
+  }
+  text = text.replace(/\s+/g, ' ').trim();
+  if (!text) {
+    return;
+  }
+  var id = assertive ? 'rp-sr-alert' : 'rp-sr-status';
+  var region = document.getElementById(id);
+  if (!region) {
+    region = document.createElement('div');
+    region.id = id;
+    region.className = 'screen-reader-text';
+    region.setAttribute('role', assertive ? 'alert' : 'status');
+    region.setAttribute('aria-live', assertive ? 'assertive' : 'polite');
+    region.setAttribute('aria-atomic', 'true');
+    region.style.cssText = 'position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;';
+    document.body.appendChild(region);
+  }
+  // Clear first so the same message twice in a row is announced again.
+  region.textContent = '';
+  window.setTimeout(function () {
+    region.textContent = text;
+  }, 100);
+}
+jQuery(function () {
+  var toast = window.tata;
+  if (!toast || toast.rpAnnounce) {
+    return;
+  }
+  toast.rpAnnounce = true;
+  ['success', 'error', 'warn', 'info'].forEach(function (type) {
+    var original = toast[type];
+    if (typeof original !== 'function') {
+      return;
+    }
+    toast[type] = function (title, text) {
+      rp_announce([title, text].filter(Boolean).join(': '), 'error' === type || 'warn' === type);
+      return original.apply(this, arguments);
+    };
+  });
+});
+// Links that act as buttons (role="button", for example the storefront Add
+// buttons) also activate on Space, like a real button. The cart edit trigger
+// has its own Enter/Space handler.
+jQuery(document).on('keydown', 'a[role="button"]:not(.rpress-edit-from-cart)', function (e) {
+  if (e.which === 32) {
+    e.preventDefault();
+    this.click();
+  }
+});
 /* RestroPress Frontend Functions */
 jQuery(function ($) {
   if (rp_is_old_ui_ux_enabled()) {
@@ -763,9 +825,9 @@ jQuery(function ($) {
     var modalHtml = [
       '<div class="modal micromodal-slide" id="rpressModal" aria-hidden="true">',
       '  <div class="modal__overlay" tabindex="-1" data-micromodal-close>',
-      '    <div class="modal__container modal-content" role="dialog" aria-modal="true">',
+      '    <div class="modal__container modal-content" role="dialog" aria-modal="true" aria-labelledby="rpressModal-title">',
       '      <header class="modal__header modal-header">',
-      '        <h2 class="modal__title modal-title"></h2>',
+      '        <h2 id="rpressModal-title" class="modal__title modal-title"></h2>',
       '        <button class="modal__close" aria-label="' + ((typeof rp_scripts !== 'undefined' && rp_scripts.close_modal) ? rp_scripts.close_modal : 'Close modal') + '" data-micromodal-close></button>',
       '      </header>',
       '      <main class="modal__content modal-body"></main>',
@@ -1608,7 +1670,7 @@ jQuery(function ($) {
 
       if (oldUiUxEnabled && (!hasRequiredServiceContext || forceOldUiServiceModal)) {
         if (forceOldUiServiceModal) {
-          tata.error('Error', rp_get_delivery_fee_context_error(activeServiceTypeForValidation), { position: "tr" });
+          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(activeServiceTypeForValidation), { position: "tr" });
         }
         rp_open_legacy_service_options_modal(fooditem_id);
         return;
@@ -1705,7 +1767,7 @@ jQuery(function ($) {
 
       var serviceClosedMessage = getClosedMessage();
       if (serviceClosedMessage) {
-        tata.error('Error', serviceClosedMessage, { position: "tr" });
+        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', serviceClosedMessage, { position: "tr" });
         return;
       }
 
@@ -1714,7 +1776,7 @@ jQuery(function ($) {
       if (!isServiceTimeDisabled && !serviceTime) {
         var closedMessage = serviceClosedMessage || getClosedMessage();
         if (closedMessage) {
-          tata.error('Error', closedMessage, { position: "tr" });
+          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', closedMessage, { position: "tr" });
         } else {
           $('#editDateTime').trigger('click');
           var $serviceDateModal = $('#rpressDateTime');
@@ -1787,7 +1849,7 @@ jQuery(function ($) {
         },
         success: function (response) {
           if (response?.success === false && response?.data?.status === 'error') {
-            tata.error('Error', response?.data?.error_msg, { position: "tr" });
+            tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', response?.data?.error_msg, { position: "tr" });
             return;
           }
           MicroModal.show('rpressModal', {
@@ -1895,8 +1957,20 @@ jQuery(function ($) {
             withCredentials: true
           },
           success: function (response) {
+            // The phone/tablet cart drawer sits above every modal: close it while
+            // editing and bring it back (with the new values) when the popup closes.
+            var reopenCart = $('body').hasClass('rp-mobile-cart-open');
+            if (reopenCart) {
+              rp_close_mobile_cart_drawer();
+            }
             MicroModal.show('rpressModal', {
-              disableScroll: true
+              disableScroll: true,
+              onClose: function () {
+                if (reopenCart) {
+                  reopenCart = false;
+                  setTimeout(rp_open_mobile_cart_drawer, 250);
+                }
+              }
             });
             $('#rpressModal')
               .removeClass('checkout-error');
@@ -1990,6 +2064,36 @@ jQuery(function ($) {
         });
       }
     });
+  function rp_show_addon_group_error($group, customValidation, is_required, checked, min_addons, max_addons) {
+    var vars = (typeof rp_scripts !== 'undefined') ? rp_scripts : {};
+    var message = vars.addon_required_text || 'Please choose an option.';
+    var min = parseInt(min_addons, 10) || 0;
+    var max = parseInt(max_addons, 10) || 0;
+    if (max && checked > max) {
+      message = (vars.addon_max_text || 'Please choose no more than %d.').replace('%d', max);
+    } else if (min > 1 && checked < min) {
+      message = (vars.addon_min_text || 'Please choose at least %d.').replace('%d', min);
+    } else if (!customValidation.isValid && customValidation.message) {
+      message = customValidation.message;
+    }
+    $group.addClass('rp-addon-group-error');
+    $group.find('.rp-addon-error-msg').remove();
+    var $msg = $('<p class="rp-addon-error-msg" role="alert"></p>').text(message);
+    var $heading = $group.children('.rpress-addon-category').first();
+    if ($heading.length) {
+      $heading.after($msg);
+    } else {
+      $group.prepend($msg);
+    }
+    $group[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  // Picking an option clears that group's error.
+  $(document).on('change', '#rpressModal .addons-wrapper input', function () {
+    var $group = $(this).closest('.addons-wrapper');
+    $group.removeClass('rp-addon-group-error');
+    $group.find('.rp-addon-error-msg').remove();
+    $group.find('.rp-addon-error').removeClass('rp-addon-error');
+  });
   // Add to Cart / Update Cart Button From Popup
   $(document).on('click', '.submit-fooditem-button', function (e) {
     e.preventDefault();
@@ -1997,6 +2101,9 @@ jQuery(function ($) {
     var cartAction = self.attr('data-cart-action');
     var text = self.find('span.cart-action-text').text();
     var validation = '';
+    // Clear the visible errors from the last try.
+    jQuery('#rpressModal .addons-wrapper.rp-addon-group-error').removeClass('rp-addon-group-error');
+    jQuery('#rpressModal .rp-addon-error-msg').remove();
     // Checking the Required & Max addon settings for Addons
     if (jQuery('.addons-wrapper').length > 0) {
       jQuery('.addons-wrapper').each(function (index, el) {
@@ -2043,10 +2150,10 @@ jQuery(function ($) {
         }
 
         if (validation === 1) {
-          var $error = $('#rpressModal .rp-addon-error').first();
-          if ($error.length) {
-            $error[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
+          // The old "1 Required (min. 1)" text that gets .rp-addon-error is
+          // hidden in 3.5 (replaced by the Required/Optional label), so mark
+          // the whole group and say what is missing, then bring it into view.
+          rp_show_addon_group_error(_self, customValidation, is_required, checked, min_addons, max_addons);
         }
 
         if (validation != '') {
@@ -2428,7 +2535,7 @@ jQuery(function ($) {
       if (oldUiUxEnabled) {
         var isDeliveryFeeContextValid = rp_has_valid_delivery_fee_context(serviceType, $updateScope);
         if (!isDeliveryFeeContextValid) {
-          tata.error('Error', rp_get_delivery_fee_context_error(serviceType), { position: "tr" });
+          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(serviceType), { position: "tr" });
           rp_open_legacy_service_options_modal(foodItemId);
           return false;
         }
@@ -2450,6 +2557,12 @@ jQuery(function ($) {
       }
       if (oldUiUxEnabled && hasServiceTimeSelect && !rp_is_service_time_hidden(serviceType) && !serviceTime) {
         tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_time) ? rp_scripts.select_time : 'Please select a time', { position: "tr" });
+        return false;
+      }
+      // Closed with nothing to schedule: say so instead of closing the popup silently.
+      var $closedNotice = ($updateScope.length ? $updateScope : $(document)).find('.rpress-service-closed-message:visible').first();
+      if (oldUiUxEnabled && $closedNotice.length && !hasServiceTimeSelect && !serviceTime) {
+        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', $.trim($closedNotice.text()) || rp_scripts.closed_message, { position: "tr" });
         return false;
       }
       var sDate = serviceDate || rp_getCookie('service_date') || '';
@@ -2510,7 +2623,7 @@ jQuery(function ($) {
             if (oldUiUxEnabled) {
               rp_persist_delivery_context_for_update($updateScope, response, serviceType);
               if (!rp_has_valid_delivery_fee_context(serviceType, $updateScope)) {
-                tata.error('Error', rp_get_delivery_fee_context_error(serviceType), { position: "tr" });
+                tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(serviceType), { position: "tr" });
                 rp_open_legacy_service_options_modal(foodItemId);
                 return false;
               }
@@ -2631,6 +2744,12 @@ jQuery(function ($) {
       }
       if (oldUiUxEnabled && hasServiceTimeSelect && !rp_is_service_time_hidden(serviceType) && !serviceTime) {
         tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_time) ? rp_scripts.select_time : 'Please select a time', { position: "tr" });
+        return false;
+      }
+      // Closed with nothing to schedule: say so instead of closing the popup silently.
+      var $closedNotice = ($updateScope.length ? $updateScope : $(document)).find('.rpress-service-closed-message:visible').first();
+      if (oldUiUxEnabled && $closedNotice.length && !hasServiceTimeSelect && !serviceTime) {
+        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', $.trim($closedNotice.text()) || rp_scripts.closed_message, { position: "tr" });
         return false;
       }
       var sDate = serviceDate || rp_getCookie('service_date') || '';
@@ -2884,6 +3003,10 @@ jQuery(function ($) {
         if (typeof window.rp_prepare_old_ui_modal_selection === 'function') {
           window.rp_prepare_old_ui_modal_selection($('#rpressModal .modal-body'));
         }
+        // The phone cart drawer sits above every modal, so close it first.
+        if ($('body').hasClass('rp-mobile-cart-open')) {
+          rp_close_mobile_cart_drawer();
+        }
         MicroModal.show('rpressModal', {
           disableScroll: true
         });
@@ -3105,12 +3228,12 @@ jQuery(function ($) {
       ).toString().toLowerCase();
       if (rp_is_old_ui_ux_enabled()) {
         if (rp_is_old_ui_delivery_context_invalid(checkoutServiceType, $('#rpress_checkout_wrap').length ? $('#rpress_checkout_wrap') : $(document))) {
-          tata.error('Error', rp_get_delivery_fee_context_error(checkoutServiceType), { position: "tr" });
+          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(checkoutServiceType), { position: "tr" });
           rp_open_legacy_service_options_modal('');
           return false;
         }
         if (!rp_has_valid_delivery_fee_context(checkoutServiceType, $('#rpress_checkout_wrap').length ? $('#rpress_checkout_wrap') : $(document))) {
-          tata.error('Error', rp_get_delivery_fee_context_error(checkoutServiceType), { position: "tr" });
+          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(checkoutServiceType), { position: "tr" });
           rp_open_legacy_service_options_modal('');
           return false;
         }
@@ -3179,6 +3302,8 @@ jQuery(function ($) {
   }
 
   function rp_open_mobile_cart_drawer() {
+    // A lingering "added to cart" toast would cover the drawer's close button.
+    $('.tata').remove();
     $(".rpress-sidebar-main-wrap")
       .css("left", "0%")
       .addClass('rp-cart-drawer-open');
@@ -4634,6 +4759,13 @@ jQuery(function ($) {
         .off('change.rpressCheckoutServiceTime', checkoutServiceTimeSelector)
         .on('change.rpressCheckoutServiceTime', checkoutServiceTimeSelector, function (event) {
           if (!$(this).closest('#rpress_checkout_wrap, .rp-checkout-service-option, #rpress_checkout_order_details, .rpress-delivery-wrap, .rpress-tabs-wrapper, .rpress-delivery-options, #rpressdeliveryTab, #rpressDateTime').length) {
+            return;
+          }
+          // The legacy order settings popup has its own Update button. Saving
+          // as soon as a time is picked submitted it before the delivery
+          // address was filled in, so the popup reloaded with an error and
+          // customers had to pick the time again.
+          if ($(this).closest('#rpressModal').length) {
             return;
           }
 

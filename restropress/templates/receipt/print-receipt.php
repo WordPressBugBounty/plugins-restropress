@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
                   </tr>
                   <tr>
                       <td>
-                          <p>{rpp_order_type} Time: <b>{rpp_order_time} {rpp_order_date}</b></p>
+                          <p><?php /* translators: %s: order type, for example Delivery or Pickup */ echo esc_html( sprintf( __( '%s Time:', 'restropress' ), '{rpp_order_type}' ) ); ?> <b>{rpp_order_time} {rpp_order_date}</b></p>
                       </td>
                   </tr>
                   <tr>

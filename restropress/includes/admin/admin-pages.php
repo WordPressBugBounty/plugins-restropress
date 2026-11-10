@@ -118,8 +118,13 @@ class RP_Admin_Menus
 	{
 		global $submenu;
 		if (isset($submenu['restropress'])) {
-			// Remove 'RestroPress' sub menu item.
-			unset($submenu['restropress'][0]);
+			// Remove the 'RestroPress' sub menu item. Match the slug, not position 0:
+			// post types shown under this menu (Reservations) can be registered first.
+			foreach ($submenu['restropress'] as $key => $menu_item) {
+				if (isset($menu_item[2]) && 'restropress' === $menu_item[2]) {
+					unset($submenu['restropress'][$key]);
+				}
+			}
 			// Add count if user has access.
 			if (apply_filters('rpress_include_pending_order_count_in_menu', true) && current_user_can('edit_shop_payments')) {
 				$pending_count = $this->get_menu_pending_count();

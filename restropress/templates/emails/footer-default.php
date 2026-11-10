@@ -43,7 +43,12 @@ $credit = "
                                                         <td colspan="2" valign="middle" id="credit" style="<?php echo wp_kses_post( $credit ); ?>">
                                                            <?php 
                                                             $page = rpress_get_option( 'order_history_page', '' );
-                                                            if( is_user_logged_in()) { 
+                                                            /*
+                                                             * Whether to print the footer link. Order emails keep the
+                                                             * old rule (only when someone is logged in at send time);
+                                                             * reservation emails turn it on (3.5).
+                                                             */
+                                                            if ( apply_filters( 'rpress_email_show_footer_link', is_user_logged_in() ) ) { 
                                                                 echo wp_kses_post(
                                                                     wpautop( 
                                                                         wptexturize( 

@@ -1,0 +1,8 @@
+category,item,description,size,price,addon_group,addon,addon_price,required,min,max,image_url,dietary
+Pizza,Margherita,"Tomato sauce, mozzarella, basil",Small,8.00,Crust,Thin,0.00,yes,1,1,https://example.com/images/margherita.jpg,Vegetarian
+Pizza,Margherita,,Small,8.00,Crust,Thick,0.50,,,,,
+Pizza,Margherita,,Large,12.00,Crust,Thin,0.00,,,,,
+Pizza,Margherita,,Large,12.00,Crust,Thick,1.00,,,,,
+Pizza,Margherita,,Small,8.00,Extra toppings,Olives,1.00,no,0,3,,
+Pizza,Margherita,,Large,12.00,Extra toppings,Olives,1.50,,,,,
+Drinks,Cola,Chilled 330 ml can,,2.50,,,,,,,,Vegan

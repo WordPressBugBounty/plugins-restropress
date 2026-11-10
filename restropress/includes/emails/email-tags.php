@@ -451,11 +451,16 @@ function rpress_email_tag_user_email( $payment_id ) {
  */
 function rpress_email_tag_delivery_address( $payment_id ) {
   $delivery_address  = get_post_meta( $payment_id, '_rpress_delivery_address', true );
+    // Pickup and older orders have no address array.
+    if ( ! is_array( $delivery_address ) ) {
+        return '';
+    }
+    $delivery_address = wp_parse_args( $delivery_address, array( 'address' => '', 'flat' => '', 'city' => '', 'postcode' => '' ) );
     $address = $delivery_address['address'] . "\n";
     if( !empty( $delivery_address['flat'] ) )
         $address .=  $delivery_address['flat'] . "\n";
-    $address .= $delivery_address['city'] . ' ' . $delivery_address['postcode'];
-    return $address;
+    $address .= trim( $delivery_address['city'] . ' ' . $delivery_address['postcode'] );
+    return trim( $address );
 }
 /**
  * Email template tag: billing_address

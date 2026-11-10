@@ -73,8 +73,11 @@ function rpress_get_formatted_tax_rate( $country = false, $state = false ) {
  * @param $state string The state to calculate tax for. Will use default if not passed
  * @return float $tax Taxed amount
  */
-function rpress_calculate_tax( $amount = 0, $country = false, $state = false ,$ignore_inclusive =false) {
-	$rate = rpress_get_tax_rate( $country, $state );
+function rpress_calculate_tax( $amount = 0, $country = false, $state = false ,$ignore_inclusive =false, $rate = null ) {
+	// $rate (decimal, e.g. 0.05) lets callers tax at a specific tax class rate.
+	if ( null === $rate ) {
+		$rate = rpress_get_tax_rate( $country, $state );
+	}
 	$tax  = 0.00;
 	if ( rpress_use_taxes() && $amount > 0 ) {
         if($ignore_inclusive){
@@ -178,6 +181,168 @@ function rpress_cart_needs_tax_address_fields() {
  * @since  1.0.0
  * @return bool
  */
+/**
+ * Tax classes.
+ *
+ * The Standard class always exists and its rate is the classic `tax_rate`
+ * setting, so a site that never adds classes behaves exactly as before.
+ * Other classes are stored in the `rpress_tax_classes` option as
+ * slug => array( name, rate (percent), code ).
+ *
+ * @since 3.5
+ * @return array slug => array( 'name', 'rate', 'code' )
+ */
+function rpress_get_tax_classes() {
+	$classes = array(
+		'standard' => array(
+			'name' => __( 'Standard', 'restropress' ),
+			'rate' => (float) rpress_get_option( 'tax_rate', 0 ),
+			'code' => (string) rpress_get_option( 'tax_class_standard_code', '' ),
+		),
+	);
+	foreach ( (array) get_option( 'rpress_tax_classes', array() ) as $slug => $class ) {
+		$slug = sanitize_key( $slug );
+		if ( '' === $slug || 'standard' === $slug || ! is_array( $class ) || ! isset( $class['name'] ) ) {
+			continue;
+		}
+		$classes[ $slug ] = array(
+			'name' => (string) $class['name'],
+			'rate' => isset( $class['rate'] ) ? (float) $class['rate'] : 0.0,
+			'code' => isset( $class['code'] ) ? (string) $class['code'] : '',
+		);
+	}
+	return apply_filters( 'rpress_tax_classes', $classes );
+}
+
+/**
+ * Tax class of a food item: item override, then its categories, then Standard.
+ *
+ * @since 3.5
+ * @param int $fooditem_id Food item ID.
+ * @return string Tax class slug.
+ */
+function rpress_get_fooditem_tax_class( $fooditem_id = 0 ) {
+	$classes = rpress_get_tax_classes();
+	$class   = (string) get_post_meta( absint( $fooditem_id ), '_rpress_tax_class', true );
+	if ( '' === $class || ! isset( $classes[ $class ] ) ) {
+		$class = 'standard';
+		$terms = get_the_terms( absint( $fooditem_id ), 'food-category' );
+		if ( is_array( $terms ) ) {
+			foreach ( $terms as $term ) {
+				$term_class = (string) get_term_meta( $term->term_id, '_rpress_tax_class', true );
+				if ( '' !== $term_class && isset( $classes[ $term_class ] ) ) {
+					$class = $term_class;
+					break;
+				}
+			}
+		}
+	}
+	return apply_filters( 'rpress_fooditem_tax_class', $class, $fooditem_id );
+}
+
+/**
+ * Decimal tax rate for a food item (0.05 for 5%).
+ *
+ * Standard goes through rpress_get_tax_rate() so its existing filters apply.
+ *
+ * @since 3.5
+ * @param int         $fooditem_id Food item ID.
+ * @param string|bool $country     Country.
+ * @param string|bool $state       State.
+ * @return float
+ */
+function rpress_get_fooditem_tax_rate( $fooditem_id = 0, $country = false, $state = false ) {
+	$class = rpress_get_fooditem_tax_class( $fooditem_id );
+	if ( 'standard' === $class ) {
+		$rate = rpress_get_tax_rate( $country, $state );
+	} else {
+		$classes = rpress_get_tax_classes();
+		$rate    = (float) $classes[ $class ]['rate'] / 100;
+	}
+	return (float) apply_filters( 'rpress_fooditem_tax_rate', $rate, $fooditem_id, $class, $country, $state );
+}
+
+/**
+ * Tax rate in percent for showing a food item's price on the menu.
+ *
+ * Standard returns the raw `tax_rate` setting, exactly what the menu used
+ * before tax classes, so single-rate stores display unchanged prices.
+ *
+ * @since 3.5
+ * @param int $fooditem_id Food item ID.
+ * @return float
+ */
+function rpress_get_fooditem_tax_percent( $fooditem_id = 0 ) {
+	$class = rpress_get_fooditem_tax_class( $fooditem_id );
+	if ( 'standard' === $class ) {
+		return (float) rpress_get_option( 'tax_rate', 0 );
+	}
+	$classes = rpress_get_tax_classes();
+	return (float) $classes[ $class ]['rate'];
+}
+
+/**
+ * Per-class tax totals for a list of cart lines (cart or order details).
+ *
+ * @since 3.5
+ * @param array      $lines Lines with 'tax', and 'tax_class' / 'tax_rate' when known.
+ * @param float|null $total Optional tax total to match. A flat discount is taxed
+ *                          after the line taxes are worked out, so the rows are
+ *                          scaled to add up to the tax actually charged.
+ * @return array slug => array( 'name', 'rate', 'code', 'tax' )
+ */
+function rpress_get_tax_breakdown( $lines, $total = null ) {
+	$classes   = rpress_get_tax_classes();
+	$breakdown = array();
+	foreach ( (array) $lines as $line ) {
+		if ( ! is_array( $line ) ) {
+			continue;
+		}
+		$slug = isset( $line['tax_class'] ) && isset( $classes[ $line['tax_class'] ] ) ? $line['tax_class'] : 'standard';
+		if ( ! isset( $breakdown[ $slug ] ) ) {
+			$breakdown[ $slug ] = array(
+				'name' => $classes[ $slug ]['name'],
+				'rate' => isset( $line['tax_rate'] ) ? round( (float) $line['tax_rate'] * 100, 4 ) : (float) $classes[ $slug ]['rate'],
+				'code' => $classes[ $slug ]['code'],
+				'tax'  => 0.0,
+			);
+		}
+		$breakdown[ $slug ]['tax'] += isset( $line['tax'] ) ? (float) $line['tax'] : 0.0;
+	}
+	$decimals = rpress_currency_decimal_filter();
+	$sum      = array_sum( wp_list_pluck( $breakdown, 'tax' ) );
+	$scale    = ( null !== $total && $sum > 0 ) ? (float) $total / $sum : 1;
+	$left     = null !== $total ? round( (float) $total, $decimals ) : null;
+	$slugs    = array_keys( $breakdown );
+	foreach ( $slugs as $i => $slug ) {
+		$tax = round( $breakdown[ $slug ]['tax'] * $scale, $decimals );
+		if ( null !== $left && $sum > 0 ) {
+			// The last row takes the rounding remainder so the rows add up exactly.
+			$tax   = ( count( $slugs ) - 1 === $i ) ? round( $left, $decimals ) : $tax;
+			$left -= $tax;
+		}
+		$breakdown[ $slug ]['tax'] = $tax;
+	}
+	return apply_filters( 'rpress_tax_breakdown', $breakdown, $lines );
+}
+
+/**
+ * Whether the given lines are taxed at more than one rate.
+ *
+ * @since 3.5
+ * @param array $lines Cart or order lines.
+ * @return bool
+ */
+function rpress_lines_have_mixed_tax_rates( $lines ) {
+	$rates = array();
+	foreach ( (array) $lines as $line ) {
+		if ( is_array( $line ) && isset( $line['tax_rate'] ) ) {
+			$rates[ (string) round( (float) $line['tax_rate'], 6 ) ] = true;
+		}
+	}
+	return count( $rates ) > 1;
+}
+
 function rpress_fooditem_is_tax_exclusive( $fooditem_id = 0 ) {
 	$ret = false;
 	return apply_filters( 'rpress_fooditem_is_tax_exclusive', $ret, $fooditem_id );

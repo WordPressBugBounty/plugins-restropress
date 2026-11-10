@@ -232,6 +232,9 @@ class RP_Addon_Sorting
         if (!check_ajax_referer('term_order_nonce', 'term_order_nonce', false)) {
             wp_send_json_error();
         }
+        if (!current_user_can('manage_product_terms') && !current_user_can('manage_categories')) {
+            wp_send_json_error(null, 403);
+        }
 
         $taxonomy_ordering_data = filter_var_array(wp_unslash($_POST['taxonomy_ordering_data']), FILTER_SANITIZE_NUMBER_INT);
         $base_index = filter_var(wp_unslash($_POST['base_index']), FILTER_SANITIZE_NUMBER_INT);

@@ -993,10 +993,10 @@ function rpress_discount_field() {
 				</label>
 				<span class="rpress-description"><?php esc_html_e( 'Enter a coupon code if you have one.', 'restropress' ); ?></span>
 				<span class="rpress-discount-code-field-wrap">
-					<input class="rpress-input" type="text" id="rpress-discount" name="rpress-discount" placeholder="<?php esc_html_e( 'Enter coupon code', 'restropress' ); ?>"/>
+					<input class="rpress-input" type="text" id="rpress-discount" name="rpress-discount" aria-describedby="rpress-discount-error-wrap" placeholder="<?php esc_attr_e( 'Enter coupon code', 'restropress' ); ?>"/>
 					<input type="submit" class="rpress-apply-discount rpress-submit <?php echo esc_attr( $style ); ?>" value="<?php echo esc_html_x( 'Apply', 'Apply discount at checkout', 'restropress' ); ?>"/>
 				</span>
-				<span id="rpress-discount-error-wrap" class="rpress_error rpress-alert rpress-alert-error" aria-hidden="true" style="display:none;"></span>
+				<span id="rpress-discount-error-wrap" class="rpress_error rpress-alert rpress-alert-error" role="alert" style="display:none;"></span>
 			</p>
 		</fieldset>
 	<?php endif;

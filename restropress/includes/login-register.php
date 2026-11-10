@@ -117,6 +117,10 @@ function rpress_process_register_form( $data ) {
 	if( empty( $_POST['rpress_register_submit'] ) ) {
 		return;
 	}
+	if ( ! isset( $_POST['rpress_register_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['rpress_register_nonce'] ) ), 'rpress-register-nonce' ) ) {
+		rpress_set_error( 'invalid_nonce', __( 'Your session expired. Please refresh the page and try again.', 'restropress' ) );
+		return;
+	}
 	do_action( 'rpress_pre_process_register_form' );
 	if( empty( $data['rpress_user_login'] ) ) {
 		rpress_set_error( 'empty_username', __( 'Invalid username', 'restropress' ) );

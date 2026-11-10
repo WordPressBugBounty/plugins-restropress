@@ -95,6 +95,16 @@ $purchase_link_kses = array(
 					</div>
 				<?php endif; ?>
 
+				<?php
+				/**
+				 * After the badge row (tags and dietary). Allergen badges render here.
+				 *
+				 * @since 3.5
+				 * @param int $id Food item ID.
+				 */
+				do_action( 'rpress_fooditem_after_badges', $id );
+				?>
+
 				<div class="rpress-price-holder rpress-grid-view-holder">
 					<span class="price">
 						<?php

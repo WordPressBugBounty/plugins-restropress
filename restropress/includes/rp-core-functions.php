@@ -417,10 +417,7 @@ function get_delivery_options($changeble)
           $service_method_label .= ', ' . $service_date;
         }
         ?>
-        <span class="delMethod"><?php echo esc_html( $service_method_label ); ?></span>
-        <?php if ( ! $hide_service_time && !empty($_COOKIE['service_time']) ): ?>
-          <span
-            class="delTime"><?php printf(esc_html__(', %s', 'restropress'), esc_html(sanitize_text_field($service_time_str))); ?></span>
+        <span class="delMethod"><?php echo esc_html( $service_method_label ); ?></span><?php if ( ! $hide_service_time && !empty($_COOKIE['service_time']) ): ?><span class="delTime"><?php printf(esc_html__(', %s', 'restropress'), esc_html(sanitize_text_field($service_time_str))); ?></span>
         <?php endif; ?>
       <?php endif; ?>
     </div>
@@ -467,10 +464,7 @@ function get_date_time_options($changeble)
   <div class="delivery-wrap">
     <div class="delivery-opts">
       <?php if (!empty($_COOKIE['service_type'])): ?>
-        <span class="delMethod"><?php echo esc_html($service_date); ?></span>
-        <?php if ( ! $hide_service_time && !empty($_COOKIE['service_time']) ): ?>
-          <span
-            class="delTime"><?php printf(esc_html__(', %s', 'restropress'), esc_html(sanitize_text_field($service_time_str))); ?></span>
+        <span class="delMethod"><?php echo esc_html($service_date); ?></span><?php if ( ! $hide_service_time && !empty($_COOKIE['service_time']) ): ?><span class="delTime"><?php printf(esc_html__(', %s', 'restropress'), esc_html(sanitize_text_field($service_time_str))); ?></span>
         <?php endif; ?>
       <?php endif; ?>
     </div>
@@ -578,6 +572,10 @@ function rpress_remove_food_cat_view_link($actions, $taxonomy)
  */
 function rp_get_store_timings($hide_past_time = true, $service_type = null, $service_date = '')
 {
+  // 3.5: delegate to the slot engine (includes/features/slot-engine).
+  if (function_exists('rpress_service_hours_engine_enabled') && rpress_service_hours_engine_enabled()) {
+    return rpress_service_hours_store_timings($hide_past_time, $service_type, $service_date);
+  }
   $now = rpress_get_wp_now();
   $current_time = $now->getTimestamp();
   $current_date = $now->format('Y-m-d');
@@ -854,6 +852,8 @@ function rpress_format_service_time($service_time, $service_date = '')
   }
 
   if (stripos($service_time, 'ASAP') !== false) {
+    // Stored as 'ASAP' . asap_text, so the space before "(ready in ...)" can be missing.
+    $service_time = preg_replace('/^ASAP(?=[^\s])/i', 'ASAP ', $service_time);
     return trim(str_ireplace('ASAP', __('ASAP', 'restropress'), $service_time));
   }
 
@@ -1365,6 +1365,10 @@ function rpress_get_first_available_service_date( $service_type, $requested_date
  * @return string
  */
 function rpress_get_selected_service_date( $service_type, $requested_date = '', $allow_future = true ) {
+  // 3.5: delegate to the slot engine (adds the midnight rollover).
+  if ( function_exists( 'rpress_service_hours_engine_enabled' ) && rpress_service_hours_engine_enabled() ) {
+    return rpress_service_hours_selected_service_date( $service_type, $requested_date, $allow_future );
+  }
   $service_type = sanitize_key( (string) $service_type );
   $seed_date    = rp_row_date( $requested_date, $service_type );
   $seed_dt      = rpress_parse_wp_datetime( $seed_date );
@@ -2904,7 +2908,8 @@ function my_plugin_handle_setup_form()
   if (
     isset($_GET['page']) && $_GET['page'] === 'rpress-setup' &&
     isset($_POST['my_plugin_setup_nonce']) &&
-    wp_verify_nonce($_POST['my_plugin_setup_nonce'], 'my_plugin_save_setup')
+    wp_verify_nonce($_POST['my_plugin_setup_nonce'], 'my_plugin_save_setup') &&
+    current_user_can('manage_shop_settings')
   ) {
     // Get existing settings
     $options = get_option('rpress_settings', array());
@@ -2939,6 +2944,10 @@ add_filter('body_class', function ($classes) {
  */
 function rpress_is_store_open($service_type, $selected_date = '')
 {
+  // 3.5: delegate to the slot engine (includes/features/slot-engine).
+  if (function_exists('rpress_service_hours_engine_enabled') && rpress_service_hours_engine_enabled()) {
+    return rpress_service_hours_is_store_open($service_type, $selected_date);
+  }
   $now = rpress_get_wp_now();
   $current_time = $now->getTimestamp();
   $current_day = $now->format('Y-m-d');

@@ -390,6 +390,8 @@
 					flashTabTitle( data.new_order_ids.length );
 				}
 				knownOrderIds = ( data.all_order_ids || [] ).slice();
+				// Lets features (e.g. missed-order alerts) react to each poll.
+				$( document ).trigger( 'rpress_live_orders_updated', [ data ] );
 			} ).fail( function ( xhr ) {
 				if ( xhr && ( xhr.status === 403 || xhr.status === 401 ) ) {
 					handleAuthFailure();
@@ -594,6 +596,15 @@
 				$card.attr( 'data-status', prevStatus );
 			} );
 		}
+
+		// Small API for features that extend the board (sound uses the same
+		// toggle and audio unlock as the board's own new-order chime).
+		window.rpressLiveOrders = {
+			playSound: playSound,
+			isSoundOn: function () { return soundOn; },
+			refresh: function () { poll( true ); }
+		};
+		$( document ).trigger( 'rpress_live_orders_ready', [ cfg ] );
 
 		// Kick off polling.
 		var pollIntervalMs = Math.max( 10, cfg.pollInterval || 30 ) * 1000;

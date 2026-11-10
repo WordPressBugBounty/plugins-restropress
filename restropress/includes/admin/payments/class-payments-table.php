@@ -1596,7 +1596,7 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 			$this->base_url = add_query_arg( 's', $search_terms, $this->base_url );
 		}
 		if ( rpress_is_payment_complete( $payment->ID ) && ! empty( $email ) ) {
-			$row_actions['email_links'] = '<a href="' . esc_url( add_query_arg( array( 'rpress-action' => 'email_links', 'purchase_id' => $payment->ID ), $this->base_url ) ) . '">' . __( 'Resend Purchase Receipt', 'restropress' ) . '</a>';
+			$row_actions['email_links'] = '<a href="' . esc_url( wp_nonce_url( add_query_arg( array( 'rpress-action' => 'email_links', 'purchase_id' => $payment->ID ), $this->base_url ), 'rpress_resend_receipt' ) ) . '">' . __( 'Resend Purchase Receipt', 'restropress' ) . '</a>';
 		}
 		$row_actions['delete'] = '<a href="' . esc_url( wp_nonce_url( add_query_arg( array( 'rpress-action' => 'delete_payment', 'purchase_id' => $payment->ID ), $this->base_url ), 'rpress_payment_nonce' ) ) . '">' . __( 'Delete', 'restropress' ) . '</a>';
 		$row_actions = apply_filters( 'rpress_payment_row_actions', $row_actions, $payment );
@@ -2207,7 +2207,7 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 		$base_url    = admin_url( 'admin.php?page=rpress-payment-history' );
 		$resend_url  = wp_nonce_url(
 			add_query_arg( array( 'rpress-action' => 'email_links', 'purchase_id' => $payment->ID ), $base_url ),
-			'rpress_payment_nonce'
+			'rpress_resend_receipt'
 		);
 		$trash_url   = wp_nonce_url(
 			add_query_arg( array( 'rpress-action' => 'trash_order', 'purchase_id' => absint( $payment->ID ) ), $base_url ),
@@ -3057,7 +3057,7 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
                     <# } #>
                     <# if ( data.customer_details.phone ) { #>
                       <strong><?php esc_html_e( 'Phone', 'restropress' ); ?></strong>
-                      : <a href="tel:{{{ data.customer_details.phone }}}">{{{ data.customer_details.phone }}}</a>
+                      : <a href="tel:{{ data.customer_details.phone }}">{{ data.customer_details.phone }}</a>
                       <br/>
                     <# } #>
                     <# } else { #>

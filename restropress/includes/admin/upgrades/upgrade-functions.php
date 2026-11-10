@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @return void
 */
 function rpress_trigger_upgrades() {
-	if( ! current_user_can( 'manage_shop_settings' ) ) {
+	if ( ! check_ajax_referer( 'rpress-upgrades', 'nonce', false ) || ! current_user_can( 'manage_shop_settings' ) ) {
 		wp_die( esc_html__( 'You do not have permission to do shop upgrades', 'restropress' ), esc_html__( 'Error', 'restropress' ), array( 'response' => 403 ) );
 	}
 	$rpress_version = get_option( 'rpress_version' );

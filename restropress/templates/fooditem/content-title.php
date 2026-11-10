@@ -54,7 +54,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     $price = get_post_meta( $post->ID,'rpress_price', true ) ;
     $variable_pricing = rpress_has_variable_prices( $post->ID );
     
-    $rate = (float) rpress_get_option( 'tax_rate', 0 );
+    $rate = rpress_get_fooditem_tax_percent( get_the_ID() );
     // Convert to a number we can use
     $item_tax = (float) $price - ( (float) $price / ( ( (float) $rate / 100 ) + 1 ) );
     $include_tax  = rpress_get_option( 'prices_include_tax', true );

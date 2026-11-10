@@ -221,7 +221,17 @@ class RP_AJAX {
     $order_user_id = isset( $user['id'] ) ? absint( $user['id'] ) : 0;
 
     if ( is_user_logged_in() ) {
-      return ( $order_user_id > 0 && get_current_user_id() === $order_user_id );
+      if ( $order_user_id > 0 && get_current_user_id() === $order_user_id ) {
+        return true;
+      }
+      // Orders linked to this user's own customer record (for example placed
+      // as a guest with the same email before the account existed) are
+      // listed in the dashboard and Order History, so they can be opened too.
+      $customer = new RPRESS_Customer( get_current_user_id(), true );
+      if ( empty( $customer->id ) || empty( $customer->payment_ids ) ) {
+        return false;
+      }
+      return in_array( $order_id, array_map( 'absint', explode( ',', $customer->payment_ids ) ), true );
     }
 
     if ( $order_user_id > 0 ) {
@@ -313,8 +323,8 @@ class RP_AJAX {
     }
     $html = '<div>
     <header class="modal__header modal-header">
-        <h2 class="modal__title modal-title">'. __( 'Food Order', 'restropress' ) .'</h2>
-        <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+        <h2 id="rpressModal-title" class="modal__title modal-title">'. __( 'Food Order', 'restropress' ) .'</h2>
+        <button class="modal__close" aria-label="' . esc_attr__( 'Close modal', 'restropress' ) . '" data-micromodal-close></button>
     </header>
     <main class="modal__content modal-body">
         <div class="rpress-order-details">
@@ -367,6 +377,9 @@ class RP_AJAX {
    */
   public static function add_category() {
     check_ajax_referer( 'add-category', 'security' );
+    if ( ! current_user_can( 'manage_product_terms' ) && ! current_user_can( 'manage_categories' ) ) {
+      wp_send_json_error( array( 'error' => __( 'You do not have permission to do this.', 'restropress' ) ), 403 );
+    }
     $parent = isset( $_POST['parent'] ) && !empty( $_POST['parent'] ) ? sanitize_text_field( wp_unslash( $_POST['parent'] ) ) : NULL;
     $name   = isset( $_POST['name'] ) && !empty( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : NULL ;
     $args   = apply_filters( 'rpress_add_category_args', array( 'parent' => $parent ) );
@@ -627,6 +640,21 @@ class RP_AJAX {
     wp_die();
   }
   /**
+   * Whether a food item popup may be shown for this ID: a published food item,
+   * or one the current user can edit. Stops the public popup endpoints from
+   * returning titles and content of orders, reservations or private posts.
+   *
+   * @param mixed $fooditem_id Posted ID.
+   * @return bool
+   */
+  private static function is_viewable_fooditem( $fooditem_id ) {
+    $fooditem_id = absint( $fooditem_id );
+    if ( ! $fooditem_id || 'fooditem' !== get_post_type( $fooditem_id ) ) {
+      return false;
+    }
+    return 'publish' === get_post_status( $fooditem_id ) || current_user_can( 'edit_post', $fooditem_id );
+  }
+  /**
    * Load Fooditems List in the popup
    */
   public static function show_products() {
@@ -634,7 +662,7 @@ class RP_AJAX {
     $service_type = sanitize_key( (string) filter_input( INPUT_POST, 'service_type' ) );
     $selected_date = sanitize_text_field( (string) filter_input( INPUT_POST, 'selected_date' ) );
     $selected_time = sanitize_text_field( (string) filter_input( INPUT_POST, 'selected_time' ) );
-    if ( empty( $_POST['fooditem_id'] ) ) {
+    if ( empty( $_POST['fooditem_id'] ) || ! self::is_viewable_fooditem( wp_unslash( $_POST['fooditem_id'] ) ) ) {
       wp_send_json_error(
         array(
           'status' => 'error',
@@ -735,7 +763,7 @@ class RP_AJAX {
         $price = rpress_get_lowest_price_option( $fooditem_id );
       } else {
         $price = rpress_get_fooditem_price( $fooditem_id );
-        $rate = (float) rpress_get_option( 'tax_rate', 0 );
+        $rate = rpress_get_fooditem_tax_percent( $fooditem_id );
         // Convert to a number we can use
         $item_tax = (float) $price - ( (float) $price / ( ( (float) $rate / 100 ) + 1 ) );
         $include_tax  = rpress_get_option( 'prices_include_tax', true );
@@ -785,6 +813,14 @@ class RP_AJAX {
     $data = ob_get_clean();
     $data = str_replace( '{fooditemslist}', $item_addons, $data );
     $data = str_replace( '{itemdescription}', $fooditem_desc, $data );
+    /**
+     * Filters the item popup body HTML (allergens prepend their block here).
+     *
+     * @since 3.5
+     * @param string $data        Popup body HTML.
+     * @param int    $fooditem_id Food item ID.
+     */
+    $data = apply_filters( 'rpress_show_products_html', $data, absint( $fooditem_id ) );
     $response = array(
       'price'       => $formatted_price,
       'price_raw'   => $price,
@@ -840,6 +876,9 @@ class RP_AJAX {
     check_ajax_referer( 'edit-cart-fooditem', 'security' );
     $cart_key  = isset( $_POST['cartitem_id'] ) && '' !== $_POST['cartitem_id'] ? absint( wp_unslash( $_POST['cartitem_id'] ) ) : 0;
     $fooditem_id = ! empty( $_POST['fooditem_id'] ) ? sanitize_text_field ( wp_unslash( $_POST['fooditem_id'] ) ) : NULL ;
+    if ( ! self::is_viewable_fooditem( $fooditem_id ) ) {
+      wp_send_json_error( array( 'status' => 'error', 'error_msg' => __( 'Unable to load item details. Please try again.', 'restropress' ) ) );
+    }
     $food_title  = ! empty( $_POST['fooditem_name'] ) ? sanitize_text_field( wp_unslash( $_POST['fooditem_name'] ) ) : get_the_title( $fooditem_id );
     $fooditem_desc  = get_post_field( 'post_content', $fooditem_id );
     $image_placeholder = rpress_get_option( 'enable_image_placeholder', false );
@@ -863,7 +902,7 @@ class RP_AJAX {
           $price = rpress_get_lowest_price_option( $fooditem_id );
         } else {
           $price = rpress_get_fooditem_price( $fooditem_id );
-          $rate = (float) rpress_get_option( 'tax_rate', 0 );
+          $rate = rpress_get_fooditem_tax_percent( $fooditem_id );
           // Convert to a number we can use
           $item_tax = (float) $price - ( (float) $price / ( ( (float) $rate / 100 ) + 1 ) );
           $include_tax  = rpress_get_option( 'prices_include_tax', true );

@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.4.11';
+	public $version = '3.5.0';
 	/**
 	 * The single instance of the class.
 	 *
@@ -254,6 +254,11 @@ final class RestroPress
 		require_once RP_PLUGIN_DIR . 'includes/rp-core-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/rp-delivery-fee-basic.php';
 		require_once RP_PLUGIN_DIR . 'includes/rp-store-hours-basic.php';
+		// Self-contained features (3.5+): each lives in includes/features/<slug>/loader.php
+		// and hooks into core, so features can be built and reviewed independently.
+		foreach ( (array) glob( RP_PLUGIN_DIR . 'includes/features/*/loader.php' ) as $rpress_feature_loader ) {
+			require_once $rpress_feature_loader;
+		}
 		require_once RP_PLUGIN_DIR . 'includes/blocks/class-rpress-blocks.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/gateways/functions.php';

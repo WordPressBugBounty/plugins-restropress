@@ -1,0 +1,304 @@
+/**
+ * Checkout upsell row (3.5).
+ *
+ * A card in the redesigned checkout (same chrome as the Contact / Details /
+ * Payment cards) holding up to 4 compact item tiles. On narrow screens the
+ * tiles become a horizontal scroll row that never widens the page.
+ *
+ * Legacy rpress.css and theme rules leak into the checkout on any property
+ * left undeclared, so every box below declares its own display, margin,
+ * padding, border, background, font and list styles. Selectors use the same
+ * doubled id as rpress-checkout.css to win over legacy and theme rules.
+ */
+
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell {
+	--rpu-primary: var(--rpc-primary, #ED5575);
+	--rpu-primary-hover: var(--rpc-primary-hover, var(--rpu-primary));
+	--rpu-tint: var(--rpc-primary-tint, #FDEEF1);
+	--rpu-tint-border: var(--rpc-primary-tint-border, #F8C9D3);
+	--rpu-ink: var(--rpc-ink, #000F37);
+	/* #6B6D70: 5.2:1 on white (the shared #787A7C is 4.3:1, too low for the price hint). */
+	--rpu-muted: #6B6D70;
+	--rpu-border: var(--rpc-border-subtle, #EAE8E7);
+
+	box-sizing: border-box;
+	display: block;
+	position: relative;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	margin: 0;
+	padding: 20px 24px;
+	background: #fff;
+	border: 1px solid var(--rpu-border);
+	border-radius: 16px;
+	box-shadow: var(--rpc-card-shadow, 0 8px 24px rgba(0, 0, 0, .05));
+	font-family: var(--rpc-font-body, 'Inter', system-ui, sans-serif);
+	color: var(--rpu-ink);
+	text-align: start;
+	float: none;
+	clear: both;
+	overflow: hidden;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell *,
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell *::before,
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell *::after { box-sizing: border-box; }
+
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-title {
+	display: block;
+	margin: 0 0 14px;
+	padding: 0;
+	border: 0;
+	background: none;
+	font: 600 16px/1.3 var(--rpc-font-head, 'Poppins', system-ui, sans-serif);
+	color: var(--rpu-ink);
+	text-transform: none;
+	letter-spacing: normal;
+	text-align: start;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-title::before,
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-title::after { content: none; display: none; }
+
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-list {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	list-style: none;
+}
+
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-item {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 10px;
+	min-width: 0;
+	margin: 0;
+	padding: 10px;
+	background: #fff;
+	border: 1px solid var(--rpu-border);
+	border-radius: 12px;
+	box-shadow: none;
+	list-style: none;
+	font-size: 13px;
+	line-height: 1.35;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-item::before,
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-item::after { content: none; display: none; }
+
+/* Image + name/price */
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-media {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 100%;
+	height: 64px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 10px;
+	background: var(--rpu-tint);
+	overflow: hidden;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-media img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	object-fit: cover;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-initial {
+	display: block;
+	margin: 0;
+	padding: 0;
+	font: 600 22px/1 var(--rpc-font-head, 'Poppins', system-ui, sans-serif);
+	color: var(--rpu-primary);
+	text-transform: uppercase;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-info {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-name {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	margin: 0;
+	padding: 0;
+	font: 600 13px/1.35 var(--rpc-font-body, 'Inter', system-ui, sans-serif);
+	color: var(--rpu-ink);
+	word-break: break-word;
+	text-transform: none;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-price {
+	display: block;
+	margin: 0;
+	padding: 0;
+	font: 500 12.5px/1.35 var(--rpc-font-body, 'Inter', system-ui, sans-serif);
+	color: var(--rpu-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Add button (a <button>, styled from scratch so theme button rules do not apply) */
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add {
+	-webkit-appearance: none;
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	position: relative;
+	width: 100%;
+	min-width: 0;
+	height: 34px;
+	min-height: 34px;
+	margin: 0;
+	padding: 0 12px;
+	border: 1px solid var(--rpu-tint-border);
+	border-radius: 999px;
+	background: var(--rpu-tint);
+	box-shadow: none;
+	color: var(--rpu-primary);
+	font: 600 13px/1 var(--rpc-font-body, 'Inter', system-ui, sans-serif);
+	text-transform: none;
+	letter-spacing: normal;
+	text-decoration: none;
+	text-shadow: none;
+	white-space: nowrap;
+	cursor: pointer;
+	float: none;
+	transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add::before {
+	content: "+";
+	display: inline-block;
+	position: static;
+	width: auto;
+	height: auto;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	-webkit-mask: none;
+	mask: none;
+	font: 600 16px/1 var(--rpc-font-body, 'Inter', system-ui, sans-serif);
+	color: inherit;
+	opacity: 1;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add .rp-ajax-toggle-text {
+	display: inline;
+	margin: 0;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add:hover,
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add:focus-visible {
+	background: var(--rpu-primary);
+	border-color: var(--rpu-primary);
+	color: #fff;
+}
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add:focus { outline: none; }
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add:focus-visible {
+	outline: 2px solid var(--rpu-primary);
+	outline-offset: 2px;
+}
+
+/* Loading: hide label and plus, show a ring (replaces the generic menu spinner) */
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add.rp-loading { cursor: progress; }
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add.rp-loading::before,
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add.rp-loading .rp-ajax-toggle-text { opacity: 0; }
+#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add.rp-loading::after {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	right: auto;
+	bottom: auto;
+	width: 16px;
+	height: 16px;
+	margin: -8px 0 0 -8px;
+	padding: 0;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	background: none;
+	animation: rpress-upsell-spin .8s linear infinite;
+}
+@keyframes rpress-upsell-spin { to { transform: rotate(360deg); } }
+
+/* Phones and narrow columns: one horizontal scroll row inside the card. */
+@media (max-width: 782px) {
+	#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell {
+		padding: 16px 0 16px 16px;
+	}
+	#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-title {
+		margin: 0 16px 12px 0;
+		font-size: 15px;
+	}
+	#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-list {
+		display: flex;
+		flex-wrap: nowrap;
+		gap: 10px;
+		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
+		padding: 0 16px 2px 0;
+	}
+	#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-list::-webkit-scrollbar { display: none; }
+	#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-item {
+		flex: 0 0 148px;
+		width: 148px;
+		scroll-snap-align: start;
+	}
+	#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-media { height: 64px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add { transition: none; }
+	#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add.rp-loading::after { animation-duration: 2s; }
+}
+
+/* RTL: mirror the asymmetric boxes above. */
+@media (max-width: 782px) {
+	[dir="rtl"] #rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell {
+		padding: 16px 16px 16px 0;
+	}
+	[dir="rtl"] #rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-title {
+		margin: 0 0 12px 16px;
+	}
+	[dir="rtl"] #rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-list {
+		padding: 0 0 2px 16px;
+	}
+}
+
+/* Touch screens: 44px tap target for the Add button. */
+@media (pointer: coarse) {
+	#rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add {
+		height: 44px;
+		min-height: 44px;
+	}
+}

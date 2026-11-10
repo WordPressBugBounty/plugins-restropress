@@ -51,6 +51,9 @@ class RPRESS_Blocks {
 			file_exists( $js_path ) ? RP_VERSION . '.' . filemtime( $js_path ) : RP_VERSION,
 			true
 		);
+		if ( function_exists( 'wp_set_script_translations' ) ) {
+			wp_set_script_translations( 'rpress-blocks-editor', 'restropress', RP_PLUGIN_DIR . 'languages' );
+		}
 		wp_register_style(
 			'rpress-blocks',
 			RP_PLUGIN_URL . 'assets/css/rpress-blocks.css',

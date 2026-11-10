@@ -49,7 +49,7 @@ $service_date       = rpress_get_payment_meta( $payment->ID, '_rpress_delivery_d
 $cart               = rpress_get_payment_meta_cart_details( $payment->ID, true );
 $discount           = rpress_get_discount_price_by_payment_id( $payment->ID );
 $user               = rpress_get_payment_meta_user_info( $payment->ID );
-$payment_status     = rpress_get_payment_status( $payment, true );
+$payment_status     = function_exists( 'rpress_get_payment_paid_label' ) ? rpress_get_payment_paid_label( $payment ) : rpress_get_payment_status( $payment, true );
 $order_status       = rpress_get_order_status( $payment->ID );
 $order_status_label = rpress_get_order_status_label( $order_status );
 $service_type       = rpress_get_payment_meta( $payment->ID, '_rpress_delivery_type' );
@@ -85,162 +85,143 @@ $phone_text       = rpress_order_details_safe_text( $phone );
 $service_date     = ( '' !== $service_date && 'undefined' !== $service_date ) ? rpress_local_date( $service_date ) : '';
 $service_date     = rpress_order_details_safe_text( $service_date );
 $service_time     = rpress_order_details_safe_text( $service_time );
+$service_time     = function_exists( 'rpress_format_service_time' ) ? rpress_format_service_time( $service_time ) : $service_time;
 $payment_type     = rpress_order_details_safe_text( rpress_get_gateway_checkout_label( rpress_get_payment_gateway( $payment->ID ) ) );
 $payment_status   = rpress_order_details_safe_text( $payment_status );
 $order_status_label = rpress_order_details_safe_text( $order_status_label );
+
+$order_number = rpress_order_details_safe_text( rpress_get_payment_number( $payment->ID ) );
+$placed_on    = rpress_order_details_safe_text( date_i18n( get_option( 'date_format' ), strtotime( $payment->post_date ) ) );
+$status_model = function_exists( 'rpress_order_status_model' ) ? rpress_order_status_model() : array();
+$status_phase = isset( $status_model[ $order_status ]['phase'] ) ? $status_model[ $order_status ]['phase'] : 'pending';
+$when         = implode( ' · ', array_filter( array( $service_date, $service_time ) ) );
+$payment_line = implode( ' · ', array_filter( array( $payment_type, $payment_status ) ) );
+$contact_line = implode( ' · ', array_filter( array( $customer_name, $phone_text ) ) );
+/* translators: %s: service type, e.g. Delivery or Pickup */
+$when_label   = '' !== $service_label_text ? sprintf( __( '%s time', 'restropress' ), ucfirst( $service_label_text ) ) : __( 'Time', 'restropress' );
 ?>
-<div class="rp-order-details-modal-wrap">
-	<header class="modal__header modal-header">
-		<h2 class="modal__title modal-title">
-			<?php esc_html_e( 'Order Details', 'restropress' ); ?>
-			<?php if ( '' !== $order_status_label ) : ?>
-				<span class="button rpress-status"><?php echo esc_html( $order_status_label ); ?></span>
-			<?php endif; ?>
-		</h2>
-		<button class="modal__close" aria-label="<?php esc_attr_e( 'Close modal', 'restropress' ); ?>" data-micromodal-close></button>
-	</header>
-	<main class="modal__content modal-body">
-		<div class="rpress-order-details">
-			<div class="rp-order-section-md-data">
-				<div class="rp-detils-content-view">
-					<?php if ( '' !== $customer_name ) : ?>
-						<div class="rp-detail-row">
-							<span class="rp-detail-label"><?php esc_html_e( 'Name', 'restropress' ); ?></span>
-							<span class="rp-detail-value"><?php echo esc_html( $customer_name ); ?></span>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( '' !== $phone_text ) : ?>
-						<div class="rp-detail-row">
-							<span class="rp-detail-label"><?php esc_html_e( 'Phone Number', 'restropress' ); ?></span>
-							<span class="rp-detail-value"><?php echo esc_html( $phone_text ); ?></span>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( '' !== $address ) : ?>
-						<div class="rp-detail-row">
-							<span class="rp-detail-label"><?php esc_html_e( 'Delivery To', 'restropress' ); ?></span>
-							<span class="rp-detail-value"><?php echo esc_html( $address ); ?></span>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( '' !== $service_date ) : ?>
-						<div class="rp-detail-row">
-							<span class="rp-detail-label"><?php echo esc_html( ucfirst( $service_label_text ) ); ?> <?php esc_html_e( 'Date', 'restropress' ); ?></span>
-							<span class="rp-detail-value"><?php echo esc_html( $service_date ); ?></span>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( '' !== $service_time ) : ?>
-						<div class="rp-detail-row">
-							<span class="rp-detail-label"><?php echo esc_html( ucfirst( $service_label_text ) ); ?> <?php esc_html_e( 'Time', 'restropress' ); ?></span>
-							<span class="rp-detail-value"><?php echo esc_html( $service_time ); ?></span>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( '' !== $payment_type ) : ?>
-						<div class="rp-detail-row">
-							<span class="rp-detail-label"><?php esc_html_e( 'Payment Type', 'restropress' ); ?></span>
-							<span class="rp-detail-value"><?php echo esc_html( $payment_type ); ?></span>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( '' !== $payment_status ) : ?>
-						<div class="rp-detail-row">
-							<span class="rp-detail-label"><?php esc_html_e( 'Payment Status', 'restropress' ); ?></span>
-							<span class="rp-detail-value"><?php echo esc_html( $payment_status ); ?></span>
-						</div>
-					<?php endif; ?>
-				</div>
-			</div>
-
-			<hr class="rp-line" style="border-style: dashed;">
-
-			<div class="rp-order-list-main-wrap">
-				<h3><?php esc_html_e( 'Your Order', 'restropress' ); ?></h3>
-				<ul class="rpress-cart">
-					<?php if ( $cart ) : ?>
-						<?php foreach ( $cart as $key => $item ) : ?>
-							<?php
-							$special_instruction = isset( $item['instruction'] ) ? rpress_order_details_safe_text( $item['instruction'] ) : '';
-							$item_title          = rpress_order_details_safe_text( rpress_get_cart_item_name( $item ) );
-							$item_price          = isset( $item['subtotal'] ) ? floatval( $item['subtotal'] ) : 0;
-							?>
-							<li class="rpress-cart-item" data-cart-key="<?php echo esc_attr( $key ); ?>">
-								<div class="rp-cart-line-main">
-									<span class="rpress-cart-item-qty qty-class"><?php echo absint( $item['quantity'] ); ?> <?php esc_html_e( 'x', 'restropress' ); ?></span>
-									<span class="rpress-cart-item-title"><?php echo esc_html( $item_title ); ?></span>
-								</div>
-								<span class="cart-item-quantity-wrap">
-									<span class="rpress-cart-item-price qty-class">
-										<?php if ( empty( $item['in_bundle'] ) ) : ?>
-											<?php echo wp_kses_post( rpress_currency_filter( rpress_format_amount( $item_price ), $payment_currency ) ); ?>
-										<?php endif; ?>
-									</span>
-								</span>
-
-								<div class="rp-addons-ht-wrap">
-									<?php
-									$addon_name = array();
-									$options    = isset( $item['item_number']['options'] ) && is_array( $item['item_number']['options'] ) ? $item['item_number']['options'] : array();
-
-									foreach ( $options as $option ) {
-										if ( isset( $option['addon_item_name'] ) ) {
-											$addon_item = rpress_order_details_safe_text( $option['addon_item_name'] );
-											if ( '' !== $addon_item ) {
-												$addon_name[] = $addon_item;
-											}
-										}
-									}
-
-									echo esc_html( implode( ', ', array_filter( $addon_name ) ) );
-									?>
-								</div>
-
-								<?php if ( '' !== $special_instruction ) : ?>
-									<span class="rpress-special-instruction"><?php echo esc_html( $special_instruction ); ?></span>
-								<?php endif; ?>
-							</li>
-						<?php endforeach; ?>
-					<?php endif; ?>
-
-					<li class="cart_item rpress-cart-meta rpress_subtotal">
-						<?php esc_html_e( 'Subtotal', 'restropress' ); ?>
-						<span class="cart-subtotal"><?php echo wp_kses_post( rpress_payment_subtotal( $payment->ID ) ); ?></span>
-					</li>
-
-					<?php if ( rpress_use_taxes() ) : ?>
-						<li class="cart_item rpress-cart-meta rpress_cart_tax">
-							<?php echo esc_html( rpress_get_tax_name() ); ?>
-							<span class="cart-tax"><?php echo wp_kses_post( rpress_payment_tax( $payment->ID ) ); ?></span>
-						</li>
-					<?php endif; ?>
-
-					<?php
-					$fees = rpress_get_payment_fees( $payment->ID, 'fee' );
-					if ( $fees ) :
-						foreach ( $fees as $fee ) :
-							$fee_amount = isset( $fee['amount'] ) ? floatval( $fee['amount'] ) : 0;
-							?>
-							<li class="cart_item rpress-cart-meta rpress_fess">
-								<?php echo esc_html( rpress_order_details_safe_text( $fee['label'] ) ); ?>
-								<span class="cart-discount"><?php echo wp_kses_post( rpress_currency_filter( rpress_format_amount( $fee_amount ), $payment_currency ) ); ?></span>
-							</li>
-						<?php endforeach; ?>
-					<?php endif; ?>
-
-					<?php if ( isset( $user['discount'] ) && 'none' !== $user['discount'] ) : ?>
-						<li class="cart_item rpress-cart-meta rpress_user_discount">
-							<?php esc_html_e( 'Coupon', 'restropress' ); ?>
-							<span class="cart-discount"><?php echo wp_kses_post( $discount ); ?></span>
-						</li>
-					<?php endif; ?>
-				</ul>
-			</div>
+<div class="rp-order-details-modal-wrap rp-od">
+	<header class="rp-od-head">
+		<div class="rp-od-head-text">
+			<h2 id="rpressModal-title" class="rp-od-title">
+				<?php
+				/* translators: %s: order number */
+				echo esc_html( sprintf( __( 'Order #%s', 'restropress' ), $order_number ) );
+				?>
+			</h2>
+			<p class="rp-od-sub">
+				<?php
+				/* translators: %s: date the order was placed */
+				echo esc_html( sprintf( __( 'Placed %s', 'restropress' ), $placed_on ) );
+				if ( '' !== $service_label_text ) {
+					echo ' · ' . esc_html( ucfirst( $service_label_text ) );
+				}
+				?>
+			</p>
 		</div>
-	</main>
-	<footer class="modal__footer modal-footer">
-		<?php esc_html_e( 'Total', 'restropress' ); ?>
-		<span><?php echo wp_kses_post( rpress_payment_amount( $payment->ID ) ); ?></span>
-	</footer>
+		<?php if ( '' !== $order_status_label ) : ?>
+			<span class="rp-od-status is-<?php echo esc_attr( $status_phase ); ?>"><?php echo esc_html( $order_status_label ); ?></span>
+		<?php endif; ?>
+		<button type="button" class="rp-od-close" aria-label="<?php esc_attr_e( 'Close modal', 'restropress' ); ?>" data-micromodal-close></button>
+	</header>
+
+	<div class="rp-od-body">
+		<dl class="rp-od-facts">
+			<?php if ( '' !== $when ) : ?>
+				<div><dt><?php echo esc_html( $when_label ); ?></dt><dd><?php echo esc_html( $when ); ?></dd></div>
+			<?php endif; ?>
+			<?php if ( '' !== $address ) : ?>
+				<div><dt><?php esc_html_e( 'Delivery To', 'restropress' ); ?></dt><dd><?php echo esc_html( $address ); ?></dd></div>
+			<?php endif; ?>
+			<?php if ( '' !== $payment_line ) : ?>
+				<div><dt><?php esc_html_e( 'Payment', 'restropress' ); ?></dt><dd><?php echo esc_html( $payment_line ); ?></dd></div>
+			<?php endif; ?>
+			<?php if ( '' !== $contact_line ) : ?>
+				<div><dt><?php esc_html_e( 'Contact', 'restropress' ); ?></dt><dd><?php echo esc_html( $contact_line ); ?></dd></div>
+			<?php endif; ?>
+		</dl>
+
+		<h3 class="rp-od-h"><?php esc_html_e( 'Your Order', 'restropress' ); ?></h3>
+		<ul class="rp-od-items">
+			<?php foreach ( (array) $cart as $key => $item ) : ?>
+				<?php
+				$special_instruction = isset( $item['instruction'] ) ? rpress_order_details_safe_text( $item['instruction'] ) : '';
+				$item_title          = rpress_order_details_safe_text( rpress_get_cart_item_name( $item ) );
+				$item_price          = isset( $item['subtotal'] ) ? floatval( $item['subtotal'] ) : 0;
+				$addon_name          = array();
+				$options             = isset( $item['item_number']['options'] ) && is_array( $item['item_number']['options'] ) ? $item['item_number']['options'] : array();
+				foreach ( $options as $option ) {
+					if ( isset( $option['addon_item_name'] ) ) {
+						$addon_item = rpress_order_details_safe_text( $option['addon_item_name'] );
+						if ( '' !== $addon_item ) {
+							$addon_name[] = $addon_item;
+						}
+					}
+				}
+				?>
+				<li class="rp-od-item" data-cart-key="<?php echo esc_attr( $key ); ?>">
+					<span class="rp-od-qty"><?php echo absint( $item['quantity'] ); ?>&times;</span>
+					<div class="rp-od-item-main">
+						<span class="rp-od-item-name"><?php echo esc_html( $item_title ); ?></span>
+						<?php if ( $addon_name ) : ?>
+							<span class="rp-od-item-opts"><?php echo esc_html( implode( ' · ', $addon_name ) ); ?></span>
+						<?php endif; ?>
+						<?php if ( '' !== $special_instruction ) : ?>
+							<span class="rp-od-item-note"><?php echo esc_html( $special_instruction ); ?></span>
+						<?php endif; ?>
+					</div>
+					<span class="rp-od-item-price">
+						<?php if ( empty( $item['in_bundle'] ) ) : ?>
+							<?php echo wp_kses_post( rpress_currency_filter( rpress_format_amount( $item_price ), $payment_currency ) ); ?>
+						<?php endif; ?>
+					</span>
+				</li>
+			<?php endforeach; ?>
+		</ul>
+
+		<dl class="rp-od-totals">
+			<?php
+			// Sum of the lines above, as stored on the order. The payment's
+			// subtotal is rebuilt from current menu prices, so it drifts for
+			// old orders once dishes are repriced or removed.
+			$lines_subtotal = 0;
+			foreach ( (array) $cart as $line ) {
+				if ( empty( $line['in_bundle'] ) && isset( $line['subtotal'] ) ) {
+					$lines_subtotal += (float) $line['subtotal'];
+				}
+			}
+			$subtotal_html = $lines_subtotal > 0
+				? rpress_currency_filter( rpress_format_amount( $lines_subtotal ), $payment_currency )
+				: rpress_payment_subtotal( $payment->ID );
+			?>
+			<div><dt><?php esc_html_e( 'Subtotal', 'restropress' ); ?></dt><dd><?php echo wp_kses_post( $subtotal_html ); ?></dd></div>
+			<?php if ( rpress_use_taxes() ) : ?>
+				<div><dt><?php echo esc_html( rpress_get_tax_name() ); ?></dt><dd><?php echo wp_kses_post( rpress_payment_tax( $payment->ID ) ); ?></dd></div>
+			<?php endif; ?>
+			<?php foreach ( (array) rpress_get_payment_fees( $payment->ID, 'fee' ) as $fee ) : ?>
+				<?php $fee_amount = isset( $fee['amount'] ) ? floatval( $fee['amount'] ) : 0; ?>
+				<div><dt><?php echo esc_html( rpress_order_details_safe_text( isset( $fee['label'] ) ? $fee['label'] : '' ) ); ?></dt><dd><?php echo wp_kses_post( rpress_currency_filter( rpress_format_amount( $fee_amount ), $payment_currency ) ); ?></dd></div>
+			<?php endforeach; ?>
+			<?php if ( isset( $user['discount'] ) && 'none' !== $user['discount'] ) : ?>
+				<div><dt><?php esc_html_e( 'Coupon', 'restropress' ); ?></dt><dd><?php echo wp_kses_post( $discount ); ?></dd></div>
+			<?php endif; ?>
+			<div class="rp-od-total"><dt><?php esc_html_e( 'Total', 'restropress' ); ?></dt><dd><?php echo wp_kses_post( rpress_payment_amount( $payment->ID ) ); ?></dd></div>
+		</dl>
+	</div>
+
+	<?php
+	ob_start();
+	/**
+	 * Buttons at the bottom of the order details popup (Track order / Receipt
+	 * from the account hub).
+	 *
+	 * @since 3.5
+	 * @param int $payment_id Order ID.
+	 */
+	do_action( 'rpress_order_details_modal_actions', $payment->ID );
+	$actions = trim( ob_get_clean() );
+	?>
+	<?php if ( '' !== $actions ) : ?>
+		<footer class="rp-od-actions"><?php echo $actions; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by the callbacks. ?></footer>
+	<?php endif; ?>
 </div>

@@ -112,7 +112,8 @@ function rpress_send_to_success_page( $query_string = null ) {
 		}
 	}
 	if ( $query_string ) {
-		$redirect .= $query_string;
+		// Plain permalinks already have "?page_id=N": join with & instead.
+		$redirect .= ( false === strpos( $redirect, '?' ) ? '?' : '&' ) . ltrim( $query_string, '?&' );
 	}
 	$gateway = isset( $_REQUEST['rpress-gateway'] ) ? sanitize_text_field( $_REQUEST['rpress-gateway'] ) : '';
 	wp_safe_redirect( apply_filters('rpress_success_page_redirect', $redirect, $gateway, $query_string) );
@@ -204,7 +205,12 @@ function rpress_listen_for_failed_payments() {
 		$payment_id = absint( $_GET['payment-id'] );
 		$payment    = get_post( $payment_id );
 		$status     = rpress_get_payment_status( $payment );
-		if( $status && 'pending' === strtolower( $status ) ) {
+		// Only the customer returning from the gateway may fail their own order.
+		$session    = rpress_get_purchase_session();
+		$order_key  = (string) rpress_get_payment_key( $payment_id );
+		$is_owner   = ( ! empty( $session['purchase_key'] ) && '' !== $order_key && hash_equals( $order_key, (string) $session['purchase_key'] ) )
+			|| ( is_user_logged_in() && (int) rpress_get_payment_user_id( $payment_id ) === get_current_user_id() );
+		if( $is_owner && $status && 'pending' === strtolower( $status ) ) {
 			rpress_update_payment_status( $payment_id, 'failed' );
 		}
 	}

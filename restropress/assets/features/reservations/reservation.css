@@ -1,0 +1,172 @@
+/* RestroPress table reservation form (3.5). Mobile first. */
+.rpress-reservation {
+	--rpress-res-accent: var(--rpress-theme-primary, #e2532d);
+	--rpress-res-border: #d6d9de;
+	--rpress-res-text: #1f2328;
+	--rpress-res-muted: #5b6370;
+	--rpress-res-error: #b42318;
+	--rpress-res-radius: var(--rpress-default-control-radius, 8px);
+	box-sizing: border-box;
+	max-width: 640px;
+	margin: 0 auto 24px;
+	padding: 20px 16px;
+	border: 1px solid var(--rpress-res-border);
+	border-radius: 12px;
+	background: #fff;
+	color: var(--rpress-res-text);
+	font-size: 16px;
+	line-height: 1.5;
+}
+.rpress-reservation *,
+.rpress-reservation *::before,
+.rpress-reservation *::after {
+	box-sizing: border-box;
+}
+.rpress-reservation .rpress-res-title {
+	margin: 0 0 16px;
+	font-size: 1.375rem;
+	line-height: 1.3;
+}
+.rpress-res-form {
+	margin: 0;
+}
+.rpress-res-row {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0 12px;
+}
+.rpress-reservation .rpress-res-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+	margin: 0 0 14px;
+	padding: 0;
+}
+.rpress-reservation .rpress-res-field label {
+	margin: 0;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--rpress-res-text);
+}
+.rpress-reservation .rpress-res-field input,
+.rpress-reservation .rpress-res-field select,
+.rpress-reservation .rpress-res-field textarea {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	min-height: 44px;
+	margin: 0;
+	padding: 10px 12px;
+	border: 1px solid var(--rpress-res-border);
+	border-radius: var(--rpress-res-radius);
+	background: #fff;
+	color: var(--rpress-res-text);
+	font: inherit;
+	font-size: 16px;
+	line-height: 1.4;
+	box-shadow: none;
+	appearance: auto;
+}
+.rpress-reservation .rpress-res-field textarea {
+	min-height: 88px;
+	resize: vertical;
+}
+.rpress-reservation .rpress-res-field input:focus,
+.rpress-reservation .rpress-res-field select:focus,
+.rpress-reservation .rpress-res-field textarea:focus {
+	outline: 2px solid var(--rpress-res-accent);
+	outline-offset: 1px;
+	border-color: var(--rpress-res-accent);
+}
+.rpress-reservation [aria-invalid="true"] {
+	border-color: var(--rpress-res-error);
+}
+.rpress-reservation .rpress-res-error {
+	font-size: 0.8125rem;
+	color: var(--rpress-res-error);
+}
+.rpress-reservation .rpress-res-alert {
+	margin: 0 0 16px;
+	padding: 10px 12px;
+	border-inline-start: 4px solid var(--rpress-res-error);
+	border-radius: 4px;
+	background: #fef3f2;
+	color: var(--rpress-res-error);
+	font-size: 0.9375rem;
+}
+.rpress-reservation .rpress-res-actions {
+	margin: 4px 0 0;
+}
+.rpress-reservation .rpress-res-submit {
+	display: block;
+	width: 100%;
+	min-height: 48px;
+	margin: 0;
+	padding: 12px 20px;
+	border: 0;
+	border-radius: var(--rpress-res-radius);
+	background: var(--rpress-res-accent);
+	color: var(--rpress-theme-primary-contrast, #fff);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.rpress-reservation .rpress-res-submit:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+.rpress-reservation .rpress-res-submit:focus-visible {
+	outline: 2px solid var(--rpress-res-text);
+	outline-offset: 2px;
+}
+/* Honeypot: off screen, not display:none (some bots skip hidden fields). */
+.rpress-reservation .rpress-res-hp {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+.rpress-reservation .rpress-res-success {
+	margin: 0 0 12px;
+	font-weight: 600;
+}
+.rpress-reservation .rpress-res-summary {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 4px 16px;
+	margin: 0 0 16px;
+}
+.rpress-reservation .rpress-res-summary dt {
+	margin: 0;
+	color: var(--rpress-res-muted);
+}
+.rpress-reservation .rpress-res-summary dd {
+	margin: 0;
+	font-weight: 600;
+}
+.rpress-reservation .rpress-res-again {
+	color: var(--rpress-res-accent);
+}
+
+@media (min-width: 560px) {
+	.rpress-reservation {
+		padding: 24px;
+	}
+	.rpress-res-row {
+		grid-template-columns: 1fr 1fr;
+	}
+	.rpress-res-row.rpress-res-row-3 {
+		grid-template-columns: 1.3fr 0.7fr 1fr;
+	}
+	.rpress-reservation .rpress-res-submit {
+		display: inline-block;
+		width: auto;
+	}
+}
+
+/* Time list reloading after a date or party change. */
+.rpress-reservation .rpress-res-form.is-loading-slots [name="rpress_res_slot"] {
+	opacity: .6;
+}

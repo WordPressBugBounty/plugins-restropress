@@ -1816,7 +1816,10 @@ public function __set( $key, $value ) {
 		$discount_code  = $this->setup_discounts();
 		$discount_id  	= !empty( $discount_code ) ? rpress_get_discount_id_by_code( $discount_code ) : '';
 		$amount      	= !empty( $discount_id ) ? rpress_get_discount_amount( $discount_id ) : '';
-		if ( !empty( $discount_id ) && 'flat' === rpress_get_discount_type( $discount_id ) ) {
+		// Orders placed with tax classes (3.5+) keep the tax worked out at checkout,
+		// which already handles flat discounts at each line's own rate.
+		$breakdown = $this->ID ? get_post_meta( $this->ID, '_rpress_tax_breakdown', true ) : array();
+		if ( !empty( $discount_id ) && 'flat' === rpress_get_discount_type( $discount_id ) && empty( $breakdown ) ) {
 			$tax = rpress_calculate_tax( $subtotal - $amount,false,false,true );
 		}
 		return $tax;

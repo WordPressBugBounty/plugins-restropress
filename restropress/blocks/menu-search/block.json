@@ -1,0 +1,36 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/menu-search",
+	"title": "Menu Search",
+	"category": "restropress",
+	"description": "Live search that filters the menu items on the page.",
+	"keywords": [
+		"search",
+		"filter",
+		"menu"
+	],
+	"textdomain": "restropress",
+	"attributes": {
+		"placeholder": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false,
+		"interactivity": true,
+		"align": [
+			"wide",
+			"full"
+		],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"editorScript": "rpress-storefront-blocks-editor",
+	"style": "rpress-storefront-blocks",
+	"viewScriptModule": "@restropress/storefront",
+	"render": "file:./render.php"
+}

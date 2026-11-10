@@ -72,6 +72,15 @@ $js_config = array(
 
 	<div class="rp-live-orders" data-config="<?php echo esc_attr( wp_json_encode( $js_config ) ); ?>">
 
+		<?php
+		/**
+		 * Fires above the Live Orders toolbar (e.g. the pause orders / busy mode panel).
+		 *
+		 * @since 3.5
+		 */
+		do_action( 'rpress_live_orders_before_toolbar' );
+		?>
+
 		<div class="rp-live-toolbar">
 			<div class="rp-live-toolbar-left">
 				<span class="rp-live-status">

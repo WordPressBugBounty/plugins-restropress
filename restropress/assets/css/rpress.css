@@ -20,11 +20,19 @@
     height: auto !important;
 }
 
+/* Quantity -/+ in the item popup: a true circle with the sign centred. */
 div.rpress-popup-actions .btn-count input[type="button"] {
   width: 36px !important;
-  height: 31px !important;
-  padding: 0px !important;
-  padding-bottom: 34px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  box-sizing: border-box !important;
+  line-height: 34px !important;
+  text-align: center !important;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .rpress-checkout-service-heading.is-service-delivery,
 .rpress-checkout-service-head {
@@ -2319,10 +2327,6 @@ body.rp-old-ui-ux-enabled #rpressModal.show-service-options a.btn.btn-primary.bt
 @media only screen and (max-width: 768px) {
 	body.rp-old-ui-ux-enabled #rpressModal.show-service-options .modal__container {
 		width: calc(100vw - 32px);
-	}
-	body.rp-old-ui-ux-enabled #rpressModal.show-service-options .rpress-delivery-location-field-wrap,
-	body.rp-old-ui-ux-enabled #rpressDateTime.rpress-edit-address-popup .rpress-delivery-location-field-wrap {
-		display: none !important;
 	}
 }
 .loading .modal__container {
@@ -11068,6 +11072,15 @@ body.rpress-checkout #rpress_checkout_wrap #rpress_checkout_cart_wrap .rpress-re
 	overflow: visible !important;
 	padding-left: 0 !important;
 }
+/* Rows an extension renders hidden (e.g. a $0.00 Delivery Fee on pickup)
+   stay hidden: the flex rule above would otherwise override their inline
+   display:none. */
+.rpress-section .rpress-cart-summary-area .rpress-cart-summary-list > li.rpress-cart-meta[style*="display:none"],
+.rpress-section .rpress-cart-summary-area .rpress-cart-summary-list > li.rpress-cart-meta[style*="display: none"],
+.rpress-section ul.rpress-cart > li.rpress-cart-meta[style*="display:none"],
+.rpress-section ul.rpress-cart > li.rpress-cart-meta[style*="display: none"] {
+	display: none !important;
+}
 
 .rpress-section .rpress-cart-summary-area .rpress-cart-summary-list > li.rpress-cart-meta > span:last-child,
 .rpress-section .rpress-sidebar-cart-wrap .rpress-cart-summary-area .rpress-cart-summary-list > li.rpress-cart-meta > span:last-child,
@@ -11510,4 +11523,302 @@ body.rpress-checkout #rpress_checkout_wrap .rpress_errors li {
 	word-break: break-word !important;
 	overflow-wrap: break-word !important;
 	white-space: normal !important;
+}
+
+/* The item popup hides its image (hidden attribute) when the item has no
+   photo. The responsive rules set display:block and would show an empty box. */
+.addon-popup-wrap .modal__image-section img.item-image[hidden] {
+	display: none;
+}
+
+/* Item popup: an option group that still needs a choice (3.5). */
+#rpressModal .addons-wrapper.rp-addon-group-error {
+	/* Room inside the outline without moving the options sideways. */
+	margin-inline: -10px;
+	padding-inline: 10px;
+	border-radius: 10px;
+	box-shadow: 0 0 0 2px #D92D20;
+	background: #FEF3F2;
+	transition: box-shadow .2s ease, background-color .2s ease;
+}
+#rpressModal .addons-wrapper.rp-addon-group-error .rp-mo-rule {
+	background: #D92D20;
+	color: #fff;
+}
+#rpressModal .addons-wrapper .rp-addon-error-msg {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 4px 0 8px;
+	color: #B42318;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+#rpressModal .addons-wrapper .rp-addon-error-msg::before {
+	content: "!";
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 18px;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: #D92D20;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+}
+@media (prefers-reduced-motion: reduce) {
+	#rpressModal .addons-wrapper.rp-addon-group-error {
+		transition: none;
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* Order details popup (customer dashboard / order history), 3.5      */
+/* ------------------------------------------------------------------ */
+#rpressModal.show-order-details .modal__container {
+	display: flex !important;
+	flex-direction: column;
+	width: calc(100vw - 32px) !important;
+	max-width: 560px !important;
+	max-height: calc(100vh - 48px);
+	max-height: calc(100dvh - 48px);
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 16px !important;
+	background: #fff !important;
+	box-shadow: 0 24px 60px rgba(16, 24, 40, .24) !important;
+	overflow: hidden !important;
+}
+#rpressModal .rp-od {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	flex: 1 1 auto;
+	color: #101828;
+	font-size: 15px;
+	line-height: 1.45;
+}
+#rpressModal .rp-od-head {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 20px 20px 16px;
+	border-bottom: 1px solid #EAECF0;
+}
+#rpressModal .rp-od-head-text {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+#rpressModal .rp-od-title {
+	margin: 0;
+	padding: 0;
+	color: #101828;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1.25;
+	letter-spacing: 0;
+}
+#rpressModal .rp-od-sub {
+	margin: 2px 0 0;
+	color: #667085;
+	font-size: 14px;
+}
+#rpressModal .rp-od-status {
+	flex: 0 0 auto;
+	margin-top: 2px;
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: #F2F4F7;
+	color: #344054;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.3;
+	white-space: nowrap;
+}
+#rpressModal .rp-od-status.is-pending { background: #FEF0C7; color: #93370D; }
+#rpressModal .rp-od-status.is-accepted,
+#rpressModal .rp-od-status.is-preparing { background: #EFF8FF; color: #175CD3; }
+#rpressModal .rp-od-status.is-ready,
+#rpressModal .rp-od-status.is-transit { background: #F4F3FF; color: #5925DC; }
+#rpressModal .rp-od-status.is-delivered { background: #ECFDF3; color: #027A48; }
+#rpressModal .rp-od-status.is-cancelled { background: #FEF3F2; color: #B42318; }
+#rpressModal .rp-od-close {
+	position: static !important;
+	flex: 0 0 36px;
+	width: 36px !important;
+	height: 36px !important;
+	margin: -4px -6px 0 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 50% !important;
+	background: #F2F4F7 !important;
+	color: #344054 !important;
+	font-size: 0 !important;
+	cursor: pointer;
+}
+#rpressModal .rp-od-close::before {
+	content: "\2715";
+	font-size: 16px;
+	line-height: 36px;
+}
+#rpressModal .rp-od-close:focus-visible {
+	outline: 2px solid var(--rpress-theme-primary, #ED5575);
+	outline-offset: 2px;
+}
+#rpressModal .rp-od-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 16px 20px 20px;
+	-webkit-overflow-scrolling: touch;
+}
+#rpressModal .rp-od-facts,
+#rpressModal .rp-od-totals {
+	margin: 0;
+	padding: 0;
+}
+#rpressModal .rp-od-facts > div,
+#rpressModal .rp-od-totals > div {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 6px 0;
+}
+#rpressModal .rp-od-facts dt,
+#rpressModal .rp-od-totals dt {
+	margin: 0;
+	color: #667085;
+	font-weight: 400;
+}
+#rpressModal .rp-od-facts dd,
+#rpressModal .rp-od-totals dd {
+	margin: 0;
+	color: #101828;
+	text-align: end;
+}
+#rpressModal .rp-od-facts {
+	padding-bottom: 12px;
+	border-bottom: 1px solid #EAECF0;
+}
+#rpressModal .rp-od-facts dt {
+	flex: 0 0 auto;
+}
+#rpressModal .rp-od-h {
+	margin: 16px 0 4px;
+	padding: 0;
+	color: #101828;
+	font-size: 16px;
+	font-weight: 700;
+	line-height: 1.3;
+}
+#rpressModal .rp-od-items {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+#rpressModal .rp-od-item {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	gap: 10px;
+	align-items: start;
+	margin: 0;
+	padding: 12px 0;
+	border-bottom: 1px solid #F2F4F7;
+}
+#rpressModal .rp-od-item::before {
+	content: none;
+}
+#rpressModal .rp-od-qty {
+	min-width: 28px;
+	color: #475467;
+	font-weight: 600;
+}
+#rpressModal .rp-od-item-main {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+#rpressModal .rp-od-item-name {
+	font-weight: 600;
+}
+#rpressModal .rp-od-item-opts,
+#rpressModal .rp-od-item-note {
+	color: #667085;
+	font-size: 13px;
+}
+#rpressModal .rp-od-item-note {
+	font-style: italic;
+}
+#rpressModal .rp-od-item-price {
+	font-weight: 600;
+	white-space: nowrap;
+}
+#rpressModal .rp-od-totals {
+	padding-top: 10px;
+}
+#rpressModal .rp-od-totals > .rp-od-total {
+	margin-top: 6px;
+	padding-top: 12px;
+	border-top: 1px solid #EAECF0;
+}
+#rpressModal .rp-od-totals > .rp-od-total dt,
+#rpressModal .rp-od-totals > .rp-od-total dd {
+	color: #101828;
+	font-size: 17px;
+	font-weight: 700;
+}
+#rpressModal .rp-od-actions {
+	display: flex;
+	gap: 10px;
+	padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+	border-top: 1px solid #EAECF0;
+	background: #fff;
+}
+#rpressModal .rp-od-actions a {
+	display: flex;
+	flex: 1 1 0;
+	align-items: center;
+	justify-content: center;
+	min-height: 46px;
+	padding: 10px 16px;
+	border: 1px solid #101828;
+	border-radius: 10px;
+	background: #fff;
+	color: #101828;
+	font-size: 15px;
+	font-weight: 600;
+	text-decoration: none;
+}
+#rpressModal .rp-od-actions a.is-live {
+	border-color: var(--rpress-theme-primary, #101828);
+	background: var(--rpress-theme-primary, #101828);
+	color: #fff;
+}
+/* Phones: a bottom sheet. */
+@media (max-width: 600px) {
+	#rpressModal.show-order-details .modal__overlay {
+		align-items: flex-end !important;
+		padding: 0 !important;
+	}
+	#rpressModal.show-order-details .modal__container {
+		width: 100% !important;
+		max-width: none !important;
+		max-height: 92vh;
+		max-height: 92dvh;
+		margin: 0 !important;
+		border-radius: 16px 16px 0 0 !important;
+	}
+	#rpressModal .rp-od-head,
+	#rpressModal .rp-od-body {
+		padding-left: 16px;
+		padding-right: 16px;
+	}
+	#rpressModal .rp-od-actions {
+		padding-left: 16px;
+		padding-right: 16px;
+	}
 }

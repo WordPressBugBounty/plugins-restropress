@@ -1,0 +1,41 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "rpress/cart-panel",
+	"title": "Cart Panel",
+	"category": "restropress",
+	"description": "Mini cart with quantities, totals and a checkout button. Updates live as items are added.",
+	"keywords": [
+		"cart",
+		"basket",
+		"checkout",
+		"order"
+	],
+	"textdomain": "restropress",
+	"attributes": {
+		"title": {
+			"type": "string",
+			"default": ""
+		},
+		"sticky": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"supports": {
+		"html": false,
+		"interactivity": true,
+		"align": [
+			"wide",
+			"full"
+		],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"editorScript": "rpress-storefront-blocks-editor",
+	"style": "rpress-storefront-blocks",
+	"viewScriptModule": "@restropress/storefront",
+	"render": "file:./render.php"
+}

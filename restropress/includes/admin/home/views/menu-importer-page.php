@@ -31,6 +31,9 @@ $menu_list   = admin_url( 'edit.php?post_type=fooditem' );
 			<p class="rp-page-subtitle"><?php esc_html_e( 'Bring your menu in from a spreadsheet, a PDF or photo, or load a sample to start.', 'restropress' ); ?></p>
 		</div>
 		<div class="rp-page-actions">
+			<?php if ( function_exists( 'rpress_importer_url' ) ) : ?>
+				<a href="<?php echo esc_url( rpress_importer_url() ); ?>" class="button rp-btn rp-btn-secondary"><?php esc_html_e( 'Switch from GloriaFood, WooCommerce or CSV', 'restropress' ); ?></a>
+			<?php endif; ?>
 			<a href="<?php echo esc_url( $menu_list ); ?>" class="button rp-btn rp-btn-secondary"><?php esc_html_e( 'Back to Menu Items', 'restropress' ); ?></a>
 		</div>
 	</div>

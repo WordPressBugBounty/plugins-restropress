@@ -518,9 +518,9 @@ class RPRESS_Customer_Query {
 	protected function construct_request_limits() {
 		if ( $this->query_vars['number'] ) {
 			if ( $this->query_vars['offset'] ) {
-				return "LIMIT {$this->query_vars['offset']},{$this->query_vars['number']}";
+				return 'LIMIT ' . absint( $this->query_vars['offset'] ) . ',' . absint( $this->query_vars['number'] );
 			}
-			return "LIMIT {$this->query_vars['number']}";
+			return 'LIMIT ' . absint( $this->query_vars['number'] );
 		}
 		return '';
 	}

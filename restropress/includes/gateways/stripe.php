@@ -393,6 +393,7 @@ function rpress_core_stripe_process_purchase( $purchase_data ) {
 			'description' => rpress_core_stripe_get_payment_description( $purchase_data['cart_details'] ),
 			'metadata'    => array(
 				'rpress_payment_id' => $payment_id,
+				'rpress_site'       => function_exists( 'rpress_payments_stripe_site_key' ) ? rpress_payments_stripe_site_key() : '',
 			),
 		),
 		'metadata'            => array(
@@ -446,10 +447,11 @@ function rpress_core_stripe_allowed_redirect_hosts( $hosts ) {
  * @param string $method   HTTP method.
  * @param string $endpoint Stripe endpoint.
  * @param array  $params   Request params.
+ * @param array  $extra_headers Optional extra headers (for example Idempotency-Key).
  * @return array
  * @throws Exception When the request fails.
  */
-function rpress_core_stripe_api_request( $method, $endpoint, $params = array() ) {
+function rpress_core_stripe_api_request( $method, $endpoint, $params = array(), $extra_headers = array() ) {
 	$secret_key = rpress_core_stripe_get_secret_key();
 
 	if ( '' === $secret_key ) {
@@ -465,6 +467,10 @@ function rpress_core_stripe_api_request( $method, $endpoint, $params = array() )
 			'Authorization' => 'Bearer ' . $secret_key,
 		),
 	);
+
+	if ( ! empty( $extra_headers ) && is_array( $extra_headers ) ) {
+		$args['headers'] = array_merge( $args['headers'], $extra_headers );
+	}
 
 	if ( 'GET' === $method && ! empty( $params ) ) {
 		$url = add_query_arg( $params, $url );
@@ -638,63 +644,21 @@ function rpress_core_stripe_event_listener() {
 		return;
 	}
 
-	$payload          = file_get_contents( 'php://input' );
-	$signature       = isset( $_SERVER['HTTP_STRIPE_SIGNATURE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_STRIPE_SIGNATURE'] ) ) : '';
-	$webhook_secret  = rpress_core_stripe_get_webhook_secret();
-
-	if ( '' === $webhook_secret || ! rpress_core_stripe_verify_webhook_signature( $payload, $signature, $webhook_secret ) ) {
-		status_header( 400 );
-		echo 'Invalid signature';
+	if ( ! function_exists( 'rpress_payments_stripe_handle_webhook' ) ) {
+		status_header( 503 );
+		echo 'Webhook handler unavailable';
 		exit;
 	}
 
-	$event = json_decode( $payload, true );
+	$payload   = (string) file_get_contents( 'php://input' );
+	$signature = isset( $_SERVER['HTTP_STRIPE_SIGNATURE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_STRIPE_SIGNATURE'] ) ) : '';
 
-	if ( ! is_array( $event ) || empty( $event['type'] ) ) {
-		status_header( 400 );
-		echo 'Invalid payload';
-		exit;
-	}
+	// Signature, timestamp, idempotency and event handling live in
+	// includes/features/payments/stripe-webhooks.php so they can be tested.
+	$result = rpress_payments_stripe_handle_webhook( $payload, $signature );
 
-	$object = isset( $event['data']['object'] ) && is_array( $event['data']['object'] ) ? $event['data']['object'] : array();
-
-	switch ( $event['type'] ) {
-		case 'checkout.session.completed':
-		case 'checkout.session.async_payment_succeeded':
-			if ( ! empty( $object['id'] ) ) {
-				$payment_id = rpress_core_stripe_get_payment_id_by_checkout_session( $object['id'] );
-
-				if ( $payment_id ) {
-					rpress_core_stripe_update_payment_from_session( $object['id'], $payment_id, $object );
-				}
-			}
-			break;
-
-		case 'checkout.session.async_payment_failed':
-			if ( ! empty( $object['id'] ) ) {
-				$payment_id = rpress_core_stripe_get_payment_id_by_checkout_session( $object['id'] );
-
-				if ( $payment_id ) {
-					rpress_update_payment_status( $payment_id, 'failed' );
-					rpress_insert_payment_note( $payment_id, __( 'Stripe checkout payment failed.', 'restropress' ) );
-				}
-			}
-			break;
-
-		case 'checkout.session.expired':
-			if ( ! empty( $object['id'] ) ) {
-				$payment_id = rpress_core_stripe_get_payment_id_by_checkout_session( $object['id'] );
-
-				if ( $payment_id ) {
-					rpress_insert_payment_note( $payment_id, __( 'Stripe checkout session expired.', 'restropress' ) );
-					delete_post_meta( $payment_id, '_stripe_checkout_sessions_key' );
-				}
-			}
-			break;
-	}
-
-	status_header( 200 );
-	echo 'OK';
+	status_header( (int) $result['code'] );
+	echo esc_html( $result['message'] );
 	exit;
 }
 

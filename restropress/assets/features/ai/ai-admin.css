@@ -1,0 +1,73 @@
+/* RestroPress AI Assistant (3.5): settings, editor helpers, bulk review. */
+
+/* Settings section */
+.rp-ai-settings { max-width: 880px; }
+.rp-ai-intro { margin: 0 0 14px; color: #50575e; font-size: 13px; line-height: 1.6; }
+.rp-ai-status-card { display: flex; gap: 8px; align-items: center; padding: 10px 14px; border-radius: 8px; border: 1px solid #dcdcde; background: #f6f7f7; margin-bottom: 16px; }
+.rp-ai-status-card.is-ready { border-color: #68de7c; background: #edfaef; }
+.rp-ai-status-card.is-ready .dashicons { color: #008a20; }
+.rp-ai-status-card.is-off .dashicons { color: #996800; }
+.rp-ai-fields { width: 100%; border-collapse: collapse; }
+.rp-ai-fields th { width: 180px; text-align: start; vertical-align: top; padding: 12px 16px 12px 0; font-weight: 600; }
+.rp-ai-fields td { padding: 10px 0; vertical-align: top; }
+.rp-ai-fields tr[hidden] { display: none; }
+.rp-ai-fields select, .rp-ai-fields .regular-text { min-width: 280px; max-width: 100%; box-sizing: border-box; height: 36px; }
+.rp-ai-secret { display: flex; gap: 6px; align-items: stretch; max-width: 460px; }
+.rp-ai-secret input { flex: 1; min-width: 0; }
+.rp-ai-secret .button { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; }
+.rp-ai-remove-key { display: block; margin-top: 8px; }
+.rp-ai-remove-key[hidden] { display: none; }
+.rp-ai-feature { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 10px; }
+.rp-ai-feature input { margin-top: 3px; }
+.rp-ai-feature b { display: block; }
+.rp-ai-feature small { display: block; color: #646970; }
+.rp-ai-fields .button + .button { margin-inline-start: 6px; }
+
+/* Shared message */
+.rp-ai-msg { display: inline-block; margin-inline-start: 8px; font-size: 13px; line-height: 1.5; }
+.rp-ai-msg[hidden],
+.rp-ai-tools .rp-ai-msg[hidden] { display: none; }
+.rp-ai-msg.is-ok { color: #008a20; }
+.rp-ai-msg.is-error { color: #b32d2e; }
+.rp-ai-msg.is-loading { color: #50575e; }
+.rp-ai-msg.is-info { color: #1d2327; }
+.rp-ai-msg a { margin-inline-start: 4px; }
+
+/* Food item editor */
+.rp-ai-tools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 8px; }
+.rp-ai-tools .rp-ai-msg { display: block; flex-basis: 100%; margin: 4px 0 0; padding: 8px 10px; border-radius: 6px; background: #f6f7f7; }
+.rp-ai-tools .rp-ai-msg.is-error { background: #fcf0f1; }
+.rp-ai-tools .rp-ai-msg.is-ok { background: #edfaef; }
+.rp-ai-tools .rp-ai-msg.is-info { background: #f0f6fc; }
+.rp-ai-btn { display: inline-flex !important; align-items: center; gap: 4px; }
+.rp-ai-btn .dashicons { font-size: 15px; width: 15px; height: 15px; line-height: 15px; color: #7e57c2; }
+.rp-ai-filled { box-shadow: 0 0 0 2px #b39ddb !important; transition: box-shadow .3s ease; }
+.rp-ai-alt { margin-top: 10px; max-width: 320px; }
+.rp-ai-alt[hidden], .rp-ai-alt-edit[hidden], .rp-ai-alt .button[hidden] { display: none; }
+.rp-ai-alt-edit { margin-top: 8px; display: grid; gap: 6px; }
+.rp-ai-alt-edit label { font-weight: 600; font-size: 12px; }
+.rp-ai-alt-edit .button { justify-self: start; }
+.rp-ai-alt .rp-ai-msg { display: block; margin: 6px 0 0; }
+
+/* Bulk review */
+.rp-ai-review-intro { max-width: 900px; }
+.rp-ai-review-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.rp-ai-review-toolbar .rp-ai-msg { margin-inline-start: 4px; }
+.rp-ai-progress { height: 6px; background: #f0f0f1; border-radius: 3px; overflow: hidden; margin: 0 0 12px; max-width: 900px; }
+.rp-ai-progress[hidden] { display: none; }
+.rp-ai-progress i { display: block; height: 100%; width: 0; background: #7e57c2; transition: width .2s ease; }
+.rp-ai-review-table td { vertical-align: top; }
+.rp-ai-review-table textarea { width: 100%; box-sizing: border-box; }
+.rp-ai-col-accept { width: 64px; text-align: center; }
+.rp-ai-review-row.is-working { opacity: .6; }
+.rp-ai-review-row.is-saved { background: #edfaef !important; }
+.rp-ai-review-row.is-saved .rp-ai-row-state::after { content: " \2713"; color: #008a20; }
+.rp-ai-row-error { color: #b32d2e; margin-top: 4px; }
+
+@media (max-width: 782px) {
+	.rp-ai-fields th, .rp-ai-fields td { display: block; width: auto; padding: 6px 0; }
+	.rp-ai-fields select, .rp-ai-fields .regular-text { min-width: 0; width: 100%; }
+}
+
+/* RTL: mirror the asymmetric boxes above. */
+[dir="rtl"] .rp-ai-fields th { padding: 12px 0 12px 16px; }

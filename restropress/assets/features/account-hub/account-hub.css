@@ -1,0 +1,199 @@
+/* Account hub (3.5): saved addresses at checkout, order tracking links, dashboard polish. */
+
+/* Checkout: saved address picker and "Save this address". Boxes are fully
+   declared because legacy rpress.css also styles checkout children. */
+#rpress_checkout_order_details .rpress-saved-addresses,
+#rpress_checkout_order_details .rpress-save-address-wrap {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	margin: 0 0 14px;
+	padding: 0;
+	float: none;
+	clear: both;
+	/* The 3.4 checkout lays the address fields out on a two-column grid. */
+	grid-column: 1 / -1;
+}
+#rpress_checkout_order_details .rpress-saved-addresses label {
+	display: block;
+	margin: 0 0 6px;
+	font-weight: 600;
+}
+#rpress_checkout_order_details .rpress-saved-addresses select {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	min-height: 44px;
+	text-overflow: ellipsis;
+}
+#rpress_checkout_order_details .rpress-save-address-wrap {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+}
+#rpress_checkout_order_details .rpress-save-address-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	margin: 0;
+	font-weight: 500;
+	text-transform: none;
+	cursor: pointer;
+}
+#rpress_checkout_order_details .rpress-save-address-toggle input {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+}
+#rpress_checkout_order_details select.rpress-save-address-label {
+	box-sizing: border-box;
+	width: auto;
+	min-width: 120px;
+	min-height: 40px;
+	margin: 0;
+}
+#rpress_checkout_order_details .rpress-save-address-wrap:has(#rpress-save-address:not(:checked)) .rpress-save-address-label {
+	display: none;
+}
+
+/* Order history cards: core styles every action link like a button, but the
+   theme-color link rule only exempts View Details and Reorder, so restate the
+   button text colour. "Receipt" (finished orders) is the outlined variant. */
+#rpress_user_history.rpress-order-history .rpress-history-actions a.rpress-track-order-btn.is-live {
+	color: var(--rpress-theme-primary-contrast, #fff);
+}
+#rpress_user_history.rpress-order-history .rpress-history-actions a.rpress-track-order-btn:not(.is-live) {
+	background: transparent;
+	color: var(--rpress-theme-primary, #ED5575);
+}
+
+/* Dashboard Orders tab: tracking link and Reorder next to the view icon.
+   The old .viewbg was a fixed 38x25px grey box for the icon alone, which
+   pushed these buttons out of the row; the box now grows and the grey
+   background moves to the icon. */
+.user-dashboard-wrapper.user-profile .viewbg {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 8px;
+	width: auto;
+	height: auto;
+	line-height: 1.2;
+	background: transparent;
+	/* Phone cards make the cell a grid; fill it so the buttons sit in one row. */
+	justify-self: stretch;
+}
+.user-dashboard-wrapper .viewbg .rpress-view-order-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	min-height: 36px;
+	border-radius: 8px;
+	background: #EEEEEE;
+	color: inherit;
+}
+.user-dashboard-wrapper .viewbg .rpress-track-order-btn,
+.user-dashboard-wrapper .viewbg .rpress-reorder-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 36px;
+	padding: 6px 12px;
+	border: 1px solid var(--rpress-theme-primary, #4E4BF5);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--rpress-theme-primary, #4E4BF5);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
+	white-space: nowrap;
+}
+.user-dashboard-wrapper .viewbg .rpress-track-order-btn.is-live {
+	background: var(--rpress-theme-primary, #4E4BF5);
+	color: #fff;
+}
+
+/* Reorder modal: what was skipped. */
+.rpress-reorder-result .rpress-reorder-skipped {
+	margin: 12px 0;
+	padding: 10px 12px;
+	border-inline-start: 3px solid #d97706;
+	background: #fffbeb;
+	color: #78350f;
+	border-radius: 6px;
+}
+.rpress-reorder-result .rpress-reorder-skipped ul {
+	margin: 6px 0 0 18px;
+	padding: 0;
+}
+.rpress-reorder-result .rpress-reorder-price-note,
+.rpress-reorder-result .rpress-reorder-changed {
+	font-size: 13px;
+	opacity: .8;
+}
+
+/* Dashboard result notice after saving an address or the profile. */
+.rpress-account-notice {
+	box-sizing: border-box;
+	margin: 0 0 12px;
+	padding: 10px 14px;
+	border-radius: 8px;
+	font-weight: 500;
+}
+.rpress-account-notice-success {
+	background: #ecfdf5;
+	color: #065f46;
+}
+.rpress-account-notice-error {
+	background: #fef2f2;
+	color: #991b1b;
+}
+
+/* Phones (390px and below): actions wrap, tables scroll inside their card. */
+@media (max-width: 480px) {
+	.user-dashboard-wrapper .table-responsive {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+	.user-dashboard-wrapper .viewbg {
+		justify-content: flex-start;
+	}
+	.user-dashboard-wrapper #user-my-address .col-lg-4 {
+		width: 100%;
+		max-width: 100%;
+		flex: 0 0 100%;
+	}
+	#rpress_checkout_order_details .rpress-save-address-wrap {
+		align-items: stretch;
+	}
+}
+
+/* RTL: mirror the asymmetric boxes above. */
+[dir="rtl"] .rpress-reorder-result .rpress-reorder-skipped ul {
+	margin: 6px 18px 0 0;
+}
+
+/* Keyboard focus for the account hub controls. */
+.user-dashboard-wrapper .viewbg .rpress-reorder-btn:focus-visible,
+#rpress_user_history.rpress-order-history .rpress-history-actions a:focus-visible,
+#rpress_checkout_order_details .rpress-saved-addresses select:focus-visible,
+#rpress_checkout_order_details select.rpress-save-address-label:focus-visible,
+#rpress_checkout_order_details .rpress-save-address-toggle input:focus-visible {
+	outline: 2px solid var(--rpress-theme-primary, #4E4BF5);
+	outline-offset: 2px;
+}
+
+/* Touch screens: 44px tap targets for the order history actions. */
+@media (pointer: coarse) {
+	.user-dashboard-wrapper .viewbg .rpress-view-order-btn,
+	.user-dashboard-wrapper .viewbg .rpress-track-order-btn,
+	.user-dashboard-wrapper .viewbg .rpress-reorder-btn {
+		min-height: 44px;
+	}
+}

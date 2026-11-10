@@ -1,0 +1,123 @@
+/**
+ * Pause orders: Live Orders panel.
+ *
+ * @since 3.5
+ */
+.rp-pause-orders {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px 16px;
+	padding: 12px 14px;
+	margin-bottom: 12px;
+	background: #fff;
+	border: 1px solid var(--rp-live-border, #e2e8f0);
+	border-radius: 12px;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.rp-pause-orders.is-paused {
+	border-color: #fca5a5;
+	background: #fef2f2;
+}
+
+.rp-pause-orders-status,
+.rp-pause-orders-controls,
+.rp-pause-orders-group {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.rp-pause-orders-controls {
+	gap: 10px 18px;
+}
+
+.rp-pause-orders-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--rp-live-success, #15803d);
+}
+
+.rp-pause-orders.is-paused .rp-pause-orders-dot {
+	background: var(--rp-live-danger, #b91c1c);
+}
+
+.rp-pause-orders-state {
+	color: var(--rp-live-navy, #111827);
+	font-size: 14px;
+}
+
+.rp-pause-orders.is-paused .rp-pause-orders-state {
+	color: var(--rp-live-danger, #b91c1c);
+}
+
+.rp-pause-orders-busy-note {
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: #fffbeb;
+	color: #92400e;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.rp-pause-orders-label {
+	color: var(--rp-live-muted, #64748b);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.rp-pause-orders .button.rp-pause-orders-btn {
+	min-height: 32px;
+	padding: 4px 11px;
+	border-color: #cbd5e1;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 22px;
+}
+
+.rp-pause-orders .button.rp-pause-orders-btn.is-active {
+	border-color: #f59e0b;
+	background: #fffbeb;
+	color: #92400e;
+}
+
+.rp-pause-orders .button-primary.rp-pause-orders-resume {
+	border-color: var(--rp-live-orange, #ff5a1f);
+	background: var(--rp-live-orange, #ff5a1f);
+	color: #fff;
+}
+
+.rp-pause-orders .button-primary.rp-pause-orders-resume:hover,
+.rp-pause-orders .button-primary.rp-pause-orders-resume:focus {
+	border-color: var(--rp-live-orange-dark, #d7440f);
+	background: var(--rp-live-orange-dark, #d7440f);
+}
+
+.rp-pause-orders-reset {
+	font-size: 13px;
+}
+
+.rp-pause-orders.is-loading {
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.rp-pause-orders-hint {
+	flex-basis: 100%;
+	margin: 0;
+	color: var(--rp-live-muted, #64748b);
+	font-size: 12px;
+}
+
+@media (max-width: 782px) {
+	.rp-pause-orders,
+	.rp-pause-orders-controls {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+}

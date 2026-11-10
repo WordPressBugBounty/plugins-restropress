@@ -3,7 +3,8 @@
   'use strict';
 
   var cfg = window.rpressOnboarding || {};
-  var STEPS = ['profile', 'appearance', 'menu', 'config', 'payments', 'golive'];
+  var sw = window.rpressSetupWizard || {};
+  var STEPS = ['store', 'services', 'hours', 'delivery', 'payments', 'menu', 'test'];
   var DIET = ['Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 'Nut-free', 'Halal', 'Kosher', 'Spicy'];
 
   var $root = $('.rp-onboard');
@@ -26,6 +27,7 @@
     jobIds: [],
     testOk: false,
     completed: {},        // step -> true
+    skipped: {},          // step -> true
     cur: $root.data('cur') || '$',
     vegmark: String($root.data('vegmark')) === '1'
   };
@@ -151,60 +153,73 @@
   }
 
   /* ---------- rail / navigation ---------- */
-  function render(){
+  function fmt(str, a, b){ return String(str || '').replace('%1$s', a).replace('%2$s', b); }
+  function render(focus){
     var key = state.done ? 'done' : STEPS[state.idx];
     $('.rp-ob-pane').attr('hidden', true);
-    $('.rp-ob-pane[data-pane="' + key + '"]').removeAttr('hidden');
+    var $pane = $('.rp-ob-pane[data-pane="' + key + '"]').removeAttr('hidden');
     if (key === 'menu') { applyMenuSub(); }
+    if (key === 'delivery') { syncServicePanes(); }
+    if (key === 'test') { refreshChecklist(); }
     buildRail();
     $('.rp-ob-scroll').scrollTop(0);
-    $('#rp-ob-stepof').text(state.done ? cfg.launchedText || 'Complete' : ('Step ' + (state.idx + 1) + ' of ' + STEPS.length));
+    $('#rp-ob-stepof').text(state.done ? (sw.readyText || 'You are ready') : (menuImportMode ? '' : fmt(sw.stepOf || 'Step %1$s of %2$s', state.idx + 1, STEPS.length)));
     syncFooter();
+    if (focus) {
+      // Move focus to the new step heading so keyboard and screen reader users land on it.
+      var $h = $pane.find('[data-sub]:not([hidden]) .rp-ob-title').first();
+      if (!$h.length) { $h = $pane.find('.rp-ob-title').first(); }
+      $h.attr('tabindex', '-1').trigger('focus');
+    }
   }
   function buildRail(){
     $('#rp-ob-steps .rp-ob-step').each(function (i) {
-      var k = $(this).data('step');
-      $(this).toggleClass('active', !state.done && k === STEPS[state.idx]);
-      $(this).toggleClass('done', !!state.completed[k] || state.done);
-      $(this).find('.rp-ob-dot').html((state.completed[k] || state.done) ? '✓' : (i + 1));
+      var k = $(this).data('step'), active = !state.done && k === STEPS[state.idx];
+      var done = !!state.completed[k] || state.done, skipped = !done && !!state.skipped[k];
+      $(this).toggleClass('active', active).toggleClass('done', done).toggleClass('skipped', skipped);
+      if (active) { $(this).attr('aria-current', 'step'); } else { $(this).removeAttr('aria-current'); }
+      $(this).find('.rp-ob-dot').html(done ? '&#10003;' : (skipped ? '&ndash;' : String(i + 1)));
+      $(this).attr('title', skipped ? (sw.skippedLabel || 'Skipped') : '');
     });
     var doneCount = STEPS.filter(function (k) { return state.completed[k]; }).length;
     var pct = state.done ? 100 : Math.round(doneCount / STEPS.length * 100);
-    $('#rp-ob-pbar').css('width', pct + '%');
-    $('#rp-ob-pmeta').text(state.done ? 'All set - you’re live' : (doneCount + ' of ' + STEPS.length + ' complete'));
+    $('#rp-ob-pbar, #rp-sw-mbar').css('width', pct + '%');
+    $('#rp-ob-pmeta').text(state.done ? (sw.readyText || 'You are ready') : fmt(sw.progress || '%1$s of %2$s done', doneCount, STEPS.length));
   }
   function syncFooter(){
-    var $f = $('#rp-ob-footer'), $b = $('#rp-ob-back'), $n = $('#rp-ob-next');
+    var $f = $('#rp-ob-footer'), $b = $('#rp-ob-back'), $n = $('#rp-ob-next'), $s = $('#rp-sw-skip');
     if (state.done) { $f.hide(); return; } $f.css('display', 'flex');
     $b.css('visibility', ( state.idx === 0 || ( menuImportMode && state.menuSub === 'choose' ) ) ? 'hidden' : 'visible');
     $n.prop('disabled', false);
     var key = STEPS[state.idx];
     // Note: the UI kit sets .rp-btn{display:... !important}, so jQuery's
-    // hide()/show() inline styles lose — toggle a class instead.
+    // hide()/show() inline styles lose; toggle a class instead.
     $n.removeClass('rp-ob-hide');
+    $s.toggleClass('rp-ob-hide', menuImportMode || key === 'test');
     if (key === 'menu') {
       if (state.menuSub === 'review' || state.menuSub === 'manual') { $n.text(cfg.saveMenuText || 'Save menu'); }
       else if (state.menuSub === 'choose') { $n.text(cfg.continueText || 'Continue'); }
       else if (state.menuSub === 'sample') { $n.text(cfg.loadSampleText || 'Load sample menu'); }
       else { $n.addClass('rp-ob-hide'); }
-    } else if (key === 'golive') {
-      $n.text(cfg.finishText || 'Finish & go live').prop('disabled', !state.testOk);
+    } else if (key === 'test') {
+      $n.text(sw.finishText || 'Finish setup');
     } else {
-      $n.text(cfg.nextText || 'Save and continue');
+      $n.text(sw.nextText || cfg.nextText || 'Save and continue');
     }
     // On the standalone importer the footer only earns its space when it holds a
-    // primary action (Save menu / Load sample). On choose/AI/spreadsheet the cards
-    // and each track's own controls drive things, so drop the footer bar entirely
-    // rather than show a lone redundant "Continue".
+    // primary action (Save menu / Load sample).
     if (menuImportMode) {
       var footerHasAction = (key === 'menu' && (state.menuSub === 'review' || state.menuSub === 'manual' || state.menuSub === 'sample'));
       $f.css('display', footerHasAction ? 'flex' : 'none');
     }
   }
-  function goStep(i){ if (state.done) state.done = false; state.idx = Math.max(0, Math.min(STEPS.length - 1, i)); render(); }
-  function advance(){ if (state.idx < STEPS.length - 1) state.idx++; render(); }
+  function goStep(i){ if (i < 0) { return; } if (state.done) state.done = false; state.idx = Math.max(0, Math.min(STEPS.length - 1, i)); render(true); }
+  function advance(){ if (state.idx < STEPS.length - 1) state.idx++; render(true); }
 
   $('#rp-ob-steps').on('click', '.rp-ob-step', function () { goStep(STEPS.indexOf($(this).data('step'))); });
+  $('#rp-ob-steps').on('keydown', '.rp-ob-step', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goStep(STEPS.indexOf($(this).data('step'))); }
+  });
   $('#rp-ob-back').on('click', function () {
     var key = STEPS[state.idx];
     if (key === 'menu' && state.menuSub !== 'choose') { menuSub(state.menuSub === 'review' ? state.track : 'choose'); return; }
@@ -212,74 +227,107 @@
     if (state.idx > 0) goStep(state.idx - 1);
   });
   $('#rp-ob-next').on('click', onNext);
+  $('#rp-sw-skip').on('click', function () {
+    var key = STEPS[state.idx], $btn = $(this).prop('disabled', true);
+    wizardSave(key, {}, true).done(function (res) {
+      applyProgress(res);
+      if (key === 'menu') { state.menuSub = 'choose'; }
+      notice(sw.skipText || 'Step skipped.', 'info');
+      advance();
+    }).fail(function (xhr) { notice(getErrMsg(xhr), 'error'); })
+      .always(function () { $btn.prop('disabled', false); });
+  });
+  $root.on('click', '.rp-sw-ck-fix', function () { goStep(STEPS.indexOf($(this).data('step'))); });
+  $('#rp-sw-review').on('click', function () { state.done = false; state.idx = 0; render(true); });
 
   /* ---------- step data ---------- */
   function collect(pane){
     var data = {};
     $('.rp-ob-pane[data-pane="' + pane + '"]').find('input,select,textarea').each(function () {
-      var name = $(this).attr('name'); if (!name) return;
-      if ($(this).attr('type') === 'checkbox') { data[name] = $(this).is(':checked') ? ($(this).val() || 1) : ''; }
+      var name = $(this).attr('name'), type = $(this).attr('type'); if (!name) return;
+      if (type === 'radio') { if ($(this).is(':checked')) { data[name] = $(this).val(); } return; }
+      if (type === 'checkbox') { data[name] = $(this).is(':checked') ? ($(this).val() || 1) : ''; }
       else { data[name] = $(this).val(); }
     });
     return data;
   }
-  function saveStep(step, data, next){
-    return ajax('rpress_onboarding_save_step', { step: step, data: data, next_step: next || '' });
+  function wizardSave(step, data, skip){
+    return ajax('rpress_setup_wizard_save', { step: step, data: data || {}, skip: skip ? 1 : 0 });
+  }
+  function applyProgress(res){
+    var d = res && res.data; if (!d) { return; }
+    state.completed = {}; state.skipped = {};
+    (d.completed || []).forEach(function (k) { state.completed[k] = true; });
+    (d.skipped || []).forEach(function (k) { state.skipped[k] = true; });
+    if (d.checklist) { renderChecklist(d.checklist); }
+  }
+  function hoursData(){
+    var days = {};
+    $('.rp-sw-day').each(function () {
+      var $r = $(this), closed = $r.find('.rp-sw-closed-cb').is(':checked');
+      days[$r.data('day')] = { open: $r.find('.rp-sw-open').val(), close: $r.find('.rp-sw-close').val(), closed: closed ? 1 : '' };
+    });
+    return { days: days };
+  }
+  function stepData(key){
+    if (key === 'services') { var d = collect('services'); d.enable_service = $('#rp-ob-svc-val').val(); return d; }
+    if (key === 'hours') { return $('.rp-sw-day').length ? hoursData() : {}; }
+    if (key === 'payments') { return paymentsData(); }
+    if (key === 'delivery') {
+      // Only send the fields that apply to the services offered.
+      var dd = collect('delivery'), svc = $('#rp-ob-svc-val').val();
+      if (svc === 'pickup') { delete dd.flat_delivery_fee; delete dd.minimum_order_price; }
+      if (svc === 'delivery') { delete dd.minimum_order_price_pickup; }
+      return dd;
+    }
+    if (key === 'store') { return collect('store'); }
+    return {};
   }
 
   function onNext(){
     var key = STEPS[state.idx];
     var $n = $('#rp-ob-next'); $n.prop('disabled', true);
+    var failed = function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); };
 
-    if (key === 'profile') {
-      saveStep('profile', collect('profile'), 'appearance').done(function () { state.completed.profile = true; advance(); })
-        .fail(function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); });
-      return;
-    }
-    if (key === 'appearance') {
-      var pack = $('.rp-ob-pane[data-pane="appearance"] input[name="template_pack"]:checked').val() || 'classic';
-      saveStep('appearance', {
-        template_pack: pack,
-        primary_color: $('#rp-ob-theme-color').val() || '',
-        template: $('#rp-ob-layout-val').val() || 'list'
-      }, 'menu').done(function () { state.completed.appearance = true; advance(); })
-        .fail(function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); });
-      return;
-    }
     if (key === 'menu') {
       if (state.menuSub === 'choose') { pickTrack(state.track); $n.prop('disabled', false); return; }
       if (state.menuSub === 'sample') { loadSample(); $n.prop('disabled', false); return; }
       if (state.menuSub === 'review' || state.menuSub === 'manual') { commitMenu(); return; }
       $n.prop('disabled', false); return;
     }
-    if (key === 'config') {
-      var d = collect('config');
-      var svc = $('#rp-ob-svc-val').val();
-      // chain the existing controller steps
-      var minDelivery = parseFloat(d.minimum_order_price) || 0, minPickup = parseFloat(d.minimum_order_price_pickup) || 0;
-      saveStep('ordering', {
-        enable_service: svc, prep_time: d.prep_time, enable_asap_option: d.enable_asap_option,
-        default_service: (svc === 'delivery' ? 'delivery' : 'pickup'),
-        allow_minimum_order: (minDelivery > 0 || minPickup > 0) ? 1 : '',
-        minimum_order_price: minDelivery > 0 ? d.minimum_order_price : '',
-        minimum_order_price_pickup: minPickup > 0 ? d.minimum_order_price_pickup : ''
-      })
-        .always(function () { return saveStep('hours', { open_time: d.open_time, close_time: d.close_time }); })
-        .then(function () { return saveStep('operations', { enable_order_notification: d.enable_order_notification, admin_notice_emails: d.admin_notice_emails, enable_food_type: d.enable_food_type }); })
-        .always(function () { state.completed.config = true; advance(); });
-      return;
-    }
-    if (key === 'payments') {
-      saveStep('payments', paymentsData())
-        .always(function () { state.completed.payments = true; advance(); });
-      return;
-    }
-    if (key === 'golive') {
-      saveStep('launch', { confirm_test_order: 1 }).done(function () { state.completed.golive = true; state.done = true; render(); })
-        .fail(function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); });
-      return;
-    }
+    wizardSave(key, stepData(key)).done(function (res) {
+      applyProgress(res);
+      if (key === 'payments') { $('#rp-sw-stripe-sk').val(''); }
+      if (key === 'test') { state.done = true; render(true); return; }
+      advance();
+    }).fail(failed);
   }
+
+  /* ---------- launch checklist ---------- */
+  function renderChecklist(items){
+    var $ul = $('<ul class="rp-sw-checklist"></ul>');
+    (items || []).forEach(function (it) {
+      var $li = $('<li></li>').addClass(it.done ? 'is-done' : 'is-missing').attr('data-id', it.id);
+      $('<span class="rp-sw-ck-icon" aria-hidden="true"></span>').html(it.done ? '&#10003;' : '!').appendTo($li);
+      var $t = $('<span class="rp-sw-ck-text"></span>').appendTo($li);
+      $('<b></b>').text(it.label).appendTo($t);
+      $('<span class="screen-reader-text"></span>').text(' ' + (it.done ? (sw.doneSr || 'Done') : (sw.missingSr || 'Still missing'))).appendTo($t);
+      if (!it.done && it.hint) { $('<small></small>').text(it.hint).appendTo($t); }
+      if (!it.done && it.step) {
+        $('<button type="button" class="rp-btn rp-btn-secondary rp-ob-btn-sm rp-sw-ck-fix"></button>').attr('data-step', it.step).text(sw.fixText || 'Fix').appendTo($li);
+      } else if (!it.done && it.url && /^https?:\/\//i.test(it.url)) {
+        $('<a class="rp-btn rp-btn-secondary rp-ob-btn-sm" target="_blank" rel="noopener"></a>').attr('href', it.url).text(sw.openText || 'Open').appendTo($li);
+      }
+      $ul.append($li);
+    });
+    $('#rp-sw-checklist').empty().append($ul);
+  }
+  function refreshChecklist(){
+    if (!$('#rp-sw-checklist').length || menuImportMode) { return; }
+    ajax('rpress_setup_wizard_checklist', {}).done(function (res) { if (res && res.data) { renderChecklist(res.data.checklist); } });
+  }
+  // Refresh when the merchant comes back from placing the test order in another tab.
+  $(window).on('focus', function () { if (!state.done && STEPS[state.idx] === 'test') { refreshChecklist(); } });
 
   /* ---------- profile: states + clock ---------- */
   function loadStates(country, preselect){
@@ -310,13 +358,13 @@
   });
 
   $('#rp-ob-tf').on('click', 'button', function () {
-    $('#rp-ob-tf button').removeClass('on'); $(this).addClass('on');
+    $('#rp-ob-tf button').removeClass('on').attr('aria-pressed', 'false'); $(this).addClass('on').attr('aria-pressed', 'true');
     $('#rp-ob-tf-val').val($(this).data('tf')); tick(); updatePvHours();
   });
 
   // Appearance step: menu-layout segmented toggle + live theme-colour hex.
   $('#rp-ob-layout').on('click', 'button', function () {
-    $('#rp-ob-layout button').removeClass('on'); $(this).addClass('on');
+    $('#rp-ob-layout button').removeClass('on').attr('aria-pressed', 'false'); $(this).addClass('on').attr('aria-pressed', 'true');
     $('#rp-ob-layout-val').val($(this).data('layout'));
   });
   $('#rp-ob-theme-color').on('input', function () { $('#rp-ob-theme-hex').text(($(this).val() || '').toUpperCase()); });
@@ -328,13 +376,46 @@
     if ($('#rp-ob-tf-val').val() === '24') { return ('0' + h).slice(-2) + ':' + m; }
     return ((h % 12) || 12) + ':' + m + ' ' + (h < 12 ? 'AM' : 'PM');
   }
-  // Keep the phone-preview hours in sync with the Ordering hours fields.
+  // Keep the phone-preview hours in sync with today's row of the weekly hours grid.
   function updatePvHours(){
-    var o = $('input[name="open_time"]').val(), c = $('input[name="close_time"]').val();
-    if (o && c) { $('#rp-ob-pv-hours').text(fmtTime(o) + '–' + fmtTime(c)); }
+    var n = new Date().getDay() || 7, $r = $('.rp-sw-day[data-day="' + n + '"]');
+    if (!$r.length) { return; }
+    if ($r.find('.rp-sw-closed-cb').is(':checked')) { $('#rp-ob-pv-hours').text($.trim($r.find('.rp-sw-closed').text())); return; }
+    var o = $r.find('.rp-sw-open').val(), c = $r.find('.rp-sw-close').val();
+    if (o && c) { $('#rp-ob-pv-hours').text(fmtTime(o) + ' - ' + fmtTime(c)); }
   }
-  $root.on('input change', 'input[name="open_time"],input[name="close_time"]', updatePvHours);
+  $root.on('input change', '.rp-sw-day input', updatePvHours);
   updatePvHours();
+
+  /* ---------- hours grid ---------- */
+  $root.on('change', '.rp-sw-closed-cb', function () {
+    var $r = $(this).closest('.rp-sw-day'), closed = $(this).is(':checked');
+    $r.toggleClass('is-closed', closed).find('input[type="time"]').prop('disabled', closed);
+  });
+  $('#rp-sw-all-apply').on('click', function () {
+    var o = $('#rp-sw-all-open').val(), c = $('#rp-sw-all-close').val();
+    $('.rp-sw-day').each(function () {
+      $(this).removeClass('is-closed').find('.rp-sw-closed-cb').prop('checked', false);
+      $(this).find('.rp-sw-open').prop('disabled', false).val(o);
+      $(this).find('.rp-sw-close').prop('disabled', false).val(c);
+    });
+    updatePvHours();
+  });
+
+  /* ---------- timezone check (browser vs WordPress) ---------- */
+  (function () {
+    var browserTz = '';
+    try { browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { browserTz = ''; }
+    var $sel = $('#rp-ob-tz'), $box = $('#rp-sw-tzbrowser');
+    if (!browserTz || !$sel.length || !$box.length) { return; }
+    var known = $sel.find('option').filter(function () { return this.value === browserTz; }).length > 0;
+    function check(){ $box.attr('hidden', !known || $sel.val() === browserTz); }
+    $box.find('span').text(String(sw.tzBrowser || 'Your computer is set to %s.').replace('%s', browserTz));
+    $('#rp-sw-tzuse').text(sw.tzUse || 'Use this timezone').on('click', function () { $sel.val(browserTz).trigger('change'); $sel.trigger('focus'); });
+    $sel.on('change', check);
+    check();
+  })();
+
   function tick(){
     var $el = $('#rp-ob-clocknow'); if (!$el.length) return;
     var tf = $('#rp-ob-tf-val').val();
@@ -454,7 +535,7 @@
 
   /* AI provider selection (WordPress AI / OpenAI / Gemini / Claude + key) */
   function aiProviderData(){
-    return { enabled: 'yes', provider: $('#rp-ob-ai-provider').val() || 'wordpress', api_key: $('#rp-ob-ai-key').val() || '', model: '' };
+    return { enabled: 'yes', provider: $('#rp-ob-ai-provider').val() || 'wordpress', api_key: $('#rp-ob-ai-key').val() || '' };
   }
   $('#rp-ob-ai-provider').on('change', function () {
     var isWp = $(this).val() === 'wordpress';
@@ -886,7 +967,8 @@
         if (url && !failed) { setTimeout(function () { window.location = url; }, 900); }
         return;
       }
-      state.completed.menu = true; $('#rp-ob-vmenu').text(saved + ' items live on the ordering page'); refreshPreview(); advance();
+      refreshPreview();
+      wizardSave('menu', {}).done(applyProgress).always(function () { state.completed.menu = true; delete state.skipped.menu; advance(); });
     };
     var fail = function (xhr) { $n.prop('disabled', false); notice(getErrMsg(xhr), 'error'); };
     var payload = JSON.stringify({ categories: regroup() });
@@ -938,39 +1020,53 @@
     menuSub('review');
   }
 
-  /* ---------- config / payments ---------- */
+  /* ---------- services / delivery / payments ---------- */
+  function syncServicePanes(){
+    var v = $('#rp-ob-svc-val').val() || 'delivery_and_pickup';
+    $('.rp-sw-delivery-only').attr('hidden', v === 'pickup');
+    $('.rp-sw-pickup-only').attr('hidden', v === 'delivery');
+    $('.rp-sw-no-delivery').attr('hidden', v !== 'pickup');
+    $('.rp-sw-both-only').attr('hidden', v !== 'delivery_and_pickup');
+  }
   $('#rp-ob-svc').on('click', 'button', function () {
-    $('#rp-ob-svc button').removeClass('on'); $(this).addClass('on');
+    $('#rp-ob-svc button').removeClass('on').attr('aria-pressed', 'false'); $(this).addClass('on').attr('aria-pressed', 'true');
     var v = $(this).data('svc'); $('#rp-ob-svc-val').val(v);
-    $('#rp-ob-pv-svc').text({ delivery_and_pickup: 'Pickup & delivery', pickup: 'Pickup only', delivery: 'Delivery only' }[v]);
+    $('#rp-ob-pv-svc').text($(this).text());
+    syncServicePanes();
   });
+  syncServicePanes();
   $('#rp-ob-vegmark').on('change', function () { state.vegmark = $(this).is(':checked'); if (state.menuSub === 'review') buildReview(); refreshPreview(); });
   $('.rp-ob-switch').on('click', function () {
     $(this).toggleClass('on');
     var pay = $(this).data('pay'), on = $(this).hasClass('on');
-    // Online gateways (paypal, stripe) reveal a status line + track a flag.
+    $(this).attr('aria-checked', on ? 'true' : 'false');
+    $('#rp-ob-' + pay + '-enabled').val(on ? '1' : '0');
+    // Online gateways reveal their key fields / status line.
     if (pay === 'paypal' || pay === 'stripe') {
       $(this).closest('.rp-ob-pay').find('.rp-ob-paymeta').attr('hidden', !on);
-      $('#rp-ob-' + pay + '-enabled').val(on ? '1' : '0');
     }
   });
-  // Onboarding only enables/disables gateways; configuration lives on each
-  // gateway's settings page reached via the "Configure" link.
   function paymentsData(){
-    return {
-      cash_gateway: 1,
-      paypal_enabled: $('#rp-ob-paypal-enabled').val() || '0',
-      stripe_enabled: $('#rp-ob-stripe-enabled').val() || '0'
+    var d = {
+      cash_gateway: $('#rp-ob-cash-enabled').val() || '0',
+      paypal_enabled: $('#rp-ob-paypal-enabled').val() || '0'
     };
+    if ($('#rp-ob-stripe-enabled').length) {
+      d.stripe_enabled = $('#rp-ob-stripe-enabled').val() || '0';
+      d.stripe_publishable_key = $.trim($('#rp-sw-stripe-pk').val() || '');
+      d.stripe_secret_key = $.trim($('#rp-sw-stripe-sk').val() || '');
+    }
+    return d;
   }
 
-  /* ---------- go live ---------- */
-  $('#rp-ob-testconfirm').on('change', function () {
-    state.testOk = $(this).is(':checked');
-    $('#rp-ob-testrow .rp-ob-vd').toggleClass('rp-ob-vd-pending', !state.testOk).html(state.testOk ? '✓' : '○');
-    syncFooter();
+  /* ---------- done ---------- */
+  $('#rp-ob-copy').on('click', function () {
+    var inp = document.getElementById('rp-sw-share'); if (!inp) { return; }
+    inp.select();
+    var ok = function () { notice(sw.copiedText || 'Copied'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(inp.value).then(ok, function () { document.execCommand('copy'); ok(); }); }
+    else { document.execCommand('copy'); ok(); }
   });
-  $('#rp-ob-copy').on('click', function () { var inp = $('.rp-ob-share input')[0]; if (inp) { inp.select(); document.execCommand('copy'); notice('Copied'); } });
 
   /* ---------- live preview ---------- */
   function refreshPreview(){
@@ -999,12 +1095,12 @@
     state.menuSub = 'choose';
   } else {
     (function () {
-      var MAP = { profile: 'profile', menu: 'menu', review: 'menu', ordering: 'config', hours: 'config', operations: 'config', payments: 'payments', launch: 'golive' };
-      String($root.data('completed') || '').split(',').forEach(function (k) {
-        if (MAP[k]) { state.completed[MAP[k]] = true; }
-      });
+      String($root.data('completed') || '').split(',').forEach(function (k) { if (k) { state.completed[k] = true; } });
+      String($root.data('skipped') || '').split(',').forEach(function (k) { if (k) { state.skipped[k] = true; } });
       if ($root.hasClass('is-launched')) { state.done = true; return; }
-      for (var n = 0; n < STEPS.length; n++) { if (!state.completed[STEPS[n]]) { state.idx = n; break; } }
+      var resume = STEPS.indexOf(String($root.data('resume') || ''));
+      if (resume > -1) { state.idx = resume; return; }
+      for (var n = 0; n < STEPS.length; n++) { if (!state.completed[STEPS[n]] && !state.skipped[STEPS[n]]) { state.idx = n; break; } }
     })();
   }
   render();

@@ -28,6 +28,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 function rpress_install( $network_wide = false ) {
 	global $wpdb;
+	// Decide before the install routine writes rpress_version: only a brand new
+	// store gets the one-time redirect into the setup wizard.
+	$is_fresh = function_exists( 'rpress_setup_wizard_is_fresh_install' )
+		? rpress_setup_wizard_is_fresh_install()
+		: false === get_option( 'rpress_version', false );
 	if ( is_multisite() && $network_wide ) {
 		$batch_size = 100;
 		$offset     = 0;
@@ -49,8 +54,8 @@ function rpress_install( $network_wide = false ) {
 	} else {
 		rpress_run_install();
 	}
-	// Only set if not already set, so it doesn't override
-	if ( false === get_option( 'rpress_show_setup_wizard' ) ) {
+	// Fresh single-site installs only: existing stores get an admin notice instead.
+	if ( $is_fresh && ! $network_wide && false === get_option( 'rpress_show_setup_wizard' ) ) {
 		add_option( 'rpress_show_setup_wizard', true );
 	}
 }
@@ -205,6 +210,12 @@ function rpress_run_install() {
 			}
 		}
 	}
+	// 3.5: one-tap reorder is on for new stores only. Existing stores keep their
+	// choice (a cleared checkbox is stored the same as never set) and are offered
+	// it through a Settings notice instead.
+	if ( ! $current_version && ! array_key_exists( 'rp_reorder', $current_options ) ) {
+		$options['rp_reorder'] = '1';
+	}
 	$merged_options = array_merge( $rpress_options, $options );
 	$rpress_options = $merged_options;
 	update_option( 'rpress_settings', $merged_options );
@@ -310,20 +321,32 @@ function rpress_after_install() {
 add_action( 'admin_init', 'rpress_after_install' );
 
 function rpress_maybe_redirect_to_setup_wizard() {
-	// Only run for admins, in the dashboard
-	if ( ! current_user_can( 'manage_options' ) || ! is_admin() ) {
+	if ( ! is_admin() || ! get_option( 'rpress_show_setup_wizard' ) ) {
 		return;
 	}
 
-	// Avoid redirect loops or if already on the setup page
-	if ( get_option( 'rpress_show_setup_wizard' ) && ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'rpress-setup' ) ) {
-		// Remove flag so it only happens once
+	// A bulk activation or network admin never redirects; drop the flag so the
+	// store gets the wizard notice instead of a surprise redirect later.
+	if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		delete_option( 'rpress_show_setup_wizard' );
-
-		// Redirect to your wizard page
-		wp_safe_redirect( admin_url( 'admin.php?page=rpress-setup' ) );
-		exit;
+		return;
 	}
+
+	// AJAX, cron, REST and CLI requests, or users who cannot run the wizard, wait for a normal page load.
+	$can_redirect = function_exists( 'rpress_setup_wizard_can_redirect' )
+		? rpress_setup_wizard_can_redirect()
+		: ( ! wp_doing_ajax() && current_user_can( 'manage_shop_settings' ) );
+	if ( ! $can_redirect ) {
+		return;
+	}
+
+	// Redirect once.
+	delete_option( 'rpress_show_setup_wizard' );
+	if ( isset( $_GET['page'] ) && 'rpress-setup' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return;
+	}
+	wp_safe_redirect( admin_url( 'admin.php?page=rpress-setup' ) );
+	exit;
 }
 add_action( 'admin_init', 'rpress_maybe_redirect_to_setup_wizard' );
 /**
@@ -496,3 +519,28 @@ function rpress_check_migartion() {
 	}
 }
 add_action( 'admin_init', 'rpress_check_migartion' );
+
+/**
+ * Record a plugin update. WordPress updates do not run the activation
+ * routine, so the stored version stayed at the first installed release.
+ *
+ * @since 3.5
+ * @return void
+ */
+function rpress_maybe_record_update() {
+	$stored = get_option( 'rpress_version', false );
+	if ( ! $stored || ! defined( 'RP_VERSION' ) || ! version_compare( $stored, RP_VERSION, '<' ) ) {
+		return;
+	}
+	update_option( 'rpress_version_upgraded_from', $stored );
+	update_option( 'rpress_version', RP_VERSION );
+	/**
+	 * Fires once after RestroPress was updated to a newer version.
+	 *
+	 * @since 3.5
+	 * @param string $from Previous version.
+	 * @param string $to   Current version.
+	 */
+	do_action( 'rpress_updated', $stored, RP_VERSION );
+}
+add_action( 'admin_init', 'rpress_maybe_record_update', 5 );

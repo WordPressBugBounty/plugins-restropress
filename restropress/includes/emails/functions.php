@@ -223,11 +223,11 @@ function rpress_get_email_names( $user_info, $payment = false ) {
 		if ( isset( $user_info['id'] ) && $user_info['id'] > 0 && isset( $user_info['first_name'] ) ) {
 			$user_data = get_userdata( $user_info['id'] );
 			$email_names['name']      = $user_info['first_name'];
-			$email_names['fullname']  = $user_info['first_name'] . ' ' . $user_info['last_name'];
+			$email_names['fullname']  = trim( $user_info['first_name'] . ' ' . ( isset( $user_info['last_name'] ) ? $user_info['last_name'] : '' ) );
 			$email_names['username']  = $user_data->user_login;
 		} elseif ( isset( $user_info['first_name'] ) ) {
 			$email_names['name']     = $user_info['first_name'];
-			$email_names['fullname'] = $user_info['first_name'] . ' ' . $user_info['last_name'];
+			$email_names['fullname'] = trim( $user_info['first_name'] . ' ' . ( isset( $user_info['last_name'] ) ? $user_info['last_name'] : '' ) );
 			$email_names['username'] = $user_info['first_name'];
 		} else {
 			$email_names['name']     = $user_info['email'];

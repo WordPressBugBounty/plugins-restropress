@@ -1,4 +1,8 @@
 jQuery(function ($) {
+  // Store Time Format setting (12 or 24 hours) for every admin time picker.
+  function rpTimeFormat() {
+    return (window.rpress_vars && rpress_vars.time_format) || 'g:ia';
+  }
   $(document)
     .on('click', '.rp-service-time span', function (e) {
       $(this)
@@ -10,6 +14,7 @@ jQuery(function ($) {
         .timepicker({
           dropdown: true,
           scrollbar: true,
+          timeFormat: rpTimeFormat(),
         });
     });
   $('select.addon-items-list')
@@ -25,6 +30,7 @@ jQuery(function ($) {
     .timepicker({
       dropdown: true,
       scrollbar: true,
+      timeFormat: rpTimeFormat(),
     });
   //Validate License
   $('body')
@@ -601,12 +607,16 @@ jQuery(document)
     var rpress_datepicker = $('.rpress_datepicker');
     if (rpress_datepicker.length > 0) {
       var dateFormat = rpress_vars.date_format || 'mm/dd/yy';
-      rpress_datepicker.datepicker({
-        dateFormat: dateFormat
+      rpress_datepicker.each(function () {
+        // A field can fix its own format (discount dates are saved as mm/dd/yyyy).
+        var $field = $(this);
+        $field.datepicker({
+          dateFormat: $field.data('rp-date-format') || dateFormat
+        });
+        if (!$field.attr('placeholder') && rpress_vars.date_placeholder) {
+          $field.attr('placeholder', rpress_vars.date_placeholder);
+        }
       });
-      if (rpress_vars.date_placeholder) {
-        rpress_datepicker.attr('placeholder', rpress_vars.date_placeholder);
-      }
     }
     /**
      * Edit payment screen JS

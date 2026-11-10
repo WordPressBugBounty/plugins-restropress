@@ -51,6 +51,7 @@ if ( ! is_user_logged_in() ) :
 			<p>
 				<input type="hidden" name="rpress_honeypot" value="" />
 				<input type="hidden" name="rpress_action" value="user_register" />
+				<?php wp_nonce_field( 'rpress-register-nonce', 'rpress_register_nonce' ); ?>
 				<input type="hidden" name="rpress_redirect" value="<?php echo esc_url( $rpress_register_redirect ); ?>"/>
 				<input type="submit" class="rpress-submit <?php echo wp_kses_post( $style ); ?>" id="rpress-purchase-button" name="rpress_register_submit" value="<?php esc_attr_e( 'Register', 'restropress' ); ?>"/>
 			</p>

@@ -28,7 +28,7 @@ function rpress_print_errors() {
 			'rpress_errors', 'rpress-alert', 'rpress-alert-error'
 		) );
 		if ( ! empty( $errors ) ) {
-			echo '<div class="' . esc_attr( implode( ' ', $classes ) ) . '">';
+			echo '<div class="' . esc_attr( implode( ' ', $classes ) ) . '" role="alert">';
 				// Loop error codes and display errors
 				foreach ( $errors as $error_id => $error ) {
 					echo '<p class="rpress_error" id="rpress_error_' . esc_attr( $error_id ) . '"><strong>' . esc_html__( 'Error', 'restropress' ) . ':</strong> ' . esc_html( $error ) . '</p>';

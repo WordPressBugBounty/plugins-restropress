@@ -72,7 +72,7 @@ function rpress_upgrades_screen() {
         <script type="text/javascript">
           jQuery( document ).ready( function() {
             // Trigger upgrades on page load
-            var data = { action: 'rpress_trigger_upgrades' };
+            var data = { action: 'rpress_trigger_upgrades', nonce: '<?php echo esc_js( wp_create_nonce( 'rpress-upgrades' ) ); ?>' };
             jQuery.post( ajaxurl, data, function (response) {
               if( response == 'complete' ) {
                 jQuery('#rpress-upgrade-loader').hide();

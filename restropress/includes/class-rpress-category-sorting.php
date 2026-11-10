@@ -238,6 +238,9 @@ class RP_Food_Category_Sorting {
         if ( ! check_ajax_referer( 'term_order_nonce', 'term_order_nonce', false ) ) {
             wp_send_json_error();
         }
+        if ( ! current_user_can( 'manage_product_terms' ) && ! current_user_can( 'manage_categories' ) ) {
+            wp_send_json_error( null, 403 );
+        }
         $taxonomy_ordering_data = isset( $_POST['taxonomy_ordering_data'] ) ? wp_unslash( $_POST['taxonomy_ordering_data'] ) : array();
         $base_index             = isset( $_POST['base_index'] ) ? absint( wp_unslash( $_POST['base_index'] ) ) : 0;
 

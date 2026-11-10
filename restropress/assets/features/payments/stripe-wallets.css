@@ -1,0 +1,41 @@
+/* Apple Pay / Google Pay button on checkout (3.5). Boxes fully declared so
+   legacy checkout styles cannot leak in. */
+.rpress-stripe-wallet[hidden] {
+	display: none !important;
+}
+.rpress-stripe-wallet {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0 0 16px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+}
+.rpress-stripe-wallet-button {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 46px;
+	margin: 0;
+	padding: 0;
+}
+.rpress-stripe-wallet-divider {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 16px 0 0;
+	padding: 0;
+	font-size: 13px;
+	line-height: 1.4;
+	color: #6b7280;
+	text-align: center;
+	text-transform: none;
+}
+.rpress-stripe-wallet-divider::before,
+.rpress-stripe-wallet-divider::after {
+	content: "";
+	flex: 1 1 auto;
+	height: 1px;
+	background: #e5e7eb;
+}

@@ -26,6 +26,9 @@ endif;
 
 $meta           = rpress_get_payment_meta( $payment->ID );
 $service_time   = rpress_get_payment_meta( $payment->ID, '_rpress_delivery_time' );
+if ( is_string( $service_time ) && false !== stripos( $service_time, 'ASAP' ) ) {
+	$service_time = rpress_format_service_time( $service_time );
+}
 $service_date   = rpress_get_payment_meta( $payment->ID, '_rpress_delivery_date', true );
 $cart           = rpress_get_payment_meta_cart_details( $payment->ID, true );
 $discount       = rpress_get_discount_price_by_payment_id( $payment->ID );
@@ -91,7 +94,7 @@ foreach ( $status_model as $skey => $sinfo ) {
 $phase        = isset( $phase_map[ $order_status_key ] ) ? $phase_map[ $order_status_key ] : 'pending';
 $current_step = isset( $step_map[ $order_status_key ] ) ? $step_map[ $order_status_key ] : 0;
 
-$pending_msg = __( "We've sent your order to %s — it usually takes a minute or two to confirm.", 'restropress' );
+$pending_msg = __( "We've sent your order to %s. It usually takes a minute or two to confirm.", 'restropress' );
 try {
 	$pending_msg = sprintf( /* translators: %s store name */ $pending_msg, $store_name );
 } catch ( \Throwable $e ) {
@@ -112,7 +115,7 @@ $phase_copy   = array(
 	'preparing' => array( __( 'In the kitchen', 'restropress' ), __( 'Your food is being prepared right now.', 'restropress' ) ),
 	'ready'     => $is_delivery
 		? array( __( 'Ready to go', 'restropress' ), __( 'Your order is packed and waiting for a rider to pick it up.', 'restropress' ) )
-		: array( __( 'Ready for pickup', 'restropress' ), __( 'Your order is ready — come collect it when you can.', 'restropress' ) ),
+		: array( __( 'Ready for pickup', 'restropress' ), __( 'Your order is ready. Come collect it when you can.', 'restropress' ) ),
 	'transit'   => array( __( 'Out for delivery', 'restropress' ), __( 'Your rider has picked up the order and is on the way.', 'restropress' ) ),
 	'delivered' => array( $is_delivery ? __( 'Delivered', 'restropress' ) : __( 'Picked up', 'restropress' ), $is_delivery ? __( 'Your order has arrived. Enjoy your meal!', 'restropress' ) : __( 'Order collected. Enjoy your meal!', 'restropress' ) ),
 	'cancelled' => array( __( 'Order cancelled', 'restropress' ), __( 'This order was cancelled.', 'restropress' ) ),
@@ -130,18 +133,30 @@ $method_noun = trim( preg_replace( '/^pay\s+(by|via|with|using)\s+/i', '', (stri
 if ( '' === $method_noun ) {
 	$method_noun = $payment_method;
 }
-$is_paid   = in_array( $payment->post_status, array( 'publish', 'complete' ), true ) || 'delivered' === $phase;
+$pay_state = function_exists( 'rpress_get_payment_paid_state' ) ? rpress_get_payment_paid_state( $payment->ID ) : '';
+$is_paid   = 'paid' === $pay_state || in_array( $payment->post_status, array( 'publish', 'complete' ), true ) || 'delivered' === $phase;
 $pay_label = $is_paid ? __( 'Paid', 'restropress' ) : '';
+// Online gateways are paid up front, so an unconfirmed online payment must not
+// read "pay when your order arrives".
+$pay_offline = ! function_exists( 'rpress_is_offline_gateway' ) || rpress_is_offline_gateway( rpress_get_payment_gateway( $payment->ID ) );
 try {
-	$pay_note  = $is_paid
-		? sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun )
-		: ( 'pickup' === $service_type
+	if ( $is_paid ) {
+		$pay_note = sprintf( /* translators: 1: amount 2: method */ __( '%1$s paid by %2$s', 'restropress' ), $order_total, $method_noun );
+	} elseif ( 'refunded' === $pay_state ) {
+		$pay_label = __( 'Refunded', 'restropress' );
+		$pay_note  = sprintf( /* translators: 1: amount 2: method */ __( '%1$s refunded to your %2$s payment', 'restropress' ), $order_total, $method_noun );
+	} elseif ( in_array( $pay_state, array( 'failed', 'abandoned' ), true ) ) {
+		$pay_label = __( 'Payment failed', 'restropress' );
+		$pay_note  = sprintf( /* translators: 1: amount 2: method */ __( 'Your %2$s payment of %1$s did not go through', 'restropress' ), $order_total, $method_noun );
+	} elseif ( ! $pay_offline ) {
+		$pay_note = sprintf( /* translators: 1: amount 2: method */ __( 'Waiting for %2$s to confirm your payment of %1$s', 'restropress' ), $order_total, $method_noun );
+	} else {
+		$pay_note = 'pickup' === $service_type
 			? sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when you collect your order', 'restropress' ), $order_total, $method_noun )
-			: sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when your order arrives', 'restropress' ), $order_total, $method_noun ) );
+			: sprintf( /* translators: 1: amount 2: method */ __( 'Pay %1$s by %2$s when your order arrives', 'restropress' ), $order_total, $method_noun );
+	}
 } catch ( \Throwable $e ) {
-	$pay_note  = $is_paid
-		? trim( $order_total . ' ' . $method_noun )
-		: trim( $order_total . ' ' . $method_noun );
+	$pay_note  = trim( $order_total . ' ' . $method_noun );
 }
 
 // Inline status icons (Lucide-style). Shared between PHP render and JS updates.
@@ -301,6 +316,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 						<?php endif; ?>
 						<?php if ( rpress_use_taxes() ) : ?>
 							<div class="rp-track-total-row"><span><?php echo esc_html( rpress_get_tax_name() ); ?></span><span><?php echo esc_html( rpress_payment_tax( $payment->ID ) ); ?></span></div>
+							<?php do_action( 'rpress_receipt_after_tax_row', $payment->ID, 'receipt' ); ?>
 						<?php endif; ?>
 						<div class="rp-track-grand">
 							<span><?php esc_html_e( 'Total', 'restropress' ); ?></span>
@@ -348,7 +364,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 					<div class="rp-track-dp-text">
 						<div class="rp-track-dp-payhead">
 							<span class="rp-track-dp-label"><?php esc_html_e( 'Payment', 'restropress' ); ?></span>
-							<span class="rp-track-pay-badge<?php echo $is_paid ? ' is-paid' : ''; ?>" id="rp-track-pay-badge"<?php echo ! $is_paid ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $pay_label ); ?></span>
+							<span class="rp-track-pay-badge<?php echo $is_paid ? ' is-paid' : ''; ?><?php echo ( ! $is_paid && '' !== $pay_label ) ? ' is-' . esc_attr( $pay_state ) : ''; ?>" id="rp-track-pay-badge"<?php echo '' === $pay_label ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $pay_label ); ?></span>
 						</div>
 						<div class="rp-track-dp-detail" id="rp-track-pay-note"><?php echo esc_html( $pay_note ); ?></div>
 					</div>

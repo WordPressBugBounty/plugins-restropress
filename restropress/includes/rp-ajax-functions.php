@@ -167,7 +167,7 @@ function get_fooditem_lists($fooditem_id, $cart_key = '')
                     $price_id = array_key_first($prices);
                 }
                 foreach ($prices as $k => $price) {
-                    $rate = (float) rpress_get_option('tax_rate', 0);
+                    $rate = rpress_get_fooditem_tax_percent( $fooditem_id );
                     // Convert to a number we can use
                     $include_tax = rpress_get_option('prices_include_tax', true);
                     $tax_inc_exc_item_option = rpress_get_option('tax_item', true);
@@ -245,13 +245,13 @@ function get_fooditem_lists($fooditem_id, $cart_key = '')
                     <h6 class="rpress-addon-category">
                         <?php echo esc_html($addon_name); ?>
                         <?php if (!empty($max_addons)): ?>
-                            <?php
+                            <span class="rp-addon-max"><?php
                             printf(
                                 /* translators: %s: Placeholder for max addons */
                                 esc_html__('(max. %s):', 'restropress'),
                                 esc_html($max_addons)
                             );
-                            ?>
+                            ?></span>
                         <?php endif; ?>
                         <?php if ($is_required == 'yes'): ?>
                             <span class="rp-addon-required">

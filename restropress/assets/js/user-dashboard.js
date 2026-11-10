@@ -34,20 +34,28 @@ jQuery('document').ready(function($) {
         $('body .user-dashboard-wrapper.user-profile ul li').removeClass('active');
         $(this).addClass('active');
     });
-    $('body .user-dashboard-wrapper.user-profile ul li.user-profile').click(function(){
-        $('body .user-dashboard-wrapper.user-profile #user-profile').show();
-        $('body .user-dashboard-wrapper.user-profile #user-my-address').hide();
-        $('body .user-dashboard-wrapper.user-profile #user-my-orders').hide();
-    });
-    $('body .user-dashboard-wrapper.user-profile ul li.user-my-address').click(function(){
-        $('body .user-dashboard-wrapper.user-profile #user-profile').hide();
-        $('body .user-dashboard-wrapper.user-profile #user-my-address').show();
-        $('body .user-dashboard-wrapper.user-profile #user-my-orders').hide();
-    });
-    $('body .user-dashboard-wrapper.user-profile ul li.user-my-orders').click(function(){
-        $('body .user-dashboard-wrapper.user-profile #user-profile').hide();
-        $('body .user-dashboard-wrapper.user-profile #user-my-address').hide();
-        $('body .user-dashboard-wrapper.user-profile #user-my-orders').show();
+    // Each sidebar item with class "user-xyz" shows the panel with id "user-xyz".
+    function showDashboardPanel(panelId) {
+        var $wrap = $('body .user-dashboard-wrapper.user-profile');
+        var $panel = $wrap.find('.col-lg-9[id="' + panelId + '"]');
+        if (!$panel.length) {
+            return false;
+        }
+        $wrap.find('.col-lg-9[id^="user-"]').hide();
+        $panel.show();
+        $wrap.find('ul.sidebar-menu li').removeClass('active');
+        $wrap.find('ul.sidebar-menu li.' + panelId).addClass('active');
+        return true;
+    }
+    function dashboardPanelId($item) {
+        var match = ($item.attr('class') || '').match(/\buser-[a-z0-9-]+\b/);
+        return match ? match[0] : '';
+    }
+    $('body .user-dashboard-wrapper.user-profile ul.sidebar-menu li').click(function(){
+        var panelId = dashboardPanelId($(this));
+        if (panelId) {
+            showDashboardPanel(panelId);
+        }
     });
     $('body .user-profile .delete-address').click(function(e){
         e.preventDefault();
@@ -111,24 +119,10 @@ jQuery('document').ready(function($) {
         });
     }
     var navLocation = hasCookiesApi ? Cookies.get('nav_location') : '';
-    if (navLocation) {
-        $('body .user-dashboard-wrapper.user-profile ul li').removeClass('active');
-        $('body .user-dashboard-wrapper.user-profile ul li.'+navLocation).addClass('active');
-        if(navLocation == 'user-profile'){
-            $('body .user-dashboard-wrapper.user-profile #user-profile').show();
-            $('body .user-dashboard-wrapper.user-profile #user-my-address').hide();
-            $('body .user-dashboard-wrapper.user-profile #user-my-orders').hide();
-        }
-        else if(navLocation == 'user-my-orders'){
-            $('body .user-dashboard-wrapper.user-profile #user-profile').hide();
-            $('body .user-dashboard-wrapper.user-profile #user-my-address').hide();
-            $('body .user-dashboard-wrapper.user-profile #user-my-orders').show();
-        }             
-        else if(navLocation == 'user-my-address'){
-            $('body .user-dashboard-wrapper.user-profile #user-profile').hide();
-            $('body .user-dashboard-wrapper.user-profile #user-my-address').show();
-            $('body .user-dashboard-wrapper.user-profile #user-my-orders').hide();
-        }
+    // A link like /my-account/#user-my-reservations (e.g. from an email) wins.
+    var hashLocation = (window.location.hash || '').replace('#', '');
+    if (!(hashLocation && showDashboardPanel(hashLocation)) && navLocation) {
+        showDashboardPanel(dashboardPanelId($('<i>').attr('class', navLocation)));
     }
 
     function ensureOrderDetailsModal() {
@@ -141,10 +135,10 @@ jQuery('document').ready(function($) {
         var modalHtml = [
             '<div class="modal micromodal-slide" id="rpressModal" aria-hidden="true">',
             '  <div class="modal__overlay" tabindex="-1" data-micromodal-close>',
-            '    <div class="modal__container modal-content" role="dialog" aria-modal="true">',
+            '    <div class="modal__container modal-content" role="dialog" aria-modal="true" aria-labelledby="rpressModal-title">',
             '      <header class="modal__header modal-header">',
-            '        <h2 class="modal__title modal-title"></h2>',
-            '        <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>',
+            '        <h2 id="rpressModal-title" class="modal__title modal-title"></h2>',
+            '        <button class="modal__close" aria-label="' + ((typeof rp_scripts !== 'undefined' && rp_scripts.close_modal) ? rp_scripts.close_modal : 'Close modal') + '" data-micromodal-close></button>',
             '      </header>',
             '      <main class="modal__content modal-body"></main>',
             '    </div>',
@@ -187,6 +181,7 @@ jQuery('document').ready(function($) {
             },
             success: function (response) {
                 if (!response || response.success !== true || !response.data || typeof response.data.html !== 'string') {
+                    orderDetailsFailed($modal, response);
                     return;
                 }
 
@@ -199,10 +194,21 @@ jQuery('document').ready(function($) {
                     jQuery('html, body').addClass('modal-open').css('overflow', 'hidden');
                 }
             },
-            error: function () {
-                $modal.removeClass('show-order-details rpress-order-details-context');
+            error: function (xhr) {
+                orderDetailsFailed($modal, xhr && xhr.responseJSON);
             }
         });
+    }
+
+    // Say why nothing opened instead of failing silently.
+    function orderDetailsFailed($modal, response) {
+        $modal.removeClass('show-order-details rpress-order-details-context');
+        var message = (response && response.data && response.data.message) ? response.data.message : getUserDashboardMessage('order_details_error_text', 'Could not load this order. Please try again.');
+        if (typeof tata !== 'undefined' && typeof tata.error === 'function') {
+            tata.error('', message, { position: 'tr', duration: 5000 });
+        } else {
+            window.alert(message);
+        }
     }
 
     if (jQuery('.user-dashboard-wrapper, #rpress_user_history').length) {
@@ -214,6 +220,12 @@ jQuery('document').ready(function($) {
         });
 
         jQuery(document).on('click.rpressDashboardOrderModalClose', '#rpressModal.show-order-details [data-micromodal-close], #rpressModal.show-order-details .modal__close', function (e) {
+            // The backdrop wraps the popup, so a delegated handler also sees
+            // clicks inside it (buttons, links, text). Only a click on the
+            // backdrop itself closes; everything inside keeps working.
+            if (e.target !== this && jQuery(this).hasClass('modal__overlay')) {
+                return;
+            }
             e.preventDefault();
             e.stopImmediatePropagation();
 

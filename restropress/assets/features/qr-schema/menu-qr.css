@@ -1,0 +1,53 @@
+/* Menu QR generator (Settings > General > QR Code & SEO). */
+.rpress-menu-qr {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+	align-items: flex-start;
+}
+
+.rpress-menu-qr__controls {
+	flex: 1 1 320px;
+	min-width: 0;
+}
+
+.rpress-menu-qr__controls select,
+.rpress-menu-qr__controls input[type="url"],
+.rpress-menu-qr__controls input[type="text"] {
+	width: 100%;
+	max-width: 420px;
+	box-sizing: border-box;
+}
+
+.rpress-menu-qr__controls .description {
+	display: block;
+	margin-top: 4px;
+}
+
+.rpress-menu-qr__link code {
+	word-break: break-all;
+}
+
+.rpress-menu-qr__actions .button {
+	margin-inline-end: 6px;
+}
+
+.rpress-menu-qr__actions .button.disabled {
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+.rpress-menu-qr__preview {
+	flex: 0 0 auto;
+	padding: 12px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+}
+
+.rpress-menu-qr__preview img {
+	display: block;
+	width: 240px;
+	max-width: 100%;
+	height: auto;
+}

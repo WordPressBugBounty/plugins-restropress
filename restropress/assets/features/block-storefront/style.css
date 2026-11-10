@@ -1,0 +1,679 @@
+/* ==========================================================================
+   RestroPress block storefront (3.5)
+   Scoped to .rpress-sf (every storefront block wrapper). Boxes are fully
+   declared (display, margin, padding, border, background, font) so the
+   legacy rpress.css and theme rules cannot leak into under-declared
+   properties. Brand color comes from --rpc-primary, injected for .rpress-sf
+   by RPRESS_Frontend_Scripts::enqueue_menu_styles() (merchant primary color
+   and template pack tokens).
+   ========================================================================== */
+
+.rpress-sf {
+	--rpress-sf-primary: var(--rpc-primary, #ED5575);
+	--rpress-sf-primary-tint: var(--rpc-primary-tint, #FDEEF1);
+	--rpress-sf-ink: var(--rpc-ink, #000F37);
+	--rpress-sf-body: var(--rpc-body, #575757);
+	--rpress-sf-muted: var(--rpc-muted, #6B6D70);
+	--rpress-sf-border: var(--rpc-border-subtle, #EAE8E7);
+	--rpress-sf-surface: var(--rpc-surface, #FAFAFA);
+	--rpress-sf-danger: var(--rpc-danger, #C7321F);
+	--rpress-sf-radius: var(--rpc-radius, 12px);
+	--rpress-sf-font: var(--rpc-font-body, 'Inter', system-ui, sans-serif);
+	--rpress-sf-font-head: var(--rpc-font-head, 'Poppins', system-ui, sans-serif);
+	--rpress-sf-sticky-top: var(--wp-admin--admin-bar--height, 0px);
+	box-sizing: border-box;
+	min-width: 0;
+	max-width: 100%;
+	font-family: var(--rpress-sf-font);
+	color: var(--rpress-sf-body);
+}
+.rpress-sf *,
+.rpress-sf *::before,
+.rpress-sf *::after {
+	box-sizing: border-box;
+}
+.rpress-sf [hidden] {
+	display: none !important;
+}
+.rpress-sf .screen-reader-text {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+.rpress-sf a:focus-visible,
+.rpress-sf button:focus-visible,
+.rpress-sf input:focus-visible,
+.rpress-sf [tabindex]:focus-visible {
+	outline: 2px solid var(--rpress-sf-primary);
+	outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Category navigation                                                 */
+/* ------------------------------------------------------------------ */
+.rpress-sf-catnav {
+	display: block;
+	margin: 0 0 16px;
+	padding: 8px 0;
+	border: 0;
+	border-bottom: 1px solid var(--rpress-sf-border);
+	background: #fff;
+}
+.rpress-sf-catnav.is-sticky {
+	position: sticky;
+	top: var(--rpress-sf-sticky-top);
+	z-index: 30;
+}
+.rpress-sf-catnav-list {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 8px;
+	margin: 0;
+	padding: 0 2px;
+	border: 0;
+	list-style: none;
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scrollbar-width: thin;
+	-webkit-overflow-scrolling: touch;
+}
+.rpress-sf-catnav-item {
+	display: block;
+	flex: 0 0 auto;
+	margin: 0;
+	padding: 2px 0;
+	border: 0;
+	list-style: none;
+}
+.rpress-sf-catnav-item::before,
+.rpress-sf-catnav-item::marker {
+	content: none;
+}
+.rpress-sf-catnav-link {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	margin: 0;
+	padding: 0 16px;
+	border: 1px solid var(--rpress-sf-border);
+	border-radius: 999px;
+	background: #fff;
+	color: var(--rpress-sf-ink);
+	font: 600 14px/1.2 var(--rpress-sf-font);
+	text-decoration: none;
+	white-space: nowrap;
+	box-shadow: none;
+	transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.rpress-sf-catnav-link:hover {
+	border-color: var(--rpress-sf-primary);
+	color: var(--rpress-sf-ink);
+	text-decoration: none;
+}
+.rpress-sf-catnav-link.is-active,
+.rpress-sf-catnav-link[aria-current]:not([aria-current="false"]) {
+	border-color: var(--rpress-sf-primary);
+	background: var(--rpress-sf-primary);
+	color: #fff;
+}
+.rpress-sf-catnav.is-vertical {
+	border-bottom: 0;
+}
+.rpress-sf-catnav.is-vertical .rpress-sf-catnav-list {
+	flex-direction: column;
+	overflow-x: visible;
+}
+.rpress-sf-catnav.is-vertical .rpress-sf-catnav-link {
+	display: flex;
+	width: 100%;
+	border-radius: 10px;
+	white-space: normal;
+}
+@media (max-width: 781px) {
+	/* Vertical lists become the scrolling strip on phones. */
+	.rpress-sf-catnav.is-vertical .rpress-sf-catnav-list {
+		flex-direction: row;
+		overflow-x: auto;
+	}
+	.rpress-sf-catnav.is-vertical .rpress-sf-catnav-link {
+		width: auto;
+		border-radius: 999px;
+		white-space: nowrap;
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* Menu search                                                         */
+/* ------------------------------------------------------------------ */
+.rpress-sf-search {
+	display: block;
+	margin: 0 0 16px;
+	padding: 0;
+}
+.rpress-sf-search-form {
+	position: relative;
+	display: block;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+.rpress-sf-search .rpress-sf-search-input {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	min-height: 44px;
+	margin: 0;
+	padding: 10px 48px 10px 42px;
+	border: 1px solid var(--rpress-sf-border);
+	border-radius: 999px;
+	background: var(--rpress-sf-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B6D70' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 15px center;
+	color: var(--rpress-sf-ink);
+	font: 400 15px/1.4 var(--rpress-sf-font);
+	box-shadow: none;
+	-webkit-appearance: none;
+	appearance: none;
+}
+.rpress-sf .rpress-sf-search-input:focus {
+	border-color: var(--rpress-sf-primary);
+	background-color: #fff;
+}
+.rpress-sf .rpress-sf-search-clear {
+	position: absolute;
+	top: 50%;
+	inset-inline-end: 2px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	margin: -22px 0 0;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--rpress-sf-muted);
+	font: 400 22px/1 var(--rpress-sf-font);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Item grid                                                           */
+/* ------------------------------------------------------------------ */
+.rpress-sf-item-grid {
+	display: block;
+	margin: 0;
+	padding: 0;
+}
+.rpress-sf-section {
+	display: block;
+	margin: 0 0 28px;
+	padding: 0;
+	border: 0;
+	/* Clears the sticky category bar when jumped to. */
+	scroll-margin-top: calc(var(--rpress-sf-sticky-top) + 80px);
+}
+.rpress-sf .rpress-sf-section-title {
+	display: block;
+	margin: 0 0 12px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--rpress-sf-ink);
+	font: 600 20px/1.3 var(--rpress-sf-font-head);
+	letter-spacing: 0;
+	text-transform: none;
+}
+.rpress-sf .rpress-sf-section-title:focus {
+	outline: none;
+}
+.rpress-sf .rpress-sf-section-title:focus-visible {
+	outline: 2px solid var(--rpress-sf-primary);
+}
+.rpress-sf-items {
+	display: grid;
+	grid-template-columns: repeat(var(--rpress-sf-columns, 2), minmax(0, 1fr));
+	gap: 16px;
+	margin: 0;
+	padding: 0;
+}
+.rpress-sf-item-grid.is-layout-list .rpress-sf-items {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 12px;
+}
+@media (max-width: 781px) {
+	.rpress-sf-item-grid.is-layout-grid .rpress-sf-items {
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+	}
+}
+.rpress-sf-card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	border: 1px solid var(--rpress-sf-border);
+	border-radius: var(--rpress-sf-radius);
+	background: #fff;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, .04);
+}
+.rpress-sf-card.is-unavailable {
+	opacity: .65;
+}
+.rpress-sf-card-media {
+	order: -1;
+	display: block;
+	margin: 0;
+	padding: 0;
+	aspect-ratio: 4 / 3;
+	overflow: hidden;
+	background: var(--rpress-sf-surface);
+}
+.rpress-sf .rpress-sf-card-img {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	object-fit: cover;
+	box-shadow: none;
+}
+.rpress-sf-card-body {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+	margin: 0;
+	padding: 14px 16px 16px;
+}
+.rpress-sf .rpress-sf-card-title {
+	display: block;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	color: var(--rpress-sf-ink);
+	font: 600 16px/1.35 var(--rpress-sf-font-head);
+	letter-spacing: 0;
+	text-transform: none;
+	overflow-wrap: anywhere;
+}
+.rpress-sf .rpress-sf-card-desc {
+	display: -webkit-box;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	color: var(--rpress-sf-muted);
+	font: 400 14px/1.45 var(--rpress-sf-font);
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow-wrap: anywhere;
+}
+.rpress-sf-card-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: auto 0 0;
+	padding: 6px 0 0;
+}
+.rpress-sf-card-price {
+	display: inline-block;
+	margin: 0;
+	padding: 0;
+	color: var(--rpress-sf-ink);
+	font: 700 15px/1.3 var(--rpress-sf-font);
+	white-space: nowrap;
+}
+.rpress-sf-card-action {
+	display: block;
+	flex: 0 0 auto;
+	margin: 0 0 0 auto;
+	padding: 0;
+	line-height: 0;
+}
+/* List layout: text left, square photo right. */
+.rpress-sf-item-grid.is-layout-list .rpress-sf-card {
+	flex-direction: row;
+	align-items: stretch;
+}
+.rpress-sf-item-grid.is-layout-list .rpress-sf-card-media {
+	order: 1;
+	flex: 0 0 112px;
+	width: 112px;
+	aspect-ratio: auto;
+	min-height: 112px;
+}
+@media (max-width: 480px) {
+	.rpress-sf-item-grid.is-layout-list .rpress-sf-card-media {
+		flex-basis: 92px;
+		width: 92px;
+		min-height: 92px;
+	}
+}
+
+/* The Add button is the classic purchase link, skinned by rpress-menu.css
+   through the .rpress-menu-v2 wrapper. Only the tap target grows to 44px;
+   the selector out-specifies the settings-driven shape rules. */
+.rpress-sf .rpress-sf-card-action.rpress-menu-v2.rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart.rpress-add-to-cart {
+	min-width: 44px !important;
+	min-height: 44px !important;
+}
+.rpress-sf .rpress-sf-card-action .rpress_fooditem_purchase_form {
+	display: block;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+.rpress-sf .rpress-sf-card-action .rpress_purchase_submit_wrapper a.rpress-not-available {
+	position: static !important;
+	left: auto !important;
+	display: inline-flex !important;
+	align-items: center;
+	min-height: 44px;
+	line-height: 1.2 !important;
+}
+.rpress-sf .rpress-sf-empty,
+.rpress-sf .rpress-sf-no-results {
+	display: block;
+	margin: 8px 0 24px;
+	padding: 16px;
+	border: 1px dashed var(--rpress-sf-border);
+	border-radius: var(--rpress-sf-radius);
+	background: var(--rpress-sf-surface);
+	color: var(--rpress-sf-body);
+	font: 400 15px/1.5 var(--rpress-sf-font);
+	text-align: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* Service bar (reuses the classic toolbar markup and its 3.4 skin)     */
+/* ------------------------------------------------------------------ */
+.rpress-sf-service-bar {
+	display: block;
+	margin: 0 0 12px;
+	padding: 0;
+}
+.rpress-sf-service-bar .rpress-sf-service-inner {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	margin: 0;
+	padding: 0;
+	float: none;
+}
+.rpress-sf-service-bar .rpress-options-row {
+	margin-bottom: 0;
+}
+.rpress-sf-service-bar .rpress-option-col {
+	min-width: 0;
+	max-width: 100%;
+}
+.rpress-sf-service-bar ul.order-online-servicetabs .nav-link,
+.rpress-sf-service-bar .rpress_order-address-wrap a {
+	min-height: 44px;
+}
+.rpress-sf-service-bar .rpress_order-address-wrap {
+	max-width: 100%;
+	flex-wrap: wrap;
+}
+.rpress-sf-service-bar .rpress_order-address-wrap a {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 6px;
+	cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cart panel                                                          */
+/* ------------------------------------------------------------------ */
+.rpress-sf-cart {
+	display: block;
+	margin: 0;
+	padding: 18px;
+	border: 1px solid var(--rpress-sf-border);
+	border-radius: var(--rpress-sf-radius);
+	background: #fff;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, .05);
+}
+@media (min-width: 782px) {
+	.rpress-sf-cart.is-sticky {
+		position: sticky;
+		top: calc(var(--rpress-sf-sticky-top) + 84px);
+	}
+}
+.rpress-sf-cart.is-busy {
+	cursor: progress;
+}
+.rpress-sf-cart-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0 0 12px;
+	padding: 0;
+}
+.rpress-sf .rpress-sf-cart-title {
+	display: block;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	color: var(--rpress-sf-ink);
+	font: 600 18px/1.3 var(--rpress-sf-font-head);
+	letter-spacing: 0;
+	text-transform: none;
+}
+.rpress-sf-cart-count {
+	display: inline-block;
+	margin: 0;
+	padding: 0;
+	color: var(--rpress-sf-muted);
+	font: 500 13px/1.3 var(--rpress-sf-font);
+	white-space: nowrap;
+}
+.rpress-sf .rpress-sf-cart-empty,
+.rpress-sf .rpress-sf-cart-closed,
+.rpress-sf .rpress-sf-cart-error {
+	display: block;
+	margin: 0 0 12px;
+	padding: 12px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--rpress-sf-surface);
+	color: var(--rpress-sf-body);
+	font: 400 14px/1.5 var(--rpress-sf-font);
+}
+.rpress-sf .rpress-sf-cart-closed,
+.rpress-sf .rpress-sf-cart-error {
+	background: #FFEDEA;
+	color: var(--rpress-sf-danger);
+}
+.rpress-sf-cart-lines {
+	display: block;
+	margin: 0 0 12px;
+	padding: 0;
+	border: 0;
+	list-style: none;
+}
+.rpress-sf-cart-line {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-areas: "info total" "qty qty";
+	align-items: center;
+	gap: 6px 12px;
+	margin: 0;
+	padding: 12px 0;
+	border: 0;
+	border-bottom: 1px solid var(--rpress-sf-border);
+	list-style: none;
+}
+.rpress-sf-cart-line::before,
+.rpress-sf-cart-line::marker {
+	content: none;
+}
+.rpress-sf-cart-line-info {
+	grid-area: info;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+.rpress-sf-cart-line-name {
+	color: var(--rpress-sf-ink);
+	font: 600 14px/1.35 var(--rpress-sf-font);
+	overflow-wrap: anywhere;
+}
+.rpress-sf-cart-line-options {
+	color: var(--rpress-sf-muted);
+	font: 400 12.5px/1.4 var(--rpress-sf-font);
+	overflow-wrap: anywhere;
+}
+.rpress-sf-cart-line-total {
+	grid-area: total;
+	color: var(--rpress-sf-ink);
+	font: 600 14px/1.35 var(--rpress-sf-font);
+	white-space: nowrap;
+}
+.rpress-sf-cart-line-qty {
+	grid-area: qty;
+	display: inline-flex;
+	align-items: center;
+	justify-self: start;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	border: 1px solid var(--rpress-sf-border);
+	border-radius: 999px;
+	background: #fff;
+}
+.rpress-sf .rpress-sf-qty-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--rpress-sf-ink);
+	font: 600 18px/1 var(--rpress-sf-font);
+	cursor: pointer;
+	box-shadow: none;
+	text-transform: none;
+}
+.rpress-sf .rpress-sf-qty-btn:hover {
+	background: var(--rpress-sf-primary-tint);
+	color: var(--rpress-sf-ink);
+}
+.rpress-sf .rpress-sf-qty-btn:disabled {
+	cursor: progress;
+	opacity: .6;
+}
+.rpress-sf-qty-value {
+	display: inline-block;
+	min-width: 20px;
+	color: var(--rpress-sf-ink);
+	font: 600 14px/1 var(--rpress-sf-font);
+	text-align: center;
+}
+.rpress-sf-cart-totals {
+	display: block;
+	margin: 0 0 14px;
+	padding: 0;
+	border: 0;
+}
+.rpress-sf-cart-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0;
+	padding: 4px 0;
+}
+.rpress-sf-cart-row dt,
+.rpress-sf-cart-row dd {
+	margin: 0;
+	padding: 0;
+	color: var(--rpress-sf-body);
+	font: 400 14px/1.4 var(--rpress-sf-font);
+}
+.rpress-sf-cart-row.is-total dt,
+.rpress-sf-cart-row.is-total dd {
+	color: var(--rpress-sf-ink);
+	font-weight: 700;
+	font-size: 16px;
+}
+.rpress-sf .rpress-sf-checkout {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	min-height: 48px;
+	margin: 0;
+	padding: 0 18px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--rpress-sf-primary);
+	color: #fff;
+	font: 700 15px/1.2 var(--rpress-sf-font);
+	text-decoration: none;
+	box-shadow: none;
+	cursor: pointer;
+}
+.rpress-sf .rpress-sf-checkout:hover,
+.rpress-sf .rpress-sf-checkout:focus {
+	background: var(--rpc-primary-hover, var(--rpress-sf-primary));
+	color: #fff;
+	text-decoration: none;
+}
+.rpress-sf .rpress-sf-checkout[aria-disabled="true"] {
+	opacity: .6;
+	cursor: not-allowed;
+}
+
+/* Pattern layout: keep the columns from forcing a horizontal scroll. */
+.rpress-storefront .rpress-storefront-columns {
+	gap: 24px;
+}
+.rpress-storefront .rpress-storefront-columns > .wp-block-column {
+	min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rpress-sf *,
+	.rpress-sf *::before,
+	.rpress-sf *::after {
+		transition: none !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* RTL: mirror the asymmetric boxes above. */
+[dir="rtl"] .rpress-sf-search .rpress-sf-search-input {
+	padding: 10px 42px 10px 48px;
+	background-position: right 15px center;
+}
+[dir="rtl"] .rpress-sf-card-action {
+	margin: 0 auto 0 0;
+}
+
+/* Themes underline links in post content (Astra: .ast-single-post
+   .entry-content a), which beats the single-class rule above. */
+.rpress-sf .rpress-sf-catnav-list .rpress-sf-catnav-link,
+.rpress-sf .rpress-sf-checkout.rpress-sf-checkout {
+	text-decoration: none;
+}
