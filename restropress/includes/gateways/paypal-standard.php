@@ -1618,6 +1618,17 @@ function rpress_process_paypal_ipn()
 }
 add_action('rpress_verify_paypal_ipn', 'rpress_process_paypal_ipn');
 /**
+ * A money amount as whole cents, for comparing PayPal amounts with order totals.
+ *
+ * @since 3.5.0
+ * @param mixed $amount Amount such as "1234.5" or 1234.5.
+ * @return int
+ */
+function rpress_paypal_amount_in_cents($amount)
+{
+    return (int) round((float) $amount * 100);
+}
+/**
  * Process web accept (one time) payment IPNs
  *
  * @since 1.0
@@ -1724,7 +1735,9 @@ function rpress_process_paypal_web_accept_and_cart($data, $payment_id)
         }
         // Retrieve the total purchase amount (before PayPal)
         $payment_amount = rpress_get_payment_amount($payment_id);
-        if (number_format((float) $paypal_amount, 2) < number_format((float) $payment_amount, 2)) {
+        // Compare in cents: formatted strings ("1,234.00") compare as text, so
+        // an underpayment of 1,000 or more was accepted.
+        if (rpress_paypal_amount_in_cents($paypal_amount) < rpress_paypal_amount_in_cents($payment_amount)) {
             // The prices don't match
             rpress_record_gateway_error(__('IPN Error', 'restropress'), sprintf(__('Invalid payment amount in IPN response. IPN data: %s', 'restropress'), json_encode($data)), $payment_id);
             rpress_debug_log('Invalid payment amount in IPN response. IPN data: ' . print_r($data, true));
@@ -1820,7 +1833,7 @@ function rpress_process_paypal_refund($data, $payment_id = 0)
     }
     $payment_amount = rpress_get_payment_amount($payment_id);
     $refund_amount  = $data['mc_gross'] * -1;
-    if (number_format((float) $refund_amount, 2) < number_format((float) $payment_amount, 2)) {
+    if (rpress_paypal_amount_in_cents($refund_amount) < rpress_paypal_amount_in_cents($payment_amount)) {
         rpress_insert_payment_note($payment_id, sprintf(__('Partial PayPal refund processed: %s', 'restropress'), $data['parent_txn_id']));
         return; // This is a partial refund
     }

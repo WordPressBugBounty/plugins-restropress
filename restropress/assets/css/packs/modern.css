@@ -1190,6 +1190,36 @@ body.rp-pack-modern #rpressModal a.submit-fooditem-button {
 	transition: background .15s ease;
 }
 body.rp-pack-modern #rpressModal a.submit-fooditem-button:hover { background: var(--rpc-primary-hover) !important; }
+/* rpress.css pins the price absolutely at the button's right edge; inside this
+   centred flex row that ran it into "Add to cart" on phones. Keep it in the row. */
+body.rp-pack-modern #rpressModal .rpress-popup-actions a.submit-fooditem-button span.cart-item-price {
+	position: static !important;
+	right: auto !important;
+	flex: none;
+	font-size: 14px !important;
+	white-space: nowrap;
+}
+body.rp-pack-modern #rpressModal .rpress-popup-actions a.submit-fooditem-button .cart-action-text {
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+body.rp-pack-modern #rpressModal .rpress-popup-actions > .rpress-popup-submit-wrap,
+body.rp-pack-modern #rpressModal .rpress-popup-actions a.submit-fooditem-button {
+	min-width: 0 !important;
+}
+@media (max-width: 389px) {
+	body.rp-pack-modern #rpressModal .rpress-popup-actions a.submit-fooditem-button {
+		gap: 6px;
+		padding: 0 10px !important;
+		font-size: 13px !important;
+		letter-spacing: 0 !important;
+	}
+	body.rp-pack-modern #rpressModal .rpress-popup-actions a.submit-fooditem-button span.cart-item-price {
+		font-size: 13px !important;
+	}
+}
 
 /* Validation error state: danger banner treatment from the mockup */
 body.rp-pack-modern #rpressModal .rpress-addon-category.rp-addon-error {

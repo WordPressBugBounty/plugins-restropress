@@ -1213,7 +1213,8 @@ class RPRESS_Cart {
 	public function get_item_name( $item = array() ) {
 		$item_title = get_the_title( $item['id'] );
 		if ( empty( $item_title ) ) {
-			$item_title = $item['id'];
+			// Deleted food item: past orders keep the name they were placed with.
+			$item_title = ! empty( $item['name'] ) ? $item['name'] : $item['id'];
 		}
 		if ( rpress_has_variable_prices( $item['id'] ) && false !== rpress_get_cart_item_price_id( $item ) ) {
 			$item_title .= ' - ' . rpress_get_cart_item_price_name( $item );

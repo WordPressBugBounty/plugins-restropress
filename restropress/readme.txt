@@ -5,93 +5,101 @@ Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
 Tested up to: 7.1.2
-Stable tag: 3.5.0
+Stable tag: 3.5.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Commission free online food ordering for WordPress. Take pickup, delivery, and dine-in orders on your own site, with no per order fees.
+Commission free online ordering for restaurants on WordPress. Take delivery, pickup and takeaway orders on your own site, with no per order fees.
 
 == Description ==
 
-**RestroPress turns your WordPress site into a complete online food ordering system, so you keep 100% of every order.**
+**RestroPress turns your WordPress site into a complete online ordering system for your restaurant, so you keep 100% of every order.**
 
-No commissions. No per order fees. No WooCommerce required. Restaurants, cloud kitchens, cafes, and food businesses use RestroPress to take pickup, delivery, and dine-in orders directly on their own website and pay nothing to third party apps.
+No commissions. No per order fees. No WooCommerce required. Restaurants, cafes, cloud kitchens and takeaways use RestroPress to take delivery, pickup and takeaway orders, and table bookings, directly on their own website instead of paying third party apps.
 
-Set up your menu in minutes with the new AI powered onboarding wizard, then run your whole service from one live dashboard.
-
-[Try the live demo](https://demo.restropress.com) or [watch the 2 minute video](https://www.youtube.com/watch?v=CGVpXYw6JDQ).
+[Try the live demo](https://demo.restropress.com) or [watch the RestroPress 3.5 video](https://www.youtube.com/watch?v=JQw1J_Ly0XM).
 
 = Why restaurants switch to RestroPress =
 
-* **Keep everything you earn.** Third party platforms can take 15% to 30% of every order. RestroPress takes 0%.
-* **Own your customers and your data.** Orders, contacts, and history stay on your site, not on someone else's app.
+* **Keep everything you earn.** Delivery apps can take 15% to 30% of every order. RestroPress takes 0%.
+* **Own your customers and your data.** Orders, contacts and history stay on your site, not on someone else's app.
+* **Your brand, your website.** Customers order from you, not from a marketplace full of competitors.
 * **No WooCommerce, no bloat.** A fast, standalone ordering system built only for food.
-* **Live from day one.** A guided setup wizard and AI menu import get you taking orders the same afternoon.
 
-= Set up in minutes, not days (new in 3.3) =
+= New in 3.5 =
 
-* **AI menu import.** Upload a PDF, a photo, or a spreadsheet of your menu and let AI turn it into items, prices, sizes, and add-ons for you to review.
-* **Guided onboarding wizard.** Simple step by step setup for your restaurant profile, menu, service options, and payments.
-* **Smart upload checks.** If you upload something that is not a menu, RestroPress tells you before it imports anything.
+* **Phone-first ordering.** On phones, ordering feels like a delivery app: dishes and the cart open as bottom sheets, a View cart bar shows the total, and every dish card has a quantity stepper.
+* **Clear options.** Every option group is marked Required or Optional, with how many to choose, so orders come through right the first time.
+* **Allergens.** The 14 standard allergens on every dish, badges on the menu, and a "Hide items containing" filter for guests.
+* **A checkout built for phones.** A sticky Place order bar, inline field errors, an "Add to your order" upsell row, and Apple Pay and Google Pay through Stripe.
+* **Table reservations.** A booking form for any page, a Reservations list to confirm or decline requests, and confirmation and reminder emails. Turn it on under Settings when you are ready.
+* **Happy regulars.** Customers save delivery addresses, track every order live, see their reservations, and reorder in one tap.
+* **Calmer busy nights.** Pause new orders for 15, 30 or 60 minutes, or add extra prep time, straight from Live Orders, plus an email alert when a new order waits too long without being accepted.
+* **AI menu assistant.** Write or improve dish descriptions and get suggested dietary labels and allergens, for you to review before saving.
+* **Menu QR codes and Google-friendly menus.** Print a QR code for your menu (optionally per table) and publish restaurant and menu details that search engines understand.
+* **Tax classes.** Different tax rates per category or per dish, with optional tax codes.
+* **Easy switch.** Import your menu from GloriaFood, WooCommerce-based ordering plugins or a CSV file, with a preview and undo.
+* **Block storefront.** Build your ordering page with blocks: service bar, category navigation, search, item grid and cart.
+
+= Set up in minutes =
+
+* **Guided setup wizard** with a live phone preview of your storefront.
+* **AI menu import.** Upload a PDF, a photo or a spreadsheet of your menu and let AI turn it into dishes, prices, sizes and add-ons for you to review.
 
 = Run your whole service from one screen =
 
-* **Live Orders board.** A real time view of new, accepted, preparing, ready, and out for delivery orders.
-* **Command Center dashboard.** See store status, live load, late orders, unpaid orders, and a priority queue of what needs attention right now.
+* **Live Orders board.** A real time view of new, accepted, preparing, ready and out for delivery orders, with sound alerts.
+* **Command Center dashboard.** Store status, kitchen load, late and unpaid orders, and a priority queue of what needs attention now.
 * **Automatic kitchen ticket printing.** Send new orders straight to your printer.
-* **Kitchen Display System.** Keep the kitchen in sync with the KDS app.
 
 = Take orders the way your customers want =
 
-* Pickup, delivery, and dine-in, all from one menu.
-* QR code table ordering with the Dine-In extension.
-* Scheduled orders and pre orders for later pickup or delivery.
-* Delivery fees and zones based on location.
+* Delivery, pickup and takeaway from one menu, as soon as possible or scheduled for later.
+* Delivery fees and zones by location.
+* Dine-in and QR table ordering with the Dine-In extension.
 
 = Get paid your way =
 
-* PayPal, Stripe, and Cash on Delivery built in.
-* Many more gateways available as extensions, including Square, Mollie, Paytm, PayU, and PhonePe.
-* Premium POS integrations with Clover and Square for in store payments.
+* PayPal, Stripe (with Apple Pay and Google Pay) and Cash on Delivery built in.
+* More gateways as extensions, including Square, Mollie, Paytm, PayU and PhonePe.
 
 = Everything you need, out of the box =
 
 * Unlimited orders on every site, always free.
-* Build your menu in a clean, modern editor: categories, add-ons, modifiers, variable pricing, and dietary labels, all in one place.
-* Veg, non-veg, and dietary labels on the storefront.
-* Customer accounts with order history and one tap reorder.
-* Automatic creation of cart, checkout, and account pages.
-* Mobile responsive storefront that looks great on any device.
-* Email, SMS, and WhatsApp notifications (via extensions) for customers and staff.
+* A clean menu editor: categories, add-ons, sizes and variable pricing, dietary labels and allergens.
+* Customer accounts with saved addresses, order history, live tracking and one tap reorder.
+* Automatic creation of the menu, checkout and account pages.
+* A storefront that looks great on phones, tablets and desktops.
+* Email notifications for customers and staff, plus SMS and WhatsApp with extensions.
 * Full REST API to build your own apps and integrations.
-* Translation ready, with Italian and Dutch bundled and more from the community.
+* Translation ready.
 
 = Who is it for =
 
-* Restaurants, cafes, and cloud kitchens
+* Restaurants, cafes and cloud kitchens
 * Takeaway and takeout businesses
-* Pizza shops, burger joints, and bakeries
-* Grocery, fruit and vegetable, and specialty food stores
+* Pizza shops, burger joints and bakeries
+* Grocery and specialty food stores
 
 = Grow with extensions and apps =
 
 * **Customer App** for a branded ordering experience
 * **Driver App** to manage your delivery team
 * **Order Tracking App** for real time updates
-* **KDS App** for the kitchen
+* **KDS App** to keep the kitchen in sync
 * **POS for mobile and desktop** to handle in store and online orders in one place
-* **Dine-In, Multi Location, Inventory, Tips, Pre Order, and Time Based Menu**, plus many more
+* **Dine-In, Multi Location, Inventory, Tips, Pre Order and Time Based Menu**, plus many more
 
 [Explore all extensions](https://restropress.com/extension/)
 
 = Built for developers =
 
-RestroPress ships with a full REST API (since version 3.0) so you can build custom apps, kiosks, and integrations on top of your ordering system. [Read the REST API docs](https://docs.restropress.com/docs/rest-api/authentication/).
+RestroPress ships with a full REST API so you can build custom apps, kiosks and integrations on top of your ordering system. [Read the REST API docs](https://docs.restropress.com/docs/rest-api/authentication/).
 
 = Get started today =
 
-Take control of your online ordering and stop paying commissions. [Download RestroPress](https://wordpress.org/plugins/restropress/) and start taking orders today.
+Stop paying commissions and take orders on your own website. [Download RestroPress](https://wordpress.org/plugins/restropress/) and start today.
 
-[Website](https://restropress.com) | [Documentation](https://docs.restropress.com) | [Live demo](https://demo.restropress.com) | [Facebook group](https://facebook.com/groups/restropress.official) | [YouTube](https://youtu.be/JQw1J_Ly0XM?si=Hx1zH5XlGYe2yvU8)
+[Website](https://restropress.com) | [Documentation](https://docs.restropress.com) | [Live demo](https://demo.restropress.com) | [Facebook group](https://facebook.com/groups/restropress.official) | [YouTube](https://www.youtube.com/@restropress)
 
 == Installation ==
 
@@ -145,15 +153,26 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 
 == Screenshots ==
 
-1. Guided onboarding wizard with AI menu import, for a setup in minutes.
-2. Live Orders board: a real time view of every active order from new to out for delivery.
-3. Command Center dashboard with store status, live load, late orders, and the priority queue.
-4. Section based food item editor with add-ons, modifiers, and variable pricing.
-5. Mobile responsive storefront menu with pickup, delivery, and dine-in.
-6. Streamlined checkout with built in payment options.
-7. Order details with status workflow and a printable kitchen ticket.
+1. Online ordering on your own website: a branded storefront with delivery, pickup and takeaway, on desktop and phone.
+2. Phone ordering that feels like a delivery app: dish cards with a quantity stepper, a View cart bar and the cart as a bottom sheet.
+3. Every option group is marked Required or Optional, and a missed choice is pointed out before the dish is added.
+4. The 14 standard allergens on every dish, with badges on the menu and a "Hide items containing" filter.
+5. A checkout built for phones: sticky Place order bar, an "Add to your order" upsell row, Apple Pay and Google Pay through Stripe, and tips (Tips extension).
+6. Live Orders: one real time board for the kitchen, with sound alerts, pausing new orders and extra prep time on busy nights.
+7. Table reservations: a booking form for any page and a Reservations list to confirm or decline requests.
+8. Customer accounts: live order tracking, order history with one-tap reorder, saved addresses and reservations.
+9. AI menu assistant: write or improve dish descriptions and get suggested dietary labels and allergens, reviewed before saving.
+10. A guided setup wizard with a live phone preview gets a restaurant ready to take orders in minutes.
+11. Menu QR codes (optionally per table) and restaurant and menu details that search engines understand.
+12. Switch to RestroPress: import your menu from GloriaFood, WooCommerce-based ordering plugins or a CSV file, with a preview and undo.
 
 == Changelog ==
+
+= Version 3.5.0.1 (2026-11-11) =
+* Security: PayPal: the payment notification (IPN) compared amounts as formatted text, so on orders of 1,000 or more a customer who changed the amount on PayPal could pay less and still have the order marked paid. Amounts are now compared as numbers; the same fix applies to telling full refunds from partial ones.
+* Fix: Orders for a menu item that was later deleted showed the item's ID instead of its name in the order details popup and the receipt.
+* Fix: Modern template pack on phones: the price in the item popup ran into the "Add to cart" text; it now sits beside it.
+* Improvement: Plugin description updated for 3.5.
 
 = Version 3.5.0 (2026-11-10) =
 * New: Phone ordering. Store card above the menu (open or closed, next opening, ready time, minimum order), Delivery/Pickup and time on one row, search in the sticky category bar, dishes and cart open as bottom sheets, a View cart bar with minimum-order progress, and a quantity stepper on each dish card. Desktop keeps its layout.
@@ -208,7 +227,7 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 * Fix: The date and time fields on the reservation edit screen were too narrow to show their values.
 * Fix: Legacy Ordering Flow: picking a time in the order settings popup submitted it straight away; with Delivery and no address yet the popup reloaded with an error and the time had to be picked again. The popup now waits for Update.
 * Fix: Customer dashboard Orders tab listed orders by ID as text ("#996" before "#1762"); newest orders are first again.
-* Improvement: The customer dashboard shows Reservations whenever the site has a booking page, with "You have no reservations yet" and a Book a table button for customers without bookings.
+* Improvement: With reservations on, the customer dashboard shows Reservations whenever the site has a booking page, with "You have no reservations yet" and a Book a table button for customers without bookings.
 * Fix: The order details popup's Subtotal could disagree with its own lines on older orders (it was rebuilt from current menu prices); it now adds up the lines as stored on the order.
 * Fix: Clicking anything inside the order details popup (including Track order) closed it; only the backdrop and the close button close it now.
 * Improvement: Legacy Ordering Flow now uses the 3.5 item popup too: Required / Optional labels on option groups and the bottom sheet on phones.
@@ -229,32 +248,6 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 * Fix: Native WPML String Translation compatibility for all RestroPress notification emails (order receipts, admin notices, status updates).
 * Fix: Ensure email notifications always render in the customer's order placement language when triggered from background processes or admin status updates.
 * Improvement: Added wpml-config.xml configuration file to automatically register translatable email templates, subjects, and settings in WPML String Translation.
-* Fix: Modern template pack: on phones, tablets and small laptops (1024px and narrower) the menu collapsed to almost no height, so the theme's footer was drawn over the menu items. The menu now keeps its full height on every screen size and theme.
-* Fix: Removed deprecated payment_method_types parameter from core Stripe Checkout session creation to ensure compatibility with Stripe Dynamic Payment Methods.
-* Fix: Modern checkout service chips conditionally suppress "Free" sublabel for Delivery and Pickup when fee-related extensions are active with configured non-zero fees.
-* Fix: Display applied fees breakdown and coupon discounts in the admin order details totals box.
-* Fix: Settings import no longer erases all RestroPress settings. The uploaded file was never read, so every import saved an empty value; invalid or empty files are now rejected without changing anything.
-* Fix: Settings > Misc (debug mode, remove data on uninstall) now saves. The export/import panel was nested inside the settings form, so Save ran an export instead.
-* Fix: Changing the size of an item no longer resets the customer's chosen add-ons (for example a spice level reverting to the default), in both the add and edit popups. The edit popup now restores saved radio choices.
-* Fix: A menu item restored from the trash returns to the menu instead of staying a draft.
-* Fix: Food categories, add-on groups, tags and dietary labels are no longer listed in the WordPress XML sitemap, where every link led to an empty or missing page.
-* Fix: Discount code field pattern is valid in current browsers, so codes with spaces or symbols are rejected before saving.
-* Fix: PHP 8.1+ deprecation notices on the Import Menu and Export Menu screens and on checkout when no coupon is applied.
-* Fix: Removed a missing password icon and a corrupt inline image from the login and register forms.
-* Fix: The store-closed state now follows the current time; core no longer auto-advances closed stores to the next pre-order slot.
-* Fix: Custom translations in wp-content/languages (including Loco Translate) are loaded first and kept across plugin updates.
-* Fix: The special instructions box stacks full width on mobile in the item popup.
-* Fix: Percentage coupons are calculated on each item's own add-ons. When an item without add-ons came before items with add-ons, the discount was worked out with another item's add-ons, so the order total could be off by several paisa or rupees.
-* Fix: The coupon amount on the receipt now matches the amount actually taken off the order total (no more 1-paisa difference with percentage coupons).
-* Fix: Adding an item that is already in the cart with the same size, add-ons and instructions now raises that line's quantity instead of adding a duplicate line. Developers can turn this off with the rpress_merge_identical_cart_items filter.
-* Fix: The Live Orders sound prompt no longer blocks the board, so the first click (for example Accept) works.
-* Improvement: Live Orders cards say "Paid" or "Not paid yet" instead of the raw payment status, so staff know whether to collect money.
-* Improvement: When an added item merges into an existing cart line, the confirmation says the quantity was updated.
-* Fix: The Admin Order Notification shows its real status and its recipients (including the site admin email fallback) in Settings > Emails. It previously always showed Enabled.
-* Fix: Wording: "1 item added to cart", "Total" instead of "Total paid" on unpaid orders in order history, and "when you collect your order" on pickup receipts.
-* Localization: Restored translatable menu search texts and the cart heading added through the cart refresh.
-
-= Version 3.4.11 (2026-10-27) =
 * Fix: Modern template pack: on phones, tablets and small laptops (1024px and narrower) the menu collapsed to almost no height, so the theme's footer was drawn over the menu items. The menu now keeps its full height on every screen size and theme.
 * Fix: Removed deprecated payment_method_types parameter from core Stripe Checkout session creation to ensure compatibility with Stripe Dynamic Payment Methods.
 * Fix: Modern checkout service chips conditionally suppress "Free" sublabel for Delivery and Pickup when fee-related extensions are active with configured non-zero fees.
@@ -1415,6 +1408,24 @@ RestroPress 3.3 is a major update: a guided setup wizard with AI menu import, a 
 
 
 == Upgrade Notice ==
+
+= 3.5.0.1 =
+Security fix for PayPal: orders of 1,000 or more could be marked paid after an underpayment. Please update.
+
+= 3.5.0 =
+Phone-first ordering, a reworked checkout, allergens, table reservations, block storefront, pause orders, AI menu tools, tax classes and more. Table reservations are off by default: turn them on under Settings > General > Reservations. Uber Direct is now a separate extension. If you use the Delivery Fee extension with the Legacy Ordering Flow, update it to 3.1.7. Back up your site before updating.
+
+= 3.4.11 =
+Conditionally suppresses misleading "Free" labels on checkout service options when fee extensions are active with configured fees, and restores fee breakdown and coupon details in admin order totals.
+
+= 3.4.10 =
+Fixes food search filtering, makes order status updates safe under simultaneous changes, keeps order status when an order is restored from trash, and improves WPML and guest receipt compatibility.
+
+= 3.4.9 =
+Bug fixes for duplicate cart item quantity and option updates, cart key 0 edit handling, and comprehensive internationalization and translation catalog updates.
+
+= 3.4.8 =
+Security hardening for payment recovery URLs, third-party payment gateway validation on automatic order acceptance, PayPal IPN security fixes, and unpaid order receipt display improvements.
 
 = 3.4.4 =
 Maintenance release resolving pending order count badge object cache invalidation, AJAX recount class auto-loading, trash item deletion, store timing pre-order compatibility, and checkout time cookie persistence.
