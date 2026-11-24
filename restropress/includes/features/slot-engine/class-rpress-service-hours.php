@@ -13,6 +13,9 @@
  * - Wall-clock times that do not exist (the skipped hour on a spring-forward
  *   day) are dropped; repeated ones (fall-back) are generated once.
  *
+ * A day can have several windows (lunch and dinner). Core's weekly hours give
+ * one; extensions add more through rpress_service_hours_windows.
+ *
  * Slots belong to the calendar date they fall on. For an overnight window
  * (for example 6:00pm to 2:00am), the slots after midnight are listed under
  * the next date, so "service date + slot time" always names the real moment.
@@ -26,6 +29,13 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class RPRESS_Service_Hours {
+
+	/**
+	 * Engine API level. 2 = several windows per day, last-order buffer and
+	 * lead time. Also exposed as the RPRESS_SERVICE_HOURS_API constant so
+	 * extensions can check for it without loading the class.
+	 */
+	const API_VERSION = 2;
 
 	/**
 	 * Site timezone.
@@ -42,6 +52,13 @@ class RPRESS_Service_Hours {
 	protected $now;
 
 	/**
+	 * Branch (Multi-Location term ID) this instance answers for, 0 for the store.
+	 *
+	 * @var int
+	 */
+	protected $location_id = 0;
+
+	/**
 	 * Per-instance cache of resolved windows, keyed by service and date.
 	 *
 	 * @var array
@@ -49,15 +66,40 @@ class RPRESS_Service_Hours {
 	protected $window_cache = array();
 
 	/**
-	 * @param DateTimeZone|null      $timezone Site timezone (defaults to wp_timezone()).
-	 * @param DateTimeImmutable|null $now      Fixed current time (defaults to the real time).
+	 * Per-instance cache of window lists, keyed by service and date.
+	 *
+	 * @var array
 	 */
-	public function __construct( $timezone = null, $now = null ) {
+	protected $windows_cache = array();
+
+	/**
+	 * @param DateTimeZone|null      $timezone    Site timezone (defaults to wp_timezone()).
+	 * @param DateTimeImmutable|null $now         Fixed current time (defaults to the real time).
+	 * @param int|null               $location_id Branch to answer for. Null = the customer's current branch.
+	 */
+	public function __construct( $timezone = null, $now = null, $location_id = null ) {
 		if ( ! $timezone instanceof DateTimeZone ) {
 			$timezone = function_exists( 'rpress_get_wp_timezone' ) ? rpress_get_wp_timezone() : wp_timezone();
 		}
 		$this->timezone = $timezone;
 		$this->now      = $now instanceof DateTimeImmutable ? $now->setTimezone( $timezone ) : null;
+		if ( null === $location_id ) {
+			$location_id = function_exists( 'rpress_get_current_location_id' ) ? rpress_get_current_location_id() : 0;
+		}
+		$this->location_id = absint( $location_id );
+	}
+
+	/**
+	 * Branch this instance answers for (0 = the whole store).
+	 *
+	 * Providers read it in their filters, for example
+	 * $engine->get_location_id() inside rpress_service_hours_windows.
+	 *
+	 * @since 3.5.1
+	 * @return int
+	 */
+	public function get_location_id() {
+		return $this->location_id;
 	}
 
 	/**
@@ -197,14 +239,21 @@ class RPRESS_Service_Hours {
 			: ( '1' === (string) rpress_get_option( 'enable_preorder', 0 ) );
 
 		$settings = array(
-			'interval'      => $interval,
-			'prep_time'     => max( 0, $prep ),
-			'always_open'   => ! empty( rpress_get_option( 'enable_always_open' ) ),
-			'preorder'      => (bool) $preorder,
-			'preorder_days' => max( 0, (int) rpress_get_option( 'po_days', 0 ) ),
+			'interval'          => $interval,
+			'prep_time'         => max( 0, $prep ),
+			'always_open'       => ! empty( rpress_get_option( 'enable_always_open' ) ),
+			'preorder'          => (bool) $preorder,
+			'preorder_days'     => max( 0, (int) rpress_get_option( 'po_days', 0 ) ),
+			// Minutes before each window closes when new orders stop.
+			'last_order_buffer' => 0,
+			// Minimum minutes between now and the first slot, when longer than prep time (1440 = next day).
+			'lead_time'         => 0,
 		);
 
-		return apply_filters( 'rpress_service_hours_settings', $settings, $service );
+		$settings = apply_filters( 'rpress_service_hours_settings', $settings, $service, $this );
+		$settings['last_order_buffer'] = isset( $settings['last_order_buffer'] ) ? max( 0, (int) $settings['last_order_buffer'] ) : 0;
+		$settings['lead_time']         = isset( $settings['lead_time'] ) ? max( 0, (int) $settings['lead_time'] ) : 0;
+		return $settings;
 	}
 
 	/**
@@ -234,33 +283,148 @@ class RPRESS_Service_Hours {
 		$hours  = rpress_get_store_hours_for_date( $day->format( 'Y-m-d' ) );
 		$window = null;
 		if ( is_array( $hours ) && empty( $hours['closed'] ) && isset( $hours['open'], $hours['close'] ) ) {
-			$open  = self::parse_time( $hours['open'] );
-			$close = self::parse_time( $hours['close'] );
-			if ( $open && $close ) {
-				$open_minutes  = $open[0] * 60 + $open[1];
-				$close_minutes = $close[0] * 60 + $close[1];
-				if ( $close_minutes < $open_minutes ) {
-					// Overnight: closes on the next calendar day.
-					$close_minutes += 1440;
-				}
-				// Same open and close is treated as closed (as before).
-				if ( $close_minutes > $open_minutes ) {
-					// 11:59pm marks the end of the business day: open until midnight.
-					$open_until = 1439 === $close_minutes % 1440 ? $close_minutes + 1 : $close_minutes;
-					$window     = array(
-						'open'           => $this->wall_clock( $day, 0, $open[0], $open[1] ),
-						'close'          => $this->wall_clock( $day, intdiv( $open_until, 1440 ), intdiv( $open_until % 1440, 60 ), $open_until % 60 ),
-						'open_minutes'   => $open_minutes,
-						'close_minutes'  => $close_minutes,
-						'until_midnight' => $open_until !== $close_minutes,
-					);
-				}
-			}
+			$window = $this->make_window( $day, $hours['open'], $hours['close'] );
 		}
 
-		$window = apply_filters( 'rpress_service_hours_window', $window, $day->format( 'Y-m-d' ), $service );
+		$window = apply_filters( 'rpress_service_hours_window', $window, $day->format( 'Y-m-d' ), $service, $this );
 		$this->window_cache[ $key ] = $window;
 		return $window;
+	}
+
+	/**
+	 * Build a window that opens on a date.
+	 *
+	 * For extensions that supply their own hours through
+	 * rpress_service_hours_windows. A close at or before the open runs past
+	 * midnight; equal open and close is closed. A close of 11:59pm keeps the
+	 * store open until midnight (see get_window()).
+	 *
+	 * @since 3.5.1
+	 * @param string|DateTimeInterface $date  Day the window opens.
+	 * @param string|int               $open  Opening time ("11:30", "11:30am") or minutes since midnight.
+	 * @param string|int               $close Closing time or minutes since midnight.
+	 * @return array|null Window array (see get_window()) or null when invalid or empty.
+	 */
+	public function make_window( $date, $open, $close ) {
+		$day = $date instanceof DateTimeImmutable && '00:00' === $date->format( 'H:i' ) ? $date : $this->date( $date );
+		if ( ! $day ) {
+			return null;
+		}
+		$open_minutes  = self::to_minutes( $open );
+		$close_minutes = self::to_minutes( $close );
+		if ( null === $open_minutes || null === $close_minutes ) {
+			return null;
+		}
+		if ( $close_minutes < $open_minutes ) {
+			// Overnight: closes on the next calendar day.
+			$close_minutes += 1440;
+		}
+		// Same open and close is treated as closed (as before).
+		if ( $close_minutes <= $open_minutes ) {
+			return null;
+		}
+		// 11:59pm marks the end of the business day: open until midnight.
+		$open_until = 1439 === $close_minutes % 1440 ? $close_minutes + 1 : $close_minutes;
+		return array(
+			'open'           => $this->wall_clock( $day, intdiv( $open_minutes, 1440 ), intdiv( $open_minutes % 1440, 60 ), $open_minutes % 60 ),
+			'close'          => $this->wall_clock( $day, intdiv( $open_until, 1440 ), intdiv( $open_until % 1440, 60 ), $open_until % 60 ),
+			'open_minutes'   => $open_minutes,
+			'close_minutes'  => $close_minutes,
+			'until_midnight' => $open_until !== $close_minutes,
+		);
+	}
+
+	/**
+	 * Minutes since midnight from a stored time or a number.
+	 *
+	 * @param string|int $value Time text or minutes.
+	 * @return int|null
+	 */
+	protected static function to_minutes( $value ) {
+		if ( is_int( $value ) || ( is_string( $value ) && ctype_digit( $value ) ) ) {
+			$value = (int) $value;
+			return ( $value >= 0 && $value <= 1440 ) ? $value : null;
+		}
+		$time = self::parse_time( $value );
+		return $time ? $time[0] * 60 + $time[1] : null;
+	}
+
+	/**
+	 * Every window that opens on a date, in opening order.
+	 *
+	 * Starts from get_window() (core's weekly hours, one window) and lets
+	 * extensions replace or extend the list, for example lunch and dinner
+	 * shifts. Build entries with make_window().
+	 *
+	 * @since 3.5.1
+	 * @param string $date    Y-m-d date.
+	 * @param string $service Service type.
+	 * @return array[] Window arrays.
+	 */
+	public function get_windows( $date, $service = '' ) {
+		$day = $this->date( $date );
+		if ( ! $day ) {
+			return array();
+		}
+		$key = $service . '|' . $day->format( 'Y-m-d' );
+		if ( array_key_exists( $key, $this->windows_cache ) ) {
+			return $this->windows_cache[ $key ];
+		}
+
+		$window  = $this->get_window( $day->format( 'Y-m-d' ), $service );
+		$windows = $window ? array( $window ) : array();
+
+		/**
+		 * Filter the windows that open on a date.
+		 *
+		 * @since 3.5.1
+		 * @param array[]              $windows Window arrays (see make_window()).
+		 * @param string               $date    Y-m-d date.
+		 * @param string               $service Service type.
+		 * @param RPRESS_Service_Hours $engine  This engine, for make_window().
+		 */
+		$windows = apply_filters( 'rpress_service_hours_windows', $windows, $day->format( 'Y-m-d' ), $service, $this );
+
+		$valid = array();
+		foreach ( (array) $windows as $candidate ) {
+			if ( is_array( $candidate ) && isset( $candidate['open'], $candidate['close'], $candidate['open_minutes'], $candidate['close_minutes'] )
+				&& $candidate['open'] instanceof DateTimeImmutable && $candidate['close'] instanceof DateTimeImmutable ) {
+				$valid[] = $candidate;
+			}
+		}
+		usort(
+			$valid,
+			function ( $a, $b ) {
+				return $a['open_minutes'] - $b['open_minutes'];
+			}
+		);
+
+		$this->windows_cache[ $key ] = $valid;
+		return $valid;
+	}
+
+	/**
+	 * The moment a window stops taking new orders, after the last-order buffer.
+	 *
+	 * @param array $window   Window.
+	 * @param array $settings Service settings.
+	 * @return array array( timestamp, inclusive ).
+	 */
+	protected function window_order_close( array $window, array $settings ) {
+		if ( $settings['last_order_buffer'] > 0 ) {
+			return array( $window['close']->getTimestamp() - $settings['last_order_buffer'] * 60, true );
+		}
+		return array( $window['close']->getTimestamp(), empty( $window['until_midnight'] ) );
+	}
+
+	/**
+	 * Earliest timestamp a new order's slot can be: now plus prep time or lead time, whichever is longer.
+	 *
+	 * @param array $settings Service settings.
+	 * @return int
+	 */
+	protected function earliest_slot_ts( array $settings ) {
+		return $this->now()->getTimestamp() + max( $settings['prep_time'], $settings['lead_time'] ) * 60;
 	}
 
 	/**
@@ -278,14 +442,15 @@ class RPRESS_Service_Hours {
 		$ts  = $dt->getTimestamp();
 		$day = $this->date( $dt );
 		foreach ( array( $day->modify( '-1 day' ), $day ) as $start_day ) {
-			$window = $this->get_window( $start_day->format( 'Y-m-d' ), $service );
-			if ( ! $window || $ts < $window['open']->getTimestamp() ) {
-				continue;
-			}
-			$close = $window['close']->getTimestamp();
-			// A stored close is inclusive; the 11:59pm end-of-day boundary runs up to (not including) midnight.
-			if ( $ts < $close || ( $ts === $close && empty( $window['until_midnight'] ) ) ) {
-				return true;
+			foreach ( $this->get_windows( $start_day->format( 'Y-m-d' ), $service ) as $window ) {
+				if ( $ts < $window['open']->getTimestamp() ) {
+					continue;
+				}
+				// A stored close is inclusive; the 11:59pm end-of-day boundary runs up to (not including) midnight.
+				list( $close, $inclusive ) = $this->window_order_close( $window, $settings );
+				if ( $ts < $close || ( $ts === $close && $inclusive ) ) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -304,13 +469,16 @@ class RPRESS_Service_Hours {
 		if ( $this->is_open_at( $from, $service ) ) {
 			return $from;
 		}
-		$day = $this->date( $from );
+		$settings = $this->get_settings( $service );
+		$day      = $this->date( $from );
 		for ( $offset = -1; $offset <= (int) $max_days; $offset++ ) {
-			$window = $this->get_window( $day->modify( sprintf( '%+d day', $offset ) )->format( 'Y-m-d' ), $service );
-			if ( ! $window || $window['close'] < $from ) {
-				continue;
+			foreach ( $this->get_windows( $day->modify( sprintf( '%+d day', $offset ) )->format( 'Y-m-d' ), $service ) as $window ) {
+				list( $close ) = $this->window_order_close( $window, $settings );
+				if ( $close < $from->getTimestamp() || $close < $window['open']->getTimestamp() ) {
+					continue;
+				}
+				return $window['open'] > $from ? $window['open'] : $from;
 			}
-			return $window['open'] > $from ? $window['open'] : $from;
 		}
 		return null;
 	}
@@ -336,13 +504,45 @@ class RPRESS_Service_Hours {
 		}
 		$settings = $this->get_settings( $service );
 		if ( ! $settings['preorder'] ) {
-			return false;
+			// Without pre-ordering, a notice period ("next day", 36 hours) makes
+			// the first day it allows the only bookable day, instead of none.
+			$notice = $this->get_notice_days( $service, false );
+			return $notice > 0 && $day == $today->modify( '+' . $notice . ' day' );
 		}
 		if ( $settings['preorder_days'] > 0 ) {
-			$last = $today->modify( '+' . $settings['preorder_days'] . ' day' );
+			// Pre-order days count from the first day the notice allows.
+			$last = $today->modify( '+' . ( $settings['preorder_days'] + $this->get_notice_days( $service ) ) . ' day' );
 			return $day <= $last;
 		}
 		return true;
+	}
+
+	/**
+	 * Calendar days between today and the first day an order can be for,
+	 * from the preparation time and the provider's lead time.
+	 *
+	 * 36 hours of notice placed at 8pm Monday gives 2 (Wednesday), where
+	 * counting whole days of minutes would give 1.
+	 *
+	 * @since 3.5.1
+	 * @param string $service      Service type.
+	 * @param bool   $include_prep Count the preparation time too. False counts
+	 *                             only the lead time (a notice period set by an
+	 *                             extension), so a long prep near midnight does
+	 *                             not make tomorrow bookable without pre-ordering.
+	 * @return int
+	 */
+	public function get_notice_days( $service = '', $include_prep = true ) {
+		$settings = $this->get_settings( $service );
+		$minutes  = $include_prep ? max( $settings['prep_time'], $settings['lead_time'] ) : $settings['lead_time'];
+		if ( $minutes <= 0 ) {
+			return 0;
+		}
+		$now   = $this->now();
+		$first = ( new DateTimeImmutable( '@' . ( $now->getTimestamp() + (int) $minutes * 60 ) ) )->setTimezone( $this->timezone );
+		$today = $this->date( $now );
+		$day   = $this->date( $first );
+		return ( $today && $day && $day > $today ) ? (int) $today->diff( $day )->days : 0;
 	}
 
 	/**
@@ -381,29 +581,28 @@ class RPRESS_Service_Hours {
 		// The previous day's overnight window spills into this date.
 		foreach ( array( -1, 0 ) as $start_offset ) {
 			$start_day = 0 === $start_offset ? $day : $day->modify( '-1 day' );
-			$window    = $this->get_window( $start_day->format( 'Y-m-d' ), $service );
-			if ( ! $window ) {
-				continue;
-			}
-			for ( $m = $window['open_minutes']; $m <= $window['close_minutes']; $m += $interval ) {
-				$day_offset = intdiv( $m, 1440 );
-				$hour       = intdiv( $m % 1440, 60 );
-				$minute     = $m % 60;
-				// Only the part of the window that falls on this calendar date.
-				if ( $start_offset + $day_offset !== 0 ) {
-					continue;
+			foreach ( $this->get_windows( $start_day->format( 'Y-m-d' ), $service ) as $window ) {
+				$last_minute = $window['close_minutes'] - $settings['last_order_buffer'];
+				for ( $m = $window['open_minutes']; $m <= $last_minute; $m += $interval ) {
+					$day_offset = intdiv( $m, 1440 );
+					$hour       = intdiv( $m % 1440, 60 );
+					$minute     = $m % 60;
+					// Only the part of the window that falls on this calendar date.
+					if ( $start_offset + $day_offset !== 0 ) {
+						continue;
+					}
+					$slot = $this->wall_clock( $start_day, $day_offset, $hour, $minute );
+					// Skip wall-clock times that do not exist (spring-forward gap).
+					if ( $slot->format( 'Y-m-d H:i' ) !== sprintf( '%s %02d:%02d', $date_key, $hour, $minute ) ) {
+						continue;
+					}
+					$slots[ $slot->getTimestamp() ] = $slot;
 				}
-				$slot = $this->wall_clock( $start_day, $day_offset, $hour, $minute );
-				// Skip wall-clock times that do not exist (spring-forward gap).
-				if ( $slot->format( 'Y-m-d H:i' ) !== sprintf( '%s %02d:%02d', $date_key, $hour, $minute ) ) {
-					continue;
-				}
-				$slots[ $slot->getTimestamp() ] = $slot;
 			}
 		}
 
 		if ( $args['hide_past'] ) {
-			$earliest = $this->now()->getTimestamp() + $settings['prep_time'] * 60;
+			$earliest = $this->earliest_slot_ts( $settings );
 			foreach ( array_keys( $slots ) as $ts ) {
 				if ( $ts <= $earliest ) {
 					unset( $slots[ $ts ] );
@@ -412,7 +611,7 @@ class RPRESS_Service_Hours {
 		}
 
 		ksort( $slots );
-		return apply_filters( 'rpress_service_hours_slots', array_values( $slots ), $date_key, $service, $args );
+		return apply_filters( 'rpress_service_hours_slots', array_values( $slots ), $date_key, $service, $args, $this );
 	}
 
 	/**
@@ -444,7 +643,7 @@ class RPRESS_Service_Hours {
 			return null;
 		}
 		$settings = $this->get_settings( $service );
-		$earliest = $now->getTimestamp() + $settings['prep_time'] * 60;
+		$earliest = $this->earliest_slot_ts( $settings );
 		$rolls    = $settings['always_open'];
 		if ( ! $rolls && $this->is_open_at( $now, $service ) ) {
 			// Open now and still open once the order is ready, with the next
@@ -493,10 +692,12 @@ class RPRESS_Service_Hours {
 	 */
 	public function get_available_dates( $service = '', $days = null ) {
 		$settings = $this->get_settings( $service );
+		$notice   = $this->get_notice_days( $service );
 		if ( null === $days ) {
-			$days = $settings['preorder_days'] > 0 ? $settings['preorder_days'] + 1 : 7;
+			$days = $settings['preorder_days'] > 0 ? $settings['preorder_days'] + $notice + 1 : 7 + $notice;
 		}
-		$days  = $settings['preorder'] ? max( 1, (int) $days ) : 1;
+		// Without pre-ordering: today, or the one day a notice period allows.
+		$days  = $settings['preorder'] ? max( 1, (int) $days ) : 1 + $this->get_notice_days( $service, false );
 		$today = $this->date( $this->now() );
 		$dates = array();
 		for ( $offset = 0; $offset < $days; $offset++ ) {

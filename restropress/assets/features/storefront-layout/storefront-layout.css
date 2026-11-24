@@ -1,0 +1,632 @@
+/*
+ * RestroPress storefront layout components (3.5.1).
+ *
+ * Loaded only on menu pages whose layout differs from the core default.
+ * Every rule is scoped to a body.rp-sf-* class, so the default storefront
+ * never sees it. Colours, fonts and radii come from the --rpc-* pack tokens:
+ * packs skin these components, they do not restyle the structure.
+ *
+ * Breakpoints follow the menu: phones up to 767px (the 3.5 mobile layer
+ * owns the cart bar and the sheets there), the category sidebar from 881px,
+ * the side cart from 1025px.
+ */
+
+/* ------------------------------------------------------------------ */
+/* 1. Masthead                                                          */
+/* ------------------------------------------------------------------ */
+.rpress-menu-v2 .rp-sf-masthead {
+	flex: 0 0 100%;
+	width: 100%;
+	box-sizing: border-box;
+	margin: 0 0 16px;
+	font-family: var(--rpc-font-body, system-ui, sans-serif);
+	color: var(--rpc-ink, #111);
+}
+.rpress-menu-v2 .rp-sf-masthead-body {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+/* The store card sits inside the masthead: drop its own card chrome. */
+.rpress-menu-v2 .rp-sf-masthead .rp-mo-store {
+	flex: 1 1 auto;
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	min-width: 0;
+}
+.rpress-menu-v2 .rp-sf-monogram {
+	flex: none;
+	display: inline-grid;
+	place-items: center;
+	width: 56px;
+	height: 56px;
+	border-radius: var(--rpc-radius-card, 14px);
+	background: var(--rpc-ink, #111);
+	color: var(--rpc-surface, #fff);
+	font: 700 20px/1 var(--rpc-font-display, var(--rpc-font-body, system-ui));
+	letter-spacing: .02em;
+	overflow: hidden;
+}
+.rpress-menu-v2 .rp-sf-monogram.has-img { background: var(--rpc-surface, #fff); border: 1px solid var(--rpc-border-subtle, #eee); }
+.rpress-menu-v2 .rp-sf-monogram-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rpress-menu-v2 .rp-sf-store-name {
+	margin: 0;
+	font: 700 24px/1.2 var(--rpc-font-display, var(--rpc-font-body, system-ui));
+	color: var(--rpc-ink, #111);
+}
+
+/* Cover: wide band, monogram overlapping its lower edge. */
+.rpress-menu-v2 .rp-sf-masthead--cover .rp-sf-cover {
+	height: 200px;
+	border-radius: var(--rpc-radius-card, 16px);
+	background-color: var(--rpc-ink, #111);
+	background-size: cover;
+	background-position: center;
+}
+.rpress-menu-v2 .rp-sf-masthead--cover.no-cover .rp-sf-cover {
+	height: 96px;
+	background-image: linear-gradient(135deg, var(--rpc-ink, #111), var(--rpc-primary, #444));
+}
+.rpress-menu-v2 .rp-sf-masthead--cover .rp-sf-masthead-body {
+	align-items: flex-end;
+	margin-top: -32px;
+	padding: 0 20px;
+}
+.rpress-menu-v2 .rp-sf-masthead--cover .rp-sf-monogram {
+	width: 80px;
+	height: 80px;
+	font-size: 26px;
+	border: 3px solid var(--rpc-page, #fff);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
+}
+.rpress-menu-v2 .rp-sf-masthead--cover .rp-mo-store { padding-top: 40px; }
+
+/* Strip: one compact row. */
+.rpress-menu-v2 .rp-sf-masthead--strip {
+	padding: 12px 16px;
+	border: 1px solid var(--rpc-border-subtle, #eee);
+	border-radius: var(--rpc-radius-card, 16px);
+	background: var(--rpc-surface, #fff);
+}
+.rpress-menu-v2 .rp-sf-masthead--strip .rp-sf-monogram { width: 44px; height: 44px; font-size: 16px; }
+.rpress-menu-v2 .rp-sf-masthead--strip .rp-mo-store { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.rpress-menu-v2 .rp-sf-masthead--strip .rp-mo-store .rp-mo-closed { flex-basis: 100%; }
+
+/* Editorial: centred, display type, thin rules. */
+.rpress-menu-v2 .rp-sf-masthead--editorial {
+	padding: 28px 16px 22px;
+	border-top: 1px solid var(--rpc-border-strong, #ddd);
+	border-bottom: 1px solid var(--rpc-border-strong, #ddd);
+	text-align: center;
+}
+.rpress-menu-v2 .rp-sf-masthead--editorial .rp-sf-masthead-body { justify-content: center; }
+.rpress-menu-v2 .rp-sf-masthead--editorial .rp-mo-store { justify-items: center; text-align: center; }
+.rpress-menu-v2 .rp-sf-masthead--editorial .rp-mo-store-head { flex-direction: column; align-items: center; justify-content: center; }
+.rpress-menu-v2 .rp-sf-masthead--editorial .rp-mo-store-name,
+.rpress-menu-v2 .rp-sf-masthead--editorial .rp-sf-store-name {
+	font-family: var(--rpc-font-display, Georgia, serif);
+	font-size: clamp(28px, 4vw, 40px);
+	font-weight: 600;
+	letter-spacing: .01em;
+}
+.rpress-menu-v2 .rp-sf-masthead--editorial .rp-mo-store-chips { justify-content: center; }
+
+@media (max-width: 767px) {
+	.rpress-menu-v2 .rp-sf-masthead--cover .rp-sf-cover { height: 132px; border-radius: 0; margin: 0 -16px; }
+	.rpress-menu-v2 .rp-sf-masthead--cover.no-cover .rp-sf-cover { height: 72px; }
+	.rpress-menu-v2 .rp-sf-masthead--cover .rp-sf-masthead-body { padding: 0 4px; margin-top: -28px; }
+	.rpress-menu-v2 .rp-sf-masthead--cover .rp-sf-monogram { width: 64px; height: 64px; font-size: 22px; }
+	.rpress-menu-v2 .rp-sf-masthead--cover .rp-mo-store { padding-top: 32px; }
+	.rpress-menu-v2 .rp-sf-masthead--strip { padding: 10px 12px; }
+	.rpress-menu-v2 .rp-sf-masthead--editorial { padding: 20px 8px 16px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. Rails                                                             */
+/* ------------------------------------------------------------------ */
+.rpress-menu-v2 .rp-sf-rail {
+	flex: 0 0 100%;
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	margin: 0 0 20px;
+	font-family: var(--rpc-font-body, system-ui, sans-serif);
+}
+.rpress-menu-v2 .rp-sf-rail-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0 0 10px;
+}
+.rpress-menu-v2 .rp-sf-rail-title {
+	margin: 0;
+	font: 700 18px/1.25 var(--rpc-font-head, var(--rpc-font-body, system-ui));
+	color: var(--rpc-ink, #111);
+}
+.rpress-menu-v2 .rp-sf-rail-paddles { display: flex; gap: 6px; }
+.rpress-menu-v2 .rp-sf-paddle {
+	display: inline-grid;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border: 1px solid var(--rpc-border-strong, #ddd);
+	border-radius: 999px;
+	background: var(--rpc-surface, #fff);
+	color: var(--rpc-ink, #111);
+	font: 400 22px/1 system-ui, sans-serif;
+	cursor: pointer;
+}
+.rpress-menu-v2 .rp-sf-paddle[disabled] { opacity: .35; cursor: default; }
+.rpress-menu-v2 .rp-sf-paddle:focus-visible,
+.rpress-menu-v2 .rp-sf-rail-card:focus-visible {
+	outline: 2px solid var(--rpc-primary, #333);
+	outline-offset: 2px;
+}
+.rpress-menu-v2 .rp-sf-rail-track {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(150px, 180px);
+	gap: 12px;
+	margin: 0;
+	padding: 2px 2px 6px;
+	list-style: none;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	scrollbar-width: none;
+	overscroll-behavior-x: contain;
+}
+.rpress-menu-v2 .rp-sf-rail-track::-webkit-scrollbar { display: none; }
+.rpress-menu-v2 .rp-sf-rail-item { margin: 0; padding: 0; scroll-snap-align: start; }
+.rpress-menu-v2 .rp-sf-rail-item::before,
+.rpress-menu-v2 .rp-sf-rail-item::marker { content: none; }
+.rpress-menu-v2 .rp-sf-rail-card {
+	display: grid;
+	align-content: start;
+	gap: 4px;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0 0 10px;
+	border: 1px solid var(--rpc-border-subtle, #eee);
+	border-radius: var(--rpc-radius-card, 14px);
+	background: var(--rpc-surface, #fff);
+	color: var(--rpc-ink, #111);
+	text-align: left;
+	font: inherit;
+	text-transform: none;
+	letter-spacing: normal;
+	box-shadow: none;
+	overflow: hidden;
+	cursor: pointer;
+}
+.rpress-menu-v2 .rp-sf-rail-card:hover { border-color: var(--rpc-border-strong, #ccc); background: var(--rpc-surface, #fff); color: var(--rpc-ink, #111); }
+.rpress-menu-v2 .rp-sf-rail-img { display: block; aspect-ratio: 4 / 3; background: var(--rpc-border-subtle, #f3f3f3); }
+.rpress-menu-v2 .rp-sf-rail-img img { display: block; width: 100%; height: 100%; object-fit: cover; margin: 0; border-radius: 0; }
+.rpress-menu-v2 .rp-sf-rail-name {
+	padding: 6px 12px 0;
+	font: 600 14px/1.3 var(--rpc-font-body, system-ui);
+	color: var(--rpc-ink, #111);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.rpress-menu-v2 .rp-sf-rail-price { padding: 0 12px; font: 500 13px/1.3 var(--rpc-font-body, system-ui); color: var(--rpc-muted, #666); }
+@media (max-width: 767px) {
+	.rpress-menu-v2 .rp-sf-rail-paddles { display: none; }
+	.rpress-menu-v2 .rp-sf-rail-track { grid-auto-columns: 42%; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Category nav: top bar                                             */
+/* ------------------------------------------------------------------ */
+/* The scrollable bar (phones' nav) runs on every width; the sidebar goes. */
+@media (min-width: 768px) {
+	body.rp-sf-nav-topbar .rpress-menu-v2 .rpress-mobile-menu-wrap { display: block !important; }
+	body.rp-sf-nav-topbar .rpress-menu-v2 .rpress-mobile-menu-wrap .cd-dropdown-wrapper { display: none !important; }
+	body.rp-sf-nav-topbar .rpress-menu-v2 .rpress_fooditems_list .cat-lists { display: none !important; }
+	body.rp-sf-nav-topbar .rpress-menu-v2 .rpress_fooditems_list > .rp-col-lg-8 {
+		flex: 1 1 100% !important;
+		width: 100% !important;
+		max-width: 100% !important;
+		padding: 0 !important;
+		float: none !important;
+	}
+}
+/* Underline tabs: the active tab is ink with the primary underline. */
+body.rp-sf-nav-topbar .rpress-menu-v2 .pn-ProductNav_Link {
+	display: inline-flex !important;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 10px 2px !important;
+	font-weight: 600 !important;
+}
+
+/* Photo tiles: image over the label. */
+body.rp-sf-media-images .rpress-menu-v2 .pn-ProductNav_Link {
+	flex-direction: column;
+	justify-content: flex-start;
+	flex: none !important;
+	gap: 6px;
+	width: 84px;
+	min-width: 84px;
+	padding: 8px 4px 10px !important;
+	margin-right: 10px !important;
+	white-space: normal !important;
+	text-align: center;
+	font-size: 13px !important;
+	line-height: 1.2;
+}
+body.rp-sf-media-images .rpress-menu-v2 .pn-ProductNav_Name {
+	display: -webkit-box;
+	max-width: 100%;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+}
+body.rp-sf-media-images .rpress-menu-v2 .rp-sf-tile {
+	display: grid;
+	place-items: center;
+	width: 64px;
+	height: 64px;
+	border-radius: var(--rpc-radius-card, 14px);
+	background: var(--rpc-primary-tint, #f4f4f4);
+	color: var(--rpc-primary, #333);
+	font: 700 24px/1 var(--rpc-font-display, var(--rpc-font-body, system-ui));
+	overflow: hidden;
+	border: 2px solid transparent;
+	transition: border-color .15s ease;
+}
+body.rp-sf-media-images .rpress-menu-v2 .rp-sf-tile img { display: block; width: 100%; height: 100%; object-fit: cover; margin: 0; border-radius: 0; }
+body.rp-sf-media-images .rpress-menu-v2 .pn-ProductNav_Link.mnuactive .rp-sf-tile { border-color: var(--rpc-primary, #333); }
+/* Pack skins paint the active tab as a pill; a tile marks itself instead. */
+body.rp-sf.rp-sf-media-images .rpress-menu-v2 .rpress-mobile-menu-wrap .pn-ProductNav .pn-ProductNav_Link,
+body.rp-sf.rp-sf-media-images .rpress-menu-v2 .rpress-mobile-menu-wrap .pn-ProductNav .pn-ProductNav_Link.mnuactive {
+	background: transparent !important;
+	border-color: transparent !important;
+	box-shadow: none !important;
+	color: var(--rpc-muted, #555) !important;
+}
+body.rp-sf.rp-sf-media-images .rpress-menu-v2 .rpress-mobile-menu-wrap .pn-ProductNav .pn-ProductNav_Link.mnuactive { color: var(--rpc-ink, #111) !important; }
+/* The sliding indicator sits under the label row; tiles mark the active one instead. */
+/* Pack skins style it by ID (Ember's sliding pill), so match that. */
+body.rp-sf.rp-sf-media-images .rpress-menu-v2 #pnIndicator,
+body.rp-sf.rp-sf-media-images .rpress-menu-v2 .pn-ProductNav_Indicator { display: none !important; }
+@media (max-width: 767px) {
+	body.rp-sf-media-images .rpress-menu-v2 .rp-sf-tile { width: 52px; height: 52px; font-size: 20px; }
+	body.rp-sf-media-images .rpress-menu-v2 .pn-ProductNav_Link { width: 72px; min-width: 72px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 4. Dish grid: columns                                                */
+/* ------------------------------------------------------------------ */
+/* The list column holds category headings and dish cards as siblings: a
+   grid with the headings spanning every column keeps sections intact.
+   "columns" is a maximum: cards never get narrower than the card shape's
+   minimum, so the count follows the space the menu really has (side cart
+   open or not), not the screen width. */
+body.rp-sf { --rp-sf-gap: 14px; --rp-sf-card-min: 300px; }
+body.rp-sf-card-top { --rp-sf-card-min: 190px; }
+body.rp-sf-card-overlay { --rp-sf-card-min: 240px; }
+body.rp-sf-card-text,
+body.rp-sf-noimg { --rp-sf-card-min: 280px; }
+body.rp-sf-cols-2 { --rp-sf-cols: 2; }
+body.rp-sf-cols-3 { --rp-sf-cols: 3; }
+body.rp-sf-cols-4 { --rp-sf-cols: 4; }
+body:is(.rp-sf-cols-2, .rp-sf-cols-3, .rp-sf-cols-4) .rpress-menu-v2 .rpress_fooditems_list > .rp-col-lg-8 {
+	display: grid !important;
+	grid-template-columns: repeat(auto-fill, minmax(max(var(--rp-sf-card-min), calc((100% - (var(--rp-sf-cols) - 1) * var(--rp-sf-gap)) / var(--rp-sf-cols))), 1fr));
+	gap: var(--rp-sf-gap);
+	align-items: stretch;
+}
+body:is(.rp-sf-cols-2, .rp-sf-cols-3, .rp-sf-cols-4) .rpress-menu-v2 .rpress_fooditems_list > .rp-col-lg-8 > *:not(.rpress_fooditem) { grid-column: 1 / -1; }
+body:is(.rp-sf-cols-2, .rp-sf-cols-3, .rp-sf-cols-4) .rpress-menu-v2 .rpress_fooditems_list > .rp-col-lg-8 > .rpress_fooditem {
+	width: auto !important;
+	max-width: none !important;
+	min-width: 0;
+	margin: 0 !important;
+	float: none !important;
+}
+/* Phones: photo-on-top cards go two up; other shapes stay one up. */
+@media (max-width: 767px) {
+	body.rp-sf { --rp-sf-gap: 10px; }
+	body.rp-sf-card-top { --rp-sf-card-min: 140px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. Dish cards: shapes                                                */
+/* ------------------------------------------------------------------ */
+/* Photo on top. The image column (photo + add button) moves above the text. */
+body.rp-sf-card-top .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: stretch !important;
+	gap: 10px;
+	height: 100%;
+	box-sizing: border-box;
+}
+body.rp-sf-card-top .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner > div[class*="rp-col-"] {
+	width: 100% !important;
+	max-width: 100% !important;
+	flex: none !important;
+	padding: 0 !important;
+	float: none !important;
+}
+body.rp-sf-card-top .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner > .rp-col-md-4 { order: -1; }
+body.rp-sf-card-top .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner > .rp-grid-view-wrap { flex: 1 1 auto !important; }
+body.rp-sf-card-top .rpress-menu-v2 .rpress_fooditem .rpress-list-view-image-wrapper { position: relative; width: 100% !important; }
+body.rp-sf-card-top .rpress-menu-v2 .rpress_fooditem .rpress-thumbnail-holder {
+	width: 100% !important;
+	height: auto !important;
+	aspect-ratio: 4 / 3;
+	max-width: none !important;
+}
+body.rp-sf-card-top .rpress-menu-v2 .rpress_fooditem .rpress-thumbnail-holder img {
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: cover;
+}
+/* A card without a photo keeps its add button in the image column: with no
+   photo it sits under the text instead of floating over nothing. */
+body.rp-sf-card-top .rpress-menu-v2 .rpress_fooditem .rp-no-img > .rp-col-md-4 { order: 2; }
+
+/* Text only (and show_image off): the photo column goes, the add button stays. */
+body.rp-sf-card-text .rpress-menu-v2 .rpress_fooditem .rpress-thumbnail-holder,
+body.rp-sf-noimg .rpress-menu-v2 .rpress_fooditem .rpress-thumbnail-holder { display: none !important; }
+body.rp-sf-card-text .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner,
+body.rp-sf-noimg .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner { align-items: center !important; }
+body.rp-sf-card-text .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner > .rp-col-md-4,
+body.rp-sf-noimg .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner > .rp-col-md-4 {
+	width: auto !important;
+	max-width: none !important;
+	flex: none !important;
+}
+body.rp-sf.rp-sf-card-text .rpress-menu-v2 .rpress_fooditem .rpress-list-view-image-wrapper,
+body.rp-sf.rp-sf-noimg .rpress-menu-v2 .rpress_fooditem .rpress-list-view-image-wrapper {
+	width: auto !important;
+	min-width: max-content !important;
+	height: auto !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	position: static !important;
+}
+/* Doubled body class and full path: Modern pins the button on the photo
+   with a 0,6,1 !important rule. */
+body.rp-sf.rp-sf-card-text .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem .rpress-list-view-image-wrapper .rpress_fooditem_buy_button,
+body.rp-sf.rp-sf-noimg .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem .rpress-list-view-image-wrapper .rpress_fooditem_buy_button {
+	position: static !important;
+	transform: none !important;
+	left: auto !important;
+	right: auto !important;
+	bottom: auto !important;
+	top: auto !important;
+	width: auto !important;
+	max-width: none !important;
+}
+body.rp-sf-card-text .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner > .rp-grid-view-wrap,
+body.rp-sf-noimg .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner > .rp-grid-view-wrap {
+	flex: 1 1 auto !important;
+	width: auto !important;
+	max-width: none !important;
+}
+
+/* Overlay: the photo fills the card, text on a scrim at the bottom. */
+body.rp-sf-card-overlay .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner:not(.rp-no-img) {
+	position: relative;
+	min-height: 240px;
+	overflow: hidden;
+	border-radius: var(--rpc-radius-card, 16px);
+}
+body.rp-sf-card-overlay .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner:not(.rp-no-img) > .rp-col-md-4 {
+	position: absolute !important;
+	inset: 0;
+	width: 100% !important;
+	max-width: none !important;
+	padding: 0 !important;
+}
+body.rp-sf-card-overlay .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner:not(.rp-no-img) .rpress-list-view-image-wrapper,
+body.rp-sf-card-overlay .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner:not(.rp-no-img) .rpress-thumbnail-holder {
+	width: 100% !important;
+	height: 100% !important;
+	max-width: none !important;
+	border-radius: 0 !important;
+}
+body.rp-sf-card-overlay .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner:not(.rp-no-img) .rpress-thumbnail-holder img { width: 100% !important; height: 100% !important; object-fit: cover; }
+body.rp-sf-card-overlay .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner:not(.rp-no-img) > .rp-grid-view-wrap {
+	position: relative;
+	z-index: 1;
+	align-self: flex-end;
+	width: 100% !important;
+	max-width: none !important;
+	margin-top: auto;
+	padding: 48px 16px 14px !important;
+	background: linear-gradient(to top, rgba(0, 0, 0, .78), rgba(0, 0, 0, 0));
+	pointer-events: none;
+}
+/* White on the scrim for name, description and price only: badges keep
+   their own colours. */
+body.rp-sf-card-overlay .rpress-menu-v2 .rpress_fooditem .rpress_fooditem_inner:not(.rp-no-img) > .rp-grid-view-wrap :is(.rpress_fooditem_title, .food-title, .rpress_fooditem_excerpt, .rpress_fooditem_excerpt p, .rpress-price-holder, .rpress-price-holder *) { color: #fff !important; }
+/* The add button moves to the top corner, clear of the text. */
+body.rp-sf.rp-sf-card-overlay .rpress-menu-v2 .rpress_fooditems_list .rpress_fooditem .rpress_fooditem_inner:not(.rp-no-img) .rpress-list-view-image-wrapper .rpress_fooditem_buy_button {
+	position: absolute !important;
+	top: 12px !important;
+	right: 12px !important;
+	bottom: auto !important;
+	left: auto !important;
+	transform: none !important;
+	z-index: 2;
+}
+
+/* ------------------------------------------------------------------ */
+/* 6. Cart drawer (desktop)                                             */
+/* ------------------------------------------------------------------ */
+/* The drawer chrome only exists on desktop: below 1025px the cart is the 3.5
+   sidebar (tablets) or the phone sheet, and a visible close button would sit
+   above the menu with nothing to close. */
+.rp-sf-cart-fab,
+.rp-sf-drawer-close,
+.rp-sf-drawer-backdrop { display: none; }
+@media (min-width: 1025px) {
+	/* The menu takes the full width; the cart lives off canvas. */
+	body.rp-sf-cart-drawer .rpress-menu-v2.rpress-menu-v2 > .rpress-sidebar-cart {
+		position: fixed !important;
+		top: 0 !important;
+		right: 0 !important;
+		bottom: 0 !important;
+		z-index: 100000;
+		width: min(420px, 100vw) !important;
+		max-width: 100vw !important;
+		flex: none !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		background: var(--rpc-surface, #fff);
+		box-shadow: -12px 0 40px rgba(0, 0, 0, .18);
+		transform: translateX(105%);
+		visibility: hidden;
+		transition: transform .25s ease, visibility 0s linear .25s;
+		overflow: hidden;
+	}
+	body.rp-sf-cart-drawer.rp-sf-cart-open .rpress-menu-v2.rpress-menu-v2 > .rpress-sidebar-cart {
+		transform: none;
+		visibility: visible;
+		transition: transform .25s ease;
+	}
+	/* The sticky-sidebar script pins this wrapper with fixed position and a
+	   transform measured for the old column: inside the drawer it must flow. */
+	body.rp-sf-cart-drawer .rpress-menu-v2 > .rpress-sidebar-cart .rpressStickySidebar,
+	body.rp-sf-cart-drawer .rpress-menu-v2 > .rpress-sidebar-cart .inner-wrapper-sticky {
+		position: static !important;
+		transform: none !important;
+		top: auto !important;
+		left: auto !important;
+		width: auto !important;
+		height: 100% !important;
+	}
+	body.rp-sf-cart-drawer .rpress-menu-v2 > .rpress-sidebar-cart .rpress-sidebar-main-wrap,
+	body.rp-sf-cart-drawer .rpress-menu-v2 > .rpress-sidebar-cart .make-me-sticky {
+		position: static !important;
+		height: 100%;
+		max-height: none !important;
+		top: auto !important;
+	}
+	body.rp-sf-cart-drawer .rpress-menu-v2.rpress-menu-v2 .rpress-sidebar-cart-wrap {
+		height: 100% !important;
+		max-height: 100vh !important;
+		border-radius: 0 !important;
+		border: 0 !important;
+		box-shadow: none !important;
+	}
+	body.rp-sf-cart-drawer .rpress-menu-v2 > .rp-col-lg-8 { flex: 1 1 100% !important; }
+	body.admin-bar.rp-sf-cart-drawer .rpress-menu-v2.rpress-menu-v2 > .rpress-sidebar-cart { top: 32px !important; }
+
+	.rp-sf-drawer-close {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		z-index: 2;
+		display: inline-grid;
+		place-items: center;
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		border: 1px solid var(--rpc-border-subtle, #eee);
+		border-radius: 999px;
+		background: var(--rpc-surface, #fff);
+		color: var(--rpc-ink, #111);
+		font: 400 22px/1 system-ui, sans-serif;
+		cursor: pointer;
+	}
+	.rp-sf-drawer-backdrop {
+		display: block;
+		position: fixed;
+		inset: 0;
+		z-index: 99999;
+		background: rgba(0, 0, 0, .4);
+		opacity: 0;
+		visibility: hidden;
+		transition: opacity .2s ease, visibility 0s linear .2s;
+	}
+	body.rp-sf-cart-open .rp-sf-drawer-backdrop { opacity: 1; visibility: visible; transition: opacity .2s ease; }
+
+	/* Floating button: count and total, opens the drawer. */
+	body.rp-sf-cart-drawer .rp-sf-cart-fab {
+		position: fixed;
+		right: 24px;
+		bottom: 24px;
+		z-index: 9990;
+		display: inline-flex;
+		align-items: center;
+		gap: 12px;
+		min-height: 52px;
+		padding: 0 20px 0 14px;
+		border: 0;
+		border-radius: 999px;
+		background: var(--rpc-primary, #111);
+		color: var(--rpc-on-primary, #fff);
+		font: 600 15px/1 var(--rpc-font-body, system-ui);
+		box-shadow: 0 10px 28px rgba(0, 0, 0, .22);
+		cursor: pointer;
+	}
+	body.rp-sf-cart-drawer .rp-sf-cart-fab:hover { background: var(--rpc-primary-hover, var(--rpc-primary, #111)); color: var(--rpc-on-primary, #fff); }
+	body.rp-sf-cart-drawer .rp-sf-cart-fab:focus-visible,
+	.rp-sf-drawer-close:focus-visible { outline: 3px solid var(--rpc-ink, #111); outline-offset: 3px; }
+	body.rp-sf-cart-drawer .rp-sf-cart-fab[hidden] { display: none; }
+	.rp-sf-cart-fab-count {
+		display: inline-grid;
+		place-items: center;
+		min-width: 26px;
+		height: 26px;
+		padding: 0 6px;
+		border-radius: 999px;
+		background: var(--rpc-on-primary, #fff);
+		color: var(--rpc-primary, #111);
+		font-size: 13px;
+		box-sizing: border-box;
+	}
+	body.rp-sf-cart-open .rp-sf-cart-fab { visibility: hidden; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 7. Item popup: right side sheet (tablet and desktop)                 */
+/* ------------------------------------------------------------------ */
+@media (min-width: 768px) {
+	body.rp-sf-item-side-sheet #rpressModal .modal__overlay {
+		justify-content: flex-end !important;
+		align-items: stretch !important;
+		padding: 0 !important;
+	}
+	body.rp-sf-item-side-sheet #rpressModal .modal__container {
+		width: min(480px, 100vw) !important;
+		max-width: 100vw !important;
+		height: 100vh !important;
+		max-height: 100vh !important;
+		margin: 0 !important;
+		border-radius: 0 !important;
+		display: flex;
+		flex-direction: column;
+	}
+	body.rp-sf-item-side-sheet #rpressModal .modal__content { flex: 1 1 auto; overflow-y: auto; max-height: none !important; }
+	body.rp-sf-item-side-sheet #rpressModal[aria-hidden="false"] .modal__container { animation: rpSfSheetIn .25s ease both; }
+	body.admin-bar.rp-sf-item-side-sheet #rpressModal .modal__container { height: calc(100vh - 32px) !important; margin-top: 32px !important; }
+}
+@keyframes rpSfSheetIn {
+	from { transform: translateX(40px); opacity: 0; }
+	to { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.rp-sf-cart-drawer .rpress-menu-v2.rpress-menu-v2 > .rpress-sidebar-cart,
+	.rp-sf-drawer-backdrop,
+	body.rp-sf-media-images .rpress-menu-v2 .rp-sf-tile { transition: none !important; }
+	body.rp-sf-item-side-sheet #rpressModal .modal__container { animation: none !important; }
+	.rpress-menu-v2 .rp-sf-rail-track { scroll-behavior: auto; }
+}

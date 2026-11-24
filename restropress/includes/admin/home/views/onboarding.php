@@ -229,13 +229,13 @@ $steps = array(
 				<div class="rp-ob-two">
 					<div class="rp-ob-field rp-sw-both-only"><label for="rp-sw-default-svc"><?php esc_html_e( 'Selected by default', 'restropress' ); ?></label>
 						<select name="default_service" id="rp-sw-default-svc" class="rp-ob-select"><option value="delivery" <?php selected( $def_service, 'delivery' ); ?>><?php esc_html_e( 'Delivery', 'restropress' ); ?></option><option value="pickup" <?php selected( $def_service, 'pickup' ); ?>><?php esc_html_e( 'Pickup', 'restropress' ); ?></option></select></div>
-					<div class="rp-ob-field"><label for="rp-sw-prep"><?php esc_html_e( 'Prep time (minutes)', 'restropress' ); ?></label><input type="number" min="0" max="1440" name="prep_time" id="rp-sw-prep" value="<?php echo esc_attr( $prep_time ); ?>" aria-describedby="rp-sw-prep-hint"><p class="rp-ob-hint rp-help-text" id="rp-sw-prep-hint"><?php esc_html_e( 'Sets the earliest time customers can choose.', 'restropress' ); ?></p></div>
+					<div class="rp-ob-field"><label for="rp-sw-prep"><?php esc_html_e( 'Prep time (minutes)', 'restropress' ); ?></label><input type="number" min="0" name="prep_time" id="rp-sw-prep" value="<?php echo esc_attr( $prep_time ); ?>" aria-describedby="rp-sw-prep-hint"><p class="rp-ob-hint rp-help-text" id="rp-sw-prep-hint"><?php esc_html_e( 'Sets the earliest time customers can choose.', 'restropress' ); ?></p></div>
 				</div>
 				<label class="rp-ob-check"><input type="checkbox" name="enable_asap_option" value="1" <?php checked( '1', $asap_on ); ?>> <?php esc_html_e( 'Let customers order "as soon as possible"', 'restropress' ); ?></label>
 
 				<div class="rp-ob-group"><?php esc_html_e( 'New order alerts', 'restropress' ); ?></div>
 				<div class="rp-ob-field"><label for="rp-sw-alert-email"><?php esc_html_e( 'Email new orders to', 'restropress' ); ?></label><input type="text" name="admin_notice_emails" id="rp-sw-alert-email" value="<?php echo esc_attr( $alert_email ); ?>" autocomplete="email" aria-describedby="rp-sw-alert-hint"><p class="rp-ob-hint rp-help-text" id="rp-sw-alert-hint"><?php esc_html_e( 'Separate several addresses with commas.', 'restropress' ); ?></p></div>
-				<label class="rp-ob-check"><input type="checkbox" name="enable_order_notification" value="1" <?php checked( ! empty( $notify_on ) ); ?>> <?php esc_html_e( 'Play a sound and show a desktop notification while Live Orders is open', 'restropress' ); ?></label>
+				<label class="rp-ob-check"><input type="checkbox" name="enable_order_notification" value="1" <?php checked( ! empty( $notify_on ) ); ?>> <?php esc_html_e( 'Show a popup and play a sound for new orders on every admin screen', 'restropress' ); ?></label>
 				<label class="rp-ob-check"><input type="checkbox" name="enable_food_type" id="rp-ob-vegmark" value="1" <?php checked( $enable_vegmark ); ?>> <?php esc_html_e( 'Show Veg / Non-veg marks on menu items', 'restropress' ); ?></label>
 			</section>
 

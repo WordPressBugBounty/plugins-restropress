@@ -409,10 +409,18 @@ function rpress_account_hub_update_profile( $user_id, $data ) {
 		$update['last_name'] = $last;
 	}
 	$code = 'profile_saved';
-	if ( '' !== $email && is_email( $email ) ) {
+	$user = get_userdata( $user_id );
+	if ( '' !== $email && is_email( $email ) && $user && 0 !== strcasecmp( $email, $user->user_email ) ) {
 		$owner = email_exists( $email );
+		// A new email needs the current password, so a session left open on
+		// a shared device cannot be used to take over the account (3.5.1).
+		$password = isset( $data['current_password'] ) ? (string) $data['current_password'] : '';
 		if ( $owner && (int) $owner !== (int) $user_id ) {
 			$code = 'email_in_use';
+		} elseif ( '' === $password ) {
+			$code = 'email_password_required';
+		} elseif ( ! wp_check_password( $password, $user->user_pass, $user_id ) ) {
+			$code = 'email_password_wrong';
 		} else {
 			$update['user_email'] = $email;
 		}

@@ -104,9 +104,12 @@ function rpress_account_hub_dashboard_notice() {
 	}
 	$messages = array(
 		'address_saved'             => array( 'success', __( 'Address saved.', 'restropress' ) ),
+		'address_deleted'           => array( 'success', __( 'Address deleted.', 'restropress' ) ),
 		'profile_saved'             => array( 'success', __( 'Profile updated.', 'restropress' ) ),
 		'email_in_use'              => array( 'error', __( 'That email address belongs to another account.', 'restropress' ) ),
 		'profile_error'             => array( 'error', __( 'Your profile could not be updated. Please try again.', 'restropress' ) ),
+		'email_password_required'   => array( 'error', __( 'Your email address was not changed: enter your current password to change it.', 'restropress' ) ),
+		'email_password_wrong'      => array( 'error', __( 'Your email address was not changed: the current password is not correct.', 'restropress' ) ),
 		'rpress_address_incomplete' => array( 'error', __( 'Please enter the street address and city.', 'restropress' ) ),
 		'rpress_address_limit'      => array( 'error', __( 'You have reached the maximum number of saved addresses. Delete one to add another.', 'restropress' ) ),
 		'rpress_address_missing'    => array( 'error', __( 'That address no longer exists.', 'restropress' ) ),

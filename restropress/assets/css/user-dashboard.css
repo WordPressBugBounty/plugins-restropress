@@ -274,58 +274,17 @@ form.profile-form-wrap input[type="submit"]{
     border: 1.6px solid #E2E2E2;
     border-radius: 14px;
 }
-div#user-my-orders h4.box-title{
-    font-size:22px;
-    color: #292929;
-    margin: 0;
-}
 table{
     background-color: #FBFBFB;
     border: 0;
     margin: 0;  
     border-radius: 14px;
 }
-table.dataTable.no-footer#user-orders {
-    border-bottom:0px solid rgba(0, 0, 0, 0.3);
-}
-table#user-orders thead th {
-    padding: 0.4em 1em;
-    background-color: #EEEEEE;
-    border:0;
-    border-top:1.6px solid #E2E2E2;
-    border-bottom:1.6px solid #E2E2E2 !important;
-    text-align: left;
-}
-table#user-orders thead th::before,
-table#user-orders thead th::after{
-    display:none;
-}
-div#user-orders_filter {
-    position: absolute;
-    right: 1.5rem;
-    top:-69px;
-}
 .table tbody tr:nth-child(even) {
     background-color: #F2F2F2;
 }
-table#user-orders tbody td{
-    color: #000000;
-    font-size: 16px;
-    font-weight: 400;
-    padding:1.4em 1em;
-    border: 0;
-}
 h6.rp-order-id {
     margin: 0;
-}
-.viewbg {
-    background-color: #EEEEEE;
-    border-radius: 5px;
-    text-align: center;
-    height: 25px;
-    line-height: 24px;
-    display: inline-block;
-    width: 38px;
 }
 .order-status{
     font-size:8px;
@@ -368,36 +327,6 @@ h6.rp-order-id {
 .order-status-accepted{
    color: #92531b;
    box-shadow: 0 0 0 2px #ffcd85;
-}
-div#user-orders_filter input[type="search"]{
-    width: 100%;
-    max-width: 250px;
-    height: 47px;
-    padding:8px 24px 8px 38px;
-    font-size: 18px;
-    font-weight: 500;
-    line-height: 22px;        
-    color: #575756;
-    background-color: #EEEEEE; 
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-size: 22px;
-    background-position:8px 50%;
-    border-radius: 5px;
-    border: 1.6px solid #E2E2E2;
-    transition: all 250ms ease-in-out;
-}
-div#user-orders_filter input[type="search"]::placeholder {
-    color:#000000;
-}
-div#user-orders_paginate{
-    padding:3em 1em 1em;
-}
-div#user-orders_info{
-    padding:4em 1em 0em;
-}
-.dataTables_wrapper .dataTables_paginate .paginate_button{
-    padding: 0.1em 0.8em !important;
 }
 /*----user-address_page----*/
 .user-saved-address .box-title-description{
@@ -1001,106 +930,6 @@ form.rpress_form p.register-link-wrap .reglink:focus{
     .text-end {
         text-align: left;
     }
-    div#user-my-orders h4.box-title {
-        font-size: 18px;
-    }
-    #user-my-orders .table-responsive {
-        overflow: visible;
-    }
-    #user-orders_wrapper {
-        width: 100%;
-    }
-    div#user-orders_filter {
-        position: static;
-        margin: 0 0 12px;
-        text-align: left;
-    }
-    div#user-orders_filter label {
-        display: block;
-        width: 100%;
-        font-size: 0;
-    }
-    div#user-orders_filter input[type="search"] {
-        width: 100%;
-        max-width: none;
-        height: 44px;
-        font-size: 14px;
-        margin: 0;
-    }
-    table#user-orders,
-    table#user-orders thead,
-    table#user-orders tbody,
-    table#user-orders tr,
-    table#user-orders td {
-        display: block;
-        width: 100% !important;
-    }
-    table#user-orders thead {
-        position: absolute;
-        width: 1px !important;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-        white-space: nowrap;
-    }
-    table#user-orders tbody tr {
-        margin: 0 0 12px;
-        padding: 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        background: #fff;
-        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
-    }
-    table#user-orders tbody tr:nth-child(even) {
-        background: #fff;
-    }
-    table#user-orders tbody td {
-        display: grid;
-        grid-template-columns: minmax(92px, 38%) minmax(0, 1fr);
-        align-items: center;
-        gap: 10px;
-        padding: 8px 0;
-        border: 0;
-        font-size: 13px;
-        text-align: left !important;
-        word-break: break-word;
-    }
-    table#user-orders tbody td::before {
-        content: attr(data-label);
-        color: #6b7280;
-        font-size: 11px;
-        font-weight: 700;
-        line-height: 1.2;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-    table#user-orders tbody td.dataTables_empty {
-        display: block;
-        padding: 14px 0;
-        text-align: center !important;
-    }
-    table#user-orders tbody td.dataTables_empty::before {
-        content: none;
-    }
-    table#user-orders tbody td:last-child {
-        align-items: start;
-        /* Label on its own line, buttons (view, track, reorder) use the full card width. */
-        grid-template-columns: minmax(0, 1fr);
-        gap: 8px;
-    }
-    .viewbg {
-        justify-self: start;
-    }
-    div#user-orders_info,
-    div#user-orders_paginate {
-        padding: 10px 0 0;
-        font-size: 12px;
-        text-align: left;
-    }
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-        padding: 0.15em 0.45em !important;
-        margin-left: 0;
-    }
     .address-wrap {
         display: block;
         width: 100%;
@@ -1155,10 +984,6 @@ form.rpress_form p.register-link-wrap .reglink:focus{
     .user-dashboard-wrapper .box-bg.pd-2,
     .user-dashboard-wrapper .light-gray-bg .box-body {
         padding: 12px;
-    }
-    table#user-orders tbody td {
-        grid-template-columns: 82px minmax(0, 1fr);
-        gap: 8px;
     }
 }
 @media screen and (max-width: 360px){
@@ -1629,3 +1454,327 @@ form.rpress_form p.register-link-wrap .reglink:focus{
     }
 }
 
+
+/* ---- Order cards (3.5.1): account Orders section and [order_history] ----
+   Every box property is declared here so older order-history rules cannot leak in. */
+.rpress-account-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding: 0;
+}
+.rpress-account-section-head h4.box-title {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.2;
+    color: #292929;
+}
+.rpress-order-cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+}
+#rpress_user_history .rpress-order-cards {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+}
+.rpress-order-card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+    padding: 16px 18px;
+    border: 1px solid #e7eaf0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    color: #1f2937;
+    text-align: start;
+}
+.rpress-order-card-head,
+.rpress-order-card-foot {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.rpress-order-card-title {
+    min-width: 0;
+}
+.rpress-order-card h3 {
+    margin: 0;
+    padding: 0;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #111827;
+    text-transform: none;
+    letter-spacing: 0;
+}
+.rpress-order-card p.rpress-order-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: 2px 0 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #6b7280;
+}
+.rpress-order-card-meta span + span::before {
+    content: "\00B7";
+    margin: 0 6px;
+}
+.rpress-order-card .rpress-order-badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 4px 10px;
+    border: 0;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-transform: none;
+    white-space: nowrap;
+}
+.rpress-order-card .rpress-order-badge.phase-pending { background: #fef3c7; color: #92400e; }
+.rpress-order-card .rpress-order-badge.phase-delivered { background: #dcfce7; color: #166534; }
+.rpress-order-card .rpress-order-badge.phase-cancelled { background: #f3f4f6; color: #6b7280; }
+.rpress-order-card p.rpress-order-card-items {
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #374151;
+    overflow-wrap: anywhere;
+}
+.rpress-order-card-more {
+    color: #6b7280;
+    white-space: nowrap;
+}
+.rpress-order-card-foot {
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid #eef2f7;
+}
+.rpress-order-card-total span {
+    display: block;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #6b7280;
+}
+.rpress-order-card-total strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #111827;
+}
+.rpress-order-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px 16px;
+    margin: 0;
+    padding: 0;
+}
+.rpress-order-card-actions a {
+    position: relative;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    text-transform: none;
+    white-space: nowrap;
+    box-shadow: none;
+}
+.rpress-order-card .rpress-order-card-actions a.rpress-order-card-link {
+    width: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--rpress-theme-primary, #4E4BF5);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.rpress-order-card .rpress-order-card-actions a.rpress-order-card-primary {
+    padding: 0 18px;
+    text-decoration: none;
+    border: 1px solid var(--rpress-theme-primary, #4E4BF5);
+    border-radius: var(--rpress-default-control-radius, 8px);
+    background: var(--rpress-theme-primary, #4E4BF5);
+    color: var(--rpress-theme-primary-contrast, #ffffff);
+}
+.rpress-order-card-actions a:hover,
+.rpress-order-card-actions a:focus {
+    opacity: 0.88;
+}
+.rpress-order-card .rpress-order-card-actions a.rpress-order-card-primary:hover,
+.rpress-order-card .rpress-order-card-actions a.rpress-order-card-primary:focus {
+    text-decoration: none;
+    color: var(--rpress-theme-primary-contrast, #ffffff);
+}
+.rpress-order-card-actions a:focus-visible,
+.rpress-orders-load-more:focus-visible,
+ul.sidebar-menu li a:focus-visible {
+    outline: 2px solid var(--rpress-theme-primary, #4E4BF5);
+    outline-offset: 2px;
+}
+.rpress-order-card-actions a.rp-loading {
+    color: transparent !important;
+}
+.rpress-orders-more {
+    margin: 16px 0 0;
+    text-align: center;
+}
+button.rpress-orders-load-more {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    margin: 0;
+    padding: 0 22px;
+    border: 1px solid #d1d5db;
+    border-radius: var(--rpress-default-control-radius, 8px);
+    background: #ffffff;
+    color: #1f2937;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-transform: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+button.rpress-orders-load-more:hover {
+    border-color: var(--rpress-theme-primary, #4E4BF5);
+    background: #ffffff;
+    color: var(--rpress-theme-primary, #4E4BF5);
+}
+button.rpress-orders-load-more[disabled] {
+    cursor: progress;
+    opacity: 0.7;
+}
+.rpress-orders-empty {
+    padding: 28px 16px;
+    text-align: center;
+    color: #6b7280;
+}
+.rpress-orders-empty p {
+    margin: 0 0 12px;
+}
+a.rpress-orders-empty-cta {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: var(--rpress-default-control-radius, 8px);
+    background: var(--rpress-theme-primary, #4E4BF5);
+    color: var(--rpress-theme-primary-contrast, #ffffff);
+    font-weight: 600;
+    text-decoration: none;
+}
+@media (max-width: 480px) {
+    .rpress-order-card {
+        padding: 14px;
+    }
+    .rpress-order-card-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .rpress-order-card .rpress-order-card-actions a.rpress-order-card-primary {
+        flex: 1 1 auto;
+        min-height: 44px;
+    }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .rpress-order-card-actions a,
+    button.rpress-orders-load-more {
+        transition: opacity 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+}
+/* Phones and small tablets (3.5.1): sections are separate pages now, so the
+   menu is one scrollable row and the open section starts right below it. */
+@media (max-width: 768px) {
+    .user-dashboard-wrapper ul.sidebar-menu {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 6px;
+        margin: 0;
+        padding: 6px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .user-dashboard-wrapper ul.sidebar-menu::-webkit-scrollbar {
+        display: none;
+    }
+    .user-dashboard-wrapper ul.sidebar-menu li {
+        flex: 0 0 auto;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border-left-width: 0;
+        border-bottom: 3px solid transparent;
+        border-radius: 8px;
+    }
+    .user-dashboard-wrapper ul.sidebar-menu li.active {
+        border-left-width: 0;
+        border-bottom-color: var(--rpress-theme-primary, #4E4BF5);
+    }
+    .user-dashboard-wrapper ul.sidebar-menu li a,
+    .user-dashboard-wrapper ul.sidebar-menu li div {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 8px 12px;
+        font-size: 14px;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+    .user-dashboard-wrapper ul.sidebar-menu li span {
+        overflow-wrap: normal;
+    }
+    .user-dashboard-wrapper .col-lg-3 .box-bg.height-100 {
+        height: auto;
+        padding: 0;
+    }
+}
+
+/* Profile: current password, shown once the email is edited (3.5.1). */
+.profile-form-wrap .rpress-email-password[hidden] {
+    display: none !important;
+}
+.profile-form-wrap .rpress-email-password-help {
+    margin: 0.4rem 0 0;
+    color: #646464;
+    font-size: 14px;
+    line-height: 1.4;
+}
+.profile-form-wrap .rpress-email-password-help a {
+    color: var(--rpress-theme-primary, #4E4BF5);
+    text-decoration: underline;
+}

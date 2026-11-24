@@ -41,7 +41,7 @@ add_action( 'admin_init', 'rpress_process_actions' );
  *
  * @since 2.6
  */
-function rp_addon_activation_notice() {
+function rp_addon_licence_problem() {
   $items = get_transient( 'restropress_add_ons_feed' );
   if( ! $items ) {
     $items = rpress_fetch_items();
@@ -60,13 +60,19 @@ function rp_addon_activation_notice() {
       }
     }
   }
-  if( !empty( $statuses ) && ( in_array( 'empty', $statuses) || in_array( 'invalid', $statuses) ) ) {
-    $class = 'notice notice-error';
-    $message = esc_html__( 'You have invalid or expired license keys for one or more addons of RestroPress. Please go to the Extensions page to update your licenses.', 'restropress' );
-    printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $class ), $message );
+  // 3.5.1: a problem in the admin notification center (licences), shown as a
+  // banner on the Extensions screen and the Dashboard only.
+  return ! empty( $statuses ) && ( in_array( 'empty', $statuses, true ) || in_array( 'invalid', $statuses, true ) );
+}
+
+/**
+ * The old every-screen banner. Kept for code that calls it; no longer hooked.
+ */
+function rp_addon_activation_notice() {
+  if ( rp_addon_licence_problem() ) {
+    printf( '<div class="notice notice-error"><p>%s</p></div>', esc_html__( 'You have invalid or expired license keys for one or more addons of RestroPress. Please go to the Extensions page to update your licenses.', 'restropress' ) );
   }
 }
-add_action( 'admin_notices', 'rp_addon_activation_notice' );
 /**
  * Check all extensions for updates
  * @since 2.7.2

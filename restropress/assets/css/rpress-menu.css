@@ -438,7 +438,7 @@ html {
 	border-radius: 50% !important;
 	border: 1.5px solid var(--rpc-addbtn-border, var(--rpc-primary)) !important;
 	background: var(--rpc-addbtn-bg, #fff) !important;
-	color: var(--rpc-addbtn-color, var(--rpc-primary)) !important;
+	color: var(--rpc-addbtn-color, var(--rpc-primary-text, var(--rpc-primary))) !important;
 	font-size: 0 !important;
 	line-height: 0 !important;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, .12) !important;
@@ -514,7 +514,7 @@ html {
 }
 .rpress-menu-v2 ul.order-online-servicetabs .nav-link.active {
 	background: var(--rpc-primary) !important;
-	color: #fff !important;
+	color: var(--rpc-on-primary, #fff) !important;
 }
 
 /* Date / time pill. border-radius / background / color keep !important
@@ -533,7 +533,7 @@ html {
 	color: var(--rpc-body) !important;
 }
 .rpress-menu-v2 .rpress_order-address-wrap a,
-.rpress-menu-v2 .rpress_order-address-wrap .rpress-edit-order-address { color: var(--rpc-primary) !important; font-weight: 600 !important; text-decoration: none !important; }
+.rpress-menu-v2 .rpress_order-address-wrap .rpress-edit-order-address { color: var(--rpc-primary-text, var(--rpc-primary)) !important; font-weight: 600 !important; text-decoration: none !important; }
 
 /* Search. width keeps !important (legacy input width wins); the rest is clean. */
 .rpress-menu-v2 .rpress-search-wrap #rpress-food-search {
@@ -810,5 +810,55 @@ body.rp-pack-modern .rpress-menu-v2 .rpress-cart-item-list .rpress-cart-item-pri
 		clear: both !important;
 		margin-top: 6px !important;
 		box-sizing: border-box !important;
+	}
+}
+
+/* Cart "Go to checkout · $12.00" button (3.5.1): sentence case, and keep the
+   gap around the dot (the button is a flex row, which drops the space). */
+.rpress-menu-v2 a.rpress-checkout-cart .rpress-checkout-label,
+.rpress-menu-v2 a.rpress-checkout-cart .rpress-checkout-amount {
+	text-transform: none !important;
+}
+.rpress-menu-v2 a.rpress-checkout-cart .rpress-checkout-amount {
+	margin-inline-start: 0.35em;
+	white-space: nowrap;
+}
+.rpress-menu-v2 a.rpress-checkout-cart .rpress-checkout-sep {
+	margin-inline-end: 0.35em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sidebar cart: CSS sticky instead of the sticky-sidebar script's      */
+/* measured position. The script pins the wrapper with absolute/fixed  */
+/* positions from heights it read earlier; once dishes are added (or   */
+/* photos load) those are stale and the cart hangs over the theme      */
+/* footer. A sticky element cannot leave its column, so it stops at    */
+/* the end of the menu. Classic keeps its static cart; the drawer has  */
+/* its own rules. A theme wrapper with overflow set stops CSS sticky;   */
+/* rp-frontend.js then adds rp-cart-script-sticky and the script runs.  */
+/* ------------------------------------------------------------------ */
+@media (min-width: 992px) {
+	body:not(.rp-pack-classic):not(.rp-sf-cart-drawer):not(.rp-cart-script-sticky) .rpress-menu-v2 > .rpress-sidebar-cart.sticky-sidebar {
+		align-self: stretch !important;
+		height: auto !important;
+		min-height: 0 !important;
+	}
+	body:not(.rp-pack-classic):not(.rp-sf-cart-drawer):not(.rp-cart-script-sticky) .rpress-menu-v2 > .rpress-sidebar-cart .rpressStickySidebar {
+		position: sticky !important;
+		top: calc(var(--wp-admin--admin-bar--height, 0px) + 24px) !important;
+		bottom: auto !important;
+		left: auto !important;
+		width: auto !important;
+		padding: 0 !important;
+		transform: none !important;
+	}
+	body:not(.rp-pack-classic):not(.rp-sf-cart-drawer):not(.rp-cart-script-sticky) .rpress-menu-v2 > .rpress-sidebar-cart .rpress-sidebar-main-wrap {
+		position: static !important;
+		left: auto !important;
+	}
+	/* One height cap, on the cart's own flex column (its item list scrolls),
+	   so the summary and checkout button always stay in view. */
+	body:not(.rp-pack-classic):not(.rp-sf-cart-drawer):not(.rp-cart-script-sticky) .rpress-menu-v2 > .rpress-sidebar-cart .rpress-sidebar-cart-wrap {
+		max-height: calc(100vh - var(--wp-admin--admin-bar--height, 0px) - 48px) !important;
 	}
 }

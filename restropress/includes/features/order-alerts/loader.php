@@ -94,7 +94,7 @@ class RPRESS_Order_Alerts {
 
 		add_filter( 'rpress_registered_settings', array( __CLASS__, 'register_settings' ), 20 );
 		add_action( 'update_option_rpress_settings', array( __CLASS__, 'settings_updated' ), 10, 2 );
-		add_action( 'admin_notices', array( __CLASS__, 'render_enable_notice' ) );
+		add_action( 'rpress_register_admin_notices', array( __CLASS__, 'register_enable_notice' ) );
 		add_action( 'admin_post_rpress_order_alerts_notice', array( __CLASS__, 'handle_enable_notice' ) );
 
 		// Escalation: WP-Cron every 5 minutes plus every board poll (throttled).
@@ -278,32 +278,29 @@ class RPRESS_Order_Alerts {
 	}
 
 	/**
-	 * Notice on the RestroPress Settings screen offering the unattended-order email.
+	 * Suggestion in the admin notification center (3.5.1; was a banner on the
+	 * Settings screen).
 	 */
-	public static function render_enable_notice() {
-		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification -- display only.
-		if ( 'rpress-settings' !== $page ) {
-			return;
-		}
-		if ( isset( $_GET['rpress_order_alerts_enabled'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- display only.
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Unattended-order email is on. New orders not accepted in time will be emailed to the admin notification recipients.', 'restropress' ) . '</p></div>';
-			return;
-		}
-		if ( ! self::show_enable_notice() ) {
-			return;
-		}
-		$enable_url  = wp_nonce_url( admin_url( 'admin-post.php?action=rpress_order_alerts_notice&do=enable' ), 'rpress-order-alerts-notice' );
-		$dismiss_url = wp_nonce_url( admin_url( 'admin-post.php?action=rpress_order_alerts_notice&do=dismiss' ), 'rpress-order-alerts-notice' );
-		?>
-		<div class="notice notice-info rpress-order-alerts-notice">
-			<p><strong><?php esc_html_e( 'Get an email when a new order is not accepted in time', 'restropress' ); ?></strong></p>
-			<p><?php esc_html_e( 'If a new order waits unaccepted for a few minutes, RestroPress can email the admin notification recipients once, even when no Live Orders screen is open. Only orders placed after you switch it on are checked.', 'restropress' ); ?></p>
-			<p>
-				<a class="button button-primary" href="<?php echo esc_url( $enable_url ); ?>"><?php esc_html_e( 'Enable unattended-order email', 'restropress' ); ?></a>
-				<a class="button-link" style="margin-left:12px" href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'No thanks', 'restropress' ); ?></a>
-			</p>
-		</div>
-		<?php
+	public static function register_enable_notice() {
+		rpress_register_admin_notice(
+			'order_alerts',
+			array(
+				'title'     => __( 'Get an email when a new order is not accepted in time', 'restropress' ),
+				'message'   => __( 'If a new order waits unaccepted for a few minutes, RestroPress can email the admin notification recipients once, even when no Live Orders screen is open. Only orders placed after you switch it on are checked.', 'restropress' ),
+				'actions'   => array(
+					array(
+						'label'   => __( 'Enable unattended-order email', 'restropress' ),
+						'url'     => wp_nonce_url( admin_url( 'admin-post.php?action=rpress_order_alerts_notice&do=enable' ), 'rpress-order-alerts-notice' ),
+						'primary' => true,
+					),
+				),
+				'condition' => array( __CLASS__, 'show_enable_notice' ),
+				'dismiss'   => function () {
+					update_option( self::OPTION_NOTICE, time(), false );
+				},
+				'priority'  => 20,
+			)
+		);
 	}
 
 	/**
@@ -316,7 +313,7 @@ class RPRESS_Order_Alerts {
 		check_admin_referer( 'rpress-order-alerts-notice' );
 
 		$do       = isset( $_GET['do'] ) ? sanitize_key( wp_unslash( $_GET['do'] ) ) : '';
-		$redirect = admin_url( 'admin.php?page=rpress-settings' );
+		$redirect = rpress_admin_notice_return_url( admin_url( 'admin.php?page=rpress-settings' ) );
 		if ( 'enable' === $do ) {
 			rpress_update_option( 'order_alerts_escalation_email', 'on' );
 			update_option( self::OPTION_ENABLED_AT, time(), false );
@@ -748,6 +745,7 @@ class RPRESS_Order_Alerts {
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'nonce'          => wp_create_nonce( self::NONCE ),
 				'printNonce'     => wp_create_nonce( 'rpress-order' ),
+				'ackNonce'       => class_exists( 'RPRESS_Order_Popup' ) ? wp_create_nonce( RPRESS_Order_Popup::NONCE ) : '',
 				'repeatInterval' => self::repeat_interval(),
 				'autoPrint'      => self::auto_print_enabled(),
 				'icon'           => esc_url_raw( (string) rpress_get_option( 'notification_icon', '' ) ),
@@ -783,7 +781,9 @@ class RPRESS_Order_Alerts {
 	 */
 	public static function render_card_row( $order_id, $order_status ) {
 		$order_id  = absint( $order_id );
-		$alertable = 'pending' === $order_status && self::is_alertable( $order_id );
+		$alertable = 'pending' === $order_status && self::is_alertable( $order_id )
+			&& ! ( class_exists( 'RPRESS_Order_Popup' ) && RPRESS_Order_Popup::is_stale( $order_id ) );
+		$acked     = $alertable && class_exists( 'RPRESS_Order_Popup' ) && RPRESS_Order_Popup::is_acknowledged( $order_id );
 		$printing  = self::printing_enabled();
 		if ( ! $alertable && ! $printing ) {
 			return;
@@ -791,14 +791,14 @@ class RPRESS_Order_Alerts {
 		$print     = rpress_get_order_print_status( $order_id );
 		$auto      = $printing && self::auto_print_enabled() && 'not_attempted' === $print['status'];
 		?>
-		<div class="rp-oa-row" data-order-id="<?php echo (int) $order_id; ?>" data-oa-alert="<?php echo $alertable ? '1' : '0'; ?>" data-oa-autoprint="<?php echo $auto ? '1' : '0'; ?>">
+		<div class="rp-oa-row" data-order-id="<?php echo (int) $order_id; ?>" data-oa-alert="<?php echo $alertable ? '1' : '0'; ?>" data-oa-acked="<?php echo $acked ? '1' : '0'; ?>" data-oa-autoprint="<?php echo $auto ? '1' : '0'; ?>">
 			<?php
 			if ( $printing ) {
 				echo self::get_print_badge_html( $order_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
 			}
 			?>
 			<?php if ( $alertable ) : ?>
-				<button type="button" class="button rp-oa-ack" data-order-id="<?php echo (int) $order_id; ?>" title="<?php esc_attr_e( 'Stop the alert sound for this order on this screen', 'restropress' ); ?>">
+				<button type="button" class="button rp-oa-ack" data-order-id="<?php echo (int) $order_id; ?>" title="<?php esc_attr_e( 'Stop the alert for this order on every screen and device', 'restropress' ); ?>">
 					<span class="dashicons dashicons-bell" aria-hidden="true"></span>
 					<?php esc_html_e( 'Acknowledge', 'restropress' ); ?>
 				</button>
@@ -898,3 +898,5 @@ class RPRESS_Order_Alerts {
 }
 
 RPRESS_Order_Alerts::init();
+
+require_once __DIR__ . '/popup.php';

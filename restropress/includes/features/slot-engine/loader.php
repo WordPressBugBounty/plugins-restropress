@@ -11,4 +11,9 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 require_once __DIR__ . '/class-rpress-service-hours.php';
+
+// Engine API level for extensions (2 = several windows per day, last-order buffer, lead time).
+if ( ! defined( 'RPRESS_SERVICE_HOURS_API' ) ) {
+	define( 'RPRESS_SERVICE_HOURS_API', RPRESS_Service_Hours::API_VERSION );
+}
 require_once __DIR__ . '/functions.php';

@@ -3,10 +3,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	 exit;
 }
 ?>
-<div class="rpress-title-holder">
+<div class="rpress-title-holder rp-card__text">
   <?php $item_prop = rpress_add_schema_microdata() ? ' itemprop="name"' : ''; ?>
   <?php $image_placeholder = rpress_get_option( 'enable_image_placeholder', false ); ?>
-  <h3<?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_title">
+  <h3<?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_title rp-card__title">
     <span class="food-title" itemprop="url">
       <?php the_title();?>
     </span>
@@ -16,12 +16,12 @@ if ( ! defined( 'ABSPATH' ) ) {
   
   <div class="description-tag-wrap">
       <?php if ( has_excerpt() ) : ?>
-        <div <?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_excerpt">
+        <div <?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_excerpt rp-card__desc">
           <?php $description = get_post_field( 'post_excerpt', get_the_ID() ); ?>
           <?php echo wp_kses( apply_filters( 'rpress_fooditems_excerpt', wp_trim_words( $description, $excerpt_length ), $description ), array( 'p' => array(), ) ); ?>
         </div>
       <?php elseif ( get_the_content() ) : ?>
-        <div <?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_excerpt">
+        <div <?php echo esc_attr( $item_prop ); ?> class="rpress_fooditem_excerpt rp-card__desc">
           <?php $description = get_post_field( 'post_content', get_the_ID() ); ?>
           <?php echo wp_kses( apply_filters( 'rpress_fooditems_content', wp_trim_words( $description, $excerpt_length ), $description ), array( 'p' => array(), ) ); ?>
         </div>

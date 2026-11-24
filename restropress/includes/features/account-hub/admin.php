@@ -44,34 +44,31 @@ function rpress_account_hub_show_reorder_notice() {
 }
 
 /**
- * Notice on the RestroPress Settings screen.
+ * Suggestion in the admin notification center (3.5.1; was a banner on the
+ * Settings screen).
  */
-function rpress_account_hub_reorder_notice() {
-	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification -- display only.
-	if ( 'rpress-settings' !== $page ) {
-		return;
-	}
-	if ( isset( $_GET['rpress_reorder_enabled'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- display only.
-		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Reorder is on. Customers will see a Reorder button in their order history.', 'restropress' ) . '</p></div>';
-		return;
-	}
-	if ( ! rpress_account_hub_show_reorder_notice() ) {
-		return;
-	}
-	$enable_url  = wp_nonce_url( admin_url( 'admin-post.php?action=rpress_reorder_notice&do=enable' ), 'rpress-reorder-notice' );
-	$dismiss_url = wp_nonce_url( admin_url( 'admin-post.php?action=rpress_reorder_notice&do=dismiss' ), 'rpress-reorder-notice' );
-	?>
-	<div class="notice notice-info rpress-reorder-notice">
-		<p><strong><?php esc_html_e( 'Let customers reorder past orders in one tap', 'restropress' ); ?></strong></p>
-		<p><?php esc_html_e( 'Regulars can repeat a previous order from their order history in one tap. Items no longer on the menu are skipped and the customer is told which ones.', 'restropress' ); ?></p>
-		<p>
-			<a class="button button-primary" href="<?php echo esc_url( $enable_url ); ?>"><?php esc_html_e( 'Enable reorder', 'restropress' ); ?></a>
-			<a class="button-link" style="margin-left:12px" href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'No thanks', 'restropress' ); ?></a>
-		</p>
-	</div>
-	<?php
+function rpress_account_hub_register_reorder_notice() {
+	rpress_register_admin_notice(
+		'reorder',
+		array(
+			'title'     => __( 'Let customers reorder past orders in one tap', 'restropress' ),
+			'message'   => __( 'Regulars can repeat a previous order from their order history in one tap. Items no longer on the menu are skipped and the customer is told which ones.', 'restropress' ),
+			'actions'   => array(
+				array(
+					'label'   => __( 'Enable reorder', 'restropress' ),
+					'url'     => wp_nonce_url( admin_url( 'admin-post.php?action=rpress_reorder_notice&do=enable' ), 'rpress-reorder-notice' ),
+					'primary' => true,
+				),
+			),
+			'condition' => 'rpress_account_hub_show_reorder_notice',
+			'dismiss'   => function () {
+				update_option( 'rpress_reorder_notice_dismissed', time(), false );
+			},
+			'priority'  => 30,
+		)
+	);
 }
-add_action( 'admin_notices', 'rpress_account_hub_reorder_notice' );
+add_action( 'rpress_register_admin_notices', 'rpress_account_hub_register_reorder_notice' );
 
 /**
  * Enable / dismiss from the notice.
@@ -83,7 +80,7 @@ function rpress_account_hub_handle_reorder_notice() {
 	check_admin_referer( 'rpress-reorder-notice' );
 
 	$do       = isset( $_GET['do'] ) ? sanitize_key( wp_unslash( $_GET['do'] ) ) : '';
-	$redirect = admin_url( 'admin.php?page=rpress-settings' );
+	$redirect = rpress_admin_notice_return_url( admin_url( 'admin.php?page=rpress-settings' ) );
 	if ( 'enable' === $do ) {
 		rpress_update_option( 'rp_reorder', '1' );
 		$redirect = add_query_arg( 'rpress_reorder_enabled', '1', $redirect );

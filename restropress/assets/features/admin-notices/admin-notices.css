@@ -1,0 +1,215 @@
+/* Admin notification center (3.5.1): see includes/features/admin-notices. */
+
+/* Bell in the admin bar. */
+#wpadminbar #wp-admin-bar-rpress-notifications > .ab-item {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	cursor: pointer;
+}
+#wpadminbar #wp-admin-bar-rpress-notifications .rpress-bell-icon::before {
+	content: "\f16d"; /* dashicons-bell */
+	top: 2px;
+}
+#wpadminbar #wp-admin-bar-rpress-notifications .rpress-bell-count {
+	display: inline-block;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	border-radius: 9px;
+	background: #72777c;
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+	text-align: center;
+}
+#wpadminbar #wp-admin-bar-rpress-notifications .rpress-bell-count.has-problems {
+	background: #d63638;
+}
+#wpadminbar #wp-admin-bar-rpress-notifications .rpress-bell-count.is-empty {
+	display: none;
+}
+#wpadminbar #wp-admin-bar-rpress-notifications.is-open > .ab-item {
+	background: #2c3338;
+	color: #72aee6;
+}
+@media screen and (max-width: 782px) {
+	#wpadminbar li#wp-admin-bar-rpress-notifications {
+		display: block;
+	}
+	#wpadminbar #wp-admin-bar-rpress-notifications > .ab-item {
+		width: auto;
+		padding: 0 10px;
+	}
+	#wpadminbar #wp-admin-bar-rpress-notifications .rpress-bell-icon::before {
+		top: 4px;
+	}
+}
+
+/* Panel under the bell. */
+.rpress-notice-panel {
+	position: fixed;
+	z-index: 100000;
+	top: 32px;
+	right: 8px;
+	box-sizing: border-box;
+	width: min(400px, calc(100vw - 16px));
+	max-height: min(70vh, 640px);
+	overflow-y: auto;
+	margin: 0;
+	border: 1px solid #dcdcde;
+	border-radius: 0 0 8px 8px;
+	background: #fff;
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+	color: #1d2327;
+}
+.rpress-notice-panel[hidden] {
+	display: none;
+}
+[dir="rtl"] .rpress-notice-panel {
+	right: auto;
+	left: 8px;
+}
+.rpress-notice-panel-head {
+	position: sticky;
+	top: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 8px 12px 16px;
+	border-bottom: 1px solid #f0f0f1;
+	background: #fff;
+}
+.rpress-notice-panel-head h2 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+}
+.rpress-notice-panel-head h2:focus {
+	outline: none;
+}
+.rpress-notice-panel-head h2:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+.rpress-notice-panel-close {
+	width: 32px;
+	height: 32px;
+	border: 0;
+	border-radius: 4px;
+	background: transparent;
+	color: #50575e;
+	font-size: 22px;
+	line-height: 1;
+	cursor: pointer;
+}
+.rpress-notice-panel-close:hover,
+.rpress-notice-panel-close:focus-visible {
+	background: #f0f0f1;
+	color: #1d2327;
+}
+.rpress-notice-panel .rpress-notice-item {
+	padding: 14px 16px;
+	border-bottom: 1px solid #f0f0f1;
+}
+.rpress-notice-panel .rpress-notice-item.is-problem {
+	border-left: 3px solid #d63638;
+	background: #fcf0f1;
+}
+[dir="rtl"] .rpress-notice-panel .rpress-notice-item.is-problem {
+	border-left: 0;
+	border-right: 3px solid #d63638;
+}
+.rpress-notice-empty {
+	margin: 0;
+	padding: 20px 16px;
+	color: #50575e;
+}
+
+/* Shared item layout (panel, banner, Dashboard card). */
+.rpress-notice-item p {
+	margin: 0;
+}
+.rpress-notice-item .rpress-notice-tag {
+	display: inline-block;
+	margin-bottom: 4px;
+	color: #b32d2e;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+.rpress-notice-item .rpress-notice-title {
+	font-size: 13px;
+	line-height: 1.4;
+}
+.rpress-notice-item .rpress-notice-message {
+	margin-top: 4px;
+	color: #3c434a;
+	font-size: 13px;
+	line-height: 1.5;
+}
+.rpress-notice-item .rpress-notice-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	margin-top: 10px;
+}
+.rpress-notice-item .rpress-notice-actions:empty {
+	display: none;
+}
+.rpress-notice-item .rpress-notice-dismiss {
+	color: #50575e;
+}
+
+/* One problem banner at the top of the screen. */
+.notice.rpress-problem-banner {
+	padding: 10px 12px;
+}
+.notice.rpress-problem-banner .rpress-notice-actions {
+	margin-top: 8px;
+}
+
+/* Dashboard card above the Command Center panels. */
+.rpress-notice-card {
+	margin: 0 0 16px;
+	padding: 16px;
+	border: 1px solid #dcdcde;
+	border-left: 4px solid #2271b1;
+	border-radius: 8px;
+	background: #fff;
+}
+[dir="rtl"] .rpress-notice-card {
+	border-left: 1px solid #dcdcde;
+	border-right: 4px solid #2271b1;
+}
+
+/* The message bar in the admin: bottom left, clear of the admin menu. */
+@media (min-width: 783px) {
+	body.wp-admin .rp-notify-host {
+		left: 184px;
+	}
+	body.wp-admin.folded .rp-notify-host {
+		left: 60px;
+	}
+	[dir="rtl"] body.wp-admin .rp-notify-host,
+	body.wp-admin.rtl .rp-notify-host {
+		left: auto;
+		right: 184px;
+	}
+	body.wp-admin.rtl.folded .rp-notify-host {
+		right: 60px;
+	}
+}
+@media (min-width: 783px) and (max-width: 960px) {
+	body.wp-admin.auto-fold .rp-notify-host {
+		left: 60px;
+	}
+	body.wp-admin.rtl.auto-fold .rp-notify-host {
+		left: auto;
+		right: 60px;
+	}
+}

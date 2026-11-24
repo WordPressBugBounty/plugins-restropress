@@ -139,6 +139,10 @@ final class RPRESS_Template_Packs {
 				'list' => __( 'List', 'restropress' ),
 				'grid' => __( 'Grid', 'restropress' ),
 			),
+			// What Modern renders today; Pro packs extend Modern and override.
+			'layout'      => array(
+				'masthead' => 'band',
+			),
 		) );
 
 		/**
@@ -201,10 +205,28 @@ final class RPRESS_Template_Packs {
 			/* translators: %d: preparation minutes */
 			$chips[] = sprintf( __( 'Ready in ~%d min', 'restropress' ), $prep );
 		}
-		$flat_fee = rpress_get_option( 'flat_delivery_fee', '' );
+		// The core flat fee only applies while it is in charge; a fee extension
+		// (Delivery Fee: zone/distance pricing) replaces it and can supply its
+		// own chip text through the filter, or '' to show none.
+		$delivery_chip = '';
+		$flat_fee      = function_exists( 'rpress_flat_delivery_fee_active' ) && rpress_flat_delivery_fee_active()
+			? rpress_get_option( 'flat_delivery_fee', '' )
+			: '';
 		if ( '' !== $flat_fee && is_numeric( $flat_fee ) && (float) $flat_fee > 0 ) {
 			/* translators: %s: formatted delivery fee */
-			$chips[] = sprintf( __( '%s delivery', 'restropress' ), rpress_currency_filter( rpress_format_amount( $flat_fee ) ) );
+			$delivery_chip = sprintf( __( '%s delivery', 'restropress' ), rpress_currency_filter( rpress_format_amount( $flat_fee ) ) );
+		}
+		/**
+		 * Filters the delivery chip text in the store header.
+		 *
+		 * @since 3.5.1
+		 * @param string $delivery_chip Chip text, '' for no chip.
+		 * @param string $context       'header' (Modern pack store header) or
+		 *                              'store_card' (menu page store card).
+		 */
+		$delivery_chip = (string) apply_filters( 'rpress_store_header_delivery_chip', $delivery_chip, 'header' );
+		if ( '' !== $delivery_chip ) {
+			$chips[] = $delivery_chip;
 		}
 		// Pickup fee from the Extra Fees extension, when it resolves a positive
 		// amount (flat fees resolve pre-cart; percentage ones need a cart).
@@ -261,6 +283,9 @@ final class RPRESS_Template_Packs {
 			'fonts'       => '',      // Fonts URL to enqueue.
 			'variants'    => array(), // Optional layout variants.
 			'pro'         => false,   // Shown locked without entitlement.
+			'extends'     => '',      // Parent pack id: its templates fill in what this pack does not override (3.5.1).
+			'layout'      => array(), // Recommended storefront layout, see rpress_get_storefront_layout() (3.5.1).
+			'components'  => array(), // How shared components look, see rpress_pack_component_schema() (3.5.1).
 		);
 		$pack = wp_parse_args( $args, $defaults );
 		$pack['id'] = sanitize_key( $pack['id'] );
@@ -272,9 +297,143 @@ final class RPRESS_Template_Packs {
 		if ( $pack['dir'] ) {
 			$pack['dir'] = trailingslashit( $pack['dir'] );
 		}
+		$pack['extends'] = sanitize_key( $pack['extends'] );
+		if ( $pack['extends'] === $pack['id'] ) {
+			$pack['extends'] = '';
+		}
+		$pack['layout'] = is_array( $pack['layout'] ) ? self::sanitize_layout( $pack['layout'] ) : array();
+		$pack['components'] = ( is_array( $pack['components'] ) && function_exists( 'rpress_sanitize_pack_components' ) ) ? rpress_sanitize_pack_components( $pack['components'] ) : array();
 
 		self::$packs[ $pack['id'] ] = $pack;
 		return true;
+	}
+
+	/**
+	 * A pack and its ancestors, nearest first. Unknown parents and loops stop
+	 * the walk, so a missing parent plugin never breaks the storefront.
+	 *
+	 * @since 3.5.1
+	 * @param array $pack Pack.
+	 * @return array[]
+	 */
+	public static function get_lineage( $pack ) {
+		$lineage = array();
+		$seen    = array();
+		while ( ! empty( $pack['id'] ) && ! isset( $seen[ $pack['id'] ] ) && count( $lineage ) < 5 ) {
+			$seen[ $pack['id'] ] = true;
+			$lineage[]           = $pack;
+			$parent              = isset( $pack['extends'] ) ? $pack['extends'] : '';
+			if ( '' === $parent || ! isset( self::$packs[ $parent ] ) ) {
+				break;
+			}
+			$pack = self::$packs[ $parent ];
+		}
+		return $lineage;
+	}
+
+	/**
+	 * Storefront layout keys and their allowed values. The same keys back the
+	 * pack recommendations and (later) the merchant's own layout settings, so
+	 * the two never disagree. Spec: restropress-planning/STOREFRONT-CUSTOMIZER-PLAN.md.
+	 *
+	 * @since 3.5.1
+	 * @return array Key => allowed values (array) or 'bool' / 'int'.
+	 */
+	public static function layout_schema() {
+		return apply_filters( 'rpress_storefront_layout_schema', array(
+			'masthead'   => array( 'none', 'band', 'cover', 'strip', 'editorial' ),
+			'nav_style'  => array( 'topbar', 'sidebar', 'tabs', 'accordion', 'dropdown' ),
+			'nav_media'  => array( 'none', 'icons', 'images' ),
+			'columns'    => array( 1, 2, 3, 4 ),
+			'card_style' => array( 'beside', 'top', 'overlay', 'text' ),
+			'show_image' => 'bool',
+			'cart_style' => array( 'sidebar', 'drawer' ),
+			'item_style' => array( 'modal', 'side_sheet' ),
+			'rails'      => array( 'popular', 'order_again', 'deals' ),
+			// Order of the parts above the dishes (3.5.1). Missing parts keep
+			// their default place; see rpress_menu_section_order().
+			'sections'   => array( 'rails', 'nav', 'service' ),
+		) );
+	}
+
+	/**
+	 * Core defaults: today's storefront, so nothing changes until a pack or
+	 * the merchant asks for something else.
+	 *
+	 * @since 3.5.1
+	 * @return array
+	 */
+	public static function layout_defaults() {
+		return array(
+			'masthead'   => 'none',
+			'nav_style'  => 'sidebar',
+			'nav_media'  => 'none',
+			'columns'    => 1,
+			'card_style' => 'beside',
+			'show_image' => true,
+			'cart_style' => 'sidebar',
+			'item_style' => 'modal',
+			'rails'      => array(),
+			'sections'   => array( 'rails', 'nav', 'service' ),
+		);
+	}
+
+	/**
+	 * Keep only known keys with allowed values.
+	 *
+	 * @since 3.5.1
+	 * @param array $layout Raw layout.
+	 * @return array
+	 */
+	public static function sanitize_layout( $layout ) {
+		$schema = self::layout_schema();
+		$clean  = array();
+		foreach ( (array) $layout as $key => $value ) {
+			if ( ! isset( $schema[ $key ] ) ) {
+				continue;
+			}
+			$allowed = $schema[ $key ];
+			if ( 'bool' === $allowed ) {
+				$clean[ $key ] = (bool) $value;
+			} elseif ( in_array( $key, array( 'rails', 'sections' ), true ) ) {
+				// Lists keep the given order, known values only, once each.
+				$clean[ $key ] = array_values( array_unique( array_intersect( (array) $value, $allowed ) ) );
+			} elseif ( is_scalar( $value ) && ! is_bool( $value ) && in_array( (string) $value, array_map( 'strval', $allowed ), true ) ) {
+				// Compared as strings: columns arrive as strings from settings.
+				$clean[ $key ] = is_int( $allowed[0] ) ? (int) $value : (string) $value;
+			}
+		}
+		return $clean;
+	}
+
+	/**
+	 * The storefront layout in effect: core defaults, then each ancestor
+	 * pack's recommendation, then the active pack's, then the merchant's
+	 * saved layout (the customizer writes `storefront_layout`).
+	 *
+	 * @since 3.5.1
+	 * @return array
+	 */
+	public static function get_storefront_layout() {
+		$layout  = self::layout_defaults();
+		$lineage = array_reverse( self::get_lineage( self::get_active_pack() ) );
+		foreach ( $lineage as $pack ) {
+			if ( ! empty( $pack['layout'] ) ) {
+				$layout = array_merge( $layout, $pack['layout'] );
+			}
+		}
+		$saved = rpress_get_option( 'storefront_layout', array() );
+		if ( is_array( $saved ) && $saved ) {
+			$layout = array_merge( $layout, self::sanitize_layout( $saved ) );
+		}
+		/**
+		 * Filter the storefront layout in effect.
+		 *
+		 * @since 3.5.1
+		 * @param array $layout Layout.
+		 * @param array $pack   Active pack.
+		 */
+		return apply_filters( 'rpress_storefront_layout', $layout, self::get_active_pack() );
 	}
 
 	/**
@@ -312,9 +471,14 @@ final class RPRESS_Template_Packs {
 	 * @return array
 	 */
 	public static function add_pack_template_path( $file_paths ) {
-		$pack = self::get_active_pack();
-		if ( ! empty( $pack['dir'] ) && is_dir( $pack['dir'] ) ) {
-			$file_paths[50] = $pack['dir'];
+		// The pack's own dir first (50), then each parent's (51, 52, ...), so a
+		// pack only ships the templates it changes (3.5.1).
+		$priority = 50;
+		foreach ( self::get_lineage( self::get_active_pack() ) as $pack ) {
+			if ( ! empty( $pack['dir'] ) && is_dir( $pack['dir'] ) ) {
+				$file_paths[ $priority ] = $pack['dir'];
+				$priority++;
+			}
 		}
 		return $file_paths;
 	}
@@ -376,6 +540,17 @@ function rpress_get_active_template_pack() {
 }
 
 /**
+ * The storefront layout in effect (core defaults, pack recommendation, then
+ * the merchant's saved layout). Packs and the customizer share these keys.
+ *
+ * @since 3.5.1
+ * @return array
+ */
+function rpress_get_storefront_layout() {
+	return RPRESS_Template_Packs::get_storefront_layout();
+}
+
+/**
  * Settings renderer for the `pack_selector` field type: a card per pack
  * (preview, name, description, Active badge). Pro packs without an
  * entitlement render locked with an upgrade link. The list|grid layout is a
@@ -426,6 +601,8 @@ function rpress_pack_selector_callback( $args ) {
 		.rpress-pack-badge { font-size:11px; font-weight:700; line-height:1; padding:4px 9px; border-radius:999px; }
 		.rpress-pack-badge.active { background:#fbe0d2; color:#b3400f; }
 		.rpress-pack-badge.pro { background:#fcf0e4; color:#996800; }
+		.rpress-pack-badge.locked { background:#fcf0f1; color:#8a2424; }
+		.rpress-pack-lapsed { max-width:1100px; box-sizing:border-box; margin:0 0 16px !important; }
 		.rpress-pack-card-desc { display:block; margin:5px 0 0; font-size:13px; line-height:1.4; color:#646970; }
 		.rpress-pack-locked-note { display:block; margin-top:7px; font-size:12px; }
 
@@ -461,6 +638,41 @@ CSS;
 			. '</p>';
 	}
 
+	// The saved pack, even when its card is disabled (a lapsed Pro license or
+	// legacy mode). Disabled radios are not submitted, and settings missing
+	// from the form are deleted on save, so without this hidden field saving
+	// the Styles tab would silently reset the pack to Classic. A checked
+	// radio later in the form overrides it.
+	$saved_id = sanitize_key( (string) rpress_get_option( $args['id'], 'classic' ) );
+	if ( isset( $packs[ $saved_id ] ) ) {
+		echo '<input type="hidden" name="' . esc_attr( $name_attr ) . '" value="' . esc_attr( $saved_id ) . '" />';
+	}
+
+	// A Pro pack is saved but no longer entitled: customers see Classic.
+	$saved_pack = isset( $packs[ $saved_id ] ) ? $packs[ $saved_id ] : array();
+	if ( ! $legacy_on && ! empty( $saved_pack['pro'] ) && ! apply_filters( 'rpress_template_pack_entitled', false, $saved_pack ) ) {
+		/**
+		 * Where to send a merchant whose Pro pack is locked. The Pro plugin
+		 * points this at its license screen.
+		 *
+		 * @since 3.5.1
+		 * @param string $url  Link.
+		 * @param array  $pack Locked pack.
+		 */
+		$renew_url = apply_filters( 'rpress_template_pack_locked_url', 'https://www.restropress.com/pricing/', $saved_pack );
+		echo '<div class="notice notice-warning inline rpress-pack-lapsed"><p><strong>'
+			. esc_html(
+				sprintf(
+					/* translators: %s: pack name */
+					__( 'Customers are seeing the Classic design instead of %s.', 'restropress' ),
+					$saved_pack['label']
+				)
+			)
+			. '</strong> '
+			. esc_html__( 'Its RestroPress Pro license is not active on this site. Your choice is kept: renew or reconnect the license and the design comes back on its own.', 'restropress' )
+			. ' <a href="' . esc_url( $renew_url ) . '">' . esc_html__( 'Check license', 'restropress' ) . '</a></p></div>';
+	}
+
 	echo '<div class="rpress-pack-cards">';
 	foreach ( $packs as $pack ) {
 		$is_active = ( $pack['id'] === $active['id'] );
@@ -490,7 +702,9 @@ CSS;
 
 		echo '<span class="rpress-pack-card-body">';
 		echo '<span class="rpress-pack-card-title">' . esc_html( $pack['label'] );
-		if ( $is_active ) {
+		if ( $is_active && $is_locked ) {
+			echo ' <span class="rpress-pack-badge locked">' . esc_html__( 'Locked', 'restropress' ) . '</span>';
+		} elseif ( $is_active ) {
 			echo ' <span class="rpress-pack-badge active">' . esc_html__( 'Active', 'restropress' ) . '</span>';
 		}
 		if ( ! empty( $pack['pro'] ) ) {

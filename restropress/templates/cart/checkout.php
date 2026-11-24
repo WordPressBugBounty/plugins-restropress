@@ -17,6 +17,7 @@ $cart_quantity = rpress_get_cart_quantity();
 $display       = $cart_quantity > 0 ? '' : ' style="display:none;"';
 $button_style = rpress_get_option('button_style', 'button');
 $old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
+$item_count        = rpress_get_cart_item_count();
 ?>
 <div class="rpress-cart-total-wrap">
 	<ul class="rpress-cart-summary-list">
@@ -59,7 +60,7 @@ $old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
 	<?php endif; ?>
 	<?php do_action( 'rpress_cart_line_item' ); ?>
 	<li class="cart_item rpress-cart-meta rpress_total">
-		<span class="rpress-total-label"><?php esc_html_e( 'Total (', 'restropress' ); ?><span class="rpress-cart-quantity" <?php echo wp_kses_post( $display ); ?> ><?php echo esc_html( $cart_quantity ); ?></span>&nbsp;<?php echo esc_html( _n( 'item)', 'items)', (int) $cart_quantity, 'restropress' ) ); ?></span>
+		<span class="rpress-total-label"><?php esc_html_e( 'Total (', 'restropress' ); ?><span class="rpress-cart-quantity" <?php echo wp_kses_post( $display ); ?> ><?php echo esc_html( $item_count ); ?></span>&nbsp;<?php echo esc_html( _n( 'item)', 'items)', $item_count, 'restropress' ) ); ?></span>
 		<span class="cart-total"><?php echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ) ); ?></span>
 	</li>
 	</ul>
@@ -79,9 +80,13 @@ $old_ui_ux_enabled = ! empty( rpress_get_option( 'old_ui_ux' ) );
 	  	<a class="rpress-checkout-cart rpress-submit <?php echo esc_attr($button_style) ?>" data-url="<?php echo esc_url( rpress_get_checkout_uri() ); ?>" href="#">
 	  		<span class="rpress-checkout-label rp-ajax-toggle-text">
 	  			<?php
-	    		$confirm_order_text = apply_filters( 'rp_confirm_order_text', esc_html__( 'Checkout', 'restropress' ) );
+	    		// 3.5 ordering flow: "Go to checkout · $12.00" with the food subtotal (3.5.1).
+	    		$confirm_order_text = apply_filters( 'rp_confirm_order_text', $old_ui_ux_enabled ? esc_html__( 'Checkout', 'restropress' ) : esc_html__( 'Go to checkout', 'restropress' ) );
 	    		echo esc_html( $confirm_order_text ); ?>
-	    	</span> 
+	    	</span>
+	    	<?php if ( ! $old_ui_ux_enabled ) : ?>
+	    	<span class="rpress-checkout-amount"><span class="rpress-checkout-sep" aria-hidden="true">&middot;</span> <?php echo esc_html( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ) ); ?></span>
+	    	<?php endif; ?>
 		</a>
 	</li>
 </ul>

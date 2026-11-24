@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
   
-  <div class="rpress_fooditem_buy_button">
+  <div class="rpress_fooditem_buy_button rp-card__add">
     <?php
     echo wp_kses(
       rpress_get_purchase_link( array( 'fooditem_id' => get_the_ID() ) ),

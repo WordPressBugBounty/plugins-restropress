@@ -1,0 +1,204 @@
+/* Settings > General > Webhooks. Colours come from the WordPress admin and core's settings styles. */
+.rpress-webhooks-panel {
+	max-width: 100%;
+	min-width: 0;
+}
+.rpress-webhooks-panel > .description {
+	margin: 0 0 10px;
+}
+.rpress-webhooks-scroll {
+	overflow-x: auto;
+	margin: 0 0 12px;
+}
+.rpress-webhooks-table {
+	min-width: 560px;
+}
+.rpress-webhooks-panel .rpress-webhooks-table th,
+.rpress-webhooks-panel .rpress-webhooks-table td {
+	/* Core's settings table styles its own th and td, also as blocks on phones: keep these real cells. */
+	display: table-cell;
+	vertical-align: top;
+	padding: 10px 12px;
+	width: auto;
+	text-align: left;
+}
+.rpress-webhooks-panel .rpress-webhooks-table thead th {
+	font-weight: 600;
+	white-space: nowrap;
+}
+.rpress-webhooks-panel .rpress-webhooks-table tr.rpress-webhooks-detail-row[hidden] {
+	display: none;
+}
+.rpress-webhooks-table code,
+.rpress-webhooks-panel code {
+	font-size: 12px;
+	overflow-wrap: anywhere;
+}
+.rpress-webhooks-url {
+	display: inline-block;
+	max-width: 100%;
+	margin-top: 4px;
+}
+/* The section sits in core's settings table: keep it inside the card on narrow screens and drop the unused Save button. */
+table.form-table.rpress-webhooks-form-table,
+table.form-table:has(.rpress-webhooks-panel) {
+	table-layout: fixed;
+	width: 100%;
+}
+.rp-settings-form.rpress-webhooks-settings-form > p.submit,
+.rp-settings-form:has(.rpress-webhooks-panel) > p.submit {
+	display: none;
+}
+.rpress-webhooks-events-cell code {
+	display: inline-block;
+	margin: 0 4px 4px 0;
+}
+.rpress-webhooks-secret {
+	margin-top: 6px;
+}
+.rpress-webhooks-actions {
+	white-space: nowrap;
+}
+.rpress-webhooks-actions .button {
+	margin: 0 4px 4px 0;
+}
+.rpress-webhooks-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 10px;
+	font-size: 12px;
+	line-height: 1.6;
+	background: #f0f0f1;
+	color: #50575e;
+	white-space: nowrap;
+}
+.rpress-webhooks-status--success {
+	background: #edfaef;
+	color: #007017;
+}
+.rpress-webhooks-status--failed {
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+.rpress-webhooks-status--retrying,
+.rpress-webhooks-status--pending,
+.rpress-webhooks-status--sending {
+	background: #fcf9e8;
+	color: #8a6100;
+}
+.rpress-webhooks-empty {
+	color: #646970;
+	font-style: italic;
+}
+.rpress-webhooks-form {
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 14px 16px;
+	background: #fff;
+	max-width: 760px;
+	box-sizing: border-box;
+}
+.rpress-webhooks-form-title {
+	margin: 0 0 10px;
+	font-size: 14px;
+}
+.rpress-webhooks-field {
+	margin: 0 0 12px;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+.rpress-webhooks-field > label,
+.rpress-webhooks-field > legend,
+	display: block;
+	font-weight: 600;
+	margin: 0 0 4px;
+	padding: 0;
+}
+.rpress-webhooks-form input[type="text"],
+.rpress-webhooks-form input[type="url"] {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	min-height: 36px;
+	line-height: 1.4;
+	padding: 6px 10px;
+	margin: 0;
+	box-sizing: border-box;
+}
+.rpress-webhooks-events {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 6px 16px;
+}
+.rpress-webhooks-events label {
+	display: block;
+	font-weight: 400;
+}
+.rpress-webhooks-form-buttons {
+	margin: 0 0 8px;
+}
+.rpress-webhooks-notice {
+	margin: 0 0 12px;
+	padding: 8px 12px;
+	border-left: 4px solid #d63638;
+	background: #fcf0f1;
+	max-width: 760px;
+	box-sizing: border-box;
+}
+.rpress-webhooks-notice.is-success {
+	border-left-color: #00a32a;
+	background: #edfaef;
+}
+.rpress-webhooks-detail-row > td {
+	background: #f6f7f7;
+}
+.rpress-webhooks-pre {
+	max-height: 320px;
+	overflow: auto;
+	margin: 0 0 10px;
+	padding: 10px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	font-size: 12px;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+.rpress-webhooks-pagination .button {
+	margin-left: 6px;
+}
+.rpress-webhooks-panel [hidden] {
+	display: none !important;
+}
+@media (max-width: 782px) {
+	.rpress-webhooks-form {
+		padding: 12px;
+	}
+	.rpress-webhooks-actions {
+		white-space: normal;
+	}
+	.rpress-webhooks-events {
+		grid-template-columns: 1fr;
+	}
+}
+/* Short cells stay on one line (the table scrolls sideways on phones), long URLs wrap. */
+.rpress-webhooks-panel .rpress-webhooks-log-table > tbody > tr:not(.rpress-webhooks-detail-row) > td,
+.rpress-webhooks-panel .rpress-webhooks-events-cell code {
+	white-space: nowrap;
+}
+.rpress-webhooks-panel .rpress-webhooks-log-table > tbody > tr:not(.rpress-webhooks-detail-row) > td.rpress-webhooks-target {
+	white-space: normal;
+	min-width: 140px;
+	/* Extension targets show "App subscription: <url>": let long URLs wrap so Resend stays visible. */
+	max-width: 260px;
+	overflow-wrap: anywhere;
+}
+.rpress-webhooks-panel .rpress-webhooks-table td:first-child {
+	min-width: 150px;
+}
+/* Log actions may wrap, so "Hide details" never pushes Resend out of the table. */
+.rpress-webhooks-panel .rpress-webhooks-log-table > tbody > tr:not(.rpress-webhooks-detail-row) > td.rpress-webhooks-actions {
+	white-space: normal;
+	min-width: 170px;
+}

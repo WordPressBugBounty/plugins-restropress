@@ -90,6 +90,7 @@ class RP_AJAX {
       'update_cart_items',
       'cart_item_quantity',
       'remove_from_cart',
+      'undo_remove_from_cart',
       'clear_cart',
       'proceed_checkout',
       'get_subtotal',
@@ -105,6 +106,7 @@ class RP_AJAX {
       'remove_fees_after_empty_cart',
       'reorder',
       "update_modal_on_service_switch",
+      'service_time_options',
       'receipt_order_status',
     );
     foreach ( $ajax_events_nopriv as $ajax_event ) {
@@ -165,6 +167,8 @@ class RP_AJAX {
       'subtotal'      => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_subtotal() ) ), ENT_COMPAT, 'UTF-8' ),
       'total'         => html_entity_decode( rpress_currency_filter( rpress_format_amount( rpress_get_cart_total() ) ), ENT_COMPAT, 'UTF-8' ),
       'cart_quantity' => html_entity_decode( rpress_get_cart_quantity() ),
+      // Dishes in the cart (quantities added up), for the cart bar (3.5.1).
+      'item_count'    => rpress_get_cart_item_count(),
       'cart_summary'  => self::get_cart_summary_fragment(),
     );
 
@@ -709,7 +713,7 @@ class RP_AJAX {
       );
     }
     $service_time_hidden = function_exists( 'rp_otil_is_service_time_hidden' ) && rp_otil_is_service_time_hidden( $service_type );
-    $allow_asap = ! empty( rpress_get_option( 'enable_asap_option' ) );
+    $allow_asap = rpress_service_asap_allowed( $selected_date );
     $available_slots = rpress_get_available_service_slots( $service_type, $selected_date, true );
     $service_time = ! empty( $selected_time )
       ? $selected_time
@@ -1218,6 +1222,60 @@ class RP_AJAX {
       wp_send_json( $return );
     }
     rpress_die();
+  }
+  /**
+   * Put back the cart line removed last (the "Undo" on the "Removed ..." message).
+   *
+   * The line comes from the session (rpress_stash_removed_cart_line()), never
+   * from the request, and is added at today's state of the cart as a new line.
+   *
+   * @since 3.5.1
+   */
+  public static function undo_remove_from_cart() {
+    check_ajax_referer( 'edit-cart-fooditem', 'security' );
+
+    $stash = RPRESS()->session->get( 'rpress_removed_cart_line' );
+    RPRESS()->session->set( 'rpress_removed_cart_line', null );
+    if ( ! is_array( $stash ) || empty( $stash['line']['id'] ) || ( time() - (int) $stash['time'] ) > 10 * MINUTE_IN_SECONDS ) {
+      wp_send_json_error( array( 'message' => __( 'That item can no longer be put back.', 'restropress' ) ) );
+    }
+    $line = $stash['line'];
+    if ( 'publish' !== get_post_status( absint( $line['id'] ) ) ) {
+      wp_send_json_error( array( 'message' => __( 'That item is no longer on the menu.', 'restropress' ) ) );
+    }
+
+    $contents   = (array) rpress_get_cart_contents();
+    $contents[] = $line;
+    RPRESS()->cart->contents = array_values( $contents );
+    RPRESS()->cart->update_cart();
+    $key = count( RPRESS()->cart->contents ) - 1;
+    do_action( 'rpress_post_add_to_cart', absint( $line['id'] ), isset( $line['options'] ) ? (array) $line['options'] : array(), array( $line ) );
+
+    // Same option shape as the quantity stepper response, so the line
+    // template has every key it reads.
+    $saved   = isset( $line['options'] ) && is_array( $line['options'] ) ? $line['options'] : array();
+    $options = array_merge(
+      $saved,
+      array(
+        'id'          => absint( $line['id'] ),
+        'quantity'    => isset( $line['quantity'] ) ? $line['quantity'] : ( isset( $saved['quantity'] ) ? $saved['quantity'] : 1 ),
+        'instruction' => isset( $line['instruction'] ) ? $line['instruction'] : ( isset( $saved['instruction'] ) ? $saved['instruction'] : '' ),
+        'addon_items' => isset( $line['addon_items'] ) ? $line['addon_items'] : ( isset( $saved['addon_items'] ) ? $saved['addon_items'] : array() ),
+        'price_id'    => isset( $line['price_id'] ) ? $line['price_id'] : ( isset( $saved['price_id'] ) ? $saved['price_id'] : '' ),
+      )
+    );
+    $item  = apply_filters( 'rpress_ajax_pre_cart_item_template', array( 'id' => absint( $line['id'] ), 'options' => $options ) );
+    $html  = rpress_get_cart_item_template( $key, $item, true, $key );
+    $return = array_merge(
+      self::get_cart_totals_payload(),
+      array(
+        'cart_item' => $html,
+        'cart_key'  => $key,
+        'merged'    => false,
+      )
+    );
+    $return = apply_filters( 'rpress_cart_data', $return );
+    wp_send_json( self::ensure_cart_response_payload( $return ) );
   }
   /**
   * Clear cart
@@ -2088,7 +2146,7 @@ class RP_AJAX {
     ob_start();
     include RP_PLUGIN_DIR . '/templates/rpress-order-history-load-more.php';
     $html = ob_get_clean();
-    wp_send_json_success( [ 'html' => $html, 'found_post' => $found_post ] );
+    wp_send_json_success( [ 'html' => $html, 'found_post' => $found_post, 'has_more' => ! empty( $has_more ) ] );
     rpress_die();
   }
   public static function delete_user_address(){
@@ -2228,6 +2286,27 @@ class RP_AJAX {
     
     // Make sure to exit to prevent any additional output
     exit;
+  }
+
+  /**
+   * Time options for a service on a date, for the order popup's date dropdown.
+   *
+   * @since 3.5.1
+   */
+  public static function service_time_options() {
+    check_ajax_referer( 'service-type', 'security' );
+    $service_type = isset( $_REQUEST['service_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['service_type'] ) ) : '';
+    $service_date = isset( $_REQUEST['service_date'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['service_date'] ) ) : '';
+    if ( '' === $service_type || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $service_date ) ) {
+      wp_send_json_error( array( 'message' => __( 'Choose a service and a date.', 'restropress' ) ), 400 );
+    }
+    $options = rpress_get_service_time_options( $service_type, $service_date );
+    wp_send_json_success(
+      array(
+        'options'        => $options,
+        'closed_message' => $options ? '' : rpress_store_closed_message( $service_type ),
+      )
+    );
   }
 
   public static function update_modal_on_service_switch() {

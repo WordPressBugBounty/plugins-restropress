@@ -5,7 +5,7 @@
  * This template can be overridden by copying it to yourtheme/restropress/fooditem/fooditems.php.
  *
  * @package RestroPress/Templates
- * @version 1.0.0
+ * @version 3.5.1
  */
 defined('ABSPATH') || exit;
 // Get selected template from settings (default to 'list')
@@ -69,20 +69,24 @@ $is_old_ui_ux = ! empty( rpress_get_option( 'old_ui_ux' ) );
 		<div class="mobile-scroll-menu">
 			<?php rpress_get_template_part($template . '/scrollable-categories-mobile'); ?>
 		</div>
-		<div class="rpress-options-row">
+		<div class="rpress-options-row rp-service-row">
 			<?php if ( ! $is_old_ui_ux ) : ?>
-				<div class="rpress-option-col">
+				<div class="rpress-option-col rp-service-row__service">
 					<?php rpress_get_template_part($template . '/delivery-option'); ?>
 				</div>
-				<div class="rpress-option-col rpress-edit-address-wrap">
+				<div class="rpress-option-col rpress-edit-address-wrap rp-service-row__time">
 					<span class="left-brdr"></span>
 					<?php rpress_get_template_part($template . '/time-option'); ?>
 				</div>
 			<?php endif; ?>
-			<div class="rpress-option-col rpress-search-wrap">
+			<div class="rpress-option-col rpress-search-wrap rp-service-row__search">
 				<?php do_action('before_fooditems_list'); ?>
 			</div>
 		</div>
+		<?php
+		// 3.5.1: rails placed after the navigation print here, above the dishes.
+		do_action( 'rpress_menu_section_rails' );
+		?>
 		<?php
 		$get_categories = rpress_get_categories($category_params);
 		if (!empty($shortcode_atts['category_menu'])) {

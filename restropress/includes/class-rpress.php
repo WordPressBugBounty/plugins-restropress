@@ -18,7 +18,7 @@ final class RestroPress
 	 *
 	 * @var string
 	 */
-	public $version = '3.5.0.1';
+	public $version = '3.5.1';
 	/**
 	 * The single instance of the class.
 	 *
@@ -268,6 +268,7 @@ final class RestroPress
 		require_once RP_PLUGIN_DIR . 'includes/discount-functions.php';
 		require_once RP_PLUGIN_DIR . 'includes/admin/orders/actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/payments/functions.php';
+		require_once RP_PLUGIN_DIR . 'includes/payments/resume-claim.php';
 		require_once RP_PLUGIN_DIR . 'includes/payments/actions.php';
 		require_once RP_PLUGIN_DIR . 'includes/payments/class-payment-stats.php';
 		require_once RP_PLUGIN_DIR . 'includes/payments/class-payments-query.php';

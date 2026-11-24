@@ -23,6 +23,8 @@ $dashboard = RPRESS_Command_Center_Dashboard::build_data();
 		</div>
 	</div>
 
+	<?php do_action( 'rpress_command_center_before_panels' ); ?>
+
 	<div id="rp-command-center-panels">
 		<?php RPRESS_Command_Center_Dashboard::render_panels( $dashboard ); ?>
 	</div>

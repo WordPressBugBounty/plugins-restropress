@@ -4,8 +4,8 @@ Tags: Online ordering, Restaurant Ordering, Food Delivery, Takeaway, Restaurant 
 Donate link: https://paypal.me/magnigeeks
 Requires at least: 6.0
 Requires PHP: 7.4
-Tested up to: 7.1.2
-Stable tag: 3.5.0.1
+Tested up to: 7.1.5
+Stable tag: 3.5.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Commission free online ordering for restaurants on WordPress. Take delivery, pickup and takeaway orders on your own site, with no per order fees.
@@ -16,7 +16,9 @@ Commission free online ordering for restaurants on WordPress. Take delivery, pic
 
 No commissions. No per order fees. No WooCommerce required. Restaurants, cafes, cloud kitchens and takeaways use RestroPress to take delivery, pickup and takeaway orders, and table bookings, directly on their own website instead of paying third party apps.
 
-[Try the live demo](https://demo.restropress.com) or [watch the RestroPress 3.5 video](https://www.youtube.com/watch?v=JQw1J_Ly0XM).
+https://www.youtube.com/watch?v=W1cHkFlqK2g
+
+[Try the live demo](https://demo.restropress.com) to order the way your customers will.
 
 = Why restaurants switch to RestroPress =
 
@@ -45,11 +47,15 @@ No commissions. No per order fees. No WooCommerce required. Restaurants, cafes, 
 * **Guided setup wizard** with a live phone preview of your storefront.
 * **AI menu import.** Upload a PDF, a photo or a spreadsheet of your menu and let AI turn it into dishes, prices, sizes and add-ons for you to review.
 
+https://www.youtube.com/watch?v=Gj9HjW36glw
+
 = Run your whole service from one screen =
 
 * **Live Orders board.** A real time view of new, accepted, preparing, ready and out for delivery orders, with sound alerts.
 * **Command Center dashboard.** Store status, kitchen load, late and unpaid orders, and a priority queue of what needs attention now.
 * **Automatic kitchen ticket printing.** Send new orders straight to your printer.
+
+https://www.youtube.com/watch?v=Z3LPsuY5lyo
 
 = Take orders the way your customers want =
 
@@ -60,7 +66,7 @@ No commissions. No per order fees. No WooCommerce required. Restaurants, cafes, 
 = Get paid your way =
 
 * PayPal, Stripe (with Apple Pay and Google Pay) and Cash on Delivery built in.
-* More gateways as extensions, including Square, Mollie, Paytm, PayU and PhonePe.
+* More gateways as extensions, including Square, Mollie, Braintree, Authorize.net, Razorpay, Paytm and PhonePe.
 
 = Everything you need, out of the box =
 
@@ -82,14 +88,52 @@ No commissions. No per order fees. No WooCommerce required. Restaurants, cafes, 
 
 = Grow with extensions and apps =
 
-* **Customer App** for a branded ordering experience
-* **Driver App** to manage your delivery team
-* **Order Tracking App** for real time updates
-* **KDS App** to keep the kitchen in sync
-* **POS for mobile and desktop** to handle in store and online orders in one place
-* **Dine-In, Multi Location, Inventory, Tips, Pre Order and Time Based Menu**, plus many more
+The free plugin runs a complete ordering site on its own. Add only what your restaurant needs. [RestroPress Pro](https://www.restropress.com/restropress-pro/) installs and updates every extension with one license key.
 
-[Explore all extensions](https://restropress.com/extension/)
+**Delivery, pickup and scheduling**
+
+* **Delivery Zone and Fees:** delivery fees by distance or postal zone, and free delivery over an amount.
+* **Store Timing & Delivery Cutoff:** separate delivery and pickup hours, breaks, holidays and order cutoffs.
+* **Order Time, Intervals & Limits:** time slot intervals and a limit on orders per slot.
+* **Pre-Order:** let customers order for a later day.
+* **Multilocation:** run several branches from one website.
+* **Address Auto Complete:** address suggestions while customers type at checkout.
+
+**Menu, cart and checkout**
+
+* **Time Based Menu:** show dishes only at the times you serve them, such as breakfast or lunch.
+* **Inventory:** track stock for your dishes.
+* **Addon Quantity:** let customers choose how many of an add-on they want.
+* **Checkout Fields Manager:** add and change checkout fields.
+* **Extra Fees** and **Pickup Discount:** service or packaging fees, and a discount on pickup orders.
+* **Tips:** customers add a tip at checkout.
+* **Menu Cart** and **Sliding Cart:** show the cart in your site menu or as a sliding panel.
+
+**Dine-in and tables**
+
+* **DineIn:** table ordering by QR code.
+* **Table Booking:** take deposits to cut no-shows, record special occasions and verify phone numbers by SMS.
+
+**Marketing and messages**
+
+* **Rewards:** points customers earn on orders and spend on later ones.
+* **WhatsApp Order**, **WhatsApp Notifications** and **SMS Notification.**
+* **Mailchimp Integration** and **Social Login.**
+
+**Payments**
+
+* Stripe (Pro), PayPal Pro and PayPal Express, Square, Mollie, Braintree, Authorize.net, Adyen, Checkout.com, Razorpay, Paytm, PhonePe, Paystack and TakePayments.
+
+**Apps and POS**
+
+* **User App:** your own branded ordering app for customers.
+* **Driver App:** for your delivery team.
+* **Order Tracking App:** live order updates for customers.
+* **KDS:** a kitchen display that keeps the kitchen in sync.
+* **RestroPress POS**, plus **Clover POS** and **Square POS** sync, for in-store and online orders in one place.
+* **RestroPress Manager** and the **Print & Tracking Desktop App** to run and print orders away from the admin.
+
+[All extensions](https://www.restropress.com/extension/) | [Apps](https://www.restropress.com/apps/) | [RestroPress Pro and pricing](https://www.restropress.com/pricing/)
 
 = Built for developers =
 
@@ -168,6 +212,75 @@ Read the [documentation](https://docs.restropress.com), join the [Facebook commu
 
 == Changelog ==
 
+= Version 3.5.1 (2026-11-24) =
+* Fix: "ASAP" is an extra choice in the order time list instead of replacing the first time, so the first time after preparation is no longer skipped. "ASAP only" now lists ASAP alone.
+* Fix: A notice period set by an extension (for example Store Timing's "Next day" or "36 hours" minimum notice) now works with pre-orders off: customers can order for the first day it allows instead of seeing the store as closed. With pre-orders on, the pre-order days count from that day, and the notice is counted in calendar days.
+* Fix: Two checkouts from the same browser at once (for example a card payment still in progress and a cash order) could both rewrite the same pending order. The order is now locked while checkout reuses it, and the second checkout creates a new order.
+* Developer: Payment gateways can lock a pending order (rpress_claim_payment(), rpress_release_payment_claim()) or refuse its reuse (filter rpress_can_resume_payment, rpress_payment_is_recoverable; actions rpress_before_resume_payment, rpress_resume_payment_refused).
+* Fix: With pre-orders on, a store that has no order times left today (or takes orders from the next day) no longer shows "closed" on the menu. The menu moves to the first day with order times, and customers can open the order popup to pick another.
+* Fix: "ASAP" is only offered for today. On a later date the popup listed ASAP in place of the first time, which then could not be chosen.
+* Fix: Saving the Styles settings while a Pro template pack is locked (for example after the Pro license lapses) no longer resets the pack to Classic. The choice is kept and comes back when the license does.
+* Improvement: When a locked Pro pack is the saved choice, the template picker says customers are seeing the Classic design and links to the license, and the pack shows a Locked badge instead of Active.
+* Fix: rpress_get_purchase_id_by_key() returned the first order's ID for every lookup after the first in a request. Gateways that look up several purchase keys at once (webhook batches, recovery jobs) now get the right order.
+* Fix: Pending orders are saved with a correct UTC date instead of a zero date, so date-based order queries and reports include them.
+* Fix: Order actions added by extensions (through rpress_order_row_actions) show in the order list's More actions menu again.
+* New: A new-order popup on every admin screen except Live Orders (which has its own alerts). It lists every order waiting to be accepted, newest first, each with Open and Acknowledge, and plays the sound only while it shows orders nobody has acknowledged. Dismiss hides it until the next new order. Acknowledge counts on every device and on the Live Orders board. Orders older than 24 hours no longer ring. It replaces the old admin-wide notification, which could miss orders when several tabs or staff were signed in. Turn it on or off with "New-order popup and sound on admin screens" in the notification settings.
+* Fix: Turning "Sound alerts" off on Live Orders now silences the new-order sound on every admin screen. Before, the dashboard, the orders list and other admin tabs kept playing it. Switching sound off also stops a sound that is already playing, in every open tab.
+* Fix: With the Delivery Fee extension active, the store header no longer shows the core flat delivery fee (the extension prices delivery by zip or distance). The menu page store card had the same problem and is fixed too. Extensions can set the delivery chip with the new `rpress_store_header_delivery_chip` filter.
+* Fix: Live Orders: after an order left a column (for example a pickup marked complete), the count tile above it could still show the order for up to a minute while the column was already empty.
+* New: Customer account sections have their own addresses: /my-account/orders/, /my-account/addresses/ and /my-account/reservations/. Links from emails and buttons open the right section, Back, refresh and bookmarks work, and only the open section is loaded. Old links to a section (such as #user-my-reservations in 3.5 emails) still land in the right place.
+* Improvement: Orders in the customer account and on the Order History page are cards with the order number, date, status, a short item list and the total. One main button per order (Track order while it is on its way, Reorder once it is done) plus View details. A "Load more orders" button replaces the search box, page numbers and endless scrolling.
+* Improvement: On phones the account menu is a single scrollable row, so the open section starts right below it.
+* Improvement: The account page no longer loads DataTables and MicroModal from outside sites.
+* Improvement: The Reservations section of the account shows only for customers who have reservations.
+* Fix: A guest who ordered with an email that already has an account (for example one WooCommerce created) was asked to log in on the order confirmation page instead of seeing the receipt. The browser that placed the order now sees it; the receipt link on its own still asks for a login.
+* Fix: On the order details screen, "Complete delivery" on an order that was out for delivery set it to Cancelled, and "Complete order" on a ready pickup order set it to Out for delivery. The next-step button now follows the order's service: delivery goes Ready, Out for delivery, Completed; pickup and dine-in go Ready, Completed.
+* Fix: "Load more" on the Order History page skipped orders placed as a guest with the same email address.
+* Fix: On the account's Addresses section, the menu on every address card opened the first card's menu.
+* Fix: Address form label read "Fast name" instead of "First name".
+* Improvement: Storefront messages are one small bar instead of the green and red "Success"/"Error" boxes: at the bottom of the screen on phones, just above the View cart bar or the Place order bar, and at the bottom left on desktop. It closes by itself, waits while you hover or focus it, closes with Escape, and is read out by screen readers without moving focus.
+* Improvement: Adding a dish to the cart shows no message any more (the dish's stepper and the cart already show it); the cart count and total give a short bump instead. Emptying the cart shows no message either.
+* New: After removing a dish from the cart, the message offers Undo to put it back.
+* Improvement: Order settings popup (service, date, time, delivery address): errors appear inside the popup next to the field, in both the current and the Legacy Ordering Flow, instead of a message over the menu.
+* Improvement: "No payment method" at checkout and failures on the account's Addresses section use the message bar instead of a browser alert; deleting an address confirms with "Address deleted." on the page.
+* Fix: Legacy Ordering Flow on phones: the "Add $X more" hint in the cart bar was squeezed into a narrow column beside the total; it now sits on its own line under the total.
+* Developer: rpress_notify( message, { type, action, duration } ) shows a storefront message. The old tata toast library is no longer loaded on the storefront; calls to tata.error(), tata.success() and the rest still work and show the new bar, so extensions need no change.
+* Improvement: Changing the email address on the account page asks for the current password (the field appears once the email is edited, with a "Forgot password?" link). Without the right password the email stays as it was.
+* Improvement: The cart counts dishes, not lines: two of the same burger now show as "2 items" on the View cart bar, in the cart and in its total.
+* Improvement: The View cart bar shows the food subtotal (delivery fee, tip and tax are added at checkout, so the amount no longer changes there). In the Legacy Ordering Flow the bar now says "Subtotal".
+* New: In the cart (current ordering flow, Classic pack) each dish has a - / + stepper; at 1 the minus removes it. The Modern pack already had one.
+* Improvement: The cart button reads "Go to checkout · $12.00" with the subtotal (current ordering flow).
+* Fix: After changing a quantity the cart header could read "2 item".
+* Developer: rpress_get_cart_item_count() returns the number of dishes in the cart (filter rpress_cart_item_count), and cart AJAX responses include item_count. rpress_get_cart_quantity() still counts lines.
+* New: Admin notification center. A bell in the admin bar shows a count and opens a panel with RestroPress suggestions and anything that needs attention, each with its button and a "No thanks" or Dismiss.
+* Improvement: Suggestions (one-tap reorder, unattended-order email, setup wizard, Table Booking) moved from banners into the panel; the newest one is also a card on the RestroPress Dashboard. Earlier "No thanks" choices are kept, and enabling a feature from the panel returns to the screen you were on.
+* Improvement: Problems (no menu or checkout page, licence keys, test mode, the W3 Total Cache setting) are listed in red in the panel, counted on the RestroPress menu item, and shown as at most one banner, only on the screens where they matter (licence keys: Extensions and Dashboard instead of every admin screen).
+* Improvement: Results of admin actions (discount added, receipt resent, customer deleted, reservations updated and others) are a short message at the bottom of the screen instead of a banner at the top; refreshing the page does not repeat it.
+* Improvement: Admin messages use the same message bar as the storefront; the old toast library is no longer loaded in the admin, and calls to tata.success() and tata.error() still work.
+* Removed: The notice asking to deactivate the old Recount Earnings plugin (RestroPress 2.5).
+* Developer: rpress_register_admin_notice( $id, $args ) during the rpress_register_admin_notices action adds a suggestion or problem to the notification center; rpress_admin_toast( $message, $type ) queues an admin toast. Filters rpress_admin_notices and rpress_admin_action_messages; action rpress_command_center_before_panels on the Dashboard.
+* Developer: Add account sections with the rpress_account_sections filter; build links with rpress_account_url(). Each section and the order card have their own template in templates/account/ that themes can override.
+* New: Storefront layout components, chosen by the template pack (and later the storefront customizer): a store header with a cover photo, a compact strip or a centred title; categories as tabs above the menu, optionally as photo tiles; dishes in up to 4 columns with the photo beside, on top, behind the text or hidden; Popular, Order again and Deals rows above the menu; a cart drawer and a side-sheet dish popup on desktop. Stores keep today's storefront until a pack or setting asks for something else; phones keep the 3.5 cart bar and bottom sheets.
+* New: Store Cover Image setting (Settings > Styles) for packs with a cover header.
+* Developer: rpress_get_storefront_layout() now drives the menu page. Filters: rpress_storefront_cover_image, rpress_category_image_url (category tiles fall back to the term's thumbnail_id, then the first dish photo), rpress_storefront_rail_items, rpress_storefront_rail_limit, rpress_storefront_rail_title and rpress_storefront_deals_tag (default "deals"). rpress_storefront_renders_masthead() tells packs core prints the header.
+* Improvement: Checkout asks for delivery or pickup details first, then contact, then payment. The chosen time, and a delivery address that is already filled in, show as one line with a Change button.
+* Improvement: Checkout shows the total once. The grey "Order Total" bar is gone, and on desktop the Place order button sits in the order summary next to the total (phones keep the sticky bar). The minimum-order hint moves with it.
+* Improvement: Delivery address fields are one per row on phones, and the "Pickup selected. Your total is still ..." line is only read out to screen readers when the total did not change.
+* Improvement: The order page has one heading ("Order #1234 placed") and shows when the order is expected ("Arrives around 7:55 pm", "Ready around 7:30 pm", with the date when it is not today) instead of the raw time slot. Guests see that a link to the page was emailed to them.
+* Fix: On phones, the "Your order" toggle on the order page opened nothing, because it found the page heading instead of the order card.
+* Developer: Tip slot in the checkout's payment step (rpress_checkout_tip_slot); RestroPress Tips is moved into it automatically (rpress_checkout_tips_in_payment_step to opt out). Filters: rpress_checkout_fulfilment_first, rpress_checkout_summary_cards, rpress_order_eta_minutes, rpress_order_eta, rpress_order_details_show_guest_note, rpress_order_details_hide_page_title. rpress_get_order_eta() returns when an order is expected.
+* Fix: With a pack that uses the cart drawer, phones and tablets showed the drawer's close button above the menu.
+* Developer: The store hours engine allows several opening windows per day (for example lunch and dinner). Extensions add them with the rpress_service_hours_windows filter and RPRESS_Service_Hours::make_window(); get_windows() lists them. New engine settings, both 0 by default: last_order_buffer (stop new orders N minutes before each window closes) and lead_time (minimum minutes before the first slot, 1440 for next day), set through rpress_service_hours_settings. RPRESS_SERVICE_HOURS_API (2) tells extensions these are available.
+* Developer: The store hours engine knows which branch it answers for. rpress_service_hours( $location_id ) and RPRESS_Service_Hours::get_location_id(); the engine is passed to the rpress_service_hours_settings, _window and _slots filters so Multi-Location schedules can differ per branch. New rpress_get_current_location_id() (filter: rpress_current_location_id) replaces four copies of the same branch lookup.
+* Fix: With only the Pre-Order plugin active, the delivery and pickup steps ignored pre-ordering and showed the closed message instead of the service tabs. They now ask rpress_is_preorder_enabled() like the rest of RestroPress.
+* Improvement: When pre-ordering is on and no extension supplies its own date picker, the order popup's date dropdown lists every date with open times (today plus the pre-order days) instead of only the current date, and picking a date reloads the times for it.
+* Developer: rpress_get_service_date_options() and rpress_get_service_time_options() (filters: rpress_service_date_options, rpress_service_time_options) build the popup's date and time lists; the rpress_service_time_options AJAX action returns times for a date; rpress_service_times_updated fires after the popup reloads them. New action rpress_live_orders_controls adds controls to the Live Orders bar next to Pause orders and Busy mode. New rpress_service_time_label() and filter rpress_service_time_label change the text of an order time in the popup and the time lists without changing the value saved with the order.
+* New: Template packs can set the order of the parts above the dishes (service and time, categories, Popular and other rows) with the new `sections` layout value.
+* Developer: Template packs can pass `components` to rpress_register_template_pack(): card, tabs, rails, store header, service switch, dish sheet and allergen settings. RestroPress checks them, merges them through parent packs and writes the CSS for the active pack (filters: rpress_pack_component_schema, rpress_pack_components; rpress_menu_section_order for the section order). Dish cards, category sections, the category nav and the service row have stable class names (rp-card, rp-menu-section, rp-menu-nav, rp-service-row). Guide: docs/template-packs.md, with a working example pack in docs/example-pack/.
+* Developer: More card settings for template packs: a full-width Add button (`add_button: block`), the dish card quantity stepper on desktop too (`stepper: always`), photo shape for cards with the photo on top (`photo_ratio`), title and price fonts, price size and colour, and hiding the card description.
+* Developer: Template pack settings for menu-card layouts: a name, dotted leader and price row (`leader`), an outlined round + button (`add_button: ring`), photo on the left, italic or serif descriptions, ruled section headings, small-caps category links, allergen codes as text and a centred menu column (`menu.max_width`).
+* New: Webhooks. Send signed order, customer, reservation and menu item events to any URL (Settings > General > Webhooks), with automatic retries, a delivery log with resend, and a Send test button.
+* Developer: rpress_webhooks_register_target_type() lets extensions deliver events through the same queue, signature and log; rpress_webhooks_samples() and rpress_webhooks_build_payload() return payloads in the documented schema.
 = Version 3.5.0.1 (2026-11-11) =
 * Security: PayPal: the payment notification (IPN) compared amounts as formatted text, so on orders of 1,000 or more a customer who changed the amount on PayPal could pay less and still have the order marked paid. Amounts are now compared as numbers; the same fix applies to telling full refunds from partial ones.
 * Fix: Orders for a menu item that was later deleted showed the item's ID instead of its name in the order details popup and the receipt.

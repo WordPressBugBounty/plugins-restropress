@@ -70,7 +70,7 @@ body.rp-pack-modern .rpress-menu-v2 ul.order-online-servicetabs .nav-link {
 }
 body.rp-pack-modern .rpress-menu-v2 ul.order-online-servicetabs .nav-link.active {
 	background: var(--rpc-primary) !important;
-	color: #fff !important;
+	color: var(--rpc-on-primary, #fff) !important;
 	font-weight: 700 !important;
 }
 body.rp-pack-modern .rpress-menu-v2 .rpress_order-address-wrap {
@@ -109,12 +109,12 @@ body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link {
 	color: var(--rpc-ink) !important;
 	transition: color .2s ease;
 }
-body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link:hover { color: var(--rpc-primary) !important; }
+body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link:hover { color: var(--rpc-primary-text, var(--rpc-primary)) !important; }
 /* Active chip has no background of its own — the sliding pill provides it. */
 body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link.mnuactive,
 body.rp-pack-modern .rpress-menu-v2 .pn-ProductNav_Link.active {
 	background: transparent !important;
-	color: var(--rpc-primary) !important;
+	color: var(--rpc-primary-text, var(--rpc-primary)) !important;
 	box-shadow: none !important;
 }
 /* Sliding active pill: the legacy indicator repurposed. The scroll JS already
@@ -270,12 +270,12 @@ body.rp-pack-modern .rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add
 	height: 36px !important;
 	border: 0 !important;
 	background: var(--rpc-addbtn-bg, var(--rpc-primary-tint)) !important;
-	color: var(--rpc-addbtn-color, var(--rpc-primary)) !important;
+	color: var(--rpc-addbtn-color, var(--rpc-primary-text, var(--rpc-primary))) !important;
 	box-shadow: 0 3px 10px rgba(25, 25, 25, .14) !important;
 }
 body.rp-pack-modern .rpress-menu-v2 .rpress_purchase_submit_wrapper a.rpress-add-to-cart:hover {
 	background: var(--rpc-addbtn-bg-hover, var(--rpc-primary)) !important;
-	color: #fff !important;
+	color: var(--rpc-on-primary, #fff) !important;
 }
 
 /* ------------------------------------------------------------------ */
@@ -563,7 +563,7 @@ body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder 
 body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder,
 body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-price-holder * {
 	font: 800 20px var(--rpc-font-display) !important;
-	color: var(--rpc-primary) !important;
+	color: var(--rpc-primary-text, var(--rpc-primary)) !important;
 }
 /* Bigger photo */
 body.rp-pack-modern .rpress-menu-v2 .rpress_fooditems_list .rpress-list-view-image-wrapper { width: 148px; }
@@ -615,7 +615,7 @@ body.rp-pack-modern .rpress-menu-v2 .rpress-sidebar-cart .cart-checkout-btn,
 body.rp-pack-modern .rpress-menu-v2 .rpress-sidebar-cart a[href*="checkout"] {
 	border-radius: 999px !important;
 	background: var(--rpc-primary) !important;
-	color: #fff !important;
+	color: var(--rpc-on-primary, #fff) !important;
 	font: 800 15px var(--rpc-font-body) !important;
 	border: 0 !important;
 	transition: background .15s ease;
@@ -757,12 +757,12 @@ body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link.active,
 body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link.rpress-active,
 body.rp-pack-modern .rpress-menu-v2 .cat-lists li.active a.rpress-category-link {
 	background: var(--rpc-primary-tint) !important;
-	color: var(--rpc-primary) !important;
+	color: var(--rpc-primary-text, var(--rpc-primary)) !important;
 }
 body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link.active .rp-cat-count,
 body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link.rpress-active .rp-cat-count,
 body.rp-pack-modern .rpress-menu-v2 .cat-lists li.active a.rpress-category-link .rp-cat-count {
-	color: var(--rpc-primary) !important;
+	color: var(--rpc-primary-text, var(--rpc-primary)) !important;
 }
 body.rp-pack-modern .rpress-menu-v2 .cat-lists a.rpress-category-link:focus-visible {
 	outline: 2px solid var(--rpc-primary) !important;
@@ -916,7 +916,7 @@ body.rp-pack-modern #rpressModal h6.rpress-addon-category {
 }
 body.rp-pack-modern #rpressModal .rp-addon-required {
 	background: var(--rpc-primary-tint) !important;
-	color: var(--rpc-primary) !important;
+	color: var(--rpc-primary-text, var(--rpc-primary)) !important;
 	border: 0 !important;
 	border-radius: 999px !important;
 	font: 600 12px var(--rpc-font-body) !important;
@@ -1160,7 +1160,7 @@ body.rp-pack-modern #rpressModal .qtyplus-wrap input {
 	padding: 0 !important;
 	border: 0 !important;
 	background: transparent !important;
-	color: var(--rpc-primary) !important;
+	color: var(--rpc-primary-text, var(--rpc-primary)) !important;
 	font: 800 18px/1 var(--rpc-font-body) !important;
 	text-align: center !important;
 	box-shadow: none !important;
@@ -1179,7 +1179,7 @@ body.rp-pack-modern #rpressModal .qty-num-wrap input.qty {
 body.rp-pack-modern #rpressModal a.submit-fooditem-button {
 	border-radius: 999px !important;
 	background: var(--rpc-primary) !important;
-	color: #fff !important;
+	color: var(--rpc-on-primary, #fff) !important;
 	font: 800 15px var(--rpc-font-body) !important;
 	min-height: 48px;
 	display: inline-flex !important;
@@ -1286,7 +1286,7 @@ body.rp-pack-modern #rpressDateTime .rpress-service-hours-row { margin-bottom: 0
 body.rp-pack-modern #rpressDateTime .rpress-editaddress-submit-btn {
 	border-radius: 999px !important;
 	background: var(--rpc-primary) !important;
-	color: #fff !important;
+	color: var(--rpc-on-primary, #fff) !important;
 	font: 800 14px var(--rpc-font-body) !important;
 	border: 0 !important;
 	padding: 12px 26px !important;

@@ -14,6 +14,8 @@ if (!defined('ABSPATH')) {
 $cart_items = rpress_get_cart_contents();
 $cart_quantity = rpress_get_cart_quantity();
 $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
+// Dishes (quantities added up) and the food subtotal for the bar (3.5.1).
+$item_count = rpress_get_cart_item_count();
 ?>
 <?php do_action('rpress_before_cart'); ?>
 <div class="rp-col-lg-4 rp-col-md-4 rp-col-sm-12 rp-col-xs-12 pull-right rpress-sidebar-cart item-cart sticky-sidebar">
@@ -24,12 +26,12 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 			</span> -->
 			<div class='rpress-cart-badge'>
 				<div class="rpress-total-price-wrap">
-					<span><?php esc_html_e( 'Total', 'restropress' ); ?></span><span
-						class="rp-mb-price"><?php echo esc_html(rpress_currency_filter(rpress_format_amount(rpress_get_cart_total()))); ?></span>
+					<span><?php esc_html_e( 'Subtotal', 'restropress' ); ?></span><span
+						class="rp-mb-price"><?php echo esc_html(rpress_currency_filter(rpress_format_amount(rpress_get_cart_subtotal()))); ?></span>
 				</div>
 				<div class='rpress-cart-total-item-list'>
-					<span class="rp-mb-quantity"><?php echo esc_html(rpress_get_cart_quantity()); ?></span>
-					<span class="rp-mb-quantity-label"><?php echo esc_html( _n( 'item added to cart', 'items added to cart', rpress_get_cart_quantity(), 'restropress' ) ); ?></span>
+					<span class="rp-mb-quantity"><?php echo esc_html( $item_count ); ?></span>
+					<span class="rp-mb-quantity-label"><?php echo esc_html( _n( 'item added to cart', 'items added to cart', $item_count, 'restropress' ) ); ?></span>
 				</div>
 			</div>
 			<!-- <span class="rp-separation">&nbsp;|&nbsp;</span> -->
@@ -53,8 +55,8 @@ $display = $cart_quantity > 0 ? '' : 'style="display:none;"';
 				<h4><?php echo esc_html(apply_filters('rpress_cart_title', __('Your Order', 'restropress'))); ?></h4>
 				<div class="rpress-cart-head-right">
 					<span class="rpress-cart-head-count" <?php echo wp_kses_post($display); ?>>
-						<span class="rpress-cart-quantity"><?php echo esc_html(rpress_get_cart_quantity()); ?></span>
-						<?php echo esc_html( _n( 'item', 'items', rpress_get_cart_quantity(), 'restropress' ) ); ?>
+						<span class="rpress-cart-quantity"><?php echo esc_html( $item_count ); ?></span>
+						<span class="rpress-cart-quantity-label"><?php echo esc_html( _n( 'item', 'items', $item_count, 'restropress' ) ); ?></span>
 					</span>
 					<i class="fa fa-times close-cart-ic" aria-hidden="true"></i>
 				</div>

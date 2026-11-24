@@ -275,6 +275,7 @@ function rpress_account_hub_ajax_reorder() {
 			'added'         => array_values( $result['added'] ),
 			'skipped'       => array_values( $result['skipped'] ),
 			'cart_quantity' => html_entity_decode( rpress_get_cart_quantity() ),
+			'item_count'    => rpress_get_cart_item_count(),
 		)
 	);
 }

@@ -56,7 +56,7 @@ $has_tags = ( $tags && ! is_wp_error( $tags ) ) ? 'has-tags' : '';
 <div 
     <?php echo esc_html( $schema ); ?>
     class="<?php 
-        echo esc_attr( $has_tags ) . ' ' . 
+        echo esc_attr( $has_tags ) . ' rp-card ' . 
              esc_attr( $product_available_class ) . ' ' . 
              esc_attr( apply_filters( 
                  'rpress_fooditem_class', 

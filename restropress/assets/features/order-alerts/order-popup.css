@@ -1,0 +1,230 @@
+/* New-order popup (3.5.1): every admin screen except Live Orders. */
+.rp-op {
+	position: fixed;
+	right: 20px;
+	bottom: 20px;
+	z-index: 99990;
+	box-sizing: border-box;
+	width: 360px;
+	max-width: calc(100vw - 40px);
+	max-height: min(70vh, 560px);
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	background: #fff;
+	color: #1d2327;
+	border: 1px solid #dcdcde;
+	border-top: 4px solid #d63638;
+	border-radius: 8px;
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
+	font-size: 13px;
+	line-height: 1.4;
+	animation: rp-op-in 0.2s ease-out;
+}
+.rp-op[hidden] {
+	display: none;
+}
+.rp-op *,
+.rp-op *::before,
+.rp-op *::after {
+	box-sizing: border-box;
+}
+
+.rp-op-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 10px 8px 10px 14px;
+	border-bottom: 1px solid #f0f0f1;
+}
+.rp-op-bell {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 20px;
+	font-size: 20px;
+	color: #d63638;
+	transform-origin: 50% 10%;
+	animation: rp-op-ring 1.6s ease-in-out infinite;
+}
+.rp-op-title {
+	flex: 1 1 auto;
+	margin: 0;
+	padding: 0;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.3;
+	color: #1d2327;
+}
+.rp-op-icon {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 4px;
+	background: transparent;
+	color: #50575e;
+	cursor: pointer;
+}
+.rp-op-icon:hover,
+.rp-op-icon:focus {
+	background: #f0f0f1;
+	color: #1d2327;
+}
+.rp-op-icon:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 1px;
+}
+.rp-op-icon .dashicons {
+	width: 20px;
+	height: 20px;
+	font-size: 20px;
+}
+.rp-op-mute.is-off {
+	color: #d63638;
+}
+
+.rp-op-blocked {
+	margin: 0;
+	padding: 8px 14px;
+	background: #fcf0f1;
+	color: #8a2424;
+	font-size: 12px;
+	border-bottom: 1px solid #f0f0f1;
+}
+.rp-op-blocked[hidden] {
+	display: none;
+}
+
+.rp-op-list {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	overscroll-behavior: contain;
+}
+.rp-op-item {
+	margin: 0;
+	padding: 10px 14px;
+	border-bottom: 1px solid #f0f0f1;
+}
+.rp-op-item:last-child {
+	border-bottom: 0;
+}
+.rp-op-line {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+}
+.rp-op-number {
+	font-size: 14px;
+	font-weight: 600;
+	color: #1d2327;
+	text-decoration: none;
+}
+.rp-op-number:hover,
+.rp-op-number:focus {
+	color: #2271b1;
+	text-decoration: underline;
+}
+.rp-op-service {
+	display: inline-block;
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: #f0f6fc;
+	color: #135e96;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+}
+.rp-op-ago {
+	margin-left: auto;
+	color: #646970;
+	font-size: 12px;
+	white-space: nowrap;
+}
+.rp-op-meta {
+	margin: 2px 0 8px;
+	color: #50575e;
+	font-size: 12px;
+}
+.rp-op-actions {
+	display: flex;
+	gap: 6px;
+}
+.rp-op .rp-op-actions .button {
+	margin: 0;
+}
+.rp-op-more {
+	margin: 0;
+	padding: 8px 14px;
+	font-size: 12px;
+}
+
+.rp-op-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin: 0;
+	padding: 10px 14px;
+	border-top: 1px solid #f0f0f1;
+	background: #f6f7f7;
+	border-radius: 0 0 8px 8px;
+}
+.rp-op-live {
+	font-weight: 600;
+	text-decoration: none;
+}
+.rp-op .rp-op-ack-all {
+	font-size: 13px;
+}
+.rp-op .rp-op-ack-all[hidden] {
+	display: none;
+}
+
+/* Phones: a full-width sheet above the bottom edge, bigger touch targets. */
+@media screen and (max-width: 600px) {
+	.rp-op {
+		right: 8px;
+		left: 8px;
+		bottom: 8px;
+		width: auto;
+		max-width: none;
+		max-height: 60vh;
+	}
+	.rp-op-icon {
+		width: 40px;
+		height: 40px;
+	}
+	.rp-op .rp-op-actions .button {
+		flex: 1 1 0;
+		min-height: 36px;
+		line-height: 34px;
+		text-align: center;
+	}
+}
+
+@keyframes rp-op-in {
+	from { opacity: 0; transform: translateY(12px); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes rp-op-ring {
+	0%, 60%, 100% { transform: rotate(0); }
+	10%, 30% { transform: rotate(14deg); }
+	20%, 40% { transform: rotate(-14deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.rp-op,
+	.rp-op-bell {
+		animation: none;
+	}
+}

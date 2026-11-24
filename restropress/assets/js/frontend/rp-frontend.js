@@ -340,57 +340,107 @@ function isStoreOpen() {
   return (now >= openTime && now <= closeTime);
 }
 /*
- * Screen reader announcements. Toasts (cart updates, validation errors) are
- * visual only, so every tata toast is mirrored into a visually hidden live
- * region: errors and warnings are announced at once (role=alert), the rest
- * politely (role=status).
+ * After the cart changes: a short bump on the cart count and total (the View
+ * cart bar on phones, the cart icon and sidebar total on desktop) instead of
+ * an "added to cart" message.
  */
-function rp_announce(message, assertive) {
-  var text = String(message || '');
-  if (!text) {
-    return;
-  }
-  if (typeof window.DOMParser === 'function') {
-    text = new window.DOMParser().parseFromString(text, 'text/html').body.textContent || '';
-  }
-  text = text.replace(/\s+/g, ' ').trim();
-  if (!text) {
-    return;
-  }
-  var id = assertive ? 'rp-sr-alert' : 'rp-sr-status';
-  var region = document.getElementById(id);
-  if (!region) {
-    region = document.createElement('div');
-    region.id = id;
-    region.className = 'screen-reader-text';
-    region.setAttribute('role', assertive ? 'alert' : 'status');
-    region.setAttribute('aria-live', assertive ? 'assertive' : 'polite');
-    region.setAttribute('aria-atomic', 'true');
-    region.style.cssText = 'position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;';
-    document.body.appendChild(region);
-  }
-  // Clear first so the same message twice in a row is announced again.
-  region.textContent = '';
-  window.setTimeout(function () {
-    region.textContent = text;
-  }, 100);
-}
-jQuery(function () {
-  var toast = window.tata;
-  if (!toast || toast.rpAnnounce) {
-    return;
-  }
-  toast.rpAnnounce = true;
-  ['success', 'error', 'warn', 'info'].forEach(function (type) {
-    var original = toast[type];
-    if (typeof original !== 'function') {
+function rp_bump_cart_totals() {
+  var targets = document.querySelectorAll('.rp-mo-cartbar-count, .rp-mo-cartbar-total, .rpress-cart-number-of-items, .rp-mb-quantity, .rpress-cart-quantity');
+  Array.prototype.forEach.call(targets, function (node) {
+    if (!node.offsetParent) {
       return;
     }
-    toast[type] = function (title, text) {
-      rp_announce([title, text].filter(Boolean).join(': '), 'error' === type || 'warn' === type);
-      return original.apply(this, arguments);
-    };
+    node.classList.remove('rp-cart-bump');
+    // Reflow so the animation restarts on quick repeat adds.
+    void node.offsetWidth;
+    node.classList.add('rp-cart-bump');
   });
+}
+/*
+ * Order settings popup errors (3.5.1): shown inside the open popup (service,
+ * date, time, address), next to the field when there is one, instead of a
+ * toast. With no popup open the message bar is used.
+ */
+function rp_service_popup() {
+  var $ = jQuery;
+  var $popup = $('#rpressDateTime.is-open, #rpressModal.show-service-options.is-open').filter(':visible').first();
+  return $popup.length ? $popup : null;
+}
+function rp_clear_popup_errors($scope) {
+  var $ = jQuery;
+  $scope = $scope || $(document);
+  $scope.find('.rpress-popup-error').remove();
+  $scope.find('[aria-invalid="true"].rp-popup-invalid').removeAttr('aria-invalid').removeClass('rp-popup-invalid');
+}
+function rp_popup_error(message, field) {
+  var $ = jQuery;
+  message = $.trim(String(message || ''));
+  var $popup = rp_service_popup();
+  if (!$popup) {
+    if (typeof window.rpress_notify === 'function') {
+      window.rpress_notify(message, { type: 'error' });
+    }
+    return;
+  }
+  if (!message) {
+    message = (window.rpress_notify_vars && window.rpress_notify_vars.generic_error) || 'Something went wrong. Please try again.';
+  }
+  rp_clear_popup_errors($popup);
+  var $error = $('<p class="rpress-popup-error" role="alert"></p>').text(message);
+  var $field = field ? (field.jquery ? field : $popup.find(field)).first() : $();
+  if ($field.length && !$field.is(':visible') && !$field.next('.chosen-container').length) {
+    $field = $();
+  }
+  if ($field.length) {
+    $field.attr('aria-invalid', 'true').addClass('rp-popup-invalid');
+    var $wrap = $field.closest('.chosen-container').length ? $field.closest('.chosen-container') : $field;
+    $wrap.after($error);
+  } else {
+    var $actions = $popup.find('.rpress-delivery-opt-update, .rpress-editaddress-submit-btn').filter(':visible').last();
+    var $row = $actions.parent();
+    if ($row.length) {
+      $row.before($error);
+    } else {
+      $popup.find('.modal__content, .modal-body').first().append($error);
+    }
+  }
+  var el = $error[0];
+  if (el && el.scrollIntoView) {
+    el.scrollIntoView({ block: 'nearest' });
+  }
+}
+// An error found before the popup opens (the popup is opened, or reloaded,
+// so the customer can fix it): show it once the popup content is in place.
+function rp_popup_error_when_open(message, field) {
+  var done = false;
+  var tries = 0;
+  function show() {
+    if (done) {
+      return;
+    }
+    done = true;
+    jQuery(document.body).off('opened_service_options.rpPopupError');
+    window.setTimeout(function () { rp_popup_error(message, field); }, 50);
+  }
+  jQuery(document.body).one('opened_service_options.rpPopupError', show);
+  // The date/time popup opens without loading content, so no event: wait a
+  // moment for it to be visible (or give up and use the message bar).
+  var timer = window.setInterval(function () {
+    tries++;
+    if (done) {
+      window.clearInterval(timer);
+    } else if ((tries >= 8 && rp_service_popup()) || tries > 40) {
+      window.clearInterval(timer);
+      show();
+    }
+  }, 100);
+}
+// Changing anything in the popup clears its error.
+jQuery(document).on('change input click', '#rpressDateTime .modal__content, #rpressModal.show-service-options .modal-body', function (e) {
+  if (jQuery(e.target).closest('.rpress-delivery-opt-update, .rpress-editaddress-submit-btn').length) {
+    return;
+  }
+  rp_clear_popup_errors(jQuery(this));
 });
 // Links that act as buttons (role="button", for example the storefront Add
 // buttons) also activate on Space, like a real button. The cart edit trigger
@@ -537,7 +587,14 @@ jQuery(function ($) {
     setTimeout(rp_fix_footer_click_intercept, 60);
   });
 
+  // Takes a cart AJAX response (3.5.1: the bar shows the food subtotal and the
+  // number of dishes), or the older ( total, quantity ) pair.
   function rp_update_mobile_cart_summary(total, quantity) {
+    if (total && typeof total === 'object') {
+      var r = total;
+      total = r.subtotal || r.total;
+      quantity = (typeof r.item_count !== 'undefined') ? r.item_count : r.cart_quantity;
+    }
     var parsedQty = parseInt(quantity, 10);
     if (isNaN(parsedQty) || parsedQty < 0) {
       parsedQty = 0;
@@ -553,6 +610,9 @@ jQuery(function ($) {
       $('.rp-mb-quantity-label').text(parsedQty === 1 ? rp_scripts.item_added_to_cart : rp_scripts.items_added_to_cart);
     }
     $('span.rpress-cart-quantity').text(parsedQty);
+    if (typeof rp_scripts !== 'undefined' && rp_scripts.cart_item_one) {
+      $('.rpress-cart-quantity-label').text(parsedQty === 1 ? rp_scripts.cart_item_one : rp_scripts.cart_item_many);
+    }
 
     var hasItems = parsedQty > 0;
     if (hasItems) {
@@ -1155,6 +1215,15 @@ jQuery(function ($) {
 
     $select.val(selectedValue || '');
 
+    // Core's own date select: if the restored date isn't the one the time list
+    // was loaded for (the customer changed it, then cancelled), reload the times.
+    if ($select.hasClass('rpress-service-date-select')) {
+      var $timesFor = $select.closest('.delivery-settings-wrapper').find('.rpress-hrs[data-times-date]').first();
+      if ($timesFor.length && String($timesFor.attr('data-times-date')) !== String(selectedValue || '')) {
+        $select.trigger('change');
+      }
+    }
+
     return selectedValue;
   }
   function rp_remove_select_placeholder($select) {
@@ -1670,7 +1739,7 @@ jQuery(function ($) {
 
       if (oldUiUxEnabled && (!hasRequiredServiceContext || forceOldUiServiceModal)) {
         if (forceOldUiServiceModal) {
-          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(activeServiceTypeForValidation), { position: "tr" });
+          rp_popup_error_when_open(rp_get_delivery_fee_context_error(activeServiceTypeForValidation), '#rp_delivery_zone, #rp_delivery_location');
         }
         rp_open_legacy_service_options_modal(fooditem_id);
         return;
@@ -1686,7 +1755,7 @@ jQuery(function ($) {
           // Check if the delivery zone input exists and has a value
           if ($rp_delivery_zone.length > 0 && !$rp_delivery_zone.val().trim()) {
             // Show error
-            tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.enter_zip_code) ? rp_scripts.enter_zip_code : 'Please enter ZIP code', { position: "tr" });
+            rp_popup_error_when_open((typeof rp_scripts !== 'undefined' && rp_scripts.enter_zip_code) ? rp_scripts.enter_zip_code : 'Please enter ZIP code', '#rp_delivery_zone');
 
             // Trigger Edit button click after 1 second
             setTimeout(function () {
@@ -1703,7 +1772,7 @@ jQuery(function ($) {
             // Check if the delivery zone input exists and has a value
             if ($rp_delivery_location.length > 0 && !$rp_delivery_location.val().trim()) {
               // Show error
-              tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.enter_location) ? rp_scripts.enter_location : 'Please enter location', { position: "tr" });
+              rp_popup_error_when_open((typeof rp_scripts !== 'undefined' && rp_scripts.enter_location) ? rp_scripts.enter_location : 'Please enter location', '#rp_delivery_location');
 
               // Trigger Edit button click after 1 second
               setTimeout(function () {
@@ -1767,7 +1836,7 @@ jQuery(function ($) {
 
       var serviceClosedMessage = getClosedMessage();
       if (serviceClosedMessage) {
-        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', serviceClosedMessage, { position: "tr" });
+        rpress_notify(serviceClosedMessage, { type: 'error' });
         return;
       }
 
@@ -1776,7 +1845,7 @@ jQuery(function ($) {
       if (!isServiceTimeDisabled && !serviceTime) {
         var closedMessage = serviceClosedMessage || getClosedMessage();
         if (closedMessage) {
-          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', closedMessage, { position: "tr" });
+          rpress_notify(closedMessage, { type: 'error' });
         } else {
           $('#editDateTime').trigger('click');
           var $serviceDateModal = $('#rpressDateTime');
@@ -1849,7 +1918,7 @@ jQuery(function ($) {
         },
         success: function (response) {
           if (response?.success === false && response?.data?.status === 'error') {
-            tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', response?.data?.error_msg, { position: "tr" });
+            rpress_notify(response?.data?.error_msg, { type: 'error' });
             return;
           }
           MicroModal.show('rpressModal', {
@@ -2217,96 +2286,12 @@ jQuery(function ($) {
               self.removeClass('disable_click');
               self.find('.cart-action-text')
                 .text(text);
-              var serviceType = rp_getCookie('service_type');
-              var serviceTime = rp_getCookie('service_time');
-              var serviceTimeText = rp_getCookie('service_time_text');
-              var serviceDate = rp_getCookie('delivery_date');
-              $('ul.rpress-cart')
-                .find('li.cart_item.empty')
-                .remove();
-              $('ul.rpress-cart')
-                .find('li.cart_item.rpress_subtotal')
-                .remove();
-              $('ul.rpress-cart')
-                .find('li.cart_item.cart-sub-total')
-                .remove();
-              $('ul.rpress-cart')
-                .find('li.cart_item.rpress_cart_tax')
-                .remove();
-              $('ul.rpress-cart')
-                .find('li.cart_item.rpress-cart-meta.rpress-delivery-fee')
-                .remove();
-              $('ul.rpress-cart')
-                .find('li.cart_item.rpress-cart-meta.rpress_subtotal')
-                .remove();
-              var $mergedLine = response.merged
-                ? $('ul.rpress-cart > li.rpress-cart-item[data-cart-key="' + response.cart_key + '"]').first()
-                : $();
-              if ($mergedLine.length) {
-                // Same item and options already in the cart: its quantity went up.
-                $mergedLine.replaceWith($(response.cart_item).attr('data-cart-key', response.cart_key));
-              } else {
-                $('ul.rpress-cart').append(response.cart_item);
-              }
-              if (float_menu.length > 0) {
-                float_menu.addClass("cart-has-items");
-              }
-
-              rp_update_mobile_cart_summary(response.total, response.cart_quantity);
-              if (serviceType !== undefined) {
-                serviceLabel = window.localStorage.getItem('serviceLabel');
-                var orderInfo = '<span class="delMethod">' + serviceLabel + ', ' + serviceDate + '</span>';
-                if (serviceTime !== undefined) {
-                  // Check if the string contains 'ASAP'
-                  if (serviceTime.includes('ASAP')) {
-                    // Remove 'ASAP' from the string
-                    serviceTimeText = serviceTime.replace('ASAP', '');
-                    serviceTimeText = rp_scripts.asap_txt + ' ' + serviceTimeText;
-                  }
-                  orderInfo += '<span class="delTime">, ' + serviceTimeText + '</span>';
-                }
-                $('.delivery-items-options')
-                  .find('.delivery-opts')
-                  .html(orderInfo);
-                if ($('.delivery-wrap .delivery-change')
-                  .length == 0) {
-                  var changeText = rp_is_old_ui_ux_enabled() ? ((typeof rp_scripts !== 'undefined' && rp_scripts.change_old_txt) ? rp_scripts.change_old_txt : 'Change') : ((typeof rp_scripts !== 'undefined' && rp_scripts.change_txt) ? rp_scripts.change_txt : 'Change?');
-                  var helperHtml = rp_is_old_ui_ux_enabled() ? rp_get_delivery_change_helper_html() : '';
-                  $("<a href='#' class='delivery-change'><span class='rp-ajax-toggle-text'>" + changeText + "</span></a>" + helperHtml)
-                    .insertAfter(".delivery-opts");
-                }
-              }
-              $('.delivery-items-options')
-                .css('display', 'block');
-              // Always reveal the cart summary/checkout once an item is added.
-              // The ".rpress.item-order" header is now always present in the
-              // template, so the removeClass below must not be gated by it or
-              // the checkout button stays hidden until a page refresh.
-              $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').removeClass('empty-cart');
-              if ($('div.rpress.item-order').length == 0) {
-                // Same header as templates/cart/cart.php (string arrives escaped).
-                var cartTitle = (typeof rp_scripts !== 'undefined' && rp_scripts.cart_title) ? rp_scripts.cart_title : 'Your Order';
-                var orderitems = $('<div class="rpress item-order"><h4>' + cartTitle + '</h4></div>');
-                $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').prepend(orderitems);
-              }
-              if ($('li.rpress-cart-item')
-                .length > 0) {
-                $('a.rpress-clear-cart')
-                  .show();
-              } else {
-                $('a.rpress-clear-cart')
-                  .hide();
-              }
-              if (typeof response.cart_summary === 'string') {
-                rp_refresh_sidebar_cart_summary(response.cart_summary);
-              }
+              rp_insert_cart_line(response);
               $(document.body)
                 .trigger('rpress_added_to_cart', [response]);
               MicroModal.close('rpressModal');
-              var addedText = (response.merged && window.rp_scripts.quantity_updated_in_cart) ? window.rp_scripts.quantity_updated_in_cart : window.rp_scripts.added_to_cart;
-              tata.success(window.rp_scripts.success, self.attr('data-title') + addedText, {
-                position: "tr"
-              })
+              // No toast: the dish stepper and the cart bar show the result (3.5.1).
+              rp_bump_cart_totals();
             }
           }
         })
@@ -2388,7 +2373,7 @@ jQuery(function ($) {
               $('ul.rpress-cart')
                 .find('.cart-tax')
                 .html(response.tax);
-              rp_update_mobile_cart_summary(response.total, response.cart_quantity);
+              rp_update_mobile_cart_summary(response);
               if (typeof response.cart_summary === 'string') {
                 rp_refresh_sidebar_cart_summary(response.cart_summary);
               }
@@ -2429,7 +2414,7 @@ jQuery(function ($) {
     if (typeof response.cart_summary === 'string') {
       rp_refresh_sidebar_cart_summary(response.cart_summary);
     }
-    rp_update_mobile_cart_summary(response.total, response.cart_quantity);
+    rp_update_mobile_cart_summary(response);
     $(document.body).trigger('rpress_items_updated', [response]);
   }
   function rpChangeCartQty($stepper, newQty) {
@@ -2519,7 +2504,7 @@ jQuery(function ($) {
       var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
       var hasMultipleServiceTabs = $updateScope.find('#rpressdeliveryTab .single-service-selected').length > 1;
       if (oldUiUxEnabled && hasMultipleServiceTabs && !serviceType) {
-        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_service_type) ? rp_scripts.select_service_type : 'Please select a service type', { position: "tr" });
+        rp_popup_error((typeof rp_scripts !== 'undefined' && rp_scripts.select_service_type) ? rp_scripts.select_service_type : 'Please select a service type');
         return false;
       }
 
@@ -2535,7 +2520,7 @@ jQuery(function ($) {
       if (oldUiUxEnabled) {
         var isDeliveryFeeContextValid = rp_has_valid_delivery_fee_context(serviceType, $updateScope);
         if (!isDeliveryFeeContextValid) {
-          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(serviceType), { position: "tr" });
+          rp_popup_error_when_open(rp_get_delivery_fee_context_error(serviceType), '#rp_delivery_zone, #rp_delivery_location');
           rp_open_legacy_service_options_modal(foodItemId);
           return false;
         }
@@ -2552,17 +2537,17 @@ jQuery(function ($) {
         serviceType
       ).length > 0;
       if (oldUiUxEnabled && hasServiceDateSelect && !serviceDate) {
-        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_date) ? rp_scripts.select_date : 'Please select a date', { position: "tr" });
+        rp_popup_error((typeof rp_scripts !== 'undefined' && rp_scripts.select_date) ? rp_scripts.select_date : 'Please select a date', rp_get_active_service_date_select($updateScope.length ? $updateScope : $(document), serviceType));
         return false;
       }
       if (oldUiUxEnabled && hasServiceTimeSelect && !rp_is_service_time_hidden(serviceType) && !serviceTime) {
-        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_time) ? rp_scripts.select_time : 'Please select a time', { position: "tr" });
+        rp_popup_error((typeof rp_scripts !== 'undefined' && rp_scripts.select_time) ? rp_scripts.select_time : 'Please select a time', rp_get_active_service_time_select($updateScope.length ? $updateScope : $(document), serviceType));
         return false;
       }
       // Closed with nothing to schedule: say so instead of closing the popup silently.
       var $closedNotice = ($updateScope.length ? $updateScope : $(document)).find('.rpress-service-closed-message:visible').first();
       if (oldUiUxEnabled && $closedNotice.length && !hasServiceTimeSelect && !serviceTime) {
-        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', $.trim($closedNotice.text()) || rp_scripts.closed_message, { position: "tr" });
+        rp_popup_error($.trim($closedNotice.text()) || rp_scripts.closed_message);
         return false;
       }
       var sDate = serviceDate || rp_getCookie('service_date') || '';
@@ -2601,7 +2586,7 @@ jQuery(function ($) {
             if (oldUiUxEnabled) {
               window.rpDeliveryFeeValidationState = 'invalid';
             }
-            tata.error(rp_scripts.error, response.error_msg || response.msg || rp_scripts.closed_message);
+            rp_popup_error(response.error_msg || response.msg || rp_scripts.closed_message);
             return false;
           } else {
             if (oldUiUxEnabled) {
@@ -2623,7 +2608,7 @@ jQuery(function ($) {
             if (oldUiUxEnabled) {
               rp_persist_delivery_context_for_update($updateScope, response, serviceType);
               if (!rp_has_valid_delivery_fee_context(serviceType, $updateScope)) {
-                tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(serviceType), { position: "tr" });
+                rp_popup_error_when_open(rp_get_delivery_fee_context_error(serviceType), '#rp_delivery_zone, #rp_delivery_location');
                 rp_open_legacy_service_options_modal(foodItemId);
                 return false;
               }
@@ -2666,7 +2651,7 @@ jQuery(function ($) {
             }
             //Trigger checked slot event so that it can be used by theme/plugins
             if (typeof response.total !== 'undefined') {
-              rp_update_mobile_cart_summary(response.total, response.cart_quantity);
+              rp_update_mobile_cart_summary(response);
             }
             if (typeof response.cart_summary === 'string') {
               rp_refresh_sidebar_cart_summary(response.cart_summary);
@@ -2714,7 +2699,7 @@ jQuery(function ($) {
       var oldUiUxEnabled = rp_is_old_ui_ux_enabled();
       var hasMultipleServiceTabs = $updateScope.find('#rpressdeliveryTab .single-service-selected').length > 1;
       if (oldUiUxEnabled && hasMultipleServiceTabs && !serviceType) {
-        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_service_type) ? rp_scripts.select_service_type : 'Please select a service type', { position: "tr" });
+        rp_popup_error((typeof rp_scripts !== 'undefined' && rp_scripts.select_service_type) ? rp_scripts.select_service_type : 'Please select a service type');
         return false;
       }
 
@@ -2739,17 +2724,17 @@ jQuery(function ($) {
         serviceType
       ).length > 0;
       if (oldUiUxEnabled && hasServiceDateSelect && !serviceDate) {
-        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_date) ? rp_scripts.select_date : 'Please select a date', { position: "tr" });
+        rp_popup_error((typeof rp_scripts !== 'undefined' && rp_scripts.select_date) ? rp_scripts.select_date : 'Please select a date', rp_get_active_service_date_select($updateScope.length ? $updateScope : $(document), serviceType));
         return false;
       }
       if (oldUiUxEnabled && hasServiceTimeSelect && !rp_is_service_time_hidden(serviceType) && !serviceTime) {
-        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', (typeof rp_scripts !== 'undefined' && rp_scripts.select_time) ? rp_scripts.select_time : 'Please select a time', { position: "tr" });
+        rp_popup_error((typeof rp_scripts !== 'undefined' && rp_scripts.select_time) ? rp_scripts.select_time : 'Please select a time', rp_get_active_service_time_select($updateScope.length ? $updateScope : $(document), serviceType));
         return false;
       }
       // Closed with nothing to schedule: say so instead of closing the popup silently.
       var $closedNotice = ($updateScope.length ? $updateScope : $(document)).find('.rpress-service-closed-message:visible').first();
       if (oldUiUxEnabled && $closedNotice.length && !hasServiceTimeSelect && !serviceTime) {
-        tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', $.trim($closedNotice.text()) || rp_scripts.closed_message, { position: "tr" });
+        rp_popup_error($.trim($closedNotice.text()) || rp_scripts.closed_message);
         return false;
       }
       var sDate = serviceDate || rp_getCookie('service_date') || '';
@@ -2788,7 +2773,7 @@ jQuery(function ($) {
             if (oldUiUxEnabled) {
               window.rpDeliveryFeeValidationState = 'invalid';
             }
-            tata.error(rp_scripts.error, response.error_msg || response.msg || rp_scripts.closed_message);
+            rp_popup_error(response.error_msg || response.msg || rp_scripts.closed_message);
             return false;
           } else {
             if (oldUiUxEnabled) {
@@ -2834,7 +2819,7 @@ jQuery(function ($) {
 
             //Trigger checked slot event so that it can be used by theme/plugins
             if (typeof response.total !== 'undefined') {
-              rp_update_mobile_cart_summary(response.total, response.cart_quantity);
+              rp_update_mobile_cart_summary(response);
             }
             if (typeof response.cart_summary === 'string') {
               rp_refresh_sidebar_cart_summary(response.cart_summary);
@@ -3026,6 +3011,138 @@ jQuery(function ($) {
       }
     })
   });
+  // Put a line the server just added into the sidebar cart and update the
+  // totals, delivery summary and cart bar (add to cart, and Undo after a
+  // remove).
+  function rp_insert_cart_line(response) {
+    var float_menu = $(".container-actionmenu");
+    var serviceType = rp_getCookie('service_type');
+    var serviceTime = rp_getCookie('service_time');
+    var serviceTimeText = rp_getCookie('service_time_text');
+    var serviceDate = rp_getCookie('delivery_date');
+    $('ul.rpress-cart')
+      .find('li.cart_item.empty')
+      .remove();
+    $('ul.rpress-cart')
+      .find('li.cart_item.rpress_subtotal')
+      .remove();
+    $('ul.rpress-cart')
+      .find('li.cart_item.cart-sub-total')
+      .remove();
+    $('ul.rpress-cart')
+      .find('li.cart_item.rpress_cart_tax')
+      .remove();
+    $('ul.rpress-cart')
+      .find('li.cart_item.rpress-cart-meta.rpress-delivery-fee')
+      .remove();
+    $('ul.rpress-cart')
+      .find('li.cart_item.rpress-cart-meta.rpress_subtotal')
+      .remove();
+    var $mergedLine = response.merged
+      ? $('ul.rpress-cart > li.rpress-cart-item[data-cart-key="' + response.cart_key + '"]').first()
+      : $();
+    if ($mergedLine.length) {
+      // Same item and options already in the cart: its quantity went up.
+      $mergedLine.replaceWith($(response.cart_item).attr('data-cart-key', response.cart_key));
+    } else {
+      $('ul.rpress-cart').append(response.cart_item);
+    }
+    if (float_menu.length > 0) {
+      float_menu.addClass("cart-has-items");
+    }
+
+    rp_update_mobile_cart_summary(response);
+    if (serviceType !== undefined) {
+      serviceLabel = window.localStorage.getItem('serviceLabel');
+      var orderInfo = '<span class="delMethod">' + serviceLabel + ', ' + serviceDate + '</span>';
+      if (serviceTime !== undefined) {
+        // Check if the string contains 'ASAP'
+        if (serviceTime.includes('ASAP')) {
+          // Remove 'ASAP' from the string
+          serviceTimeText = serviceTime.replace('ASAP', '');
+          serviceTimeText = rp_scripts.asap_txt + ' ' + serviceTimeText;
+        }
+        orderInfo += '<span class="delTime">, ' + serviceTimeText + '</span>';
+      }
+      $('.delivery-items-options')
+        .find('.delivery-opts')
+        .html(orderInfo);
+      if ($('.delivery-wrap .delivery-change')
+        .length == 0) {
+        var changeText = rp_is_old_ui_ux_enabled() ? ((typeof rp_scripts !== 'undefined' && rp_scripts.change_old_txt) ? rp_scripts.change_old_txt : 'Change') : ((typeof rp_scripts !== 'undefined' && rp_scripts.change_txt) ? rp_scripts.change_txt : 'Change?');
+        var helperHtml = rp_is_old_ui_ux_enabled() ? rp_get_delivery_change_helper_html() : '';
+        $("<a href='#' class='delivery-change'><span class='rp-ajax-toggle-text'>" + changeText + "</span></a>" + helperHtml)
+          .insertAfter(".delivery-opts");
+      }
+    }
+    $('.delivery-items-options')
+      .css('display', 'block');
+    // Always reveal the cart summary/checkout once an item is added.
+    // The ".rpress.item-order" header is now always present in the
+    // template, so the removeClass below must not be gated by it or
+    // the checkout button stays hidden until a page refresh.
+    $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').removeClass('empty-cart');
+    if ($('div.rpress.item-order').length == 0) {
+      // Same header as templates/cart/cart.php (string arrives escaped).
+      var cartTitle = (typeof rp_scripts !== 'undefined' && rp_scripts.cart_title) ? rp_scripts.cart_title : 'Your Order';
+      var orderitems = $('<div class="rpress item-order"><h4>' + cartTitle + '</h4></div>');
+      $('div.rpress-sidebar-main-wrap div.rpress-sidebar-cart-wrap').prepend(orderitems);
+    }
+    if ($('li.rpress-cart-item')
+      .length > 0) {
+      $('a.rpress-clear-cart')
+        .show();
+    } else {
+      $('a.rpress-clear-cart')
+        .hide();
+    }
+    if (typeof response.cart_summary === 'string') {
+      rp_refresh_sidebar_cart_summary(response.cart_summary);
+    }
+  }
+
+  // "Removed Chicken Biryani · Undo" after a cart line is removed (3.5.1).
+  function rp_offer_undo_remove(name) {
+    if (typeof window.rpress_notify !== 'function') {
+      return;
+    }
+    var nv = window.rpress_notify_vars || {};
+    var message = name ? (nv.removed_item || 'Removed %s').replace('%s', name) : (nv.removed || 'Item removed');
+    window.rpress_notify(message, {
+      type: 'info',
+      action: {
+        label: nv.undo || 'Undo',
+        onClick: function () {
+          $.ajax({
+            type: 'POST',
+            url: rp_scripts.ajaxurl,
+            dataType: 'json',
+            xhrFields: { withCredentials: true },
+            data: {
+              action: 'rpress_undo_remove_from_cart',
+              security: rp_scripts.edit_cart_fooditem_nonce
+            },
+            success: function (response) {
+              if (!response || response.success === false || typeof response.cart_item !== 'string') {
+                window.rpress_notify(response && response.data && response.data.message, { type: 'error' });
+                return;
+              }
+              $('.rpress-mobile-cart-icons').css({ display: 'flex' });
+              rp_insert_cart_line(response);
+              $(document.body)
+                .trigger('rpress_added_to_cart', [response])
+                .trigger('rpress_cart_item_added', [response]);
+              rp_bump_cart_totals();
+            },
+            error: function () {
+              window.rpress_notify('', { type: 'error' });
+            }
+          });
+        }
+      }
+    });
+  }
+
   // Remove Item from Cart
   $(document)
     .on('click', '.rpress-remove-from-cart', function (event) {
@@ -3034,6 +3151,7 @@ jQuery(function ($) {
         return false;
       }
       var $this = $(this),
+        removedName = $.trim($this.closest('.rpress-cart-item, .rpress_cart_item').find('.rpress-cart-item-title').first().text()),
         item = $this.data('cart-item'),
         action = $this.data('action'),
         id = $this.data('fooditem-id'),
@@ -3070,7 +3188,7 @@ jQuery(function ($) {
                   .show();
               }
             }
-            rp_update_mobile_cart_summary(response.total, response.cart_quantity);
+            rp_update_mobile_cart_summary(response);
             $(document.body)
               .trigger('rpress_quantity_updated', [response.cart_quantity]);
             if (rpress_scripts.taxes_enabled) {
@@ -3080,7 +3198,7 @@ jQuery(function ($) {
                 .html(response.tax);
             }
             $('.cart_item.rpress_total span.rpress-cart-quantity')
-              .html(response.cart_quantity);
+              .html(typeof response.item_count !== 'undefined' ? response.item_count : response.cart_quantity);
             $('.cart_item.rpress_total span.cart-total')
               .html(response.total);
             if (typeof response.cart_summary === 'string') {
@@ -3109,6 +3227,11 @@ jQuery(function ($) {
             }
             $(document.body)
               .trigger('rpress_cart_item_removed', [response]);
+            // Emptying the cart was confirmed in a dialog; any other removal
+            // can be undone from the message.
+            if (parseInt(response.cart_quantity, 10) > 0) {
+              rp_offer_undo_remove(removedName);
+            }
             $('ul.rpress-cart > li.rpress-cart-item')
               .each(function (index, item) {
                 $(this)
@@ -3207,9 +3330,7 @@ jQuery(function ($) {
               $('.delivery-items-options')
                 .css('display', 'none');
               self.hide();
-              tata.success(window.rp_scripts.success, window.rp_scripts.success_empty_cart, {
-                position: "tr"
-              })
+              // No toast: the emptied cart shows the result (3.5.1).
             }
           }
         });
@@ -3228,12 +3349,12 @@ jQuery(function ($) {
       ).toString().toLowerCase();
       if (rp_is_old_ui_ux_enabled()) {
         if (rp_is_old_ui_delivery_context_invalid(checkoutServiceType, $('#rpress_checkout_wrap').length ? $('#rpress_checkout_wrap') : $(document))) {
-          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(checkoutServiceType), { position: "tr" });
+          rp_popup_error_when_open(rp_get_delivery_fee_context_error(checkoutServiceType), '#rp_delivery_zone, #rp_delivery_location');
           rp_open_legacy_service_options_modal('');
           return false;
         }
         if (!rp_has_valid_delivery_fee_context(checkoutServiceType, $('#rpress_checkout_wrap').length ? $('#rpress_checkout_wrap') : $(document))) {
-          tata.error((typeof rp_scripts !== 'undefined' && rp_scripts.error) ? rp_scripts.error : 'Error', rp_get_delivery_fee_context_error(checkoutServiceType), { position: "tr" });
+          rp_popup_error_when_open(rp_get_delivery_fee_context_error(checkoutServiceType), '#rp_delivery_zone, #rp_delivery_location');
           rp_open_legacy_service_options_modal('');
           return false;
         }
@@ -3262,7 +3383,7 @@ jQuery(function ($) {
             if (response.error_msg) {
               errorString = response.error_msg;
             }
-            tata.error(rp_scripts.error, errorString);
+            rpress_notify(errorString, { type: 'error' });
             _self.removeClass('rp-loading');
             _self.children('.rp-ajax-toggle-text')
               .removeClass('rp-text-visibility');
@@ -3302,8 +3423,10 @@ jQuery(function ($) {
   }
 
   function rp_open_mobile_cart_drawer() {
-    // A lingering "added to cart" toast would cover the drawer's close button.
-    $('.tata').remove();
+    // A lingering message would cover the drawer's close button.
+    if (typeof window.rpress_notify === 'function') {
+      window.rpress_notify.dismiss();
+    }
     $(".rpress-sidebar-main-wrap")
       .css("left", "0%")
       .addClass('rp-cart-drawer-open');
@@ -3645,6 +3768,22 @@ function rp_close_action_menu_if_open() {
 }
 
 jQuery(function ($) {
+  // The sidebar cart follows the scroll with CSS sticky (rpress-menu.css).
+  // A theme wrapper with overflow set stops sticky from working; then the
+  // body class hands the cart back to the sticky-sidebar script.
+  var cartCol = document.querySelector('.rpress-menu-v2 > .rpress-sidebar-cart');
+  if (cartCol) {
+    // Stop below <body>: its overflow is applied to the viewport and does
+    // not stop sticky (and it is locked while a sheet is open). clip does
+    // not make a scroll box either.
+    for (var el = cartCol.parentElement; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+      var cs = window.getComputedStyle(el);
+      if (/(auto|scroll|hidden)/.test(cs.overflowX + ' ' + cs.overflowY)) {
+        document.body.classList.add('rp-cart-script-sticky');
+        break;
+      }
+    }
+  }
   if ($(window).width() > 991) {
     if ($(".sticky-sidebar").length > 0) {
       $('.sticky-sidebar').rpressStickySidebar({
@@ -4681,8 +4820,6 @@ jQuery(function ($) {
         }
       };
 
-      // Infinate scroll for order history page 
-      createObserver();
       //Select service type on checkout page 
       let chkServiceType = (rp_getCookie('service_type') || '')
         .toLowerCase();
@@ -4844,53 +4981,6 @@ jQuery(function ($) {
   });
   // 
 });
-let page = 1;
-let rpressOrderHistoryLoading = false;
-const infinateCallback = async function (entries, observer) {
-  for (var i = 0; i < entries.length; i++) {
-    let cahnge = entries[i];
-    if (cahnge.isIntersecting && !rpressOrderHistoryLoading) {
-      rpressOrderHistoryLoading = true;
-      const $loadContainer = jQuery('#rp-order-history-infi-load-container');
-      $loadContainer
-        .html('<h2 class="rp-infi-load"><div class="rp-infi-loading">Loading...</div></h2>');
-      page = page + 1;
-      try {
-        const data = await fetch(`${rp_scripts.ajaxurl}?action=rpress_more_order_history&security=${rp_scripts.order_details_nonce}&paged=${page}`);
-        const html = await data.json();
-        const responseData = html && html.data ? html.data : {};
-        const $historyGrid = jQuery('#rpress_user_history .rpress-order-history-grid, #rpress_user_history .repress-history-inner')
-          .first();
-        if (responseData.html && $historyGrid.length) {
-          $historyGrid.append(responseData.html);
-        }
-        if (String(responseData.found_post || '0') === '0') {
-          $loadContainer.hide();
-          observer.unobserve(cahnge.target);
-        } else {
-          $loadContainer.empty();
-        }
-      } catch (error) {
-        page = Math.max(1, page - 1);
-        $loadContainer.empty();
-        if (window.console && window.console.log) {
-          console.log(error);
-        }
-      } finally {
-        rpressOrderHistoryLoading = false;
-      }
-    }
-  }
-}
-const createObserver = () => {
-  const options = {
-    threshold: 0,
-  }
-  const lastDiv = document.getElementById('rp-order-history-infi-load-container');
-  if (!lastDiv) return;
-  const observer = new IntersectionObserver(infinateCallback, options);
-  observer.observe(lastDiv)
-}
 // Refresh page after coming from prev page
 if (performance.navigation.type == 2) {
   var navReloadKey = 'rpress_nav_reloaded';
@@ -4907,6 +4997,50 @@ jQuery('.rpress_fooditems_list').find('.rpress_fooditem_inner').each(function (i
   }
 });
 jQuery(document).ready(function ($) {
+  // Core's own date dropdown in the order popup: reload the time list for the
+  // chosen date. Extension date pickers (other classes) refresh themselves.
+  $(document).on('change.rpServiceDate', 'select.rpress-service-date-select', function () {
+    var $date = $(this);
+    var $pane = $date.closest('.delivery-settings-wrapper');
+    var serviceType = String($pane.attr('id') || '').replace(/^nav-/, '');
+    var $hours = $pane.find('.rpress-hrs').first();
+    if (!serviceType || !$hours.length || typeof rp_scripts === 'undefined') {
+      return;
+    }
+    var previous = String($hours.val() || '');
+    var requestedDate = String($date.val() || '');
+    $hours.prop('disabled', true);
+    $.post(rp_scripts.ajaxurl, {
+      action: 'rpress_service_time_options',
+      security: rp_scripts.service_type_nonce,
+      service_type: serviceType,
+      service_date: $date.val()
+    }).done(function (response) {
+      if (!response || !response.success) {
+        return;
+      }
+      var options = response.data.options || [];
+      if (String($date.val() || '') !== requestedDate) {
+        return; // A newer date was picked while this one loaded.
+      }
+      $hours.empty();
+      $hours.attr('data-times-date', requestedDate);
+      if (!options.length) {
+        $hours.append($('<option>').val('').text(response.data.closed_message || ''));
+      }
+      $.each(options, function (i, option) {
+        $hours.append($('<option>').val(option.value).text(option.label));
+      });
+      if (previous && $hours.find('option').filter(function () { return this.value === previous; }).length) {
+        $hours.val(previous);
+      }
+      $hours.trigger('change');
+      $(document.body).trigger('rpress_service_times_updated', [serviceType, $date.val(), options]);
+    }).always(function () {
+      $hours.prop('disabled', false);
+    });
+  });
+
   $(document).on('change', '.rp-variable-price-option', function () {
     rp_checked_default_subaddon();
   });

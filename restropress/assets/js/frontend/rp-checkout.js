@@ -38,7 +38,7 @@ window.RPRESS_Checkout = (function ($) {
 			var gateway = $('#rpress-gateway option:selected')
 				.val();
 			if (gateway == 0) {
-				alert(rpress_global_vars.no_gateway);
+				if (typeof window.rpress_notify === 'function') { window.rpress_notify(rpress_global_vars.no_gateway, { type: 'error' }); } else { alert(rpress_global_vars.no_gateway); }
 				return false;
 			}
 		});

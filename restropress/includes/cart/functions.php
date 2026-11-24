@@ -40,6 +40,22 @@ function rpress_get_cart_content_details() {
 function rpress_get_cart_quantity() {
 	return RPRESS()->cart->get_quantity();
 }
+
+/**
+ * Number of dishes in the cart: line quantities added up, so two of the same
+ * burger count as 2. rpress_get_cart_quantity() counts lines and stays as is
+ * for code that relies on it.
+ *
+ * @since 3.5.1
+ * @return int
+ */
+function rpress_get_cart_item_count() {
+	$count = 0;
+	foreach ( (array) rpress_get_cart_contents() as $item ) {
+		$count += isset( $item['quantity'] ) ? max( 1, absint( $item['quantity'] ) ) : 1;
+	}
+	return (int) apply_filters( 'rpress_cart_item_count', $count );
+}
 /**
  * Add To Cart
  *
@@ -65,6 +81,26 @@ function rpress_add_to_cart( $fooditem_id, $options = array() ) {
 function rpress_remove_from_cart( $cart_key ) {
 	return RPRESS()->cart->remove( $cart_key );
 }
+/**
+ * Keep the cart line being removed for a few minutes, so the storefront's
+ * "Removed ... Undo" message can put it back (RP_AJAX::undo_remove_from_cart()).
+ *
+ * @since 3.5.1
+ * @param int $cart_key Cart key being removed.
+ */
+function rpress_stash_removed_cart_line( $cart_key ) {
+	$contents = rpress_get_cart_contents();
+	if ( is_array( $contents ) && isset( $contents[ $cart_key ] ) && is_array( $contents[ $cart_key ] ) ) {
+		RPRESS()->session->set(
+			'rpress_removed_cart_line',
+			array(
+				'line' => $contents[ $cart_key ],
+				'time' => time(),
+			)
+		);
+	}
+}
+add_action( 'rpress_pre_remove_from_cart', 'rpress_stash_removed_cart_line' );
 /**
  * Checks to see if an item is already in the cart and returns a boolean
  *

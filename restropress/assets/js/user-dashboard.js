@@ -19,44 +19,70 @@ jQuery('document').ready(function($) {
         return fallback;
     }
 
-    if (typeof DataTable !== 'undefined') {
-    new DataTable('#user-orders', {
-        responsive: true,
-        dom: 'frtip',
-        order: [[ 0, 'desc' ]],
-        initComplete: function () {
-            var searchPlaceholder = (typeof users !== 'undefined' && users.search_orders_placeholder) ? users.search_orders_placeholder : 'Search orders';
-            $('#user-orders_filter input').attr('placeholder', searchPlaceholder);
+    function dashboardError(message) {
+        if (typeof window.rpress_notify === 'function') {
+            window.rpress_notify(message, { type: 'error' });
+        } else {
+            window.alert(message);
         }
-    });
-}
-    $('body .user-dashboard-wrapper.user-profile ul li').click(function(){
-        $('body .user-dashboard-wrapper.user-profile ul li').removeClass('active');
-        $(this).addClass('active');
-    });
-    // Each sidebar item with class "user-xyz" shows the panel with id "user-xyz".
-    function showDashboardPanel(panelId) {
-        var $wrap = $('body .user-dashboard-wrapper.user-profile');
-        var $panel = $wrap.find('.col-lg-9[id="' + panelId + '"]');
-        if (!$panel.length) {
-            return false;
-        }
-        $wrap.find('.col-lg-9[id^="user-"]').hide();
-        $panel.show();
-        $wrap.find('ul.sidebar-menu li').removeClass('active');
-        $wrap.find('ul.sidebar-menu li.' + panelId).addClass('active');
-        return true;
     }
-    function dashboardPanelId($item) {
+
+    // Profile: a new email address needs the current password (3.5.1).
+    $(document).on('input change', '.profile-form-wrap input[name="email"]', function () {
+        var current = String($(this).data('current') || '').toLowerCase();
+        var changed = $.trim(String($(this).val() || '')).toLowerCase() !== current;
+        var $row = $(this).closest('form').find('.rpress-email-password');
+        $row.prop('hidden', !changed);
+        $row.find('input').prop('required', changed);
+        if (!changed) {
+            $row.find('input').val('');
+        }
+    });
+
+    var $account = $('.user-dashboard-wrapper.rpress-account').first();
+
+    // 3.5 links pointed at a tab with a #hash (e.g. /my-account/#user-my-reservations).
+    // Each section now has its own URL: send old links there.
+    if ($account.length && window.location.hash) {
+        var sectionUrls = $account.data('section-urls') || {};
+        var legacyId = window.location.hash.replace('#', '');
+        if (sectionUrls[legacyId] && legacyId !== ($account.find('.rpress-account-section').attr('id') || '')) {
+            window.location.replace(sectionUrls[legacyId]);
+            return;
+        }
+    }
+
+    // Phones show the menu as one scrollable row: bring the open section's item into view.
+    var $activeNav = $account.find('ul.sidebar-menu li.active').first();
+    if ($activeNav.length) {
+        var menu = $activeNav.parent()[0];
+        if (menu.scrollWidth > menu.clientWidth) {
+            var itemBox = $activeNav[0].getBoundingClientRect();
+            var menuBox = menu.getBoundingClientRect();
+            menu.scrollLeft += (itemBox.left - menuBox.left) - (menu.clientWidth - itemBox.width) / 2;
+        }
+    }
+
+    // Panels added through the 3.5 hooks (rpress_user_dashboard_menu_items /
+    // rpress_user_dashboard_panels) still open in place: an <li class="user-xyz">
+    // without a link shows <div id="user-xyz">.
+    $account.on('click', 'ul.sidebar-menu li', function (e) {
+        var $item = $(this);
+        if ($item.children('a').length) {
+            return;
+        }
         var match = ($item.attr('class') || '').match(/\buser-[a-z0-9-]+\b/);
-        return match ? match[0] : '';
-    }
-    $('body .user-dashboard-wrapper.user-profile ul.sidebar-menu li').click(function(){
-        var panelId = dashboardPanelId($(this));
-        if (panelId) {
-            showDashboardPanel(panelId);
+        var $panel = match ? $account.find('.col-lg-9[id="' + match[0] + '"]') : $();
+        if (!$panel.length) {
+            return;
         }
+        e.preventDefault();
+        $account.find('.col-lg-9[id^="user-"], .rpress-account-section').hide();
+        $panel.show();
+        $account.find('ul.sidebar-menu li').removeClass('active').find('a').removeAttr('aria-current');
+        $item.addClass('active');
     });
+
     $('body .user-profile .delete-address').click(function(e){
         e.preventDefault();
 
@@ -78,15 +104,17 @@ jQuery('document').ready(function($) {
                 var parsedResponse = parseAddressAjaxResponse(response);
 
                 if (parsedResponse.success) {
-                    alert(getUserDashboardMessage('delete_success_text', 'Address Deleted'));
-                    location.reload();
+                    // Reload with a notice: the default address may have moved.
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('rpress_account', 'address_deleted');
+                    window.location.replace(url.toString());
                     return;
                 }
 
-                alert(getUserDashboardMessage('delete_failed_text', 'Unable to delete the address. Please try again.'));
+                dashboardError(getUserDashboardMessage('delete_failed_text', 'Unable to delete the address. Please try again.'));
             },
             error: function(){
-                alert(getUserDashboardMessage('delete_error_text', 'Something went wrong while deleting the address. Please try again.'));
+                dashboardError(getUserDashboardMessage('delete_error_text', 'Something went wrong while deleting the address. Please try again.'));
             }
         });
     });
@@ -108,22 +136,62 @@ jQuery('document').ready(function($) {
     
         });
     });
-    var hasCookiesApi = (typeof Cookies !== 'undefined' && Cookies && typeof Cookies.get === 'function' && typeof Cookies.set === 'function');
-    if (hasCookiesApi) {
-        $('.sidebar-menu li').click(function(){
-            var clickedClass = $(this).attr('class');
-            clickedClass = clickedClass.replace(/\bactive\b/, '').trim();
-            var expirationDate = new Date();
-            expirationDate.setTime(expirationDate.getTime() + (5 * 60 * 1000));
-            Cookies.set('nav_location', clickedClass,{ expires: expirationDate });
+    // "Load more orders" under the order cards (account Orders and [order_history]).
+    $(document).on('click', '.rpress-orders-load-more', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        if ($btn.prop('disabled')) {
+            return;
+        }
+        var $wrap = $btn.closest('.rpress-orders-more');
+        var $list = $wrap.prevAll('.rpress-order-cards').first();
+        var next = (parseInt($btn.attr('data-page'), 10) || 1) + 1;
+        var ajaxUrl = (typeof rp_scripts !== 'undefined' && rp_scripts.ajaxurl) ? rp_scripts.ajaxurl : users.ajaxurl;
+        var nonce = (typeof users !== 'undefined' && users.order_details_nonce) ? users.order_details_nonce : (typeof rp_scripts !== 'undefined' ? rp_scripts.order_details_nonce : '');
+
+        $btn.prop('disabled', true).attr('aria-busy', 'true').addClass('rp-loading');
+        $btn.find('.rp-ajax-toggle-text').addClass('rp-text-visibility');
+        $.ajax({
+            url: ajaxUrl,
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                action: 'rpress_more_order_history',
+                security: nonce,
+                paged: next,
+                context: $btn.attr('data-context') || 'history'
+            }
+        }).done(function (response) {
+            var data = response && response.data ? response.data : {};
+            if (!response || !response.success || typeof data.html !== 'string') {
+                orderListFailed();
+                return;
+            }
+            var $cards = $($.parseHTML(data.html.trim())).filter('article');
+            $list.append($cards);
+            $btn.attr('data-page', next);
+            if (!data.has_more) {
+                $wrap.remove();
+            }
+            // Move focus to the first new order so keyboard users carry on from there.
+            var $first = $cards.first().find('a, button').first();
+            if ($first.length) {
+                $first.trigger('focus');
+            }
+        }).fail(orderListFailed).always(function () {
+            $btn.prop('disabled', false).removeAttr('aria-busy').removeClass('rp-loading');
+            $btn.find('.rp-ajax-toggle-text').removeClass('rp-text-visibility');
         });
-    }
-    var navLocation = hasCookiesApi ? Cookies.get('nav_location') : '';
-    // A link like /my-account/#user-my-reservations (e.g. from an email) wins.
-    var hashLocation = (window.location.hash || '').replace('#', '');
-    if (!(hashLocation && showDashboardPanel(hashLocation)) && navLocation) {
-        showDashboardPanel(dashboardPanelId($('<i>').attr('class', navLocation)));
-    }
+
+        function orderListFailed() {
+            var message = getUserDashboardMessage('load_orders_error_text', 'Could not load more orders. Please try again.');
+            if (typeof window.rpress_notify === 'function') {
+                rpress_notify(message, { type: 'error', duration: 5000 });
+            } else {
+                window.alert(message);
+            }
+        }
+    });
 
     function ensureOrderDetailsModal() {
         var $modal = jQuery('#rpressModal').first();
@@ -204,8 +272,8 @@ jQuery('document').ready(function($) {
     function orderDetailsFailed($modal, response) {
         $modal.removeClass('show-order-details rpress-order-details-context');
         var message = (response && response.data && response.data.message) ? response.data.message : getUserDashboardMessage('order_details_error_text', 'Could not load this order. Please try again.');
-        if (typeof tata !== 'undefined' && typeof tata.error === 'function') {
-            tata.error('', message, { position: 'tr', duration: 5000 });
+        if (typeof window.rpress_notify === 'function') {
+            rpress_notify(message, { type: 'error', duration: 5000 });
         } else {
             window.alert(message);
         }

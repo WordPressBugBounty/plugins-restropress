@@ -360,7 +360,7 @@ class RP_Shortcodes {
   public static function customer_dashboard( $atts = array(), $content = null ) {
     $escaped_atts = self::normalize_shortcode_atts( $atts );
     ob_start();
-    include_once plugin_dir_path(RP_PLUGIN_FILE).'templates/rpress-user-dashboard.php';
+    include plugin_dir_path(RP_PLUGIN_FILE).'templates/rpress-user-dashboard.php';
     return ob_get_clean();
   }
    

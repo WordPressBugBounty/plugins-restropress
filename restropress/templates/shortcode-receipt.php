@@ -126,6 +126,23 @@ $message  = $phase_copy[ $phase ][1];
 // ETA: show the requested service time until the order is delivered/cancelled.
 $eta_hidden = in_array( $phase, array( 'delivered', 'cancelled' ), true ) || empty( $service_time );
 $eta_value  = ( 'transit' === $phase && $is_delivery ) ? __( 'Any minute now', 'restropress' ) : $service_time;
+$eta_label  = $is_delivery ? __( 'Estimated delivery', 'restropress' ) : __( 'Ready by', 'restropress' );
+
+// 3.5.1: a computed time ("Arrives around 7:55 pm") instead of the raw
+// requested slot ("ASAP (ready in 15-20 min)").
+$order_eta = function_exists( 'rpress_get_order_eta' ) ? rpress_get_order_eta( $payment->ID ) : null;
+if ( $order_eta ) {
+	$eta_label  = $is_delivery ? __( 'Arrives around', 'restropress' ) : __( 'Ready around', 'restropress' );
+	$eta_hidden = in_array( $phase, array( 'delivered', 'cancelled' ), true );
+	if ( 'transit' !== $phase || ! $is_delivery ) {
+		$eta_value = $order_eta['time'];
+	}
+	// The requested time row reads the same way.
+	$requested_time = $order_eta['asap']
+		/* translators: %s: time the order is expected */
+		? sprintf( __( 'As soon as possible, around %s', 'restropress' ), $order_eta['time'] )
+		: $order_eta['time'];
+}
 
 // Payment badge/note. Trim a leading "Pay by/via/with" from the gateway label
 // so notes read "paid by cash" rather than "paid by Pay by cash".
@@ -195,7 +212,15 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 		<!-- Header -->
 		<div class="rp-track-topbar">
 			<div class="rp-track-brand">
-				<span class="rp-track-order"><?php /* translators: %s order number */ echo esc_html( sprintf( __( 'Order #%s', 'restropress' ), $order_number ) ); ?></span>
+				<h1 class="rp-track-title"><?php
+				echo esc_html(
+					'cancelled' === $phase
+						/* translators: %s order number */
+						? sprintf( __( 'Order #%s', 'restropress' ), $order_number )
+						/* translators: %s order number */
+						: sprintf( __( 'Order #%s placed', 'restropress' ), $order_number )
+				);
+				?></h1>
 			</div>
 			<a href="#" class="rp-track-print" onclick="window.print();return false;">
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -214,7 +239,7 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 				</div>
 				<div class="rp-track-hero-side">
 					<div class="rp-track-eta" id="rp-track-eta"<?php echo $eta_hidden ? ' hidden' : ''; ?>>
-						<div class="rp-track-eta-label"><?php echo esc_html( $is_delivery ? __( 'Estimated delivery', 'restropress' ) : __( 'Ready by', 'restropress' ) ); ?></div>
+						<div class="rp-track-eta-label"><?php echo esc_html( $eta_label ); ?></div>
 						<div class="rp-track-eta-time" id="rp-track-eta-time"><?php echo esc_html( $eta_value ); ?></div>
 					</div>
 					<button type="button" class="rp-track-alerts is-on" id="rp-track-alerts" aria-pressed="true">
@@ -392,6 +417,18 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 			</div>
 		</div>
 
+		<?php if ( function_exists( 'rpress_order_details_show_guest_note' ) && rpress_order_details_show_guest_note( $payment->ID ) ) : ?>
+			<p class="rp-track-guest-note">
+				<?php
+				/* translators: %s: customer email address */
+				echo esc_html( sprintf( __( 'We emailed a link to this page to %s, so you can check on your order any time.', 'restropress' ), $email ) );
+				if ( get_option( 'users_can_register' ) ) :
+					?>
+					<a href="<?php echo esc_url( wp_registration_url() ); ?>"><?php esc_html_e( 'Create an account for faster checkout next time', 'restropress' ); ?></a>
+				<?php endif; ?>
+			</p>
+		<?php endif; ?>
+
 		<?php do_action( 'rpress_after_payment_receipt', $payment, $rpress_receipt_args ); ?>
 	</div>
 </div>
@@ -568,6 +605,11 @@ do_action( 'rpress_before_payment_receipt', $payment, $rpress_receipt_args );
 	var toggle = document.getElementById('rp-track-receipt-toggle');
 	var orderCard = root.querySelector('.rp-track-order');
 	if (toggle && orderCard) {
+		// Phones start with the receipt folded: say so to screen readers.
+		var body = orderCard.querySelector('.rp-track-order-body');
+		if (body && 'none' === window.getComputedStyle(body).display) {
+			toggle.setAttribute('aria-expanded', 'false');
+		}
 		toggle.addEventListener('click', function () {
 			var open = orderCard.classList.toggle('is-open');
 			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');

@@ -94,6 +94,23 @@
 .rpress-mobile-cart-icons .rpress-cux-min-hint.is-bar .rpress-cux-min-text {
 	display: inline;
 }
+/* Legacy Ordering Flow: the left side of the bar is a flex row, so put the
+   hint on its own line under the total instead of a narrow column beside it. */
+.rpress-mobile-cart-icons .rp-cart-left-wrap {
+	flex-wrap: wrap;
+	align-content: center;
+}
+.rpress-mobile-cart-icons .rp-cart-left-wrap > .rpress-cux-min-hint.is-bar {
+	flex: 0 1 auto;
+	max-width: 100%;
+}
+/* A two-line hint needs a little more than the bar's fixed 80px. */
+.rpress-section .rpress-mobile-cart-icons:has(.rp-cart-left-wrap > .rpress-cux-min-hint.is-bar) {
+	height: auto;
+	min-height: 80px;
+	padding-top: 8px;
+	padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+}
 
 /* ------------------------------------------------------------------ */
 /* Checkout                                                             */

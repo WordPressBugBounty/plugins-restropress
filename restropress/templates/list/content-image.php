@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	 exit;
 }
 ?>
-<div class="rpress-thumbnail-holder rpress-default-bg rpress-icon-bg">
+<div class="rp-card__photo rpress-thumbnail-holder rpress-default-bg rpress-icon-bg">
   <?php
   $fooditems_overlay = rpress_get_option('enable_food_image_popup', false);
   $image_placeholder = rpress_get_option('enable_image_placeholder', false);

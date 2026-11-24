@@ -203,10 +203,13 @@ class RP_Frontend_Scripts
         'deps' => array('jquery'),
         'version' => RP_VERSION,
       ),
+      // Storefront messages (3.5.1). The handle keeps its old name so scripts
+      // that depend on 'rp-toast' still load after it; rp-notify.js also
+      // provides a window.tata shim for code that calls tata.error().
       'rp-toast' => array(
-        'src' => self::get_asset_url('assets/js/rp-tata.js'),
-        'deps' => array('jquery'),
-        'version' => RP_VERSION,
+        'src' => self::get_asset_url('assets/js/frontend/rp-notify.js'),
+        'deps' => array(),
+        'version' => file_exists(RP_PLUGIN_DIR . 'assets/js/frontend/rp-notify.js') ? RP_VERSION . '.' . filemtime(RP_PLUGIN_DIR . 'assets/js/frontend/rp-notify.js') : RP_VERSION,
       ),
       'rp-reorder' => array(
         'src' => self::get_asset_url('assets/js/frontend/rp-reorder.js'),
@@ -227,6 +230,18 @@ class RP_Frontend_Scripts
     self::register_scripts();
     self::enqueue_script('jquery-cookies');
     self::enqueue_script('rp-toast');
+    wp_localize_script('rp-toast', 'rpress_notify_vars', array(
+      'generic_error' => __( 'Something went wrong. Please try again.', 'restropress' ),
+      'dismiss'       => __( 'Dismiss', 'restropress' ),
+      'undo'          => __( 'Undo', 'restropress' ),
+      /* translators: %s: name of the dish removed from the cart. */
+      'removed_item'  => __( 'Removed %s', 'restropress' ),
+      'removed'       => __( 'Item removed', 'restropress' ),
+      'title_error'   => __( 'Error', 'restropress' ),
+      'title_success' => __( 'Success', 'restropress' ),
+    ));
+    $rp_notify_css = 'assets/css/rp-notify.css';
+    wp_enqueue_style('rp-notify', self::get_asset_url($rp_notify_css), array(), RP_VERSION . '.' . (int) @filemtime(RP_PLUGIN_DIR . $rp_notify_css));
     self::enqueue_script('swl-js');
     $user_params = array(
       'ajaxurl' => rpress_get_ajax_url(),
@@ -241,7 +256,7 @@ class RP_Frontend_Scripts
       'add_address_title_text' => esc_html__( 'Add Delivery Address', 'restropress' ),
       'save_changes_text' => esc_html__( 'Save Changes', 'restropress' ),
       'save_address_text' => esc_html__( 'Save Address', 'restropress' ),
-      'search_orders_placeholder' => esc_html__( 'Search orders', 'restropress' ),
+      'load_orders_error_text' => esc_html__( 'Could not load more orders. Please try again.', 'restropress' ),
     );
     $user_dashboard_script_version = RP_VERSION;
     $user_dashboard_script_path = trailingslashit(RP_PLUGIN_DIR) . 'assets/js/user-dashboard.js';
@@ -401,6 +416,8 @@ class RP_Frontend_Scripts
       'search_view_full_menu' => esc_html__( 'View Full Menu', 'restropress' ),
       'item_added_to_cart' => esc_html( _n( 'item added to cart', 'items added to cart', 1, 'restropress' ) ),
       'items_added_to_cart' => esc_html( _n( 'item added to cart', 'items added to cart', 2, 'restropress' ) ),
+      'cart_item_one' => esc_html( _n( 'item', 'items', 1, 'restropress' ) ),
+      'cart_item_many' => esc_html( _n( 'item', 'items', 2, 'restropress' ) ),
       'cart_title' => esc_html( apply_filters( 'rpress_cart_title', __( 'Your Order', 'restropress' ) ) ),
     );
     $cookie_service = isset($_COOKIE['service_type']) ? sanitize_text_field(wp_unslash($_COOKIE['service_type'])) : $default_service;
@@ -587,16 +604,85 @@ class RP_Frontend_Scripts
    * @since 3.4
    * @return string Hex color.
    */
+  /**
+   * Readable text colour for a fill: white or near-black, whichever reads
+   * better on it.
+   *
+   * @since 3.5.1
+   * @param string $hex Fill colour.
+   * @return string
+   */
+  private static function contrast_text_color($hex)
+  {
+    $rgb = sscanf((string) self::full_hex(sanitize_hex_color($hex)), '#%02x%02x%02x');
+    if (!is_array($rgb) || 3 !== count($rgb)) {
+      return '#ffffff';
+    }
+    // Whichever of white and near-black has the higher contrast (WCAG).
+    $f = function ($v) {
+      $v = $v / 255;
+      return $v <= 0.03928 ? $v / 12.92 : pow(($v + 0.055) / 1.055, 2.4);
+    };
+    $l = 0.2126 * $f($rgb[0]) + 0.7152 * $f($rgb[1]) + 0.0722 * $f($rgb[2]);
+    $on_white = 1.05 / ($l + 0.05);
+    $on_dark  = ($l + 0.05) / (0.0097 + 0.05); // #111827
+    return $on_dark > $on_white ? '#111827' : '#ffffff';
+  }
+
+  /**
+   * The primary colour, darkened until it reads as text on white with room to spare (5:1), so it also passes on light tints of itself.
+   * Light brand colours (yellow, pastel) stay usable for prices and links.
+   *
+   * @since 3.5.1
+   * @param string $hex Primary colour.
+   * @return string
+   */
+  private static function primary_text_color($hex)
+  {
+    $hex = self::full_hex(sanitize_hex_color($hex));
+    if (!$hex) {
+      return '#111827';
+    }
+    $lum = function ($h) {
+      $rgb = sscanf($h, '#%02x%02x%02x');
+      $f = function ($v) {
+        $v = $v / 255;
+        return $v <= 0.03928 ? $v / 12.92 : pow(($v + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * $f($rgb[0]) + 0.7152 * $f($rgb[1]) + 0.0722 * $f($rgb[2]);
+    };
+    $out = $hex;
+    for ($step = 0; $step <= 90 && (1.05 / ($lum($out) + 0.05)) < 5; $step += 6) {
+      $out = self::mix_hex_color($hex, '#000000', $step);
+    }
+    return $out;
+  }
+
+  /**
+   * #f60 -> #ff6600, so the colour maths (sscanf of three pairs) reads it.
+   *
+   * @since 3.5.1
+   * @param string $hex Sanitized hex colour.
+   * @return string
+   */
+  private static function full_hex($hex)
+  {
+    if (is_string($hex) && preg_match('/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i', $hex, $m)) {
+      return '#' . $m[1] . $m[1] . $m[2] . $m[2] . $m[3] . $m[3];
+    }
+    return $hex;
+  }
+
   private static function get_effective_primary()
   {
     $default = '#ED5575';
-    $saved   = sanitize_hex_color(rpress_get_option('primary_color', $default));
+    $saved   = self::full_hex(sanitize_hex_color(rpress_get_option('primary_color', $default)));
     if ($saved && strtoupper($saved) !== $default) {
       return $saved;
     }
     $pack = function_exists('rpress_get_active_template_pack') ? rpress_get_active_template_pack() : array();
     if (!empty($pack['tokens']['primary'])) {
-      $pack_primary = sanitize_hex_color($pack['tokens']['primary']);
+      $pack_primary = self::full_hex(sanitize_hex_color($pack['tokens']['primary']));
       if ($pack_primary) {
         return $pack_primary;
       }
@@ -671,6 +757,17 @@ class RP_Frontend_Scripts
         if ('' === $token || '' === $value || false !== strpos($value, ';')) {
           continue;
         }
+        // A pack's on-primary (text on primary fills) is picked for the
+        // pack's own primary. When the merchant's primary_color replaces it,
+        // that text colour can vanish (Saffron's dark text on a dark brand
+        // colour), so derive it from the colour actually in use.
+        if ('on-primary' === $token) {
+          $pack_primary = !empty($pack['tokens']['primary']) ? sanitize_hex_color($pack['tokens']['primary']) : '';
+          $effective    = self::get_effective_primary();
+          if (!$pack_primary || strtoupper($effective) !== strtoupper($pack_primary)) {
+            $value = self::contrast_text_color($effective);
+          }
+        }
         $vars .= '--rpc-' . $token . ':' . $value . ';';
       }
       if ($vars) {
@@ -717,13 +814,15 @@ class RP_Frontend_Scripts
       // The item and schedule modals render outside the menu wrapper, so the
       // tokens must reach them too for pack skins. .rpress-sf = the 3.5
       // storefront blocks.
-      '.rpress-menu-v2,.rpress-sf,#rpressModal,#rpressDateTime{--rpc-primary:%1$s;--rpc-primary-hover:%2$s;--rpc-primary-press:%3$s;--rpc-primary-tint:%4$s;--rpc-primary-tint-border:%5$s;--rpc-primary-shadow:rgba(%6$s,0.24);--rpc-primary-rgb:%6$s;}',
+      '.rpress-menu-v2,.rpress-sf,#rpressModal,#rpressDateTime{--rpc-primary:%1$s;--rpc-primary-hover:%2$s;--rpc-primary-press:%3$s;--rpc-primary-tint:%4$s;--rpc-primary-tint-border:%5$s;--rpc-primary-shadow:rgba(%6$s,0.24);--rpc-primary-rgb:%6$s;--rpc-on-primary:%7$s;--rpc-primary-text:%8$s;}',
       $primary,
       self::mix_hex_color($primary, '#000000', 12),
       self::mix_hex_color($primary, '#000000', 28),
       self::mix_hex_color($primary, '#ffffff', 92),
       self::mix_hex_color($primary, '#ffffff', 75),
-      $rgba
+      $rgba,
+      self::contrast_text_color($primary),
+      self::primary_text_color($primary)
     );
     wp_add_inline_style('rpress-menu', $vars);
     // The settings-driven add-button CSS must print AFTER the pack skin so
@@ -871,13 +970,15 @@ class RP_Frontend_Scripts
     $rgba = (is_array($rgb) && 3 === count($rgb)) ? absint($rgb[0]) . ',' . absint($rgb[1]) . ',' . absint($rgb[2]) : '237,85,117';
 
     $vars = sprintf(
-      '#rpress_checkout_wrap.rpress-checkout-v2{--rpc-primary:%1$s;--rpc-primary-hover:%2$s;--rpc-primary-press:%3$s;--rpc-primary-tint:%4$s;--rpc-primary-tint-border:%5$s;--rpc-primary-shadow:rgba(%6$s,0.24);}',
+      '#rpress_checkout_wrap.rpress-checkout-v2{--rpc-primary:%1$s;--rpc-primary-hover:%2$s;--rpc-primary-press:%3$s;--rpc-primary-tint:%4$s;--rpc-primary-tint-border:%5$s;--rpc-primary-shadow:rgba(%6$s,0.24);--rpc-on-primary:%7$s;--rpc-primary-text:%8$s;}',
       $primary,
       self::mix_hex_color($primary, '#000000', 12),
       self::mix_hex_color($primary, '#000000', 28),
       self::mix_hex_color($primary, '#ffffff', 92),
       self::mix_hex_color($primary, '#ffffff', 75),
-      $rgba
+      $rgba,
+      self::contrast_text_color($primary),
+      self::primary_text_color($primary)
     );
     wp_add_inline_style('rpress-checkout', $vars);
     // Pack token scope matches the double-id selector rpress-checkout.css uses
@@ -1141,11 +1242,6 @@ class RP_Frontend_Scripts
       .custom-reset-password form label,
       .user-dashboard-wrapper .form-label,
       .user-dashboard-wrapper .box-title-description,
-      .user-dashboard-wrapper table#user-orders tbody td::before,
-      #rpress_user_history.rpress-order-history .rpress-history-card-label,
-      #rpress_user_history.rpress-order-history .rpress-history-meta-item span,
-      #rpress_user_history.rpress-order-history .rpress-history-items span,
-      #rpress_user_history.rpress-order-history .rpress-history-total span,
       #rpressModal.show-order-details.rpress-order-details-context .rp-detils-content-view .rp-detail-label {
         color: var(--rpress-theme-label) !important;
       }
@@ -1154,20 +1250,13 @@ class RP_Frontend_Scripts
         background: linear-gradient(180deg, var(--rpress-theme-section-bg-soft) 0%, #ffffff 100%) !important;
       }
 
-      #rpress_user_history.rpress-order-history .rpress-history-card,
       .user-dashboard-wrapper .box-bg,
       .user-dashboard-wrapper .light-gray-bg,
-      .user-dashboard-wrapper .address-wrap,
-      .user-dashboard-wrapper table#user-orders,
-      .user-dashboard-wrapper table#user-orders tbody tr {
+      .user-dashboard-wrapper .address-wrap {
         background: linear-gradient(180deg, #ffffff 0%, var(--rpress-theme-section-bg-soft) 100%) !important;
         border-color: var(--rpress-theme-border-soft) !important;
       }
       #rpress_user_history.rpress-order-history .rpress-order-history-count,
-      #rpress_user_history.rpress-order-history .rpress-history-meta-item,
-      .user-dashboard-wrapper table#user-orders thead th,
-      .user-dashboard-wrapper .viewbg .rpress-view-order-btn,
-      .user-dashboard-wrapper div#user-orders_filter input[type="search"],
       .user-dashboard-wrapper .rp-order-dropdown {
         background: var(--rpress-theme-section-bg) !important;
         border-color: var(--rpress-theme-border-soft) !important;
@@ -1211,7 +1300,6 @@ class RP_Frontend_Scripts
 
       .user-dashboard-wrapper .input-wrap .form-control:focus,
       .user-dashboard-wrapper input.search__input:focus,
-      .user-dashboard-wrapper div#user-orders_filter input[type="search"]:focus,
       form.rpress_form p input:focus,
       .custom-reset-password form input:focus {
         border-color: var(--rpress-theme-primary) !important;
@@ -1228,8 +1316,7 @@ class RP_Frontend_Scripts
       .user-dashboard-wrapper .address-wrap.default button.btn.btn-primary,
       .user-dashboard-wrapper .address-wrap button.btn.btn-primary:hover,
       form.rpress_form p input[type="submit"],
-      .custom-reset-password form input[type="submit"],
-      #rpress_user_history.rpress-order-history .rpress-history-actions a {
+      .custom-reset-password form input[type="submit"] {
         background: var(--rpress-theme-primary) !important;
         border-color: var(--rpress-theme-primary) !important;
         color: var(--rpress-theme-primary-contrast) !important;
@@ -1277,8 +1364,7 @@ class RP_Frontend_Scripts
       #rpress_login_submit,
       #rpress_register_form input[type="submit"].rpress-submit,
       #rpress_profile_editor_submit,
-      .rpress-order-history a.rpress-view-order-btn,
-      .rpress-order-history a.rpress-reorder-btn {
+      .rpress-order-card a.rpress-order-card-primary {
         border-radius: var(--rpress-default-control-radius) !important;
       }
 
@@ -1435,8 +1521,7 @@ class RP_Frontend_Scripts
       #rpress_login_submit,
       #rpress_register_form input[type="submit"].rpress-submit,
       #rpress_profile_editor_submit,
-      .rpress-order-history a.rpress-view-order-btn,
-      .rpress-order-history a.rpress-reorder-btn {
+      .rpress-order-card a.rpress-order-card-primary {
         background:
           <?php echo sanitize_hex_color($primary_color); ?>
         ;
@@ -1482,8 +1567,7 @@ class RP_Frontend_Scripts
       #rpress_login_submit:hover,
       #rpress_register_form input[type="submit"].rpress-submit:hover,
       #rpress_profile_editor_submit:hover,
-      .rpress-order-history a.rpress-view-order-btn:hover,
-      .rpress-order-history a.rpress-reorder-btn:hover
+      .rpress-order-card a.rpress-order-card-primary:hover
       {
       border: 1px solid
         <?php echo sanitize_hex_color($primary_color); ?>
@@ -1602,8 +1686,7 @@ class RP_Frontend_Scripts
         text-shadow: none !important;
       }
 
-      .rpress-order-history a.rpress-view-order-btn,
-      .rpress-order-history a.rpress-reorder-btn {
+      .rpress-order-card a.rpress-order-card-primary {
         background:
           <?php echo sanitize_hex_color($primary_color); ?>
           !important;
@@ -1721,8 +1804,7 @@ class RP_Frontend_Scripts
         #rpress_login_submit,
         #rpress_register_form input[type="submit"].rpress-submit,
         #rpress_profile_editor_submit,
-        .rpress-order-history a.rpress-view-order-btn,
-        .rpress-order-history a.rpress-reorder-btn {
+        .rpress-order-card a.rpress-order-card-primary {
           background: transparent !important;
           background-color: transparent !important;
           border: 0 !important;
@@ -1819,10 +1901,8 @@ class RP_Frontend_Scripts
         #rpress_register_form input[type="submit"].rpress-submit:focus,
         #rpress_profile_editor_submit:hover,
         #rpress_profile_editor_submit:focus,
-        .rpress-order-history a.rpress-view-order-btn:hover,
-        .rpress-order-history a.rpress-view-order-btn:focus,
-        .rpress-order-history a.rpress-reorder-btn:hover,
-        .rpress-order-history a.rpress-reorder-btn:focus {
+        .rpress-order-card a.rpress-order-card-primary:hover,
+        .rpress-order-card a.rpress-order-card-primary:focus {
           background: transparent !important;
           background-color: transparent !important;
           border-color: transparent !important;
@@ -1874,8 +1954,7 @@ class RP_Frontend_Scripts
         #rpress_login_submit,
         #rpress_register_form input[type="submit"].rpress-submit,
         #rpress_profile_editor_submit,
-        .rpress-order-history a.rpress-view-order-btn,
-        .rpress-order-history a.rpress-reorder-btn {
+        .rpress-order-card a.rpress-order-card-primary {
           color: #fff !important;
           text-decoration: none !important;
         }
@@ -1914,10 +1993,8 @@ class RP_Frontend_Scripts
         #rpress_register_form input[type="submit"].rpress-submit:focus,
         #rpress_profile_editor_submit:hover,
         #rpress_profile_editor_submit:focus,
-        .rpress-order-history a.rpress-view-order-btn:hover,
-        .rpress-order-history a.rpress-view-order-btn:focus,
-        .rpress-order-history a.rpress-reorder-btn:hover,
-        .rpress-order-history a.rpress-reorder-btn:focus {
+        .rpress-order-card a.rpress-order-card-primary:hover,
+        .rpress-order-card a.rpress-order-card-primary:focus {
           background:
             <?php echo sanitize_hex_color($theme_dark); ?>
             !important;

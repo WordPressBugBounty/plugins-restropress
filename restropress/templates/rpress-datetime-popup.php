@@ -23,7 +23,8 @@ $asap_option        = rpress_get_option('enable_asap_option', '');
 $asap_option_only   = rpress_get_option('enable_asap_option_only', '');
 $button_style       = rpress_get_option('button_style', 'button');
 $has_store_timings  = is_array($store_timings) && !empty($store_timings);
-$show_update_button = rpress_is_service_enabled( $service_type ) && $has_store_timings && ! empty( $context['is_store_open'] );
+$has_future_dates   = rpress_is_preorder_enabled( $service_type );
+$show_update_button = rpress_is_service_enabled( $service_type ) && ( ( $has_store_timings && ! empty( $context['is_store_open'] ) ) || $has_future_dates );
 
 $asap_text_key      = $service_type . '_asap_text';
 $delivery_asap_text = rpress_get_option($asap_text_key, '');
@@ -131,8 +132,10 @@ foreach ( $popup_services as $popup_service ) {
                             $popup_closed_notice  = rpress_store_closed_message( $popup_service );
                             $popup_is_active      = ( $popup_service === $service_type );
 
-                            if ( $asap_option_only == 1 && ! empty( $popup_store_timings ) ) {
-                                array_splice( $popup_store_timings, 1 );
+                            // ASAP (today only) is its own option ahead of the times.
+                            $popup_asap = $asap_option && ! class_exists( 'RPRESS_SlotLimit' ) && ( ! function_exists( 'rpress_service_asap_allowed' ) || rpress_service_asap_allowed( $popup_service_date_value ) );
+                            if ( $asap_option_only == 1 && $popup_asap && ! empty( $popup_store_timings ) ) {
+                                $popup_store_timings = array();
                             }
 
                             $popup_time_label_text = ( 'pickup' === $popup_service )
@@ -153,15 +156,26 @@ foreach ( $popup_services as $popup_service ) {
                             if ( $popup_is_active ) {
                                 $popup_tab_classes .= ' active show';
                             }
+                            $popup_date_options = function_exists( 'rpress_get_service_date_options' )
+                                ? rpress_get_service_date_options( $popup_service, $popup_service_date_value )
+                                : array( $popup_service_date_value => $popup_service_date_label );
+                            $popup_has_future_dates = rpress_is_preorder_enabled( $popup_service ) && ! empty( $popup_date_options );
                             ?>
                             <div class="<?php echo esc_attr( $popup_tab_classes ); ?>" id="nav-<?php echo esc_attr( $popup_service ); ?>" role="tabpanel" aria-labelledby="nav-<?php echo esc_attr( $popup_service ); ?>-tab">
-								<?php if ( empty( $popup_store_timings ) || ! $popup_is_store_open ) : ?>
+								<?php if ( ( empty( $popup_store_timings ) || ! $popup_is_store_open ) && ! $popup_has_future_dates ) : ?>
                                     <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
                                         <div class="alert alert-warning rpress-service-closed-message" data-service-type="<?php echo esc_attr( $popup_service ); ?>" role="status" aria-live="polite">
                                             <span class="rpress-closed-message-text"><?php echo esc_html( $popup_closed_notice ); ?></span>
                                         </div>
                                     </div>
 								<?php elseif ( rpress_is_service_enabled( $popup_service ) ) : ?>
+                                    <?php if ( empty( $popup_store_timings ) || ! $popup_is_store_open ) : ?>
+                                        <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12">
+                                            <div class="alert alert-warning rpress-service-closed-message" data-service-type="<?php echo esc_attr( $popup_service ); ?>" role="status" aria-live="polite">
+                                                <span class="rpress-closed-message-text"><?php echo esc_html( $popup_closed_notice ); ?></span>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                     <?php if ( '' !== $popup_service_time_preface_markup ) : ?>
                                         <div class="rp-col-lg-12 rp-col-md-12 rp-col-sm-12 rp-col-xs-12 rpress-service-date-row<?php echo $popup_has_date_selector ? ' rpress-service-date-row-extension' : ''; ?>">
                                             <?php echo $popup_service_time_preface_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -177,9 +191,16 @@ foreach ( $popup_services as $popup_service ) {
                                                 id="<?php echo esc_attr( $popup_date_select_id ); ?>"
                                                 name="rpress_service_date"
                                                 aria-label="<?php echo esc_attr( $popup_date_label_text ); ?>">
-                                                <option value="<?php echo esc_attr( $popup_service_date_value ); ?>" selected>
-                                                    <?php echo esc_html( $popup_service_date_label ); ?>
-                                                </option>
+                                                <?php
+                                                $popup_date_options = function_exists( 'rpress_get_service_date_options' )
+                                                    ? rpress_get_service_date_options( $popup_service, $popup_service_date_value )
+                                                    : array( $popup_service_date_value => $popup_service_date_label );
+                                                foreach ( $popup_date_options as $popup_date_value => $popup_date_label ) :
+                                                    ?>
+                                                    <option value="<?php echo esc_attr( $popup_date_value ); ?>" <?php selected( $popup_date_value, $popup_service_date_value ); ?>>
+                                                        <?php echo esc_html( $popup_date_label ); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
                                             </select>
                                         </div>
                                     <?php endif; ?>
@@ -191,9 +212,15 @@ foreach ( $popup_services as $popup_service ) {
                                             class="rpress-delivery rpress-allowed-delivery-hrs rpress-hrs rp-form-control"
                                             id="rpress-delivery-hours"
                                             name="rpress_allowed_hours"
+                                            data-times-date="<?php echo esc_attr( $popup_service_date_value ); ?>"
                                             aria-label="<?php echo esc_attr( $popup_time_aria_label ); ?>"
                                         >
 											<?php if ( $popup_has_store_time ) : ?>
+												<?php if ( $popup_asap ) : ?>
+                                                    <option value="<?php echo esc_attr( 'ASAP' . $delivery_asap_text ); ?>" <?php selected( 0 === stripos( (string) $popup_selected_time, 'asap' ) ); ?>>
+														<?php echo esc_html( trim( __( 'ASAP', 'restropress' ) . ' ' . $delivery_asap_text ) ); ?>
+                                                    </option>
+												<?php endif; ?>
 												<?php foreach ( $popup_store_timings as $index => $time_slot ) : ?>
                                                     <?php
                                                     $filtered_time = apply_filters(
@@ -205,14 +232,14 @@ foreach ( $popup_services as $popup_service ) {
                                                         continue;
                                                     }
 
-                                                    $is_asap = ( $asap_option && $index === 0 );
+                                                    $is_asap = false; // ASAP is printed above the loop.
                                                     ?>
 													<?php if ( class_exists( 'RPRESS_SlotLimit' ) ) : ?>
                                                         <option
                                                             value="<?php echo esc_attr( $time_slot ); ?>"
 															<?php selected( $popup_selected_time, $filtered_time ); ?>
                                                         >
-															<?php echo esc_html( $filtered_time ); ?>
+															<?php echo esc_html( rpress_service_time_label( $filtered_time, $popup_service, $popup_service_date_value ) ); ?>
                                                         </option>
 													<?php else : ?>
                                                         <?php
@@ -221,8 +248,8 @@ foreach ( $popup_services as $popup_service ) {
                                                             : esc_attr( $filtered_time );
 
                                                         $option_label = $is_asap
-                                                            ? __( 'ASAP', 'restropress' ) . ' ' . esc_html( $delivery_asap_text )
-                                                            : esc_html( $filtered_time );
+                                                            ? __( 'ASAP', 'restropress' ) . ' ' . $delivery_asap_text
+                                                            : rpress_service_time_label( $filtered_time, $popup_service, $popup_service_date_value );
                                                         ?>
                                                         <option
                                                             value="<?php echo esc_attr( $option_value ); ?>"

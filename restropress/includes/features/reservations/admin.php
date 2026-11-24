@@ -266,7 +266,7 @@ function rpress_reservation_admin_notices() {
 		)
 	) . '</p></div>';
 }
-add_action( 'admin_notices', 'rpress_reservation_admin_notices' );
+// 3.5.1: shown as a toast by the admin notification center (admin-notices/messages.php).
 
 /**
  * Reservations list: a one-line pointer to the Table Booking extension,
@@ -294,7 +294,35 @@ function rpress_reservation_table_booking_notice() {
 		. ' <span aria-hidden="true">&middot;</span> <a class="rpress-res-tb-dismiss" href="' . esc_url( $dismiss ) . '">' . esc_html__( 'Dismiss', 'restropress' ) . '</a>'
 		. '</p></div>';
 }
-add_action( 'admin_notices', 'rpress_reservation_table_booking_notice' );
+add_action( 'rpress_register_admin_notices', 'rpress_reservation_register_table_booking_notice' );
+
+/**
+ * Table Booking suggestion in the admin notification center (3.5.1; was a
+ * line above the Reservations list).
+ */
+function rpress_reservation_register_table_booking_notice() {
+	rpress_register_admin_notice(
+		'table_booking',
+		array(
+			'title'     => __( 'Deposits and SMS checks for reservations', 'restropress' ),
+			'message'   => __( 'Take deposits to cut no-shows, record special occasions and verify phone numbers by SMS with the Table Booking extension.', 'restropress' ),
+			'actions'   => array(
+				array(
+					'label'    => __( 'View extension', 'restropress' ),
+					'url'      => rpress_reservation_table_booking_url(),
+					'external' => true,
+				),
+			),
+			'condition' => function () {
+				return ! rpress_reservation_has_table_booking() && array_sum( (array) wp_count_posts( 'rpress_reservation' ) ) > 0 && ! get_user_meta( get_current_user_id(), 'rpress_res_tb_notice_dismissed', true );
+			},
+			'dismiss'   => function ( $user_id ) {
+				update_user_meta( $user_id, 'rpress_res_tb_notice_dismissed', 1 );
+			},
+			'priority'  => 40,
+		)
+	);
+}
 
 /**
  * Today / Upcoming / Past / Pending views.

@@ -90,6 +90,23 @@
 			if ( soundOn && ! audioUnlocked ) {
 				tryUnlockAudio();
 			}
+			if ( ! soundOn ) {
+				stopSound();
+			}
+		} );
+
+		// Keep every open tab on the same switch: turning sound off in one
+		// Live Orders tab (or back on) applies to the others straight away.
+		$( window ).on( 'storage', function ( e ) {
+			var ev = e.originalEvent || {};
+			if ( 'rp_live_orders_sound' !== ev.key ) {
+				return;
+			}
+			soundOn = 'off' !== ev.newValue;
+			renderSoundButton();
+			if ( ! soundOn ) {
+				stopSound();
+			}
 		} );
 
 		// ── Audio context unlock (browsers block until user gesture) ────
@@ -269,10 +286,18 @@
 				audio.play();
 				// Stop after configured duration (the audio file may be long or looping).
 				var duration = ( cfg.soundDuration || 5 ) * 1000;
-				window.setTimeout( function () {
-					try { audio.pause(); audio.currentTime = 0; } catch ( e ) {}
-				}, duration );
+				window.clearTimeout( stopTimer );
+				stopTimer = window.setTimeout( stopSound, duration );
 			} catch ( e ) {}
+		}
+
+		// Silence a chime that is still ringing (sound switched off mid-ring).
+		var stopTimer = null;
+		function stopSound() {
+			window.clearTimeout( stopTimer );
+			if ( hasCustomAudio() ) {
+				try { $audio[ 0 ].pause(); $audio[ 0 ].currentTime = 0; } catch ( e ) {}
+			}
 		}
 
 		// ── Tab title flash ────────────────────────────────────────────
@@ -427,7 +452,7 @@
 					if ( ! serverIds.hasOwnProperty( id ) ) {
 						$( this ).addClass( 'is-leaving' );
 						var $card = $( this );
-						window.setTimeout( function () { $card.remove(); maybeShowEmpty( $col ); }, 250 );
+						window.setTimeout( function () { $card.remove(); maybeShowEmpty( $col ); recomputeKpisFromVisible(); }, 250 );
 					}
 				} );
 
@@ -476,9 +501,9 @@
 		} );
 
 		function maybeShowEmpty( $col ) {
-			var hasCards = $col.find( '.rp-live-card:not(.is-filtered-out)' ).length > 0;
+			var hasCards = $col.find( '.rp-live-card:not(.is-filtered-out):not(.is-leaving)' ).length > 0;
 			$col.find( '.rp-live-column-empty' ).attr( 'hidden', hasCards ? true : null );
-			$col.find( '.rp-live-column-count' ).text( $col.find( '.rp-live-card:not(.is-filtered-out)' ).length );
+			$col.find( '.rp-live-column-count' ).text( $col.find( '.rp-live-card:not(.is-filtered-out):not(.is-leaving)' ).length );
 		}
 
 		function applyClientFilters() {
@@ -496,6 +521,8 @@
 			recomputeKpisFromVisible();
 		}
 
+		// Cards fading out of a column (.is-leaving, removed 250ms later) do not
+		// count, so a tile never shows an order its column no longer has.
 		// Keep the KPI tiles in step with the active type/search filter so they
 		// never contradict the column counts directly below them. Each column maps
 		// 1:1 to a KPI tile (data-column === data-kpi); "late" is counted from the
@@ -505,7 +532,7 @@
 			$root.find( '.rp-live-column' ).each( function () {
 				var $col = $( this );
 				var key = $col.attr( 'data-column' );
-				var $visible = $col.find( '.rp-live-card:not(.is-filtered-out)' );
+				var $visible = $col.find( '.rp-live-card:not(.is-filtered-out):not(.is-leaving)' );
 				if ( key ) {
 					$root.find( '.rp-live-kpi[data-kpi="' + key + '"] .rp-live-kpi-count' ).text( $visible.length );
 				}

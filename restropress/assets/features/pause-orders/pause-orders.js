@@ -19,8 +19,8 @@
 	}
 
 	function showError(message) {
-		if (window.tata && typeof window.tata.error === 'function') {
-			window.tata.error(cfg.errorTitle || 'Error', message, { position: 'tr' });
+		if (typeof window.rpress_notify === 'function') {
+			rpress_notify(message, { type: 'error' });
 		} else {
 			window.alert(message);
 		}

@@ -137,7 +137,7 @@
 	border: 0;
 	border-radius: 999px;
 	background: var(--rpc-addbtn-bg, var(--rpc-primary, #ED5575));
-	color: var(--rpc-addbtn-color, #fff);
+	color: var(--rpc-addbtn-color, var(--rpc-on-primary, #fff));
 	box-shadow: 0 6px 16px rgba(0, 0, 0, .14);
 	font: 700 15px/1 var(--rpc-font-body, system-ui, sans-serif);
 	overflow: visible;
@@ -475,7 +475,7 @@
 		padding: 0 7px;
 		border-radius: 999px;
 		background: var(--rpc-primary, #ED5575);
-		color: #fff;
+		color: var(--rpc-on-primary, #fff);
 		font: 700 13px/1 var(--rpc-font-body, system-ui, sans-serif);
 	}
 	/* Primary too dark to show on the dark bar: white badge instead. */
@@ -884,6 +884,10 @@
 		color: #667085 !important;
 	}
 	body.rp-mo-sheet-cart .rpress-menu-v2 .rpress-sidebar-main-wrap .cart-action-wrap a svg {
+		display: none !important;
+	}
+	/* The line's stepper removes at 1 (3.5.1); its Remove link stays hidden. */
+	body.rp-mo-sheet-cart .rpress-menu-v2 .rpress-sidebar-main-wrap .cart-action-wrap a.rp-remove-hidden {
 		display: none !important;
 	}
 

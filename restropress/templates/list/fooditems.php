@@ -5,7 +5,7 @@
  * This template can be overridden by copying it to yourtheme/restropress/fooditem/fooditems.php.
  *
  * @package RestroPress/Templates
- * @version 1.0.0
+ * @version 3.5.1
  */
 defined('ABSPATH') || exit;
 // Get selected template from settings (default to 'list')
@@ -58,23 +58,44 @@ $data = $category_params;
 	do_action( 'rpress_menu_page_top' );
 	?>
 	<div class="rp-col-lg-8 rp-col-md-8">
-		<div class="rpress-mobile-menu-wrap">
-			<?php rpress_get_template_part($template . '/scrollable-categories'); ?>
-		</div>
-		<div class="rpress-options-row">
-			<?php if ( ! $is_old_ui_ux ) : ?>
-				<div class="rpress-option-col">
-					<?php rpress_get_template_part($template . '/delivery-option'); ?>
+		<?php
+		// 3.5.1: the parts above the dishes print in the layout's order (see
+		// rpress_menu_section_order()), so reading order matches the screen.
+		$rp_sections = function_exists( 'rpress_menu_section_order' ) ? rpress_menu_section_order() : array( 'rails', 'nav', 'service' );
+		foreach ( $rp_sections as $rp_section ) :
+			if ( 'nav' === $rp_section ) :
+				?>
+				<div class="rpress-mobile-menu-wrap rp-menu-nav">
+					<?php rpress_get_template_part($template . '/scrollable-categories'); ?>
 				</div>
-				<div class="rpress-option-col rpress-edit-address-wrap">
-					<span class="left-brdr"></span>
-					<?php rpress_get_template_part($template . '/time-option'); ?>
+				<?php
+			elseif ( 'service' === $rp_section ) :
+				?>
+				<div class="rpress-options-row rp-service-row">
+					<?php if ( ! $is_old_ui_ux ) : ?>
+						<div class="rpress-option-col rp-service-row__service">
+							<?php rpress_get_template_part($template . '/delivery-option'); ?>
+						</div>
+						<div class="rpress-option-col rpress-edit-address-wrap rp-service-row__time">
+							<span class="left-brdr"></span>
+							<?php rpress_get_template_part($template . '/time-option'); ?>
+						</div>
+					<?php endif; ?>
+					<div class="rpress-option-col rpress-search-wrap rp-service-row__search">
+						<?php do_action('before_fooditems_list'); ?>
+					</div>
 				</div>
-			<?php endif; ?>
-			<div class="rpress-option-col rpress-search-wrap">
-				<?php do_action('before_fooditems_list'); ?>
-			</div>
-		</div>
+				<?php
+			elseif ( 'rails' === $rp_section ) :
+				/**
+				 * Rails print here when the layout places them after other parts.
+				 *
+				 * @since 3.5.1
+				 */
+				do_action( 'rpress_menu_section_rails' );
+			endif;
+		endforeach;
+		?>
 
 		<div class="rpress_fooditems_list">
 			<?php do_action('rpress_get_food_categories');

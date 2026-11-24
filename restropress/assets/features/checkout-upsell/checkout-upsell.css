@@ -14,6 +14,9 @@
 #rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell {
 	--rpu-primary: var(--rpc-primary, #ED5575);
 	--rpu-primary-hover: var(--rpc-primary-hover, var(--rpu-primary));
+	/* Text in the brand colour: core darkens a light one to read on white,
+	   and dark packs point it at their accent. */
+	--rpu-primary-text: var(--rpc-primary-text, var(--rpu-primary));
 	--rpu-tint: var(--rpc-primary-tint, #FDEEF1);
 	--rpu-tint-border: var(--rpc-primary-tint-border, #F8C9D3);
 	--rpu-ink: var(--rpc-ink, #000F37);
@@ -124,7 +127,7 @@
 	margin: 0;
 	padding: 0;
 	font: 600 22px/1 var(--rpc-font-head, 'Poppins', system-ui, sans-serif);
-	color: var(--rpu-primary);
+	color: var(--rpu-primary-text);
 	text-transform: uppercase;
 }
 #rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell .rpress-upsell-info {
@@ -178,7 +181,7 @@
 	border-radius: 999px;
 	background: var(--rpu-tint);
 	box-shadow: none;
-	color: var(--rpu-primary);
+	color: var(--rpu-primary-text);
 	font: 600 13px/1 var(--rpc-font-body, 'Inter', system-ui, sans-serif);
 	text-transform: none;
 	letter-spacing: normal;
@@ -216,7 +219,7 @@
 #rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add:focus-visible {
 	background: var(--rpu-primary);
 	border-color: var(--rpu-primary);
-	color: #fff;
+	color: var(--rpc-on-primary, #fff);
 }
 #rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add:focus { outline: none; }
 #rpress_checkout_wrap#rpress_checkout_wrap .rpress-upsell button.rpress-upsell-add:focus-visible {

@@ -51,40 +51,33 @@ function rpress_reservation_get_user_reservations( $user_id ) {
  * @return string
  */
 function rpress_reservation_account_url() {
-	$page_id = get_transient( 'rpress_customer_dashboard_page' );
-	if ( false === $page_id ) {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- cached right below.
-		$page_id = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_content LIKE %s ORDER BY ID ASC LIMIT 1",
-				'%' . $wpdb->esc_like( '[customer_dashboard' ) . '%'
-			)
-		);
-		set_transient( 'rpress_customer_dashboard_page', $page_id, DAY_IN_SECONDS );
-	}
-	$url = $page_id ? get_permalink( $page_id ) : '';
-	$url = $url ? add_query_arg( 'rpress_account', 'reservations', $url ) . '#user-my-reservations' : '';
+	$url = function_exists( 'rpress_account_url' ) ? rpress_account_url( 'reservations' ) : '';
 	return (string) apply_filters( 'rpress_reservation_account_url', $url );
 }
 
 /**
- * Links with ?rpress_account=reservations remember the section in the
- * dashboard's own nav_location cookie, so a customer who has to log in first
- * still lands on Reservations (the #hash is lost through the login form).
+ * 3.5 emails linked to /my-account/?rpress_account=reservations#user-my-reservations.
+ * Send those to the Reservations section URL.
  *
- * @since 3.5
+ * @since 3.5.1
  * @return void
  */
-function rpress_reservation_remember_account_section() {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only picks which tab opens.
-	if ( empty( $_GET['rpress_account'] ) || 'reservations' !== $_GET['rpress_account'] || headers_sent() ) {
+function rpress_reservation_redirect_legacy_account_link() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- routing only.
+	if ( empty( $_GET['rpress_account'] ) || 'reservations' !== $_GET['rpress_account'] || ! is_page() ) {
 		return;
 	}
-	// Read by assets/js/user-dashboard.js; same 5-minute life it gives the cookie.
-	setcookie( 'nav_location', 'user-my-reservations', time() + 5 * MINUTE_IN_SECONDS, COOKIEPATH ? COOKIEPATH : '/', COOKIE_DOMAIN, is_ssl(), false );
+	$post = get_post();
+	if ( ! $post || ! has_shortcode( $post->post_content, 'customer_dashboard' ) ) {
+		return;
+	}
+	$url = rpress_account_url( 'reservations', $post->ID );
+	if ( $url ) {
+		wp_safe_redirect( $url );
+		exit;
+	}
 }
-add_action( 'template_redirect', 'rpress_reservation_remember_account_section' );
+add_action( 'template_redirect', 'rpress_reservation_redirect_legacy_account_link' );
 
 /**
  * URL of the booking page (see rpress_reservation_booking_page_id()), or ''.
@@ -99,29 +92,40 @@ function rpress_reservation_booking_page_url() {
 }
 
 /**
- * Sidebar item for customers who have reservations, or on sites with a
- * booking page.
+ * Does the current customer have any reservations? (Cached per request.)
  *
- * @since 3.5
- * @return void
+ * @since 3.5.1
+ * @return bool
  */
-function rpress_reservation_account_menu_item() {
-	// Shown when the customer has bookings, or when the site takes bookings
-	// (so the section is there to find, with a link to book).
-	if ( ! rpress_reservation_get_user_reservations( get_current_user_id() ) && ! rpress_reservation_booking_page_url() ) {
-		return;
+function rpress_reservation_account_has_bookings() {
+	static $has = null;
+	if ( null === $has ) {
+		$has = (bool) rpress_reservation_get_user_reservations( get_current_user_id() );
 	}
-	?>
-	<li class="user-my-reservations">
-		<div>
-			<?php // Inline so it needs no new image; sized and tinted like the other sidebar icons (img rules). ?>
-			<img alt="" src="<?php echo esc_attr( 'data:image/svg+xml,' . rawurlencode( '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' ) ); ?>" />
-			<span><?php esc_html_e( 'Reservations', 'restropress' ); ?></span>
-		</div>
-	</li>
-	<?php
+	return $has;
 }
-add_action( 'rpress_user_dashboard_menu_items', 'rpress_reservation_account_menu_item' );
+
+/**
+ * Reservations section of the customer account, shown to customers who
+ * have bookings, at /my-account/reservations/.
+ *
+ * @since 3.5.1
+ * @param array $sections Account sections.
+ * @return array
+ */
+function rpress_reservation_account_section( $sections ) {
+	$sections['reservations'] = array(
+		'label'     => __( 'Reservations', 'restropress' ),
+		// Inline so it needs no new image; sized and tinted like the other sidebar icons (img rules).
+		'icon'      => 'data:image/svg+xml,' . rawurlencode( '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' ),
+		'endpoint'  => 'reservations',
+		'callback'  => 'rpress_reservation_account_panel',
+		'visible'   => 'rpress_reservation_account_has_bookings',
+		'legacy_id' => 'user-my-reservations',
+	);
+	return $sections;
+}
+add_filter( 'rpress_account_sections', 'rpress_reservation_account_section' );
 
 /**
  * Reservations panel: upcoming first (soonest on top), then past.
@@ -137,7 +141,6 @@ function rpress_reservation_account_panel() {
 	}
 	if ( ! $all ) {
 		?>
-		<div class="col-lg-9 col-12" id="user-my-reservations" style="display:none;">
 			<div class="box-bg pd-2">
 				<div class="light-gray-bg">
 					<div class="box-body rpress-account-reservations rpress-account-res-empty">
@@ -147,7 +150,6 @@ function rpress_reservation_account_panel() {
 					</div>
 				</div>
 			</div>
-		</div>
 		<?php
 		return;
 	}
@@ -168,7 +170,6 @@ function rpress_reservation_account_panel() {
 		array( __( 'Past', 'restropress' ), $past, '' ),
 	);
 	?>
-	<div class="col-lg-9 col-12" id="user-my-reservations" style="display:none;">
 		<div class="box-bg pd-2">
 			<div class="light-gray-bg">
 				<div class="box-body">
@@ -225,10 +226,8 @@ function rpress_reservation_account_panel() {
 				</div>
 			</div>
 		</div>
-	</div>
 	<?php
 }
-add_action( 'rpress_user_dashboard_panels', 'rpress_reservation_account_panel' );
 
 /**
  * Footer link in reservation emails. The shared footer links to the order

@@ -36,7 +36,7 @@ $tags = get_the_terms( get_the_ID(), 'fooditem_tag' );
 $has_tags = ( $tags && ! is_wp_error( $tags ) ) ? 'has-tags' : '';
 ?>
 <div <?php echo esc_html($schema); ?> class="<?php 
-    echo esc_attr($has_tags) . ' ' . 
+    echo esc_attr($has_tags) . ' rp-card ' . 
          esc_attr($product_available_class) . ' ' . 
          esc_attr(apply_filters('rpress_fooditem_class', 'rpress_fooditem', get_the_ID(), $rpress_fooditem_shortcode_item_atts, $rpress_fooditem_shortcode_item_i)) . ' ' . 
          esc_attr($food_item_class);
@@ -60,7 +60,7 @@ $has_tags = ( $tags && ! is_wp_error( $tags ) ) ? 'has-tags' : '';
 			?>
 		</div>
 		<div class="rp-col-md-4 rp-col-sm-4 rp-col-xs-4">
-			<div class="rpress-list-view-image-wrapper">
+			<div class="rpress-list-view-image-wrapper rp-card__media">
 				<?php
 				rpress_get_template_part($template . '/content-image');
 				do_action('rpress_fooditem_after_thumbnail');

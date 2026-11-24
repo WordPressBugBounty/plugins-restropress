@@ -124,9 +124,9 @@ if ('delivery' === $service_type && !empty($user_address)) {
 	);
 }
 $order_statuses = rpress_get_order_statuses();
-$status_keys = array_keys($order_statuses);
-$current_status_index = array_search($order_status, $status_keys, true);
-$next_status_key = false !== $current_status_index && isset($status_keys[$current_status_index + 1]) ? $status_keys[$current_status_index + 1] : '';
+// Next step follows the service flow, not the position in the status list
+// (which would turn "Complete delivery" into "cancelled").
+$next_status_key = rpress_get_next_order_status($order_status, $service_type);
 $next_status_label = !empty($next_status_key) && isset($order_statuses[$next_status_key]) ? $order_statuses[$next_status_key] : __('No next step', 'restropress');
 $next_action_label = '';
 if ('pending' === $order_status) {
@@ -137,7 +137,7 @@ if ('pending' === $order_status) {
 	$next_action_label = __('Mark ready', 'restropress');
 } elseif ('ready' === $order_status) {
 	$next_action_label = 'delivery' === $service_type ? __('Dispatch order', 'restropress') : __('Complete order', 'restropress');
-} elseif ('transit' === $order_status) {
+} elseif (in_array($order_status, array('transit', 'out_for_delivery'), true)) {
 	$next_action_label = __('Complete delivery', 'restropress');
 }
 // Resolve rider aliases for display without changing the saved order/payment state.

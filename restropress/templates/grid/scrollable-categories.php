@@ -60,7 +60,7 @@ if (!$disable_category && is_array($get_all_items) && !empty($get_all_items)) :
                         <a href="#menu-category-<?php echo esc_attr($cat->term_id); ?>"
                         class="pn-ProductNav_Link<?php echo $first ? ' mnuactive' : ''; ?>"
                         aria-selected="<?php echo $first ? 'true' : 'false'; ?>">
-                            <?php echo esc_html($cat->name); ?><span class="pn-ProductNav_Count">(<?php echo intval($cat->count); ?>)</span>
+                            <?php echo function_exists('rpress_storefront_nav_media_html') ? rpress_storefront_nav_media_html($cat) : ''; // Photo tile when the layout asks for one. ?><span class="pn-ProductNav_Name"><?php echo esc_html($cat->name); ?></span><span class="pn-ProductNav_Count">(<?php echo intval($cat->count); ?>)</span>
                         </a>
                     <?php $first = false; endforeach; ?>
                     <span id="pnIndicator" class="pn-ProductNav_Indicator"></span>
@@ -93,6 +93,7 @@ $allowed_html = array(
         'class' => array(),
         'id' => array(),
         'aria-selected' => array(),
+        'aria-hidden' => array(),
     ),
     'a' => array(
         'href' => array(),
@@ -129,6 +130,12 @@ $allowed_html = array(
     ),
     'path' => array(
         'd' => array(),
+    ),
+    'img' => array(
+        'src' => array(),
+        'alt' => array(),
+        'loading' => array(),
+        'decoding' => array(),
     ),
 );
 

@@ -22,7 +22,7 @@ add_action( 'wp_ajax_rpress_setup_wizard_save', 'rpress_setup_wizard_ajax_save' 
 add_action( 'wp_ajax_rpress_setup_wizard_checklist', 'rpress_setup_wizard_ajax_checklist' );
 add_action( 'admin_enqueue_scripts', 'rpress_setup_wizard_enqueue', 20 );
 add_action( 'admin_init', 'rpress_setup_wizard_handle_dismiss' );
-add_action( 'admin_notices', 'rpress_setup_wizard_notice' );
+add_action( 'rpress_register_admin_notices', 'rpress_setup_wizard_register_notice' );
 add_action( 'admin_init', 'rpress_setup_wizard_page_title' );
 
 /**
@@ -139,6 +139,35 @@ function rpress_setup_wizard_handle_dismiss() {
  * Notice for stores that have not run the wizard (no auto-redirect for them).
  *
  * @return void
+ */
+function rpress_setup_wizard_register_notice() {
+	// Suggestion in the admin notification center (3.5.1; was a banner on the
+	// WP Dashboard and RestroPress screens).
+	rpress_register_admin_notice(
+		'setup_wizard',
+		array(
+			'title'     => __( 'RestroPress setup wizard', 'restropress' ),
+			'message'   => __( 'Check your store details, hours, delivery, payments and menu in a few guided steps, then place a test order.', 'restropress' ),
+			'actions'   => array(
+				array(
+					'label'   => __( 'Run the setup wizard', 'restropress' ),
+					'url'     => admin_url( 'admin.php?page=rpress-setup' ),
+					'primary' => true,
+				),
+			),
+			'condition' => function () {
+				return ! rpress_setup_wizard_is_complete() && ! get_option( 'rpress_show_setup_wizard' ) && ! get_user_meta( get_current_user_id(), 'rpress_setup_wizard_notice_dismissed', true );
+			},
+			'dismiss'   => function ( $user_id ) {
+				update_user_meta( $user_id, 'rpress_setup_wizard_notice_dismissed', 1 );
+			},
+			'priority'  => 10,
+		)
+	);
+}
+
+/**
+ * The old banner (3.4 to 3.5.0). Kept for code that calls it; no longer hooked.
  */
 function rpress_setup_wizard_notice() {
 	if ( ! current_user_can( 'manage_shop_settings' ) || rpress_setup_wizard_is_complete() || get_option( 'rpress_show_setup_wizard' ) ) {

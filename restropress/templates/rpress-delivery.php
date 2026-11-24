@@ -95,8 +95,10 @@ $delivery_date_label = rpress_format_service_date( $delivery_date_value );
             $delivery_asap_text = rpress_get_option('delivery_asap_text', '');
 
             // ASAP-only mode: keep only first slot
-            if ($asap_option_only == 1 && is_array($store_timings)) {
-                array_splice($store_timings, 1);
+            // ASAP (today only) is its own option ahead of the times.
+            $list_asap = $asap_option && ! class_exists('RPRESS_SlotLimit') && rpress_service_asap_allowed($delivery_date_value) && ! empty($store_timings);
+            if ($asap_option_only == 1 && $list_asap && is_array($store_timings)) {
+                $store_timings = array();
             }
            
             ?>
@@ -107,6 +109,11 @@ $delivery_date_label = rpress_format_service_date( $delivery_date_value );
                     name="rpress_allowed_hours"
                     aria-label="<?php esc_attr_e('Delivery time', 'restropress'); ?>">
 
+                <?php if ($list_asap) : ?>
+                    <option value="<?php echo esc_attr('ASAP' . $delivery_asap_text); ?>" <?php selected(0 === stripos((string) $selected_time, 'asap')); ?>>
+                        <?php echo esc_html(trim(__('ASAP', 'restropress') . ' ' . $delivery_asap_text)); ?>
+                    </option>
+                <?php endif; ?>
                 <?php if (is_array($store_timings)) : ?>
                     <?php foreach ($store_timings as $key => $time) : ?>
 
@@ -121,7 +128,7 @@ $delivery_date_label = rpress_format_service_date( $delivery_date_value );
                             continue;
                         }
 
-                        $is_asap = $asap_option && $key === 0;
+                        $is_asap = false; // ASAP is printed above the loop.
                         ?>
 
                         <?php if (class_exists('RPRESS_SlotLimit')) : ?>
@@ -130,7 +137,7 @@ $delivery_date_label = rpress_format_service_date( $delivery_date_value );
                                 value="<?php echo esc_attr($filtered_time); ?>"
                                 <?php selected($selected_time, $filtered_time); ?>
                             >
-                                <?php echo esc_html($filtered_time); ?>
+                                <?php echo esc_html(rpress_service_time_label($filtered_time, $service_type, $delivery_date_value)); ?>
                             </option>
 
                         <?php else : ?>
@@ -146,7 +153,7 @@ $delivery_date_label = rpress_format_service_date( $delivery_date_value );
                                 <?php echo esc_html(
                                     $is_asap
                                         ? __('ASAP', 'restropress') . ' ' . $delivery_asap_text
-                                        : $filtered_time
+                                        : rpress_service_time_label($filtered_time, $service_type, $delivery_date_value)
                                 ); ?>
                             </option>
 

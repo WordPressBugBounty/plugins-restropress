@@ -131,10 +131,66 @@ function rpress_insert_payment( $payment_data = array() ) {
 		return false;
 	}
 	$resume_payment   = false;
-	$existing_payment = RPRESS()->session->get( 'rpress_resume_payment' );
+	$resume_claim     = '';
+	$existing_payment = absint( RPRESS()->session->get( 'rpress_resume_payment' ) );
 	if ( ! empty( $existing_payment ) ) {
 		$payment = new RPRESS_Payment( $existing_payment );
-		$resume_payment = $payment->is_recoverable();
+		if ( ! empty( $payment->ID ) && $payment->is_recoverable() ) {
+			// Lock the payment before deciding: two requests of one buyer
+			// session (a card payment in flight and a cash on delivery post)
+			// must never both rewrite it. See includes/payments/resume-claim.php.
+			$resume_claim = RPRESS_RESUME_CLAIM_OWNER . '-' . wp_generate_password( 10, false );
+			if ( rpress_claim_payment( $payment->ID, $resume_claim, MINUTE_IN_SECONDS ) ) {
+				// Re-read from the database: a gateway may have written to it
+				// between our first read and the claim.
+				clean_post_cache( $payment->ID );
+				wp_cache_delete( md5( 'rpress_payment' . $payment->ID ), 'payments' );
+				$payment        = new RPRESS_Payment( $payment->ID );
+				$resume_payment = rpress_is_payment_resumable( $payment, $payment_data, 'insert', $resume_claim );
+				if ( ! $resume_payment ) {
+					rpress_release_payment_claim( $payment->ID, $resume_claim );
+				}
+			}
+		}
+		if ( $resume_payment ) {
+			/**
+			 * Fires once core has claimed a pending payment and decided to
+			 * resume it, right before it rewrites the payment's cart, fees,
+			 * total, gateway and key. Same request as the
+			 * `rpress_can_resume_payment` filter. Core holds the claim until
+			 * the rewrite is saved, so rpress_claim_payment() from another
+			 * request is refused meanwhile.
+			 *
+			 * @since 3.5.1
+			 * @param int            $payment_id   Payment about to be rewritten.
+			 * @param array          $payment_data Data it is rewritten with.
+			 * @param RPRESS_Payment $payment      The payment, as just re-read from the database.
+			 */
+			do_action( 'rpress_before_resume_payment', $payment->ID, $payment_data, $payment );
+		} elseif ( ! empty( $payment->ID ) && $payment->is_recoverable() ) {
+			/**
+			 * Fires when checkout did not resume the session's pending payment
+			 * because a claim or a `rpress_can_resume_payment` callback refused.
+			 * Checkout creates a new payment instead; the refused payment is
+			 * left untouched.
+			 *
+			 * @since 3.5.1
+			 * @param int   $payment_id   The payment that was left untouched.
+			 * @param array $payment_data Data of the new payment.
+			 */
+			do_action( 'rpress_resume_payment_refused', $payment->ID, $payment_data );
+			// process-purchase may have reused the refused payment's key; two
+			// payments must never share one. Give the new payment its own key
+			// and point the purchase session at it.
+			if ( ! empty( $payment->key ) && isset( $payment_data['purchase_key'] ) && $payment->key === $payment_data['purchase_key'] ) {
+				$payment_data['purchase_key'] = strtolower( md5( $payment_data['purchase_key'] . uniqid( 'rpress', true ) ) );
+				$session = rpress_get_purchase_session();
+				if ( is_array( $session ) ) {
+					$session['purchase_key'] = $payment_data['purchase_key'];
+					rpress_set_purchase_session( $session );
+				}
+			}
+		}
 	}
 	if ( $resume_payment ) {
 		$payment->date = current_time( 'mysql' );
@@ -216,6 +272,10 @@ function rpress_insert_payment( $payment_data = array() ) {
 	}
 	do_action( 'rpress_insert_payment', $payment->ID, $payment_data );
 	rpress_update_order_status( $payment->ID, 'pending' );
+	if ( $resume_payment ) {
+		// Rewrite saved: let gateways claim the payment again.
+		rpress_release_payment_claim( $payment->ID, $resume_claim );
+	}
 	if ( ! empty( $payment->ID ) ) {
 		return $payment->ID;
 	}
@@ -1008,6 +1068,47 @@ function rpress_order_status_step_index( $status, $service_type = 'delivery' ) {
 }
 
 /**
+ * The status an order moves to on its next fulfilment step.
+ *
+ * Walks the service's tracker steps, so delivery goes ready -> transit ->
+ * completed and pickup / dine-in go ready -> completed. Never returns
+ * cancelled: that is not a forward step. Returns '' when there is no next step
+ * (completed, cancelled or an unknown status).
+ *
+ * @since 3.5.1
+ * @param string $status       Current order status.
+ * @param string $service_type 'delivery', 'pickup', 'dinein' and so on.
+ * @return string Next status key, or ''.
+ */
+function rpress_get_next_order_status( $status, $service_type = 'delivery' ) {
+	$status = (string) $status;
+	if ( 'out_for_delivery' === $status ) {
+		$status = 'transit';
+	}
+	if ( in_array( $status, array( 'completed', 'cancelled', 'failed', 'refunded', '' ), true ) ) {
+		return '';
+	}
+	$model = rpress_order_status_model();
+	if ( ! isset( $model[ $status ] ) ) {
+		return '';
+	}
+
+	// Only delivery has the transit step; every other service ends like pickup.
+	$flow  = 'delivery' === strtolower( (string) $service_type ) ? 'delivery' : 'pickup';
+	$steps = array_values( wp_list_pluck( rpress_order_tracker_steps( $flow ), 'status' ) );
+	$index = array_search( $status, $steps, true );
+	if ( false === $index ) {
+		$index = rpress_order_status_step_index( $status, $flow );
+	}
+	$next = isset( $steps[ $index + 1 ] ) ? $steps[ $index + 1 ] : '';
+	if ( 'cancelled' === $next ) {
+		$next = '';
+	}
+
+	return apply_filters( 'rpress_next_order_status', $next, $status, $service_type );
+}
+
+/**
  * The order statuses valid to set for a given service type — used to scope the
  * admin status dropdown so delivery-only statuses aren't offered on pickup
  * orders (and vice-versa).
@@ -1658,15 +1759,17 @@ function rpress_set_payment_transaction_id( $payment_id = 0, $transaction_id = '
  */
 function rpress_get_purchase_id_by_key( $key ) {
 	global $wpdb;
-	$global_key_string = 'rpress_purchase_id_by_key' . $key;
-	global $global_key_string;
-	if ( null !== $global_key_string ) {
-		return $global_key_string;
+	// Per-request cache keyed by purchase key. It used to be a single global,
+	// so every lookup after the first returned the first payment's ID.
+	static $cache = array();
+	$key = (string) $key;
+	if ( isset( $cache[ $key ] ) ) {
+		return $cache[ $key ];
 	}
 	$purchase = $wpdb->get_var( $wpdb->prepare( "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = '_rpress_payment_purchase_key' AND meta_value = %s LIMIT 1", $key ) );
 	if ( $purchase != NULL ) {
-		$global_key_string = $purchase;
-		return $global_key_string;
+		$cache[ $key ] = $purchase;
+		return $purchase;
 	}
 	return 0;
 }

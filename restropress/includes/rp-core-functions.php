@@ -280,7 +280,7 @@ function get_special_instruction($items)
   $instruction = '';
   if (is_array($items)) {
     if (isset($items['options'])) {
-      $instruction = $items['options']['instruction'];
+      $instruction = isset($items['options']['instruction']) ? (string) $items['options']['instruction'] : '';
     } else {
       if (isset($items['instruction'])) {
         $instruction = $items['instruction'];
@@ -309,6 +309,29 @@ function rpress_get_instruction_by_key($cart_key)
 }
 
 /**
+ * The branch (Multi-Location term ID) the customer is ordering from, or 0.
+ *
+ * Reads the customer's chosen branch, then the default location from
+ * RestroPress or Multi-Location settings. One place for what several
+ * templates and extensions used to work out themselves.
+ *
+ * @since 3.5.1
+ * @return int
+ */
+function rpress_get_current_location_id() {
+  $location_id = isset( $_COOKIE['branch'] ) ? absint( wp_unslash( $_COOKIE['branch'] ) ) : 0;
+  if ( $location_id <= 0 ) {
+    $rpress_settings = get_option( 'rpress_settings', array() );
+    $location_id     = ! empty( $rpress_settings['default_location'] ) ? absint( $rpress_settings['default_location'] ) : 0;
+  }
+  if ( $location_id <= 0 ) {
+    $multi_location_settings = get_option( 'rp_multi_location', array() );
+    $location_id             = ! empty( $multi_location_settings['default_location'] ) ? absint( $multi_location_settings['default_location'] ) : 0;
+  }
+  return absint( apply_filters( 'rpress_current_location_id', $location_id ) );
+}
+
+/**
  * Determine if pre-order functionality is enabled via an active pre-order extension.
  *
  * Core RestroPress does not provide pre-ordering; pre-ordering requires a dedicated
@@ -326,18 +349,11 @@ function rpress_is_preorder_enabled( $service_type = '' ) {
     $enabled = true;
   }
 
-  // 2. Store Timing & Delivery Cutoff extension.
-  if ( ! $enabled && class_exists( 'RP_StoreTiming_Settings' ) ) {
-    $location_id = isset( $_COOKIE['branch'] ) ? absint( wp_unslash( $_COOKIE['branch'] ) ) : 0;
-    if ( $location_id <= 0 ) {
-      $rpress_settings = get_option( 'rpress_settings', array() );
-      $location_id     = ! empty( $rpress_settings['default_location'] ) ? absint( $rpress_settings['default_location'] ) : 0;
-    }
-    if ( $location_id <= 0 ) {
-      $multi_location_settings = get_option( 'rp_multi_location', array() );
-      $location_id             = ! empty( $multi_location_settings['default_location'] ) ? absint( $multi_location_settings['default_location'] ) : 0;
-    }
-    $timing_settings = RP_StoreTiming_Settings::rpress_timing_options( $location_id );
+  // 2. Store Timing & Delivery Cutoff 2.x reads here. Store Timing 3.0+ is a
+  // schedule provider (RP_ST_SCHEDULE_PROVIDER) and answers through the
+  // rpress_is_preorder_enabled filter instead, so core stops reading its settings.
+  if ( ! $enabled && class_exists( 'RP_StoreTiming_Settings' ) && ! defined( 'RP_ST_SCHEDULE_PROVIDER' ) ) {
+    $timing_settings = RP_StoreTiming_Settings::rpress_timing_options( rpress_get_current_location_id() );
     if ( ! empty( $service_type ) ) {
       if ( 'delivery' === $service_type && ! empty( $timing_settings['pre_order'] ) ) {
         $enabled = true;
@@ -1262,7 +1278,9 @@ function rpress_get_available_service_slots( $service_type, $service_date = '', 
   if ( $service_date < $today ) {
     return array();
   }
-  $hide_past_time = $hide_past_time && ( $service_date === $today );
+  // Keep hide_past_time intact for future dates so preparation time
+  // correctly filters out slots that fall before now + prep_time.
+  $hide_past_time = (bool) $hide_past_time;
   $store_times  = rp_get_store_timings( $hide_past_time, $service_type, $service_date );
   $store_times  = apply_filters( 'rpress_store_timings', $store_times, $service_type, $service_date );
 
@@ -1383,16 +1401,46 @@ function rpress_get_selected_service_date( $service_type, $requested_date = '', 
   }
 
   if ( $seed_dt < $today_dt ) {
-    return $today_dt->format( 'Y-m-d' );
+    $seed_dt = $today_dt;
   }
 
-  $can_preorder = $allow_future && rpress_is_preorder_enabled( $service_type );
-  if ( ! $can_preorder && $seed_dt > $today_dt ) {
+  $can_preorder = rpress_is_preorder_enabled( $service_type );
+  if ( $can_preorder ) {
+    $first_available = rpress_get_first_available_service_date( $service_type, $seed_date );
+    if ( ! empty( $first_available ) ) {
+      $current_slots = rpress_get_available_service_slots( $service_type, $seed_dt->format( 'Y-m-d' ), true );
+      if ( empty( $current_slots ) || ( ! $allow_future && $seed_dt > $today_dt ) ) {
+        return $first_available;
+      }
+    }
+    if ( $allow_future ) {
+      return $seed_dt->format( 'Y-m-d' );
+    }
+  }
+
+  if ( ! $allow_future && $seed_dt > $today_dt ) {
     return $today_dt->format( 'Y-m-d' );
   }
 
   return $seed_dt->format( 'Y-m-d' );
 }
+/**
+ * Whether "ASAP" can be the service time for a date.
+ *
+ * ASAP only means something for today. A future date (a pre-order, or the
+ * date moving to tomorrow because today has no times left) needs a real slot.
+ *
+ * @since 3.5.1
+ * @param string $service_date Y-m-d service date.
+ * @return bool
+ */
+function rpress_service_asap_allowed( $service_date ) {
+  if ( empty( rpress_get_option( 'enable_asap_option' ) ) ) {
+    return false;
+  }
+  return '' === (string) $service_date || (string) $service_date === rpress_get_wp_now()->format( 'Y-m-d' );
+}
+
 /**
  * Match service time with available slots.
  *
@@ -1554,7 +1602,7 @@ function rpress_pre_validate_order() {
     $prep_time = (int) rpress_get_option('prep_time', 0) * 60;
 
     $current_time = rpress_get_wp_now()->getTimestamp() + $prep_time;
-    $allow_asap = ! empty( rpress_get_option( 'enable_asap_option' ) );
+    $allow_asap = rpress_service_asap_allowed( $service_date );
     $available_slots = rpress_get_available_service_slots( $service_type, $service_date, true );
 
     if ( ! $service_time_hidden ) {
@@ -2679,6 +2727,13 @@ function rpress_can_view_receipt($payment_key = '')
     }
   }
   $session = rpress_get_purchase_session();
+  // The browser that just placed the order sees its receipt, also when the
+  // order is linked to an account because a guest used an email that already
+  // has one (stores where WooCommerce or registration created that account).
+  // A receipt link alone, without that session, still needs a login (3.5.1).
+  if (!$return && !empty($session['purchase_key']) && !empty($payment_meta['key']) && hash_equals((string) $payment_meta['key'], (string) $session['purchase_key']) && hash_equals((string) $payment_meta['key'], (string) $payment_key)) {
+    $return = true;
+  }
   if (!is_user_logged_in() && rpress_is_guest_payment($rpress_receipt_args['id'])) {
     if (!empty($session) && !empty($session['purchase_key']) && hash_equals((string) $session['purchase_key'], (string) $payment_meta['key'])) {
       $return = true;
@@ -3101,8 +3156,9 @@ function rpress_get_service_context( $service_type_override = '' ): array
     $context['service_date'] = rpress_format_service_date( rpress_get_wp_now()->format( 'Y-m-d' ) );
   }
 
-  // Pre-order auto-advance removed from core. The service date is not advanced
-  // to future dates in core RestroPress.
+  // Without the hours engine the service date is not advanced to future
+  // dates. With it, rpress_service_hours_selected_service_date() moves to the
+  // first date with order times when pre-ordering (3.5.1).
 
   if ( ! empty( $raw ) && ( ! headers_sent() ) ) {
     setcookie( 'service_date', $raw, time() + ( 86400 * 30 ), '/' );
@@ -3132,12 +3188,22 @@ function rpress_get_service_context( $service_type_override = '' ): array
   if ( $service_time_hidden ) {
     $context['selected_time'] = '';
   } else {
-    $allow_asap = ! empty( rpress_get_option( 'enable_asap_option' ) );
+    $allow_asap = rpress_service_asap_allowed( $context['service_date_raw'] );
+    if ( ! $allow_asap && 0 === stripos( (string) $context['service_time'], 'asap' ) ) {
+      // ASAP from an earlier visit does not carry over to a later date.
+      $context['service_time'] = '';
+      $dropped_asap = true;
+    }
     $context['selected_time'] = rpress_match_service_time_to_slot(
       $context['service_time'],
       $context['store_timings'],
       $allow_asap
     );
+
+    // No time chosen yet: ASAP, when offered (it is the first choice in the lists).
+    if ( empty( $context['selected_time'] ) && $allow_asap && ! empty( $context['store_timings'] ) ) {
+      $context['selected_time'] = 'ASAP' . rpress_get_option( 'pickup' === $context['service_type'] ? 'pickup_asap_text' : 'delivery_asap_text', '' );
+    }
 
     if ( empty( $context['selected_time'] ) && ! empty( $context['store_timings'] ) ) {
       $context['selected_time'] = rpress_get_next_available_service_time(
@@ -3149,6 +3215,15 @@ function rpress_get_service_context( $service_type_override = '' ): array
 
     if ( empty( $context['selected_time'] ) ) {
       $context['selected_time'] = rpress_get_option( 'default_time' );
+    }
+
+    if ( ! empty( $dropped_asap ) && ! empty( $context['selected_time'] ) ) {
+      if ( ! headers_sent() ) {
+        setcookie( 'service_time', $context['selected_time'], time() + ( 86400 * 30 ), '/' );
+        setcookie( 'service_time_text', $context['selected_time'], time() + ( 86400 * 30 ), '/' );
+      }
+      $_COOKIE['service_time']      = $context['selected_time'];
+      $_COOKIE['service_time_text'] = $context['selected_time'];
     }
   }
   /* ---------------- Store Open Check ---------------- */

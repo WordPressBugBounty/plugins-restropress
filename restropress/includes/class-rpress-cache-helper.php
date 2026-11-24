@@ -16,7 +16,7 @@ class RPRESS_Cache_Helper {
 	 */
 	public function __construct() {
 		add_action( 'init', array( $this, 'init' ), 0 );
-		add_action( 'admin_notices', array( $this, 'notices' ) );
+		// 3.5.1: the W3 Total Cache notice is a problem in the admin notification center.
 	}
 	/**
 	 * Prevent caching on dynamic pages.

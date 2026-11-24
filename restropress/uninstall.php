@@ -83,6 +83,12 @@ if( rpress_get_option( 'uninstall_on_delete' ) ) {
 	// Remove all database tables
 	$wpdb->query( "DROP TABLE IF EXISTS " . $wpdb->prefix . "rpress_customers" );
 	$wpdb->query( "DROP TABLE IF EXISTS " . $wpdb->prefix . "rpress_customermeta" );
+	// Webhooks (3.5.1): the deliveries table holds request bodies with customer data.
+	$wpdb->query( "DROP TABLE IF EXISTS " . $wpdb->prefix . "rpress_webhook_deliveries" );
+	delete_option( 'rpress_webhooks_endpoints' );
+	delete_option( 'rpress_webhooks_db_version' );
+	wp_clear_scheduled_hook( 'rpress_webhooks_process_queue' );
+	delete_post_meta_by_key( '_rpress_webhooks_last_status' );
 	/** Cleanup Cron Events */
 	wp_clear_scheduled_hook( 'rpress_daily_scheduled_events' );
 	wp_clear_scheduled_hook( 'rpress_daily_cron' );

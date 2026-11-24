@@ -2,7 +2,8 @@
  * Missed-order protection on the Live Orders board.
  *
  * - Repeats the new-order sound every N seconds while any new order is
- *   unaccepted and not acknowledged; pulses the card and New column and
+ *   unaccepted and not acknowledged (Acknowledge is saved on the order, so it
+ *   counts on every device); pulses the card and New column and
  *   flashes the tab title.
  * - Opt-in desktop notifications (Notification API) for orders that arrive
  *   while the tab is in the background.
@@ -73,6 +74,13 @@
 			return String( str || '' ).replace( '%d', value ).replace( '%s', value );
 		}
 
+		// Acknowledged here (instant) or by anyone, on any device (saved on
+		// the order, rendered into the card as data-oa-acked).
+		function isAcked( $card ) {
+			return !! acked[ String( $card.attr( 'data-order-id' ) ) ] ||
+				'1' === $card.find( '.rp-oa-row' ).attr( 'data-oa-acked' );
+		}
+
 		// ── Alert state ────────────────────────────────────────────────
 		function alertingCards() {
 			return $root.find( '.rp-live-card' ).filter( function () {
@@ -80,7 +88,7 @@
 				var id    = String( $card.attr( 'data-order-id' ) );
 				return 'pending' === $card.attr( 'data-status' ) &&
 					'1' === $card.find( '.rp-oa-row' ).attr( 'data-oa-alert' ) &&
-					! acked[ id ];
+					! isAcked( $card );
 			} );
 		}
 
@@ -88,9 +96,9 @@
 			$root.find( '.rp-live-card' ).each( function () {
 				var $card    = $( this );
 				var id       = String( $card.attr( 'data-order-id' ) );
-				var isAcked  = !! acked[ id ];
-				$card.find( '.rp-oa-ack' ).prop( 'hidden', isAcked );
-				$card.find( '.rp-oa-acked' ).prop( 'hidden', ! isAcked );
+				var done     = isAcked( $card );
+				$card.find( '.rp-oa-ack' ).prop( 'hidden', done );
+				$card.find( '.rp-oa-acked' ).prop( 'hidden', ! done );
 			} );
 			var $alerting = alertingCards();
 			$root.find( '.rp-live-card' ).removeClass( 'rp-oa-alerting' );
@@ -136,9 +144,14 @@
 		$root.on( 'click', '.rp-oa-ack', function ( e ) {
 			e.preventDefault();
 			e.stopPropagation();
-			acked[ String( $( this ).attr( 'data-order-id' ) ) ] = true;
+			var ackId = String( $( this ).attr( 'data-order-id' ) );
+			acked[ ackId ] = true;
 			saveAcks();
 			tick();
+			// Share it: the popup on other screens and other devices stop too.
+			if ( cfg.ackNonce ) {
+				$.post( cfg.ajaxUrl, { action: 'rpress_order_popup_ack', security: cfg.ackNonce, order_ids: [ ackId ] } );
+			}
 		} );
 
 		$( document ).on( 'rpress:orderStatusChanged', function () {

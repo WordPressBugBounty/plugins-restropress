@@ -41,27 +41,11 @@ $service_section_heading = apply_filters(
 $service_section_heading = trim( wp_strip_all_tags( (string) $service_section_heading ) );
 
 $button_style = sanitize_html_class( rpress_get_option( 'button_style', 'th-rounded' ) );
-$preorder_enabled      = false;
 $show_service_tabs      = false;
 $closed_message_display = '';
 
-if ( class_exists( 'RP_StoreTiming_Settings' ) ) {
-    $location_id = isset( $_COOKIE['branch'] ) ? absint( wp_unslash( $_COOKIE['branch'] ) ) : 0;
-
-    if ( $location_id <= 0 ) {
-        $rpress_settings = get_option( 'rpress_settings', array() );
-        $location_id     = ! empty( $rpress_settings['default_location'] ) ? absint( $rpress_settings['default_location'] ) : 0;
-    }
-
-    if ( $location_id <= 0 ) {
-        $multi_location_settings = get_option( 'rp_multi_location', array() );
-        $location_id             = ! empty( $multi_location_settings['default_location'] ) ? absint( $multi_location_settings['default_location'] ) : 0;
-    }
-
-    $timing_settings  = RP_StoreTiming_Settings::rpress_timing_options( $location_id );
-    $preorder_enabled = ( 'delivery' === $current_service && ! empty( $timing_settings['pre_order'] ) )
-        || ( 'pickup' === $current_service && ! empty( $timing_settings['pre_order_pickup'] ) );
-}
+// Pre-ordering from any extension (Pre-Order, Store Timing) for this branch.
+$preorder_enabled = rpress_is_preorder_enabled( $current_service );
 
 if ( 'delivery_and_pickup' === $enabled_service ) {
     // Show both tabs and let each tab render its own open/closed state.

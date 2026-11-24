@@ -179,10 +179,20 @@ function rpress_mobile_ordering_store_state( $service ) {
 			: sprintf( __( 'Prepared in ~%d min', 'restropress' ), $prep );
 	}
 	if ( 'delivery' === $service ) {
-		$flat_fee = rpress_get_option( 'flat_delivery_fee', '' );
+		// Same rule as the Modern pack header: the core flat fee only while it
+		// is in charge; a fee extension (Delivery Fee) supplies its own text.
+		$delivery_chip = '';
+		$flat_fee      = function_exists( 'rpress_flat_delivery_fee_active' ) && rpress_flat_delivery_fee_active()
+			? rpress_get_option( 'flat_delivery_fee', '' )
+			: '';
 		if ( '' !== $flat_fee && is_numeric( $flat_fee ) && (float) $flat_fee > 0 ) {
 			/* translators: %s: formatted delivery fee */
-			$chips[] = sprintf( __( '%s delivery fee', 'restropress' ), rpress_currency_filter( rpress_format_amount( $flat_fee ) ) );
+			$delivery_chip = sprintf( __( '%s delivery fee', 'restropress' ), rpress_currency_filter( rpress_format_amount( $flat_fee ) ) );
+		}
+		/** This filter is documented in includes/class-rpress-template-packs.php */
+		$delivery_chip = (string) apply_filters( 'rpress_store_header_delivery_chip', $delivery_chip, 'store_card' );
+		if ( '' !== $delivery_chip ) {
+			$chips[] = $delivery_chip;
 		}
 	}
 	if ( function_exists( 'rpress_checkout_ux_minimum_order' ) ) {

@@ -41,8 +41,8 @@ jQuery(function ($) {
 	}
 
 	function notifyError(message) {
-		if (window.tata && typeof window.tata.error === 'function') {
-			window.tata.error((window.rp_scripts && window.rp_scripts.error) || 'Error', message, { position: 'tr' });
+		if (typeof window.rpress_notify === 'function') {
+			rpress_notify(message, { type: 'error' });
 		} else {
 			window.alert(message);
 		}
@@ -88,9 +88,9 @@ jQuery(function ($) {
 					return;
 				}
 				$(document.body).trigger('rpress_added_to_cart', [response]);
-				if (window.tata && typeof window.tata.success === 'function' && window.rp_scripts) {
+				if (typeof window.rpress_notify === 'function' && window.rp_scripts) {
 					var added = (response.merged && window.rp_scripts.quantity_updated_in_cart) ? window.rp_scripts.quantity_updated_in_cart : window.rp_scripts.added_to_cart;
-					window.tata.success(window.rp_scripts.success || '', $btn.attr('data-title') + (added || ''), { position: 'tr' });
+					rpress_notify($btn.attr('data-title') + (added || ''), { type: 'success' });
 				}
 			},
 			error: function () {

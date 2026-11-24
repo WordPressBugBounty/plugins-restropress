@@ -1633,31 +1633,8 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 	 * @return string Displays a checkbox
 	 */
 	public function column_ID( $payment ) {
-		// Row actions (Trash / Restore / Delete) - same behaviour as before, just collected first.
-		$row_actions = array();
-		if ( rpress_is_order_trashable( $payment->ID ) ) {
-			$trash_url = wp_nonce_url( add_query_arg( array(
-				'rpress-action' => 'trash_order',
-				'purchase_id'   => absint( $payment->ID ),
-			), $this->base_url ), 'rpress_payment_nonce' );
-			$row_actions['trash'] = '<a href="' . esc_url( $trash_url ) . '">' . esc_html__( 'Trash', 'restropress' ) . '</a>';
-		} elseif ( rpress_is_order_restorable( $payment->ID ) ) {
-			$restore_url = wp_nonce_url( add_query_arg( array(
-				'rpress-action' => 'restore_order',
-				'purchase_id'   => absint( $payment->ID ),
-			), $this->base_url ), 'rpress_payment_nonce' );
-			$row_actions['restore'] = '<a href="' . esc_url( $restore_url ) . '">' . esc_html__( 'Restore', 'restropress' ) . '</a>';
-			$delete_url = wp_nonce_url( add_query_arg( array(
-				'rpress-action' => 'delete_order',
-				'purchase_id'   => absint( $payment->ID ),
-			), $this->base_url ), 'rpress_payment_nonce' );
-			$row_actions['delete'] = '<a href="' . esc_url( $delete_url ) . '">' . esc_html__( 'Delete Permanently', 'restropress' ) . '</a>';
-		}
-		if ( has_filter( 'rpress_payment_row_actions' ) ) {
-			$payment_obj = rpress_get_payment( $payment->ID );
-			$row_actions = apply_filters_deprecated( 'rpress_payment_row_actions', array( $row_actions, $payment_obj ), '3.0', 'rpress_order_row_actions' );
-		}
-		$row_actions = apply_filters( 'rpress_order_row_actions', $row_actions, $payment );
+		// Row actions from rpress_order_row_actions are rendered in the Actions
+		// column's "More actions" menu (see get_extension_row_actions()).
 
 		// Customer name resolution (id → customer → user_info fallback).
 		$customer_id = rpress_get_payment_customer_id( $payment->ID );
@@ -2068,7 +2045,13 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 			$map['ready'] = array( 'status' => 'transit', 'label' => __( 'Out for delivery', 'restropress' ) );
 		}
 
-		return isset( $map[ $status ] ) ? $map[ $status ] : array();
+		if ( ! isset( $map[ $status ] ) ) {
+			return array();
+		}
+		// The target status comes from the shared service flow; the map only supplies the label.
+		$map[ $status ]['status'] = rpress_get_next_order_status( $status, $service_type );
+
+		return $map[ $status ]['status'] ? $map[ $status ] : array();
 	}
 
 	/**
@@ -2200,6 +2183,33 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 	}
 
 	/**
+	 * Row actions that extensions add through rpress_order_row_actions (and the
+	 * deprecated rpress_payment_row_actions), minus the ones core renders itself.
+	 *
+	 * The redesigned list has no hover row actions, so these go in the
+	 * Actions column's "More actions" menu.
+	 *
+	 * @since 3.5.1
+	 * @param RPRESS_Payment $payment Payment object.
+	 * @return array Action key => link HTML.
+	 */
+	protected static function get_extension_row_actions( $payment ) {
+		$core_keys   = array( 'trash', 'restore', 'delete' );
+		$row_actions = array();
+		if ( has_filter( 'rpress_payment_row_actions' ) ) {
+			$row_actions = apply_filters_deprecated( 'rpress_payment_row_actions', array( $row_actions, rpress_get_payment( $payment->ID ) ), '3.0', 'rpress_order_row_actions' );
+		}
+		$row_actions = apply_filters( 'rpress_order_row_actions', $row_actions, $payment );
+		if ( ! is_array( $row_actions ) ) {
+			return array();
+		}
+		foreach ( $core_keys as $core_key ) {
+			unset( $row_actions[ $core_key ] );
+		}
+		return array_filter( $row_actions, 'is_string' );
+	}
+
+	/**
 	 * Actions column: View / Print / overflow ⋮ menu.
 	 */
 	protected static function render_actions_cell( $payment ) {
@@ -2246,6 +2256,11 @@ class RPRESS_Payment_History_Table extends WP_List_Table {
 		} elseif ( rpress_is_order_restorable( $payment->ID ) ) {
 			$out .= '<li><a href="' . esc_url( $restore_url ) . '">' . esc_html__( 'Restore', 'restropress' ) . '</a></li>';
 			$out .= '<li><a href="' . esc_url( $delete_url ) . '" class="rp-action-destructive">' . esc_html__( 'Delete Permanently', 'restropress' ) . '</a></li>';
+		}
+		// Actions added by extensions through rpress_order_row_actions. Core's
+		// own Trash / Restore / Delete are already in this menu above.
+		foreach ( self::get_extension_row_actions( $payment ) as $action_key => $action_html ) {
+			$out .= '<li class="rp-action-ext rp-action-' . esc_attr( sanitize_html_class( $action_key ) ) . '">' . wp_kses_post( $action_html ) . '</li>';
 		}
 		$out .= '</ul>';
 		$out .= '</div>';

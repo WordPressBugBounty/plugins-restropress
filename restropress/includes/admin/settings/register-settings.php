@@ -752,8 +752,8 @@ function rpress_get_registered_settings()
 				'order_notification' => array(
 					'enable_order_notification' => array(
 						'id' => 'enable_order_notification',
-						'name' => esc_html__('Enable Notification', 'restropress'),
-						'desc' => esc_html__('Enable order notification', 'restropress'),
+						'name' => esc_html__('New-order popup and sound on admin screens', 'restropress'),
+						'desc' => esc_html__('Show a popup listing new orders, with a sound, on every admin screen (Live Orders has its own alerts). Staff can open or acknowledge each order. Mute the sound with the speaker button in the popup or on Live Orders.', 'restropress'),
 						'type' => 'checkbox',
 					),
 					'notification_title' => array(
@@ -1199,6 +1199,12 @@ function rpress_get_registered_settings()
 						'desc' => esc_html__('Main accent color used across the storefront for buttons, links, and active highlights.', 'restropress'),
 						'type' => 'color',
 						'std' => '#ED5575',
+					),
+					'store_cover_image' => array(
+						'id' => 'store_cover_image',
+						'name' => esc_html__('Store Cover Image', 'restropress'),
+						'desc' => esc_html__('Wide photo behind the store name at the top of the menu, for packs and layouts with a cover header. Leave empty for a plain band.', 'restropress'),
+						'type' => 'upload',
 					),
 					'menu_display_header' => array(
 						'id' => 'menu_display_header',

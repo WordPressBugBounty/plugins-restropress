@@ -499,6 +499,11 @@ public function __set( $key, $value ) {
 			$this->ip = rpress_get_ip();
 			$this->pending['ip'] = $this->ip;
 		}
+		// Always give WordPress an explicit date. Without one, a pending post is
+		// stored with a zero post_date_gmt, which breaks date queries on orders.
+		if ( empty( $this->date ) ) {
+			$this->date = current_time( 'mysql' );
+		}
 		$payment_data = array(
 			'price'        => $this->total,
 			'date'         => $this->date,
@@ -825,10 +830,13 @@ public function __set( $key, $value ) {
 						$this->update_meta( '_rpress_payment_number', $this->number );
 						break;
 					case 'date':
+						// Pass the UTC date too: for pending orders WordPress
+						// otherwise stores a zero post_date_gmt.
 						$args = array(
-							'ID'        => $this->ID,
-							'post_date' => $this->date,
-							'edit_date' => true,
+							'ID'            => $this->ID,
+							'post_date'     => $this->date,
+							'post_date_gmt' => get_gmt_from_date( $this->date ),
+							'edit_date'     => true,
 						);
 						wp_update_post( $args );
 						break;
@@ -1616,7 +1624,16 @@ public function __set( $key, $value ) {
 		if ( in_array( $this->status, $recoverable_statuses ) && empty( $this->transaction_id ) ) {
 			$recoverable = true;
 		}
-		return $recoverable;
+		/**
+		 * Filters whether this payment can be resumed by the buyer (recovery
+		 * link, checkout resume). Return false from a gateway while a charge
+		 * is unresolved, instead of writing a placeholder transaction ID.
+		 *
+		 * @since 3.5.1
+		 * @param bool           $recoverable Whether the payment is recoverable.
+		 * @param RPRESS_Payment $payment     The payment.
+		 */
+		return (bool) apply_filters( 'rpress_payment_is_recoverable', $recoverable, $this );
 	}
 	/**
 	 * Returns the URL that a customer can use to resume a payment, or false if it's not recoverable.

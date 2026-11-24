@@ -14,6 +14,10 @@ if (!defined('ABSPATH')) {
 }
 
 $button_style = sanitize_html_class( rpress_get_option( 'button_style', 'button' ) );
+// 3.5 ordering flow: a − / value / + stepper per line (3.5.1). At 1 the − turns
+// into a trash and fires the Remove link, which is then hidden. The Legacy
+// Ordering Flow keeps "x 2" and the Remove link.
+$rp_cart_stepper = empty( rpress_get_option( 'old_ui_ux' ) );
 ?>
 <li class="rpress-cart-item" data-cart-key="{cart_item_id}">
 	<div class="rpress-cart-item-list">
@@ -22,10 +26,18 @@ $button_style = sanitize_html_class( rpress_get_option( 'button_style', 'button'
 			<span class="rpress-cart-item-title">{item_title}</span>
 		</div>
 		<div class="rpress-cart-item-price">
+			<?php if ( $rp_cart_stepper ) : ?>
+			<div class="rpress-qty-stepper" data-cart-key="{cart_item_id}">
+				<button type="button" class="rp-qty-btn rp-qty-dec" aria-label="<?php esc_attr_e( 'Decrease quantity', 'restropress' ); ?>"></button>
+				<span class="rp-qty-val rpress-cart-item-qty qty-class">{item_qty}</span>
+				<button type="button" class="rp-qty-btn rp-qty-inc" aria-label="<?php esc_attr_e( 'Increase quantity', 'restropress' ); ?>"></button>
+			</div>
+			<?php else : ?>
 			<div>
 				<span class="separator">x</span>
 				<span class="rpress-cart-item-qty qty-class">{item_qty}</span>
 			</div>
+			<?php endif; ?>
 			<span class="cart-item-quantity-wrap">
 				<span class="rpress-cart-item-price qty-class">{item_formated_amount}</span>
 			</span>
@@ -44,7 +56,7 @@ $button_style = sanitize_html_class( rpress_get_option( 'button_style', 'button'
 					<?php echo esc_html(apply_filters('rpress_cart_edit', __('Edit', 'restropress'))); ?></span>
 			</a>
 			<a href="{remove_url}" data-cart-item="{cart_item_id}" data-fooditem-id="{item_id}"
-				data-action="rpress_remove_from_cart" class="rpress-remove-from-cart <?php echo esc_attr( $button_style ); ?>">				
+				data-action="rpress_remove_from_cart" class="rpress-remove-from-cart <?php echo esc_attr( $button_style ); ?><?php echo $rp_cart_stepper ? ' rp-remove-hidden' : ''; ?>"<?php echo $rp_cart_stepper ? ' aria-hidden="true" tabindex="-1"' : ''; ?>>				
 				<svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
 					<path d="M0.526503 0.025013C0.100779 0.141119 -0.114847 0.594487 0.062077 0.995331C0.111837 1.10867 0.39381 1.40447 1.67651 2.68717L3.23012 4.24355L1.67651 5.79716C-0.0208561 7.49729 0.00125933 7.47241 0.00125933 7.78479C0.00125933 8.17458 0.308112 8.48143 0.700662 8.48143C1.01028 8.48143 0.988164 8.50078 2.68553 6.80618L4.23914 5.25257L5.79552 6.80618C7.49289 8.50355 7.46801 8.48143 7.78039 8.48143C8.17018 8.48143 8.47703 8.17458 8.47703 7.78203C8.47703 7.47241 8.49638 7.49453 6.80178 5.79716L5.24816 4.24355L6.80178 2.68717C8.49638 0.992567 8.47703 1.01468 8.47703 0.705065C8.47703 0.312514 8.17018 0.00566196 7.78039 0.00566196C7.46801 0.00566196 7.49289 -0.0164537 5.79552 1.68091L4.23914 3.23453L2.68553 1.68091C1.05727 0.0554218 1.04345 0.0415993 0.769773 0.00289726C0.708956 -0.00539589 0.598378 0.00566196 0.526503 0.025013Z" fill="#28303F"/>
 				</svg>

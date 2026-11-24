@@ -88,6 +88,19 @@ if ( $rp_po_paused && $rp_po_until ) {
 				</button>
 			<?php endif; ?>
 		</div>
+
+		<?php
+		/**
+		 * Add controls to the Live Orders "today" bar, next to Pause and Busy mode.
+		 *
+		 * The panel is re-rendered over AJAX after every pause or busy change,
+		 * so bind events with delegation (on document) rather than directly.
+		 *
+		 * @since 3.5.1
+		 * @param array $state Current pause / busy state (see RPRESS_Pause_Orders::get_state()).
+		 */
+		do_action( 'rpress_live_orders_controls', $state );
+		?>
 	</div>
 
 	<?php if ( $rp_po_paused ) : ?>

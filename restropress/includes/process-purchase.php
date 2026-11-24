@@ -184,10 +184,11 @@ function rpress_process_purchase_form() {
 	// Set up the unique purchase key. If we are resuming a payment, we'll overwrite this with the existing key.
 	$purchase_key     = strtolower( md5( $user['user_email'] . gmdate( 'Y-m-d H:i:s' ) . $auth_key . uniqid( 'rpress', true ) ) );
 	$existing_payment = RPRESS()->session->get( 'rpress_resume_payment' );
+	$resume_candidate = false;
 	if ( ! empty( $existing_payment ) ) {
 		$payment = new RPRESS_Payment( $existing_payment );
 		if( $payment->is_recoverable() && ! empty( $payment->key ) ) {
-			$purchase_key = $payment->key;
+			$resume_candidate = $payment;
 		}
 	}
 	// Setup purchase information
@@ -208,6 +209,12 @@ function rpress_process_purchase_form() {
 		'gateway'      => $valid_data['gateway'],
 		'card_info'    => $valid_data['cc_info'],
 	);
+	// Reuse the key of the payment being resumed, unless a gateway holds a
+	// claim on it or refuses the resume (rpress_can_resume_payment). The final,
+	// locked decision is made again in rpress_insert_payment().
+	if ( $resume_candidate && rpress_is_payment_resumable( $resume_candidate, $purchase_data, 'purchase' ) ) {
+		$purchase_data['purchase_key'] = $resume_candidate->key;
+	}
 	// Add the user data for hooks
 	$valid_data['user'] = $user;
 	// Allow themes and plugins to hook before the gateway

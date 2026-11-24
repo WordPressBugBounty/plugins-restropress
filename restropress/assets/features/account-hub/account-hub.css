@@ -59,66 +59,6 @@
 	display: none;
 }
 
-/* Order history cards: core styles every action link like a button, but the
-   theme-color link rule only exempts View Details and Reorder, so restate the
-   button text colour. "Receipt" (finished orders) is the outlined variant. */
-#rpress_user_history.rpress-order-history .rpress-history-actions a.rpress-track-order-btn.is-live {
-	color: var(--rpress-theme-primary-contrast, #fff);
-}
-#rpress_user_history.rpress-order-history .rpress-history-actions a.rpress-track-order-btn:not(.is-live) {
-	background: transparent;
-	color: var(--rpress-theme-primary, #ED5575);
-}
-
-/* Dashboard Orders tab: tracking link and Reorder next to the view icon.
-   The old .viewbg was a fixed 38x25px grey box for the icon alone, which
-   pushed these buttons out of the row; the box now grows and the grey
-   background moves to the icon. */
-.user-dashboard-wrapper.user-profile .viewbg {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: flex-start;
-	gap: 8px;
-	width: auto;
-	height: auto;
-	line-height: 1.2;
-	background: transparent;
-	/* Phone cards make the cell a grid; fill it so the buttons sit in one row. */
-	justify-self: stretch;
-}
-.user-dashboard-wrapper .viewbg .rpress-view-order-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	min-height: 36px;
-	border-radius: 8px;
-	background: #EEEEEE;
-	color: inherit;
-}
-.user-dashboard-wrapper .viewbg .rpress-track-order-btn,
-.user-dashboard-wrapper .viewbg .rpress-reorder-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 36px;
-	padding: 6px 12px;
-	border: 1px solid var(--rpress-theme-primary, #4E4BF5);
-	border-radius: 8px;
-	background: transparent;
-	color: var(--rpress-theme-primary, #4E4BF5);
-	font-size: 14px;
-	font-weight: 600;
-	line-height: 1.2;
-	text-decoration: none;
-	white-space: nowrap;
-}
-.user-dashboard-wrapper .viewbg .rpress-track-order-btn.is-live {
-	background: var(--rpress-theme-primary, #4E4BF5);
-	color: #fff;
-}
-
 /* Reorder modal: what was skipped. */
 .rpress-reorder-result .rpress-reorder-skipped {
 	margin: 12px 0;
@@ -161,9 +101,6 @@
 		overflow-x: auto;
 		-webkit-overflow-scrolling: touch;
 	}
-	.user-dashboard-wrapper .viewbg {
-		justify-content: flex-start;
-	}
 	.user-dashboard-wrapper #user-my-address .col-lg-4 {
 		width: 100%;
 		max-width: 100%;
@@ -180,20 +117,9 @@
 }
 
 /* Keyboard focus for the account hub controls. */
-.user-dashboard-wrapper .viewbg .rpress-reorder-btn:focus-visible,
-#rpress_user_history.rpress-order-history .rpress-history-actions a:focus-visible,
 #rpress_checkout_order_details .rpress-saved-addresses select:focus-visible,
 #rpress_checkout_order_details select.rpress-save-address-label:focus-visible,
 #rpress_checkout_order_details .rpress-save-address-toggle input:focus-visible {
 	outline: 2px solid var(--rpress-theme-primary, #4E4BF5);
 	outline-offset: 2px;
-}
-
-/* Touch screens: 44px tap targets for the order history actions. */
-@media (pointer: coarse) {
-	.user-dashboard-wrapper .viewbg .rpress-view-order-btn,
-	.user-dashboard-wrapper .viewbg .rpress-track-order-btn,
-	.user-dashboard-wrapper .viewbg .rpress-reorder-btn {
-		min-height: 44px;
-	}
 }
